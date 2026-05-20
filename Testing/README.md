@@ -155,6 +155,14 @@ fun add(a: Int, b: Int): Int {
 }
 ```
 
+Void functions are indicated by ```Unit``` or you can just omit it:
+
+```Kotlin
+fun doAbsolutelyNothing(): Unit {
+    println("e");
+}
+```
+
 ### Short version
 
 ```Kotlin
