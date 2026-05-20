@@ -297,3 +297,56 @@ println(doubled)
 val evens = nums.filter { it % 2 == 0 }
 println(evens)
 ```
+
+# Kotlin in Android Studio
+
+## Composable functions
+
+### Composable annotation
+
+- add ```@Composable``` annotation before function header
+- composable function names are capitalized
+- composable functions can't return anything
+
+```Kotlin
+@Composable
+fun Greeting(name: String, modifier: Modifier = Modifier) {
+    Text(
+        text = "Hello $name!",
+        modifier = modifier
+    )
+}
+```
+
+### Preview annotation
+
+- tells android studio that this composable should be shown in the design view of this file
+- takes in a boolean parameter called showBackground
+
+```Kotlin
+@Preview(showBackground = true)
+@Composable
+fun GreetingPreview() {
+    GreetingCardTheme {
+        Greeting("Bingus")
+    }
+}
+```
+
+## Surfaces
+
+- container that represents a section of UI where you can alter the appearance, such as the background color or border
+- default container is box layout, but you can change it to surface
+- Surface() takes in a color parameter
+
+```Kotlin
+@Composable
+fun Greeting(name: String, modifier: Modifier = Modifier) {
+    Surface(color = Color) {
+        Text(
+            text = "Hello, $name!",
+            modifier = modifier
+        )
+    }
+}
+```
