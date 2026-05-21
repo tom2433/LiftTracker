@@ -330,6 +330,13 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 }
 ```
 
+> [!NOTE]
+> Every composable function must include an optional ```modifier``` parameter like so:
+> ```Kotlin
+> @Composable
+> fun AComposableFunction(modifier: Modifier = Modifier)
+> ```
+
 ### Composable build in layouts
 
 A Surface is one, Row or Column are some others:
@@ -450,7 +457,7 @@ Adding a padding to the modifier with a size of 24 dp:
 fun Greeting(name: String, modifier: Modifier = Modifier) {
     Surface(color = Color.Cyan) {
         Text(
-            text = "Hi, my name is $name!",
+            text = "Hi, my name is $name!", 
             modifier = modifier.padding(24.dp)
         )
     }
@@ -465,4 +472,35 @@ Go [here](https://developer.android.com/codelabs/basic-android-kotlin-compose-co
 
 ---
 
+## Images
 
+### Upload an image
+
+- Go to View > Tool Windows > Resource Manager
+- Click + for "import drawables"
+- Upload and select Qualifier Type "Density" and select "No Density"
+- Images are placed in the ```/app/src/main/res/drawable-nodpi``` folder to stop the resizing behavior
+
+### Add an image as a composable
+
+- Call the ```painterResource()``` function and pass in the resource ID. This function loads a drawable image resource and takes in the resource ID as an argument.
+- Then add an ```Image``` composable and pass the Painter object.
+- The ```contentDescription``` parameter is for accessibility like an alt text
+
+Example:
+
+```Kotlin
+@Composable
+fun GreetingImage(modifier: Modifier = Modifier) {
+    val image = painterResource(R.drawable.background)
+    
+    Image(
+        painter = image
+        contentDescription = null
+    )
+}
+```
+
+### Additional Image Parameters
+
+- contentScale: how to size the image (ContentScale.Crop will scale the image uniformly to maintain the aspect ratio so that the width and height are equal to or larger than the corresponding dimension of the screen)
