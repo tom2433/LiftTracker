@@ -302,6 +302,18 @@ println(evens)
 
 ## Composable functions
 
+- Compose uses a declarative UI approach (focus on <em>what</em> the UI should look like rather than <em>how</em> to build it)
+- <em>Everything</em> about how your UI should look should use Composable functions
+- UI Composables are immutable and there is no way to change them once they have been created
+- **Recomposition** - Since Composables are immutable, they cannot be changed. Instead, when the app data has changed (and thus the arguments for the function have changed), the UI refreshes and the Composable is automatically re-executed.
+    - just call the composable function again to update the UI
+
+### Naming conventions
+
+- must be a noun
+- must be PascalCase
+- must not be a nouned proposition like ```TextFieldWithLink()```
+
 ### Composable annotation
 
 - add ```@Composable``` annotation before function header
@@ -315,6 +327,20 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
         text = "Hello $name!",
         modifier = modifier
     )
+}
+```
+
+### Composable build in layouts
+
+A Surface is one, Row or Column are some others:
+
+```Kotlin
+@Composable
+fun Greeting() {
+    Column {
+        Text("Hello there")
+        Text("General Kenobi")
+    }
 }
 ```
 
@@ -333,6 +359,8 @@ fun GreetingPreview() {
 }
 ```
 
+---
+
 ## Surfaces
 
 - container that represents a section of UI where you can alter the appearance, such as the background color or border
@@ -342,7 +370,7 @@ fun GreetingPreview() {
 ```Kotlin
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Surface(color = Color) {
+    Surface(color = Color.Cyan) {
         Text(
             text = "Hello, $name!",
             modifier = modifier
@@ -350,3 +378,91 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
     }
 }
 ```
+
+> [!NOTE]
+> Layouts like ```Box```, ```Row```, and ```Column``` use Trailing Lambda Syntax, which means that they use curly braces directly after the layout name instead of parentheses. Ex:
+> ```Kotlin
+> Box {
+>   // UI components
+> }
+> ```
+
+Change the ```setContent{}``` in ```onCreate()``` to also use a Surface:
+
+```Kotlin
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        setContent {
+            LiftTrackerTheme {
+                // Surface container using background color from the theme
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorscheme.background
+                ) {
+                    Greeting("World")
+                }
+            }
+        }
+    }
+}
+```
+
+### Colors
+
+Color class has some preset values:
+
+```Kotlin
+Color.Black
+Color.DarkGray
+Color.Gray
+Color.LightGray
+Color.White
+Color.Red
+Color.Green
+Color.Blue
+Color.Yellow
+Color.Cyan
+Color.Magenta
+Color.Transparent
+Color.Unspecified           // transparent
+```
+
+Or you can create your own with rgb, hsl, or hsv:
+
+```Kotlin
+Color(0.5f, 0.5f, 0.5f)
+```
+
+---
+
+## Padding
+
+- ```Modifier``` - used to augment or decorate a composable
+- ```padding``` - a modifier used to add space around the element (use ```Modifier.padding()```)
+- Every Composable has an optional parameter of the type ```Modifier```. This is the first optional parameter.
+
+Adding a padding to the modifier with a size of 24 dp:
+
+```Kotlin
+@Composable
+fun Greeting(name: String, modifier: Modifier = Modifier) {
+    Surface(color = Color.Cyan) {
+        Text(
+            text = "Hi, my name is $name!",
+            modifier = modifier.padding(24.dp)
+        )
+    }
+}
+```
+
+---
+
+## Run on android device
+
+Go [here](https://developer.android.com/codelabs/basic-android-kotlin-compose-connect-device?continue=https%3A%2F%2Fdeveloper.android.com%2Fcourses%2Fpathways%2Fandroid-basics-compose-unit-1-pathway-2%23codelab-https%3A%2F%2Fdeveloper.android.com%2Fcodelabs%2Fbasic-android-kotlin-compose-connect-device#2).
+
+---
+
+
