@@ -504,3 +504,4 @@ fun GreetingImage(modifier: Modifier = Modifier) {
 ### Additional Image Parameters
 
 - contentScale: how to size the image (ContentScale.Crop will scale the image uniformly to maintain the aspect ratio so that the width and height are equal to or larger than the corresponding dimension of the screen)
+- Sometimes the image won't actually fit the entire screen. In that event, set its modifier to Modifier.fillMaxSize() as well as its parent container
