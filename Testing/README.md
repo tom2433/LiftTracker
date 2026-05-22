@@ -544,3 +544,14 @@ verticalAlignment = Alignment.Top,
 verticalAlignment = Alignment.Center,
 verticalAlignment = Alignment.Bottom
 ```
+
+Padding example usages:
+
+```Kotlin
+Modifier.padding(
+    start = 16.dp,
+    top = 16.dp,
+    end = 16.dp,
+    bottom = 16.dp
+)
+```
