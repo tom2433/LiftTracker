@@ -555,3 +555,9 @@ Modifier.padding(
     bottom = 16.dp
 )
 ```
+
+### Text Alignment
+
+```Kotlin
+textAlign = TextAlign.Center
+```
