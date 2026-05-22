@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -57,16 +58,14 @@ fun GreetingText(message: String, from: String, modifier: Modifier = Modifier) {
 //            modifier = modifier.padding(24.dp)
             fontSize = 100.sp,
             lineHeight = 116.sp,
-            textAlign = TextAlign.Center,
-            color = Color.White
+            textAlign = TextAlign.Center
         )
         Text(
             text = from,
             fontSize = 36.sp,
-            color = Color.White,
             modifier = Modifier
                 .padding(16.dp)
-                .align(alignment = Alignment.End)
+                .align(alignment = Alignment.CenterHorizontally)
         )
     }
 }
@@ -79,7 +78,8 @@ fun GreetingImage(message: String, from: String, modifier: Modifier = Modifier) 
             painter = image,
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.Crop,
+            alpha = 0.5F
         )
         GreetingText(
             message = message,
@@ -95,6 +95,6 @@ fun GreetingImage(message: String, from: String, modifier: Modifier = Modifier) 
 @Composable
 fun GreetingPreview() {
     LiftTrackerTheme {
-        GreetingImage("Hello, World!", "Bottom text")
+        GreetingImage(stringResource(R.string.hello_world), stringResource(R.string.bottom_text))
     }
 }

@@ -505,3 +505,42 @@ fun GreetingImage(modifier: Modifier = Modifier) {
 
 - contentScale: how to size the image (ContentScale.Crop will scale the image uniformly to maintain the aspect ratio so that the width and height are equal to or larger than the corresponding dimension of the screen)
 - Sometimes the image won't actually fit the entire screen. In that event, set its modifier to Modifier.fillMaxSize() as well as its parent container
+
+---
+
+## Layout modifiers
+
+List of some obvious modifiers:
+
+```Kotlin
+Modifier.background(color = Color.Green)
+```
+
+To arrange objects in a parent Row or Column:
+
+```Kotlin
+// to set childrens' position in a row, use horizontalArrangement and verticalAignment
+// for column, use vertical Arrangment and horizontalAlignment
+
+// for a column
+verticalArrangement = Arrangement.SpaceBetween,
+verticalArrangement = Arrangement.SpaceAround,
+verticalArrangement = Arrangement.SpaceEvenly,
+verticalArrangement = Arrangement.Top,
+verticalArrangement = Arrangement.Center,
+verticalArrangement = Arrangement.Bottom
+horizontalAlignment = Alignment.Start,
+horizontalAlignment = Alignment.End,
+horizontalAlignment = Alignment.Center
+
+// for a row
+horizontalArrangement = Arrangement.SpaceBetween,
+horizontalArrangement = Arrangement.SpaceAround,
+horizontalArrangement = Arrangement.SpaceEvenly,
+horizontalArrangement = Arrangement.End,
+horizontalArrangement = Arrangement.Center,
+horizontalArrangement = Arrangement.Start
+verticalAlignment = Alignment.Top,
+verticalAlignment = Alignment.Center,
+verticalAlignment = Alignment.Bottom
+```
