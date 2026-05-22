@@ -8,6 +8,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -37,15 +38,11 @@ class MainActivity : ComponentActivity() {
         setContent {
             LiftTrackerTheme {
                 // surface container using background color from the theme
-                val graphic = painterResource(R.drawable.check)
-                val heading = "All tasks completed"
-                val subHeading = "Nice Work!"
-
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    AlertScreen(graphic, heading, subHeading)
+                    // put grid stuff here
                 }
             }
         }
@@ -53,101 +50,77 @@ class MainActivity : ComponentActivity() {
 }
 
 //@Composable
-//fun ArticleScreen(bannerImg: Painter, title: String, intro: String, body: String, modifier: Modifier = Modifier) {
+//fun AlertScreen(graphic: Painter, heading: String, subHeading: String, modifier: Modifier = Modifier) {
 //    Column(
 //        modifier = modifier.fillMaxSize(),
-//        verticalArrangement = Arrangement.Top
+//        verticalArrangement = Arrangement.Center,
+//        horizontalAlignment = Alignment.CenterHorizontally
 //    ) {
+//        // checkmark graphic
 //        Image(
-//            painter = bannerImg,
-//            contentDescription = null,
-//            modifier = Modifier.fillMaxWidth()
+//            painter = graphic,
+//            contentDescription = null
 //        )
+//        // heading: bold, padding (24dp top, 8dp bottom)
 //        Text(
-//            // 24sp font size, 16dp padding (all)
-//            text = title,
-//            fontSize = 24.sp,
-//            modifier = Modifier.padding(16.dp)
-//        )
-//        Text(
-//            // default font size, 16dp padding (start and end), and justify text align
-//            text = intro,
-//            textAlign = TextAlign.Justify,
+//            text = heading,
+//            fontWeight = FontWeight.Bold,
 //            modifier = Modifier.padding(
-//                start = 16.dp,
-//                end = 16.dp
+//                top = 24.dp,
+//                bottom = 8.dp
 //            )
 //        )
+//        // sub heading: 16sp font size
 //        Text(
-//            // default font size, 16dp padding (all), justify text align
-//            text = body,
-//            textAlign = TextAlign.Justify,
-//            modifier = Modifier.padding(16.dp)
+//            text = subHeading,
+//            fontSize = 16.sp
 //        )
 //    }
 //}
 
 @Composable
-fun AlertScreen(graphic: Painter, heading: String, subHeading: String, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+fun GridScreen(modifier: Modifier = Modifier) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Start
     ) {
-        // checkmark graphic
-        Image(
-            painter = graphic,
-            contentDescription = null
-        )
-        // heading: bold, padding (24dp top, 8dp bottom)
-        Text(
-            text = heading,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(
-                top = 24.dp,
-                bottom = 8.dp
-            )
-        )
-        // sub heading: 16sp font size
-        Text(
-            text = subHeading,
-            fontSize = 16.sp
-        )
+        Column(
+            modifier = Modifier.weight(0.5f),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+
+        }
     }
 }
 
-//
 //@Preview(showBackground = true)
 //@Composable
-//fun ArticlePreview() {
+//fun TasksCompletedPreview() {
 //    LiftTrackerTheme {
-//        val image = painterResource(R.drawable.banner)
-//        val title = stringResource(R.string.jetpack_compose_tutorial_title)
-//        val intro = stringResource(R.string.jetpack_compose_tutorial_intro)
-//        val body = stringResource(R.string.jetpack_compose_tutorial_body)
+//        val graphic = painterResource(R.drawable.check)
+//        val heading = "All tasks completed"
+//        val subHeading = "Nice Work!"
 //
 //        Surface(
 //            modifier = Modifier.fillMaxSize(),
 //            color = MaterialTheme.colorScheme.background
 //        ) {
-//            ArticleScreen(image, title, intro, body)
+//            AlertScreen(graphic, heading, subHeading)
 //        }
 //    }
 //}
 
 @Preview(showBackground = true)
 @Composable
-fun TasksCompletedPreview() {
+fun GridPreview() {
     LiftTrackerTheme {
-        val graphic = painterResource(R.drawable.check)
-        val heading = "All tasks completed"
-        val subHeading = "Nice Work!"
-
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            AlertScreen(graphic, heading, subHeading)
+            // show grid screen here
+            GridScreen()
         }
     }
 }
