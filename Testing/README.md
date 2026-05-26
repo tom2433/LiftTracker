@@ -442,6 +442,81 @@ Or you can create your own with rgb, hsl, or hsv:
 Color(0.5f, 0.5f, 0.5f)
 ```
 
+#### Material Design colors
+
+All material design colors can be accessed using ```MaterialTheme.colorScheme.``` followed by a color, like ```MaterialTheme.colorScheme.primary```. Below are all of the material design color options and their usages:
+
+- ```primary```
+    - main brand/accent color, used for buttons, active controls, selected items, highlights
+- ```onPrimary```
+    - color used on top of primary; usually text/icons on a primary-colored surface, like white text on a blue button
+- ```primaryContainer```
+    - less intense version of primary; used for cards, selected chips, containers needing emphasis but not full primary strength
+- ```onPrimaryContainer```
+    - used for text/icons shown on primaryContainer
+- ```secondary```
+    - a secondary accent color; used less frequently than primary; used for alternate buttons, supporting accents
+- ```onSecondary```
+    - used for content shown on top of secondary
+- ```secondaryContainer```
+    - a softer secondary background/container color
+- ```onSecondaryContainer```
+    - used for content shown on top of secondaryContainer
+- ```tertiary```
+    - a third accent color for visual variety; often used sparingly for charts, special callouts, or decorative accents
+- ```onTertiary```
+    - used for content shown on top of tertiary
+- ```tertiaryContainer```
+    - soft tertiary container color
+- ```onTertiaryContainer```
+    - used for content shown on top of tertiaryContainer
+- ```background```
+    - used for the main app background color; changes based on light/dark mode
+- ```onBackground```
+    - used for text/icons displayed on the background
+- ```surface```
+    - the default color for surfaces and components, like cards, sheets, menus, and dialogs
+- ```onSurface```
+    - used for text/icons shown on surfaces
+- ```surfaceVariant```
+    - an alternative surface color; used for outlined components and lower emphasis sections
+- ```onSurfaceVariant```
+    - used for content shown on surfaceVariant
+- ```error```
+    - used for error states like invalid text fields or destructive actions
+- ```onError```
+    - used for content shown on error
+- ```errorContainer```
+    - soft error background
+- ```onErrorContainer```
+    - used for content shown on errorContainer
+- ```outline```
+    - used for borders and dividers, like text field borders and separators
+- ```outlineVariant```
+    - softer/lower emphasis outline
+- ```surfaceTint```
+    - used for tint applied to elevated surfaces; helps create Material 3 elevation effects
+- ```inverseSurface```
+    - opposite-tone surface color; used for things like snackbars and temporary overlays
+- ```inverseOnSurface```
+    - used for content shown on inverseSurface
+- ```inversePrimary```
+    - inverse version of primary, used in inverse-colored components
+- ```scrim```
+    - a semi-transparent overlay color; used behind dialogs, drawers, and modals
+
+**Surface Container Colors for newer Material 3**
+
+These create subtle elevation layering without manually changing colors:
+
+- ```surfaceBright```
+- ```surfaceDim```
+- ```surfaceContainer```
+- ```surfaceContainerLow```
+- ```surfaceContainerLowest```
+- ```surfaceContainerHigh```
+- ```surfaceContainerHighest``` 
+
 ---
 
 ## Padding
@@ -506,6 +581,20 @@ fun GreetingImage(modifier: Modifier = Modifier) {
 - contentScale: how to size the image (ContentScale.Crop will scale the image uniformly to maintain the aspect ratio so that the width and height are equal to or larger than the corresponding dimension of the screen)
 - Sometimes the image won't actually fit the entire screen. In that event, set its modifier to Modifier.fillMaxSize() as well as its parent container
 
+### Other useful image hacks
+
+To wrap a surface around an image such that the surface is only as wide as its child (useful for adding a background to a transparent image), use ```Modifier.wrapContentWidth``` as follows:
+
+```Kotlin
+Surface(
+    modifier = Modifier.wrapContentWidth
+) {
+    Image(
+        // ...
+    )
+}
+```
+
 ---
 
 ## Layout modifiers
@@ -556,8 +645,77 @@ Modifier.padding(
 )
 ```
 
+### Spacing between elements in a column
+
+Use ```Arrangement.spacedBy()``` for the verticalArrangement parameter.
+
+Ex:
+
+```Kotlin
+Column(
+    modifier = Modifier.fillMaxWidth(),
+    verticalArrangement = Arrangement.spacedBy(
+        4.dp,
+        alignment = Alignment.CenterVertically
+    ),
+    horizontalAlignment = Alignment.CenterHorizontally
+) {
+    // put elements here, they will automatically be spaced now
+}
+```
+
+> [!NOTE]
+> This can also work for rows I think? Just change the verticals and horizontals probably
+
 ### Text Alignment
 
 ```Kotlin
 textAlign = TextAlign.Center
+```
+
+---
+
+## Borders
+
+BorderStroke class:
+
+- Initialize as ```BorderStroke(Dp, Brush)```
+- ```Dp``` can just be something like ```4.dp```
+- ```Brush``` can just be something like ```Color.Red```
+
+Ex:
+
+```Kotlin
+Surface(
+    modifier = Modifier.fillMaxSize(),
+    border = BorderStroke(4.dp, Color.Red)
+) {
+    // some things contained inside of a border
+}
+```
+
+---
+
+## Spacers
+
+Used to make spacing more explicit. Takes ```Modifier``` as a parameter, can use ```Modifier.width```, ```Modifier.height```, and ```Modifier.size``` modifiers. Can also take ```Modifier.weight``` which is more helpful.
+
+Ex:
+
+```Kotlin
+Column(
+    modifier = Modifier.fillMaxSize(),
+    verticalArrangement = Arrangement.Top,
+    horizontalAlignment = Alignment.CenterHorizontally
+) {
+    Spacer(
+        modifier = Modifier.weight(1f)
+    )
+    Text(
+        text = "Placeholder text"
+    )
+    Spacer(
+        modifier = Modifier.weight(1f)
+    )
+}
 ```
