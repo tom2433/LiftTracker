@@ -187,7 +187,7 @@ name = null                 // this is illegal
 ```?``` means nullable
 
 ```Kotlin
-val name: String? = null    // this is not illegal 
+val name: String? = null    // this is not illegal
 ```
 
 ### Safe calls
@@ -515,7 +515,7 @@ These create subtle elevation layering without manually changing colors:
 - ```surfaceContainerLow```
 - ```surfaceContainerLowest```
 - ```surfaceContainerHigh```
-- ```surfaceContainerHighest``` 
+- ```surfaceContainerHighest```
 
 ---
 
@@ -532,7 +532,7 @@ Adding a padding to the modifier with a size of 24 dp:
 fun Greeting(name: String, modifier: Modifier = Modifier) {
     Surface(color = Color.Cyan) {
         Text(
-            text = "Hi, my name is $name!", 
+            text = "Hi, my name is $name!",
             modifier = modifier.padding(24.dp)
         )
     }
@@ -568,7 +568,7 @@ Example:
 @Composable
 fun GreetingImage(modifier: Modifier = Modifier) {
     val image = painterResource(R.drawable.background)
-    
+
     Image(
         painter = image
         contentDescription = null
@@ -671,6 +671,23 @@ Column(
 
 ```Kotlin
 textAlign = TextAlign.Center
+```
+
+### Using wrapContentSize()
+
+```wrapContentSize()``` specifies that the available space should at least be as large as the components inside of it. You can also use ```fillMaxSize()``` in combination with this in order to center align things. I know this doesn't make sense but it should somehow.
+
+It's usually used with a composable that takes up the entire screen like so:
+
+```Kotlin
+@Preview(showBackground = true)
+@Composable
+fun DiceWithButtonAndImage(modifier: Modifier = Modifier
+    .fillMaxSize()
+    .wrapContentSize(Alignment.Center)
+) {
+    // put contents here, they will be centered in the middle of the screen I think
+}
 ```
 
 ---
