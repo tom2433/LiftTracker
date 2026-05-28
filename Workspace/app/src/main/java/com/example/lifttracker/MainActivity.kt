@@ -96,23 +96,32 @@ fun LemonadeActivityContainer(modifier: Modifier = Modifier) {
 
         // determine image and text from step
         var imageResource: Int
+        var imageResourceDescription: String
         var instruction: String
         when (step) {
             1 -> {
                 imageResource = R.drawable.lemon_tree
-                instruction = "Tap the lemon tree to select a lemon"
+                instruction = stringResource(R.string.lemonade_instruction_1)
+                imageResourceDescription =
+                    stringResource(R.string.lemonade_image_content_description_1)
             }
             2 -> {
                 imageResource = R.drawable.lemon_squeeze
-                instruction = "Keep tapping the lemon to squeeze it"
+                instruction = stringResource(R.string.lemonade_instruction_2)
+                imageResourceDescription =
+                    stringResource(R.string.lemonade_image_content_description_2)
             }
             3 -> {
                 imageResource = R.drawable.lemon_drink
-                instruction = "Tap the lemonade to drink it"
+                instruction = stringResource(R.string.lemonade_instruction_3)
+                imageResourceDescription =
+                    stringResource(R.string.lemonade_image_content_description_3)
             }
             else -> {
                 imageResource = R.drawable.lemon_restart
-                instruction = "Tap the empty glass to start again"
+                instruction = stringResource(R.string.lemonade_instruction_4)
+                imageResourceDescription =
+                    stringResource(R.string.lemonade_image_content_description_4)
             }
         }
 
@@ -135,7 +144,7 @@ fun LemonadeActivityContainer(modifier: Modifier = Modifier) {
         ) {
             Image(
                 painter = painterResource(imageResource),
-                contentDescription = "not implemented yet"
+                contentDescription = imageResourceDescription
             )
         }
         Spacer(modifier = Modifier.height(16.dp))
