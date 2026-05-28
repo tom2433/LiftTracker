@@ -313,7 +313,7 @@ This is shorthand for creating and storing state that survives recompositions.
 - The value is kept between recompositions of the composable.
 - Without ```remember```, the value would reset every time the UI redraws.
 
-```mutableStateOf(0)``` creates observable state. When the value changes, Compose automatically recomposes any UI using it. See [using buttons](#using-buttons) for more info.
+```mutableStateOf(0)``` creates observable state. When the value changes, Compose automatically recomposes any UI using it. See [using buttons](#state) for more info.
 
 # Kotlin in Android Studio
 
@@ -758,7 +758,7 @@ Column(
 
 ---
 
-## Using buttons
+## State
 
 ### Creating and storing state for implementing button functionality
 
@@ -790,3 +790,85 @@ println(result.value)
 The ```by``` just means that **property delegation** is used to delegate the value of the ```MutableState``` object to ```result```, so that it can be used directly. Also note that ```val``` is used here, meaning the reference to the object does not change, but the value inside it can.
 
 The delegation version is used more frequently because it's easier to use and it doesn't make much sense to use the raw version.
+
+### State for text field functionality
+
+```TextField()```s must have ```value``` and ```onValueChange``` parameters. ```value``` is the initial value in the text field, and ```onValueChange``` is a lambda that contains functionality that executes when the value is changed. The obvious functionality that should be implemented is that the content in the text field should be updated as the user types:
+
+```Kotlin
+fun NormalTextField(modifier: Modifier = Modifier) {
+    var inputtedText by remember { mutableStateOf("") }
+
+    TextField(
+        value = inputtedText,
+        onValueChange = { inputtedText = it },      // where 'it' is the user's keyboard input
+        modifier = modifier
+    )
+}
+```
+
+#### Other TextField parameters
+
+The ```label``` parameter takes in a lambda which should contain a composable, like ```Text```. The ```singleLine``` parameter takes in a boolean indicating if the text field is one long scrollable line instead of multiple lines. ```keyboardOptions``` is important for the Lift Tracker since it can bring up the number keypad instead of just the text one. A number textfield might look like this:
+
+```Kotlin
+@Composable
+fun EditNumberField(modifier: Modifier = Modifier) {
+    var amountInput by remember { mutableStateOf("") }
+
+    TextField(
+        value = amountInput,
+        onValueChange = {
+            amountInput = it
+        },
+        label = {
+            Text(
+                text = stringResource(R.string.bill_amount)
+            )
+        },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+    )
+}
+```
+
+### State hoisting
+
+In the above example, if an element in a parent container needed access to the value entered in the text field, we'd do **state hoisting**. This involves moving the ```amountInput``` value (the variable with the mutable state) up into the parent container, which also means that we must hoist the value passed to the ```value``` parameter of the ```TextField``` and the lambda passed to the ```onValueChange``` parameter of the ```TextField```.
+
+This can be done like so:
+
+```Kotlin
+@Composable
+fun ParentContainer(modifier: Modifier = Modifier) {
+    // amountInput can now be accessed by parent container
+    var amountInput by remember { mutableStateOf("") }
+
+    EditNumberField(
+        value = amountInput,
+        onValueChange = {
+            amountInput = it
+        },
+        modifier = Modifier.padding(16.dp)
+    )
+}
+
+@Composable
+fun EditNumberField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    TextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = {
+            Text(
+                text = stringResource(R.string.bill_amount)
+            )
+        },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+    )
+}
+```
