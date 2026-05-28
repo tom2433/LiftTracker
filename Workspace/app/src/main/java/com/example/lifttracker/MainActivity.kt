@@ -95,18 +95,23 @@ fun LemonadeActivityContainer(modifier: Modifier = Modifier) {
         // determine image and text from step
         var imageResource: Int
         var instruction: String
-        if (step == 1) {
-            imageResource = R.drawable.lemon_tree
-            instruction = "Tap the lemon tree to select a lemon"
-        } else if (step == 2) {
-            imageResource = R.drawable.lemon_squeeze
-            instruction = "Keep tapping the lemon to squeeze it"
-        } else if (step == 3) {
-            imageResource = R.drawable.lemon_drink
-            instruction = "Tap the lemonade to drink it"
-        } else {
-            imageResource = R.drawable.lemon_restart
-            instruction = "Tap the empty glass to start again"
+        when (step) {
+            1 -> {
+                imageResource = R.drawable.lemon_tree
+                instruction = "Tap the lemon tree to select a lemon"
+            }
+            2 -> {
+                imageResource = R.drawable.lemon_squeeze
+                instruction = "Keep tapping the lemon to squeeze it"
+            }
+            3 -> {
+                imageResource = R.drawable.lemon_drink
+                instruction = "Tap the lemonade to drink it"
+            }
+            else -> {
+                imageResource = R.drawable.lemon_restart
+                instruction = "Tap the empty glass to start again"
+            }
         }
 
         Button(
@@ -137,7 +142,7 @@ fun LemonadeHeader(modifier: Modifier = Modifier) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .height(80.dp),
+            .height(100.dp),
         color = Color(249, 228, 75)
     ) {
         // Box to align header text
