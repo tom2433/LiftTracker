@@ -91,6 +91,8 @@ fun LemonadeActivityContainer(modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.Center
     ) {
         var step by remember { mutableIntStateOf(1) }
+        var clickCount by remember { mutableIntStateOf((2..4).random()) }
+        var currentClick by remember { mutableIntStateOf(0) }
 
         // determine image and text from step
         var imageResource: Int
@@ -118,6 +120,13 @@ fun LemonadeActivityContainer(modifier: Modifier = Modifier) {
             onClick = {
                 if (step == 4) {
                     step = 1
+                } else if (step == 2) {
+                    currentClick++
+                    if (currentClick == clickCount) {
+                        step++
+                        currentClick = 0
+                        clickCount = (2..4).random()
+                    }
                 } else {
                     step++
                 }
@@ -140,7 +149,7 @@ fun LemonadeActivityContainer(modifier: Modifier = Modifier) {
 @Composable
 fun LemonadeHeader(modifier: Modifier = Modifier) {
     Surface(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .height(100.dp),
         color = Color(249, 228, 75)
