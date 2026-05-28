@@ -5,27 +5,38 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.BottomCenter
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Color.Companion.Black
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
 import com.example.lifttracker.ui.theme.LiftTrackerTheme
 
@@ -40,7 +51,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    DiceRollerApp()
+                    LemonadeApp()
                 }
             }
         }
@@ -49,270 +60,139 @@ class MainActivity : ComponentActivity() {
 
 @Preview(showBackground = true)
 @Composable
-fun DiceRollerApp() {
-    DiceWithButtonAndImage(modifier = Modifier
-        .fillMaxSize()
-        .wrapContentSize(Alignment.Center)
-    )
+fun LemonadeApp() {
+    LemonadeScreen()
 }
 
 @Composable
-fun DiceWithButtonAndImage(modifier: Modifier = Modifier) {
-    var result by remember { mutableIntStateOf(1) }
-    val imageResource = when(result) {
-        1 -> R.drawable.dice_1
-        2 -> R.drawable.dice_2
-        3 -> R.drawable.dice_3
-        4 -> R.drawable.dice_4
-        5 -> R.drawable.dice_5
-        else -> R.drawable.dice_6
-    }
-
+fun LemonadeScreen(modifier: Modifier = Modifier) {
     Column(
-        modifier = modifier,
+        modifier = modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Image(
-            painter = painterResource(imageResource),
-            contentDescription = result.toString()
+        // Lemonade header surface
+        LemonadeHeader()
+
+        // Lemonade Activity Container (contains image and text)
+        LemonadeActivityContainer(
+            modifier = Modifier
+                .fillMaxSize()
+                .wrapContentSize(Alignment.Center)
         )
+    }
+}
 
+@Composable
+fun LemonadeActivityContainer(modifier: Modifier = Modifier) {
+    Column (
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        var step by remember { mutableIntStateOf(1) }
+
+        // determine image and text from step
+        var imageResource: Int
+        var instruction: String
+        if (step == 1) {
+            imageResource = R.drawable.lemon_tree
+            instruction = "Tap the lemon tree to select a lemon"
+        } else if (step == 2) {
+            imageResource = R.drawable.lemon_squeeze
+            instruction = "Keep tapping the lemon to squeeze it"
+        } else if (step == 3) {
+            imageResource = R.drawable.lemon_drink
+            instruction = "Tap the lemonade to drink it"
+        } else {
+            imageResource = R.drawable.lemon_restart
+            instruction = "Tap the empty glass to start again"
+        }
+
+        Button(
+            onClick = {
+                if (step == 4) {
+                    step = 1
+                } else {
+                    step++
+                }
+            },
+            shape = RoundedCornerShape(40.dp)
+        ) {
+            Image(
+                painter = painterResource(imageResource),
+                contentDescription = "not implemented yet"
+            )
+        }
         Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = instruction,
+            textAlign = TextAlign.Center
+        )
+    }
+}
 
-        Button(onClick = { result = (1..6).random() }) {
+@Composable
+fun LemonadeHeader(modifier: Modifier = Modifier) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(80.dp),
+        color = Color(249, 228, 75)
+    ) {
+        // Box to align header text
+        Box(
+            modifier = Modifier.padding(12.dp),
+            contentAlignment = BottomCenter
+        ) {
             Text(
-                text = stringResource(R.string.roll),
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Light
+                text = stringResource(R.string.lemonade),
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 20.sp,
+                color = Color(0, 0, 0)
             )
         }
     }
 }
 
-//@Composable
-//fun NameCard(modifier: Modifier = Modifier) {
-//    Surface(
-//        modifier = modifier
-//            .fillMaxWidth(),
-////        border = BorderStroke(2.dp, Color.Red)
-//    ) {
-//        Column(
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .padding(
-//                    top = 8.dp,
-//                    bottom = 8.dp,
-//                    start = 16.dp,
-//                    end = 16.dp
-//                ),
-//            verticalArrangement = Arrangement.spacedBy(
-//                4.dp,
-//                alignment = Alignment.CenterVertically
-//            ),
-//            horizontalAlignment = Alignment.CenterHorizontally
-//        ) {
-//            // image surface (weight = 3)
-//            Surface(
-//                modifier = Modifier
-//                    .wrapContentWidth()
-//                    .weight(3.5f),
-////                border = BorderStroke(2.dp, Color.Blue),
-//                color = Color(7, 48, 66)
-//            ) {
-//                Surface(
-//                    modifier = Modifier.padding(6.dp),
-//                    color = Color(7, 48, 66)
-//                ) {
-//                    // Image
-//                    val image = painterResource(R.drawable.android_logo)
-//
-//                    Image(
-//                        painter = image,
-//                        contentDescription = "Android Logo"
-//                    )
-//                }
-//            }
-//
-//            // name surface (weight = 1.5)
-//            Surface(
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .weight(1.5f),
-////                border = BorderStroke(2.dp, Color.Blue)
-//            ) {
-//                // full name
-//                Box(
-//                    contentAlignment = Alignment.Center
-//                ) {
-//                    Text(
-//                        text = "Thomas England",
-//                        fontSize = 32.sp,
-//                        textAlign = TextAlign.Center,
-//                        fontWeight = FontWeight.Light
-//                    )
-//                }
-//            }
-//
-//            // title surface (weight = 1)
-//            Surface(
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .weight(1f),
-////                border = BorderStroke(2.dp, Color.Blue)
-//            ) {
-//                // title
-//                Box(
-//                    contentAlignment = Alignment.Center
-//                ) {
-//                    Text(
-//                        text = "Android Developer",
-//                        fontSize = 13.sp,
-//                        textAlign = TextAlign.Center,
-//                        fontWeight = FontWeight.Bold,
-//                        color = Color(4, 115, 65)
-//                    )
-//                }
-//            }
-//        }
-//    }
-//}
-//
-//@Composable
-//fun IconRow(icon: ImageVector, iconDescription: String, content: String, modifier: Modifier = Modifier) {
-//    Surface(
-//        modifier = modifier
-//            .fillMaxWidth(),
-////        border = BorderStroke(2.dp, Color.Blue)
-//    ) {
-//        Row(
-//            modifier = Modifier.fillMaxSize(),
-//            horizontalArrangement = Arrangement.spacedBy(
-//                14.dp,
-//                alignment = Alignment.Start
-//            ),
-//            verticalAlignment = Alignment.CenterVertically
-//        ) {
-//            // start spacer
-//            Spacer(modifier = Modifier.weight(1f))
-//
-//            // icon surface
-//            Surface(
-//                modifier = Modifier
-//                    .weight(0.6f)
-//                    .fillMaxSize(),
-////                border = BorderStroke(2.dp, Color.Green)
-//            ) {
-//                Icon(
-//                    imageVector = icon,
-//                    contentDescription = iconDescription,
-//                    tint = Color(4, 115, 65)
-//                )
-//            }
-//
-//            // text surface
-//            Surface(
-//                modifier = Modifier
-//                    .weight(6f)
-//                    .fillMaxWidth(),
-////                border = BorderStroke(2.dp, Color.Green)
-//            ) {
-//                Box(
-//                    contentAlignment = Alignment.CenterStart
-//                ) {
-//                    Text(
-//                        text = content,
-//                        textAlign = TextAlign.Left,
-//                        fontSize = 13.sp
-//                    )
-//                }
-//            }
-//
-//            // end spacer
-//            Spacer(modifier = Modifier.weight(1f))
-//        }
-//    }
-//}
-//
-//@Composable
-//fun ContactCard(modifier: Modifier = Modifier) {
-//    Surface(
-//        modifier = modifier.fillMaxWidth(),
-////        border = BorderStroke(2.dp, Color.Red)
-//    ) {
-//        Column(
-//            modifier = Modifier
-//                .wrapContentWidth()
-//                .padding(
-//                    top = 8.dp,
-//                    bottom = 8.dp,
-//                    start = 16.dp,
-//                    end = 16.dp
-//                ),
-//            verticalArrangement = Arrangement.spacedBy(
-//                4.dp,
-//                alignment = Alignment.CenterVertically
-//            ),
-//            horizontalAlignment = Alignment.CenterHorizontally
-//        ) {
-//            // phone number row
-//            IconRow(
-//                Icons.Rounded.Phone,
-//                "Phone",
-//                "+1 (630) 967 4510",
-//                Modifier.weight(1f)
-//            )
-//
-//            // social media handle row
-//            IconRow(
-//                Icons.Rounded.AccountCircle,
-//                "Account Circle",
-//                "linkedin.com/in/thomasjengland",
-//                Modifier.weight(1f)
-//            )
-//
-//            // email address row
-//            IconRow(
-//                Icons.Rounded.Mail,
-//                "Mail",
-//                "thomas.j.england@gmail.com",
-//                Modifier.weight(1f)
-//            )
-//        }
-//    }
-//}
-//
-//@Composable
-//fun BusinessCardScreen(modifier: Modifier = Modifier) {
-//    Column(
-//        modifier = modifier
-//            .fillMaxSize()
-//            .padding(
-//                start = 16.dp,
-//                end = 16.dp,
-//                top = 8.dp,
-//                bottom = 8.dp
-//            ),
-//        verticalArrangement = Arrangement.Top,
-//        horizontalAlignment = Alignment.CenterHorizontally
-//    ) {
-//        Spacer(modifier = Modifier.weight(0.9f))            // previously 0.9f
-//        NameCard(modifier = Modifier.weight(0.8f))          // previously 0.9f
-//        Spacer(modifier = Modifier.weight(0.6f))            // previously 0.6f
-//        ContactCard(modifier = Modifier.weight(0.5f))       // previously 0.7f
-//        Spacer(modifier = Modifier.weight(0.5f))            // previously 0.3f
-//    }
-//}
-//
 //@Preview(showBackground = true)
 //@Composable
-//fun BusinessCardPreview() {
-//    LiftTrackerTheme {
-//        Surface(
-//            modifier = Modifier.fillMaxSize(),
-//            color = MaterialTheme.colorScheme.background
-//        ) {
-//            // show BusinessCard screen here
-//            BusinessCardScreen()
+//fun DiceRollerApp() {
+//    DiceWithButtonAndImage(modifier = Modifier
+//        .fillMaxSize()
+//        .wrapContentSize(Alignment.Center)
+//    )
+//}
+//
+//@Composable
+//fun DiceWithButtonAndImage(modifier: Modifier = Modifier) {
+//    var result by remember { mutableIntStateOf(1) }
+//    val imageResource = when(result) {
+//        1 -> R.drawable.dice_1
+//        2 -> R.drawable.dice_2
+//        3 -> R.drawable.dice_3
+//        4 -> R.drawable.dice_4
+//        5 -> R.drawable.dice_5
+//        else -> R.drawable.dice_6
+//    }
+//
+//    Column(
+//        modifier = modifier,
+//        horizontalAlignment = Alignment.CenterHorizontally
+//    ) {
+//        Image(
+//            painter = painterResource(imageResource),
+//            contentDescription = result.toString()
+//        )
+//
+//        Spacer(modifier = Modifier.height(16.dp))
+//
+//        Button(onClick = { result = (1..6).random() }) {
+//            Text(
+//                text = stringResource(R.string.roll),
+//                fontSize = 24.sp,
+//                fontWeight = FontWeight.Light
+//            )
 //        }
 //    }
 //}
