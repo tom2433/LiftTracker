@@ -298,7 +298,26 @@ val evens = nums.filter { it % 2 == 0 }
 println(evens)
 ```
 
+---
+
+## Creating and storing state
+
+```Kotlin
+var count by remember { mutableStateOf(0) }
+```
+
+This is shorthand for creating and storing state that survives recompositions.
+
+```remember``` stores a value in Compose memory.
+
+- The value is kept between recompositions of the composable.
+- Without ```remember```, the value would reset every time the UI redraws.
+
+```mutableStateOf(0)``` creates observable state. When the value changes, Compose automatically recomposes any UI using it. See [using buttons](#using-buttons) for more info.
+
 # Kotlin in Android Studio
+
+For debugging tutorial, visit [this link](https://developer.android.com/codelabs/basic-android-kotlin-compose-intro-debugger?continue=https%3A%2F%2Fdeveloper.android.com%2Fcourses%2Fpathways%2Fandroid-basics-compose-unit-2-pathway-2%23codelab-https%3A%2F%2Fdeveloper.android.com%2Fcodelabs%2Fbasic-android-kotlin-compose-intro-debugger#1).
 
 ## Composable functions
 
@@ -736,3 +755,38 @@ Column(
     )
 }
 ```
+
+---
+
+## Using buttons
+
+### Creating and storing state for implementing button functionality
+
+For variables to survive a refresh of UI (when a composable is redrawn), you need to store the state of that variable. This is done using something like this:
+
+```Kotlin
+var count by remember { mutableStateOf(0) }
+```
+
+This means that ```count``` starts as 0, and whenever ```count``` is updated, compose automatically refreshes anything that depends on it. You can then feel free to update count inside the composable directly:
+
+```Kotlin
+count++
+```
+
+You can also use this syntax:
+
+```Kotlin
+val result = remember { mutableStateOf(0) }
+```
+
+But that would mean that ```result``` is now a ```MutableState``` object, and you can only modify its value like this:
+
+```Kotlin
+result.value++
+println(result.value)
+```
+
+The ```by``` just means that **property delegation** is used to delegate the value of the ```MutableState``` object to ```result```, so that it can be used directly. Also note that ```val``` is used here, meaning the reference to the object does not change, but the value inside it can.
+
+The delegation version is used more frequently because it's easier to use and it doesn't make much sense to use the raw version.
