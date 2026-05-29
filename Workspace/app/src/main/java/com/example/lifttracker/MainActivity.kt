@@ -101,7 +101,9 @@ fun TipTimeLayout() {
     val amount = amountInput.toDoubleOrNull() ?: 0.0
     val tipPercent = tipInput.toDoubleOrNull() ?: 0.0
     val tip = calculateTip(amount, tipPercent, roundUp)
-    val total = NumberFormat.getCurrencyInstance().format(amount + (tip.toDoubleOrNull() ?: 0.0))
+    val total = amount + tip
+    val tipString = NumberFormat.getCurrencyInstance().format(tip)
+    val totalString = NumberFormat.getCurrencyInstance().format(total)
 
     Column(
         modifier = Modifier
@@ -165,14 +167,14 @@ fun TipTimeLayout() {
 
         // tip amount
         Text(
-            text = stringResource(R.string.tip_amount, tip),
+            text = stringResource(R.string.tip_amount, tipString),
             style = MaterialTheme.typography.displaySmall,
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
         // total + tip amount
         Text(
-            text = stringResource(R.string.total_amount, total),
+            text = stringResource(R.string.total_amount, totalString),
             style = MaterialTheme.typography.displaySmall
         )
 
@@ -214,14 +216,14 @@ private fun calculateTip(
     amount: Double,
     tipPercent: Double = 20.0,
     roundUp: Boolean
-): String {
+): Double {
     var tip = tipPercent / 100 * amount
 
     if (roundUp) {
         tip = kotlin.math.ceil(tip)
     }
 
-    return NumberFormat.getCurrencyInstance().format(tip)
+    return tip
 }
 
 @Preview(showBackground = true)
