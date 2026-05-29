@@ -191,7 +191,7 @@ val name: String? = null    // this is not illegal
 ```
 
 ### Safe calls
-
+ 
 ```Kotlin
 val length = name?.length
 ```
@@ -832,6 +832,28 @@ fun EditNumberField(modifier: Modifier = Modifier) {
 }
 ```
 
+#### KeyBoardOptions
+
+The ```KeyBoardOptions()``` constructor can also take in a ```imeAction``` parameter, which takes  in a ```ImeAction``` object. This changes what kind of button is shown in place of the "enter" key.
+
+Usage:
+
+```Kotlin
+TextField(
+    keyboardOptions = KeyboardOptions.Default.copy(
+        keyBoardType = KeyboardType.Number,
+        imeAction = ImeAction.Go
+    )
+)
+```
+
+Values:
+
+- ```ImeAction.Search``` is used when the user wants to execute a search
+- ```ImeAction.Send``` is used when the user wants to send the text in the input field
+- ```ImeAction.Go``` is used when the user wants to navigate to the target of the text in the input
+- ```ImeAction.Done``` is used when the user wants to complete a process. This also closes the keypad.
+
 ### State hoisting
 
 In the above example, if an element in a parent container needed access to the value entered in the text field, we'd do **state hoisting**. This involves moving the ```amountInput``` value (the variable with the mutable state) up into the parent container, which also means that we must hoist the value passed to the ```value``` parameter of the ```TextField``` and the lambda passed to the ```onValueChange``` parameter of the ```TextField```.
@@ -871,4 +893,4 @@ fun EditNumberField(
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
     )
 }
-```
+```.
