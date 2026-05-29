@@ -639,7 +639,7 @@ verticalArrangement = Arrangement.Center,
 verticalArrangement = Arrangement.Bottom
 horizontalAlignment = Alignment.Start,
 horizontalAlignment = Alignment.End,
-horizontalAlignment = Alignment.Center
+horizontalAlignment = Alignment.CenterHorizontally
 
 // for a row
 horizontalArrangement = Arrangement.SpaceBetween,
@@ -649,7 +649,7 @@ horizontalArrangement = Arrangement.End,
 horizontalArrangement = Arrangement.Center,
 horizontalArrangement = Arrangement.Start
 verticalAlignment = Alignment.Top,
-verticalAlignment = Alignment.Center,
+verticalAlignment = Alignment.CenterVertically,
 verticalAlignment = Alignment.Bottom
 ```
 
