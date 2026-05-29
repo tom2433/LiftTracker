@@ -709,6 +709,18 @@ fun DiceWithButtonAndImage(modifier: Modifier = Modifier
 }
 ```
 
+### Scrollbars
+
+To add scrolling functionality to a column, just add a ```verticalScroll()``` function to the modifier parameter like so:
+
+```Kotlin
+Column (
+    modifier = Modifier.verticalScroll(rememberScrollState())
+) {
+    // column content here
+}
+```
+
 ---
 
 ## Borders
@@ -893,4 +905,27 @@ fun EditNumberField(
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
     )
 }
-```.
+```
+
+---
+
+## Icons
+
+To use icons, import the following resources:
+
+```Kotlin
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.*
+```
+
+Icons can now be added like so, with a tint:
+
+```Kotlin
+Icon(
+    imageVector = Icons.Rounded.AttachMoney,
+    contentDescription = "Attach Money",
+    tint = Color(4, 115, 65)
+)
+```
