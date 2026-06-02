@@ -170,11 +170,11 @@ fun ImagePane(
 ) {
     Box(
         contentAlignment = Alignment.Center,
-        modifier = modifier
+        modifier = modifier.fillMaxWidth()
     ) {
         Surface(
             modifier = Modifier
-                .fillMaxWidth(),
+                .wrapContentWidth(),
             shadowElevation = 8.dp
         ) {
             val painter = painterResource(image)
