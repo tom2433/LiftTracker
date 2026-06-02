@@ -36,6 +36,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -96,30 +97,80 @@ fun ItemsOnMyDeskLayout(modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.Bottom,
         horizontalAlignment = Alignment.Start
     ) {
+        var imageNum by remember { mutableIntStateOf(1) }
+
+        @DrawableRes var currentImage: Int
+        var currentTitle: String
+        var currentDesc: String
+
+        when (imageNum) {
+            1 -> {
+                currentImage = R.drawable.computer_mouse
+                currentTitle = stringResource(R.string.computer_mouse_title)
+                currentDesc = stringResource(R.string.computer_mouse_description)
+            }
+            2 -> {
+                currentImage = R.drawable.energy_drink
+                currentTitle = stringResource(R.string.energy_drink_title)
+                currentDesc = stringResource(R.string.energy_drink_description)
+            }
+            3 -> {
+                currentImage = R.drawable.pen
+                currentTitle = stringResource(R.string.pen_title)
+                currentDesc = stringResource(R.string.pen_description)
+            }
+            else -> {
+                currentImage = R.drawable.power_bank
+                currentTitle = stringResource(R.string.power_bank_title)
+                currentDesc = stringResource(R.string.power_bank_description)
+            }
+        }
+
         ImagePane(
-            image = R.drawable.computer_mouse,
+            image = currentImage,
+            contentDescription = currentTitle,
             modifier = Modifier.weight(1f)
         )
 
         TitleSection(
-            title = "My Computer Mouse",
-            description = "This mouse is very expensive.",
+            title = currentTitle,
+            description = currentDesc,
             modifier = Modifier.padding(bottom = 50.dp)
         )
 
-        ButtonRow(modifier = Modifier.padding(bottom = 12.dp))
+        ButtonRow(
+            onClickPrev = {
+                if (imageNum == 1) {
+                    imageNum = 4
+                } else {
+                    imageNum--
+                }
+            },
+            onClickNext = {
+                if (imageNum == 4) {
+                    imageNum = 1
+                } else {
+                    imageNum++
+                }
+            },
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
     }
 }
 
 @Composable
-fun ButtonRow(modifier: Modifier = Modifier) {
+fun ButtonRow(
+    onClickPrev: () -> Unit,
+    onClickNext: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     Row(
         modifier = modifier.fillMaxWidth(),
     ) {
         // previous button
         Button(
             modifier = Modifier.weight(2f),
-            onClick = { /*TODO*/ },
+            onClick = onClickPrev
         ) {
             Text(
                 text = "Previous"
@@ -131,7 +182,7 @@ fun ButtonRow(modifier: Modifier = Modifier) {
         // next button
         Button(
             modifier = Modifier.weight(2f),
-            onClick = { /*TODO*/ }
+            onClick = onClickNext
         ) {
             Text(
                 text = "Next"
@@ -141,7 +192,11 @@ fun ButtonRow(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun TitleSection(title: String, description: String, modifier: Modifier = Modifier) {
+fun TitleSection(
+    title: String,
+    description: String,
+    modifier: Modifier = Modifier
+) {
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.Top,
@@ -165,8 +220,9 @@ fun TitleSection(title: String, description: String, modifier: Modifier = Modifi
 
 @Composable
 fun ImagePane(
-    modifier: Modifier = Modifier,
-    @DrawableRes image: Int
+    @DrawableRes image: Int,
+    contentDescription: String,
+    modifier: Modifier = Modifier
 ) {
     Box(
         contentAlignment = Alignment.Center,
@@ -181,7 +237,7 @@ fun ImagePane(
 
             Image(
                 painter = painter,
-                contentDescription = "computer mouse",
+                contentDescription = contentDescription,
                 modifier = Modifier.padding(24.dp)
             )
         }

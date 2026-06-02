@@ -21,4 +21,12 @@
     <string name="total_amount">Total: %s</string>
     <string name="how_was_the_service">Tip Percentage</string>
     <string name="round_up_tip">Round up tip?</string>
+    <string name="computer_mouse_title">My Computer Mouse</string>
+    <string name="computer_mouse_description">This mouse is very expensive.</string>
+    <string name="energy_drink_title">Reign Energy Drink</string>
+    <string name="energy_drink_description">Only for use in dire situations.</string>
+    <string name="pen_title">Pentel Gel Pen</string>
+    <string name="pen_description">I will forever mourn the loss of this pen.</string>
+    <string name="power_bank_title">Large Power Bank</string>
+    <string name="power_bank_description">Cool as hell and very useful.</string>
 </resources>
