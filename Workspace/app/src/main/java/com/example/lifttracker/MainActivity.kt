@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -97,7 +98,7 @@ fun ItemsOnMyDeskLayout(modifier: Modifier = Modifier) {
     ) {
         ImagePane(
             image = R.drawable.computer_mouse,
-            modifier = Modifier.padding(bottom = 50.dp)
+            modifier = Modifier.weight(1f)
         )
 
         TitleSection(
@@ -106,7 +107,7 @@ fun ItemsOnMyDeskLayout(modifier: Modifier = Modifier) {
             modifier = Modifier.padding(bottom = 50.dp)
         )
 
-        ButtonRow()
+        ButtonRow(modifier = Modifier.padding(bottom = 12.dp))
     }
 }
 
@@ -167,18 +168,23 @@ fun ImagePane(
     modifier: Modifier = Modifier,
     @DrawableRes image: Int
 ) {
-    Surface(
+    Box(
+        contentAlignment = Alignment.Center,
         modifier = modifier
-            .fillMaxWidth(),
-        shadowElevation = 8.dp
     ) {
-        val painter = painterResource(image)
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth(),
+            shadowElevation = 8.dp
+        ) {
+            val painter = painterResource(image)
 
-        Image(
-            painter = painter,
-            contentDescription = "computer mouse",
-            modifier = Modifier.padding(24.dp)
-        )
+            Image(
+                painter = painter,
+                contentDescription = "computer mouse",
+                modifier = Modifier.padding(24.dp)
+            )
+        }
     }
 }
 
