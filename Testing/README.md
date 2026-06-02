@@ -315,6 +315,120 @@ This is shorthand for creating and storing state that survives recompositions.
 
 ```mutableStateOf(0)``` creates observable state. When the value changes, Compose automatically recomposes any UI using it. See [using buttons](#state) for more info.
 
+---
+
+## Generic Data Types
+
+Generic data types can be used when a property of a certain class may vary depending on what the class is implemented for. An example is for a quiz when you have questions that may be numeric, true/false, or fill-in-the-blank. You might define all three classes:
+
+```Kotlin
+class NumericQuestion(
+    val questionText: String,
+    val answer: Int,
+    val difficutly: String
+)
+
+class TrueOrFalseQuestion(
+    val questionText: String,
+    val answer: Boolean,
+    val difficulty: String
+)
+
+class FillInTheBlankQuestion(
+    val questionText: String,
+    val answer: String,
+    val difficulty: String
+)
+```
+
+Or you could just define one class to solve this:
+
+```Kotlin
+class Question<T>(
+    val questionText: String,
+    val answer: T,
+    val difficulty: String
+)
+
+// usage:
+
+fun main() {
+    val question1 = Question<String>("Quoth the raven ___", "nevermore", "medium")
+    val question2 = Question<Boolean>("The sky is green. True or False?", false, "easy")
+    val question3 = Question<Int>("What is 2 + 2?", 4, "hard")
+}
+```
+
+## Enum classes
+
+Enum classes are used for data types that have a limited set of values. Think about cardinal directions, for example - they only have North, South, East, and West. This can be used with our quiz question example:
+
+```Kotlin
+enum class Difficulty {
+    EASY, MEDIUM, HARD
+}
+
+class Question<T>(
+    val questionText: String,
+    val answer: T,
+    val difficulty: Difficulty
+)
+
+// usage:
+
+fun main() {
+    val question1 = Question<String>("Quoth the raven ___", "nevermore", Difficulty.MEDIUM)
+}
+```
+
+## Data classes
+
+Data classes are classes that only contain data. Defining one as such allows the compiler to make certain assumptions and automatically implement some methods like ```toString()```. You can convert the question class into a data class like so:
+
+```Kotlin
+data class Question<T>(
+    val questionText: String,
+    val answer: T,
+    val difficulty: Difficulty
+)
+```
+
+Since this is now a data class, Kotlin can now display the class's properties when calling ```toString()```:
+
+```
+Question(questionText=Quoth the raven ___, answer=nevermore, difficulty=MEDIUM)
+```
+
+```toString()```, in addition to the following functions, are automatically implemented:
+
+- ```equals()```
+- ```hashCode()```
+- ```componentN()```: ```component1()```, ```component2()```, etc.
+- ```copy()```
+
+> [!NOTE]
+> A data class needs to have at least one parameter in its constructor, and all constructor parameters must be marked with ```val``` or ```var```. A data class also cannot be ```abstract```, ```open```, ```sealed```, or ```inner```.
+
+---
+
+## Singleton objects
+
+Singleton objects are used for when a class will only have one instance, i.e. player stats in a game for one user; an object to access a remote data source like a database; authentication, where only one user should be logged in at a time. Singleton objects do not have constructors since you cannot create instances of them.
+
+Syntax:
+```Kotlin
+object StudentProgress {
+    var total: Int = 10
+    var answered: Int = 3
+}
+```
+
+Usage (```companion object```'s are objects that you can place inside of a class)
+
+```Kotlin
+class Quiz
+```
+
 # Kotlin in Android Studio
 
 For debugging tutorial, visit [this link](https://developer.android.com/codelabs/basic-android-kotlin-compose-intro-debugger?continue=https%3A%2F%2Fdeveloper.android.com%2Fcourses%2Fpathways%2Fandroid-basics-compose-unit-2-pathway-2%23codelab-https%3A%2F%2Fdeveloper.android.com%2Fcodelabs%2Fbasic-android-kotlin-compose-intro-debugger#1).
