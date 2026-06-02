@@ -2,8 +2,8 @@
 test: Test.kt
 	kotlinc Test.kt -include-runtime -d Test.jar
 
-run: Test.jar
+r: Test.jar
 	java -jar Test.jar
 
-clean:
-	rm -rf *.jar
+c:
+	rm -rf *.jar *.class

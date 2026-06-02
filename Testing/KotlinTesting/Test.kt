@@ -15,3 +15,4 @@ fun main() {
     val doubled = nums.map { it * 2 }
     println(doubled)
 }
+
