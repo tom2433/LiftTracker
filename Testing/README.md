@@ -1065,6 +1065,9 @@ fun AffirmationList(affirmationList: List<Affirmation>, modifier: Modifier = Mod
 }
 ```
 
+> [!WARNING]
+> Don't actually use lazy columns. They're terrible.
+
 ## Padding for lists
 
 Use a LayoutDirection object to configure start and end padding for lists like so:
