@@ -1043,3 +1043,51 @@ Icon(
     tint = Color(4, 115, 65)
 )
 ```
+
+---
+
+## LazyColumns (to display lists)
+
+A ```LazyColumn``` composable can be used in place of a regular ```Column``` composable when you want to add content on demand, especially for long lists or when the length of the list is unknown. ```LazyColumn``` also provides scrolling by default.
+
+To add items to the ```LazyColumn```, unlike the regular ```Column```, you add an ```items()``` method with a list as the argument, and you create a lambda function to add composables to the ```LazyColumn``` like so:
+
+```Kotlin
+fun AffirmationList(affirmationList: List<Affirmation>, modifier: Modifier = Modifier) {
+    LazyColumn(modifier = modifier) {
+        items(affirmationList) { affirmation ->
+            AffirmationCard(
+                affirmation = affirmation,
+                modifier = Modifier.padding(8.dp)
+            )
+        }
+    }
+}
+```
+
+## Padding for lists
+
+Use a LayoutDirection object to configure start and end padding for lists like so:
+
+```Kotlin
+@Composable
+fun AffirmationsApp() {
+    val layoutDirection = LocalLayoutDirection.current
+
+    Surface(
+        modifier = Modifier
+            .fillMaxSize()
+            .statusBarsPadding()
+            .padding(
+                start = WindowInsets.safeDrawing.asPaddingValues()
+                    .calculateStartPadding(layoutDirection),
+                end = WindowInsets.safeDrawing.asPaddingValues()
+                    .calculateEndPadding(layoutDirection)
+            )
+    ) {
+        AffirmationList(
+            affirmationList = DataSource().loadAffirmations()
+        )
+    }
+}
+```

@@ -29,4 +29,14 @@
     <string name="pen_description">I will forever mourn the loss of this pen.</string>
     <string name="power_bank_title">Large Power Bank</string>
     <string name="power_bank_description">Cool as hell and very useful.</string>
+    <string name="affirmation1">This is affirmation 1.</string>
+    <string name="affirmation2">This is affirmation 2.</string>
+    <string name="affirmation3">This is affirmation 3.</string>
+    <string name="affirmation4">This is affirmation 4.</string>
+    <string name="affirmation5">This is affirmation 5.</string>
+    <string name="affirmation6">This is affirmation 6.</string>
+    <string name="affirmation7">This is affirmation 7.</string>
+    <string name="affirmation8">This is affirmation 8.</string>
+    <string name="affirmation9">This is affirmation 9.</string>
+    <string name="affirmation10">This is affirmation 10.</string>
 </resources>
