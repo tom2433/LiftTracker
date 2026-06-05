@@ -54,6 +54,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
@@ -199,6 +200,13 @@ fun TopicCard(
             CardDefaults.cardColors().containerColor
         }
     )
+    val textColor by animateColorAsState(
+        targetValue = if (expanded) {
+            MaterialTheme.colorScheme.onPrimaryContainer
+        } else {
+            Color.Unspecified
+        }
+    )
 
     Card(
         modifier = modifier
@@ -254,6 +262,7 @@ fun TopicCard(
                         textAlign = TextAlign.Left,
                         style = MaterialTheme.typography.bodyMedium,
                         fontSize = 12.sp,
+                        color = textColor,
                         modifier = Modifier.padding(bottom = 4.dp)
                     )
 
@@ -265,12 +274,14 @@ fun TopicCard(
                         Icon(
                             imageVector = Icons.Rounded.Assessment,
                             contentDescription = "Assessment",
+                            tint = textColor,
                             modifier = Modifier.padding(end = 8.dp)
                         )
                         Text(
                             text = topic.statusNumber.toString(),
                             textAlign = TextAlign.Left,
-                            style = MaterialTheme.typography.labelMedium
+                            style = MaterialTheme.typography.labelMedium,
+                            color = textColor
                         )
                     }
                 }
@@ -289,6 +300,7 @@ fun TopicCard(
                     } else {
                         "Expand More"
                     },
+                    tint = textColor,
                     modifier = Modifier
                         .padding(end = 4.dp)
                         .height(20.dp)
@@ -302,7 +314,8 @@ fun TopicCard(
                     modifier = Modifier.padding(
                         start = 8.dp,
                         bottom = 8.dp
-                    )
+                    ),
+                    color = textColor
                 )
             }
         }
