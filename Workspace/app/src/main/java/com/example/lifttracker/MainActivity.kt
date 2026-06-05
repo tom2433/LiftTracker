@@ -86,10 +86,6 @@ private fun TopicsAppPreview() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopicTopAppBar(modifier: Modifier = Modifier) {
-    val appBarColors = TopAppBarDefaults.topAppBarColors(
-        containerColor = MaterialTheme.colorScheme.primaryContainer
-    )
-
     CenterAlignedTopAppBar(
         title = {
             Row {
@@ -109,7 +105,6 @@ fun TopicTopAppBar(modifier: Modifier = Modifier) {
                 )
             }
         },
-        colors = appBarColors,
         modifier = modifier
     )
 }
@@ -180,8 +175,6 @@ fun TopicsApp() {
 
 @Composable
 fun TopicCard(topic: Topic, modifier: Modifier = Modifier) {
-    val myCardColors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -189,8 +182,7 @@ fun TopicCard(topic: Topic, modifier: Modifier = Modifier) {
         shape = RoundedCornerShape(
             bottomStart = 16.dp,
             topEnd = 16.dp
-        ),
-        colors = myCardColors
+        )
     ) {
         Row(
             horizontalArrangement = Arrangement.Start,
