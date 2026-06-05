@@ -204,7 +204,7 @@ fun TopicCard(
         targetValue = if (expanded) {
             MaterialTheme.colorScheme.onPrimaryContainer
         } else {
-            Color.Unspecified
+            MaterialTheme.colorScheme.onBackground
         }
     )
 
