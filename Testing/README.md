@@ -577,7 +577,13 @@ Color(0.5f, 0.5f, 0.5f)
 
 #### Material Design colors
 
-All material design colors can be accessed using ```MaterialTheme.colorScheme.``` followed by a color, like ```MaterialTheme.colorScheme.primary```. Below are all of the material design color options and their usages:
+All material design colors can be accessed using ```MaterialTheme.colorScheme.``` followed by a color, like ```MaterialTheme.colorScheme.primary```. 
+
+Primary colors are used for key components across the UI. Secondary colors are used for less prominent components. Tertiary colors are used for contrasting accents that can be used to balance primary and secondary colors or bring heightened attention to an element such as an input field.
+
+The **on** color elements appear on top of other colors in the palette, and are primarily applied to text, iconography, and strokes. 
+
+Below are all of the material design color options and their usages:
 
 - ```primary```
     - main brand/accent color, used for buttons, active controls, selected items, highlights
@@ -649,6 +655,10 @@ These create subtle elevation layering without manually changing colors:
 - ```surfaceContainerLowest```
 - ```surfaceContainerHigh```
 - ```surfaceContainerHighest```
+
+#### Create your own Material theme
+
+Go to the [Material Theme Builder](https://material-foundation.github.io/material-theme-builder/) to create a palette. Export as Theme.kt. Replace the Theme.kt and Color.kt files in the project, and update the package names.
 
 ---
 
@@ -1092,5 +1102,73 @@ fun AffirmationsApp() {
             affirmationList = DataSource().loadAffirmations()
         )
     }
+}
+```
+
+---
+
+## How to use Scaffold
+
+Scaffolds are like a structural blueprint to hold the top app bar, bottom navigation, and floating action button so you don't have to manually place them.
+
+The minimum code you need to use a scaffold is below:
+
+```Kotlin
+Scaffold(
+    modifier = Modifier
+        .fillMaxSize()
+        .statusBarsPadding()
+) { innerPadding ->
+    Column(
+        modifier = Modifier.padding(innerPadding)
+    ) {
+        // contents here
+    }
+}
+```
+
+To add a top app bar:
+
+```Kotlin
+Scaffold(
+    topBar = {
+        MyTopAppBar()
+    },
+    modifier = Modifier
+        .fillMaxSize()
+        .statusBarsPadding()
+) { innerPadding ->
+    Column(
+        modifier = Modifier.padding(innerPadding)
+    ) {
+        // contents here
+    }
+}
+```
+
+Create a top app bar:
+
+```Kotlin
+@Composable
+fun MyTopAppBar(modifier: Modifier = Modifier) {
+    CenterAlignedTopAppBar(
+        title = {
+            Row() {
+                Image(
+                    modifier = Modifier
+                        .width(64.dp)
+                        .height(64.dp)
+                        .padding(8.dp),
+                    painter = painterResource(R.drawable.walmart_logo),
+                    contentDescription = null
+                )
+                Text(
+                    text = "Walmar",
+                    style = MaterialTheme.typography.displayLarge
+                )
+            }
+        },
+        modifier = modifier
+    )
 }
 ```

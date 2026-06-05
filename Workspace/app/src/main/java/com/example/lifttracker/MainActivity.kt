@@ -1,6 +1,7 @@
 package com.example.lifttracker
 
 import android.os.Bundle
+import android.view.Window
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -8,32 +9,45 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Assessment
 import androidx.compose.material3.Card
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.lifttracker.data.Datasource
 import com.example.lifttracker.model.Topic
 import com.example.lifttracker.ui.theme.LiftTrackerTheme
@@ -67,6 +81,32 @@ private fun TopicsAppPreview() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TopicTopAppBar(modifier: Modifier = Modifier) {
+    CenterAlignedTopAppBar(
+        title = {
+            Row() {
+                Image(
+                    modifier = Modifier
+                        .width(64.dp)
+                        .height(64.dp)
+                        .padding(8.dp),
+                    painter = painterResource(R.drawable.walmart),
+                    contentDescription = null
+                )
+                Text(
+                    text = "Topics App",
+                    style = MaterialTheme.typography.displayLarge,
+                    fontWeight = FontWeight.Light,
+                    fontSize = 24.sp
+                )
+            }
+        },
+        modifier = modifier
+    )
+}
+
 @Composable
 fun TopicsApp() {
     val topicCardList = Datasource().loadTopics()
@@ -78,44 +118,53 @@ fun TopicsApp() {
     val leftColumnCards = evensWithIndex.map { it.value }
     val rightColumnCards = oddsWithIndex.map { it.value }
 
-    // column with scroll bars (holds everything)
-    Column(
+    // Scaffold to hold TopAppBar and Contents
+    Scaffold(
+        topBar = {
+            TopicTopAppBar()
+        },
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
             .statusBarsPadding()
-    ) {
-        // row to hold two columns of cards
-        Row(
+    ) { innerPadding ->
+        // column with scroll bars (holds everything)
+        Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(8.dp)
+                .verticalScroll(rememberScrollState())
+                .padding(innerPadding)
         ) {
-            // left column of cards
-            Column(
-                modifier = Modifier.weight(1f)
+            // row to hold two columns of cards
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(8.dp)
             ) {
-                leftColumnCards.forEach { topic ->
-                    TopicCard(
-                        topic = topic,
-                        modifier = Modifier.padding(
-                            bottom = 8.dp,
-                            end = 8.dp
+                // left column of cards
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    leftColumnCards.forEach { topic ->
+                        TopicCard(
+                            topic = topic,
+                            modifier = Modifier.padding(
+                                bottom = 8.dp,
+                                end = 8.dp
+                            )
                         )
-                    )
+                    }
                 }
-            }
-            // right column of cards
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                rightColumnCards.forEach { topic ->
-                    TopicCard(
-                        topic = topic,
-                        modifier = Modifier.padding(
-                            bottom = 8.dp
+                // right column of cards
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    rightColumnCards.forEach { topic ->
+                        TopicCard(
+                            topic = topic,
+                            modifier = Modifier.padding(
+                                bottom = 8.dp
+                            )
                         )
-                    )
+                    }
                 }
             }
         }
@@ -127,7 +176,11 @@ fun TopicCard(topic: Topic, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .wrapContentHeight()
+            .wrapContentHeight(),
+        shape = RoundedCornerShape(
+            bottomStart = 16.dp,
+            topEnd = 16.dp
+        )
     ) {
         Row(
             horizontalArrangement = Arrangement.Start,
@@ -138,8 +191,8 @@ fun TopicCard(topic: Topic, modifier: Modifier = Modifier) {
                 contentDescription = stringResource(topic.stringResourceId),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .width(68.dp)
-                    .height(68.dp)
+                    .width(72.dp)
+                    .height(72.dp)
             )
 
             Column(
