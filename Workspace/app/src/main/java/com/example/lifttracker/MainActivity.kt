@@ -5,6 +5,9 @@ import android.view.Window
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -23,6 +26,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -38,6 +42,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -174,7 +182,12 @@ fun TopicsApp() {
 }
 
 @Composable
-fun TopicCard(topic: Topic, modifier: Modifier = Modifier) {
+fun TopicCard(
+    topic: Topic,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -182,53 +195,82 @@ fun TopicCard(topic: Topic, modifier: Modifier = Modifier) {
         shape = RoundedCornerShape(
             bottomStart = 16.dp,
             topEnd = 16.dp
-        )
+        ),
+        onClick = { expanded = !expanded }
     ) {
-        Row(
-            horizontalArrangement = Arrangement.Start,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Image(
-                painter = painterResource(topic.imageResourceId),
-                contentDescription = stringResource(topic.stringResourceId),
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .width(68.dp)
-                    .height(68.dp)
-            )
-
-            Column(
-                verticalArrangement = Arrangement.Top,
-                horizontalAlignment = Alignment.Start,
-                modifier = Modifier
-                    .padding(
-                        start = 16.dp,
-                        end = 16.dp
+        Column(
+            modifier = Modifier
+                .animateContentSize(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioNoBouncy,
+                        stiffness = Spring.StiffnessMedium
                     )
-                    .wrapContentSize()
+                )
+        ) {
+            // row holding image, text
+            Row(
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = stringResource(topic.stringResourceId),
-                    textAlign = TextAlign.Left,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(bottom = 4.dp)
+                // image for topic
+                Image(
+                    painter = painterResource(topic.imageResourceId),
+                    contentDescription = stringResource(topic.stringResourceId),
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .width(60.dp)
+                        .height(60.dp)
+                        .padding(8.dp)
+                        .clip(CircleShape)
                 )
 
-                Row (
-                    horizontalArrangement = Arrangement.Start,
-                    verticalAlignment = Alignment.CenterVertically
+                // column holding name of topic and number
+                Column(
+                    verticalArrangement = Arrangement.Top,
+                    horizontalAlignment = Alignment.Start,
+                    modifier = Modifier
+                        .padding(
+                            start = 16.dp,
+                            end = 16.dp
+                        )
+                        .wrapContentSize()
                 ) {
-                    Icon(
-                        imageVector = Icons.Rounded.Assessment,
-                        contentDescription = "Assessment",
-                        modifier = Modifier.padding(end = 8.dp)
-                    )
+                    // name of topic
                     Text(
-                        text = topic.statusNumber.toString(),
+                        text = stringResource(topic.stringResourceId),
                         textAlign = TextAlign.Left,
-                        style = MaterialTheme.typography.labelMedium
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(bottom = 4.dp)
                     )
+
+                    // row holding icon and number
+                    Row(
+                        horizontalArrangement = Arrangement.Start,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Assessment,
+                            contentDescription = "Assessment",
+                            modifier = Modifier.padding(end = 8.dp)
+                        )
+                        Text(
+                            text = topic.statusNumber.toString(),
+                            textAlign = TextAlign.Left,
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                    }
                 }
+            }
+
+            // bottom text for when the user clicks the card
+            if (expanded) {
+                Text(
+                    text = "Bottom text.",
+                    modifier = Modifier.padding(
+                        start = 8.dp,
+                        bottom = 8.dp
+                    )
+                )
             }
         }
     }
