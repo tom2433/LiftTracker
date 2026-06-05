@@ -64,7 +64,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            LiftTrackerTheme {
+            LiftTrackerTheme(dynamicColor = false) {
                 // surface container using background color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
