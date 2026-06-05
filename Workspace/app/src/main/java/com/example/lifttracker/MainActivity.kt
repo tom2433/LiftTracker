@@ -5,13 +5,16 @@ import android.view.Window
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
@@ -31,6 +34,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Assessment
+import androidx.compose.material.icons.rounded.ExpandLess
+import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -187,6 +192,13 @@ fun TopicCard(
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val color by animateColorAsState(
+        targetValue = if (expanded) {
+            MaterialTheme.colorScheme.primaryContainer
+        } else {
+            CardDefaults.cardColors().containerColor
+        }
+    )
 
     Card(
         modifier = modifier
@@ -202,15 +214,17 @@ fun TopicCard(
             modifier = Modifier
                 .animateContentSize(
                     animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioNoBouncy,
-                        stiffness = Spring.StiffnessMedium
+                        dampingRatio = Spring.DampingRatioLowBouncy,
+                        stiffness = Spring.StiffnessMediumLow
                     )
                 )
+                .background(color = color)
         ) {
             // row holding image, text
             Row(
                 horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
             ) {
                 // image for topic
                 Image(
@@ -230,8 +244,7 @@ fun TopicCard(
                     horizontalAlignment = Alignment.Start,
                     modifier = Modifier
                         .padding(
-                            start = 16.dp,
-                            end = 16.dp
+                            start = 12.dp
                         )
                         .wrapContentSize()
                 ) {
@@ -240,6 +253,7 @@ fun TopicCard(
                         text = stringResource(topic.stringResourceId),
                         textAlign = TextAlign.Left,
                         style = MaterialTheme.typography.bodyMedium,
+                        fontSize = 12.sp,
                         modifier = Modifier.padding(bottom = 4.dp)
                     )
 
@@ -260,6 +274,25 @@ fun TopicCard(
                         )
                     }
                 }
+
+                // spacer to separate expand more icon
+                Spacer(modifier = Modifier.weight(1f))
+
+                Icon(
+                    imageVector = if (expanded) {
+                        Icons.Rounded.ExpandLess
+                    } else {
+                        Icons.Rounded.ExpandMore
+                    },
+                    contentDescription = if (expanded) {
+                        "Expand Less"
+                    } else {
+                        "Expand More"
+                    },
+                    modifier = Modifier
+                        .padding(end = 4.dp)
+                        .height(20.dp)
+                )
             }
 
             // bottom text for when the user clicks the card

@@ -1172,3 +1172,57 @@ fun MyTopAppBar(modifier: Modifier = Modifier) {
     )
 }
 ```
+
+---
+
+## Animations
+
+To animate the size of a container, add the ```animateContentSize()``` function to the ```Modifier``` parameter like so:
+
+```Kotlin
+Card() {
+    var expanded by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = Modifier
+            .animateContentSize(
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioLowBouncy,
+                    stiffness = Spring.StiffnessMediumLow
+                )
+            )
+    ) {
+        // contents
+
+        if (expanded) {
+            // more contents
+        }
+    }
+}
+```
+
+To animate the color of a container, use the ```animateColorAsState()``` function, assign it to a variable, and use that variable to define the color of a container like so:
+
+```Kotlin
+Card() {
+    var expanded by remember { mutableStateOf(false) }
+    var color by animateColorAsState(
+        targetValue = if (expanded) {
+            MaterialTheme.colorScheme.primaryContainer
+        } else {
+            MaterialTheme.colorScheme.tertiaryContainer
+        }
+    )
+
+    Column(
+        modifier = Modifier
+            .animateContentSize(
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioLowBouncy,
+                    stiffness = Spring.StiffnessMediumLow
+                )
+            )
+            .background(color = color)
+    )
+}
+```
