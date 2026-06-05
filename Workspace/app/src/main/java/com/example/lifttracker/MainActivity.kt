@@ -28,6 +28,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Assessment
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -35,6 +36,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -84,9 +86,13 @@ private fun TopicsAppPreview() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopicTopAppBar(modifier: Modifier = Modifier) {
+    val appBarColors = TopAppBarDefaults.topAppBarColors(
+        containerColor = MaterialTheme.colorScheme.primaryContainer
+    )
+
     CenterAlignedTopAppBar(
         title = {
-            Row() {
+            Row {
                 Image(
                     modifier = Modifier
                         .width(64.dp)
@@ -103,6 +109,7 @@ fun TopicTopAppBar(modifier: Modifier = Modifier) {
                 )
             }
         },
+        colors = appBarColors,
         modifier = modifier
     )
 }
@@ -173,6 +180,8 @@ fun TopicsApp() {
 
 @Composable
 fun TopicCard(topic: Topic, modifier: Modifier = Modifier) {
+    val myCardColors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -180,7 +189,8 @@ fun TopicCard(topic: Topic, modifier: Modifier = Modifier) {
         shape = RoundedCornerShape(
             bottomStart = 16.dp,
             topEnd = 16.dp
-        )
+        ),
+        colors = myCardColors
     ) {
         Row(
             horizontalArrangement = Arrangement.Start,
@@ -191,8 +201,8 @@ fun TopicCard(topic: Topic, modifier: Modifier = Modifier) {
                 contentDescription = stringResource(topic.stringResourceId),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .width(72.dp)
-                    .height(72.dp)
+                    .width(68.dp)
+                    .height(68.dp)
             )
 
             Column(
