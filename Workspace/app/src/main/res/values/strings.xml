@@ -63,4 +63,9 @@
     <string name="biology">Biology</string>
     <string name="automotive">Automotive</string>
     <string name="architecture">Architecture</string>
+    <string name="dessert_sold">Desserts sold</string>
+    <string name="total_revenue">Total Revenue</string>
+    <string name="share">Share</string>
+    <string name="share_text">I\'ve clicked %1$d Desserts for a total of $%2$d #AndroidDessertClicker</string>
+    <string name="sharing_not_available">Sharing Not Available</string>
 </resources>

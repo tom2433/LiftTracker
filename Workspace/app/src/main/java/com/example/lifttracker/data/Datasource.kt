@@ -1,34 +1,21 @@
 package com.example.lifttracker.data
 import com.example.lifttracker.R
-import com.example.lifttracker.model.Topic
+import com.example.lifttracker.model.Dessert
 
-class Datasource() {
-    fun loadTopics(): List<Topic> {
-        return listOf<Topic>(
-            Topic(R.drawable.tech, R.string.tech, 118),
-            Topic(R.drawable.physics, R.string.physics, 57),
-            Topic(R.drawable.photography, R.string.photography, 34),
-            Topic(R.drawable.painting, R.string.painting, 120),
-            Topic(R.drawable.music, R.string.music, 41),
-            Topic(R.drawable.lifestyle, R.string.lifestyle, 55),
-            Topic(R.drawable.law, R.string.law, 21),
-            Topic(R.drawable.journalism, R.string.journalism, 102),
-            Topic(R.drawable.history, R.string.history, 78),
-            Topic(R.drawable.geology, R.string.geology, 44),
-            Topic(R.drawable.gaming, R.string.gaming, 164),
-            Topic(R.drawable.finance, R.string.finance, 165),
-            Topic(R.drawable.film, R.string.film, 134),
-            Topic(R.drawable.fashion, R.string.fashion, 423),
-            Topic(R.drawable.engineering, R.string.engineering, 78),
-            Topic(R.drawable.ecology, R.string.ecology, 305),
-            Topic(R.drawable.drawing, R.string.drawing, 92),
-            Topic(R.drawable.design, R.string.design, 84),
-            Topic(R.drawable.culinary, R.string.culinary, 73),
-            Topic(R.drawable.crafts, R.string.crafts, 103),
-            Topic(R.drawable.business, R.string.business, 784),
-            Topic(R.drawable.biology, R.string.biology, 118),
-            Topic(R.drawable.automotive, R.string.automotive, 165),
-            Topic(R.drawable.architecture, R.string.architecture, 345)
-        )
-    }
+object Datasource {
+    val dessertList = listOf(
+        Dessert(R.drawable.cupcake, 5, 0),
+        Dessert(R.drawable.donut, 10, 5),
+        Dessert(R.drawable.eclair, 15, 20),
+        Dessert(R.drawable.froyo, 30, 50),
+        Dessert(R.drawable.gingerbread, 50, 100),
+        Dessert(R.drawable.honeycomb, 100, 200),
+        Dessert(R.drawable.icecreamsandwich, 500, 500),
+        Dessert(R.drawable.jellybean, 1000, 1000),
+        Dessert(R.drawable.kitkat, 2000, 2000),
+        Dessert(R.drawable.lollipop, 3000, 4000),
+        Dessert(R.drawable.marshmallow, 4000, 8000),
+        Dessert(R.drawable.nougat, 5000, 16000),
+        Dessert(R.drawable.oreo, 6000, 20000)
+    )
 }
