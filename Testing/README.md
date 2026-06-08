@@ -1230,3 +1230,108 @@ Card() {
 ## Accessibility
 
 Go to [here](https://developer.android.com/codelabs/basic-android-kotlin-compose-test-accessibility?continue=https%3A%2F%2Fdeveloper.android.com%2Fcourses%2Fpathways%2Fandroid-basics-compose-unit-3-pathway-3%23codelab-https%3A%2F%2Fdeveloper.android.com%2Fcodelabs%2Fbasic-android-kotlin-compose-test-accessibility#0) to learn about accessibility.
+
+---
+
+## Activity Life Cycle
+
+Apps are supposed to be one activity which starts with the ```onCreate()``` method, and it changes state throughout the execution of the application.
+
+### Life Cycle States
+
+- **Initialized** - the app is opened and calls the ```onCreate()``` method
+- **Created** - the ```onCreate()``` method has been called and the Activity has been created
+- **Started** - the ```onStart()``` method is called to make the activity visible; or, the ```onRestart()``` method is called to make the activity visible again. ```onRestart()``` is not called every time the state tansitions between **Created** and **Started**. It is only called if ```onStop()``` was called (like when the user goes to their home screen) and the activity is subsequently restarted.
+- **Resumed** - the ```onResume()``` method is called (even if it is being started for the first time), and the activity now has focus. Activity is still visible.
+- Back to **Started** - the ```onPause()``` method is called, and the activity no longer has focus but is still visible.
+- Back to **Created** - the ```onStop()``` method is called, and the activity is no longer visible.
+
+- **Destroyed** - the ```onDestroy()``` method is called.
+
+### ```Log``` class and the Logcat
+
+The Logcat is the console for logging messages. A simple log instruction may look like this:
+
+```Kotlin
+// put this line at the top of the file, underneath the import statements, before the MainActivity class
+private const val TAG = "MainActivity"
+
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        // log the status with the TAG
+        Log.d(
+            tag = TAG,
+            msg = "onCreate Called"
+        )
+
+        enableEdgeToEdge()
+        setContent {
+            LiftTrackerTheme(dynamicColor = false) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .statusBarsPadding()
+                ) {
+                    LiftTrackerApp()
+                }
+            }
+        }
+    }
+}
+```
+
+Log instructions have a priority. In the above case, ```Log.d()``` logs debug messages, ```Log.v()``` logs verbose messages, ```Log.i()``` logs informational messages, ```Log.w()``` logs warning messages, and ```Log.e()``` logs error messages. The ```tag``` parameter is a string the lets you more easily find your log messages in the Logcat, and is typically the name of the class. Click the Logcat tab on the bottom left of the IDE to view these messages during runtime, and use the search function to search for the tags by typing ```tag:MainActivity```.
+
+You can also override other methods when logging:
+
+```Kotlin
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {    // creates the app
+        super.onCreate(savedInstanceState)
+        
+        enableEdgeToEdge()
+        setContent{
+            // ...
+        }
+    }
+
+    override fun onStart() {        // makes the app visible on screen, not interactable
+        super.onStart()
+        Log.d(TAG, "onStart Called")
+    }
+
+    override fun onRestart() {
+        super.onRestart()
+        Log.d(TAG, "onRestart Called")
+    }
+
+    override fun onPause() {
+        super.onPause()
+        Log.d(TAG, "onPause Called")
+    }
+
+    override fun onStop() {
+        super.onStop()
+        Log.d(TAG, "onStop Called")
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d(TAG, "onDesto")
+    }
+}
+```
+
+### How to save values across configuration changes
+
+Sometimes when a configuration changes (i.e., the user rotates their device from portrait mode into landscape mode), the activity is shut down and then re-created. This resets all values back to default. To avoid this, use the ```rememberSaveable``` function in place of the ```remember``` function like so:
+
+```Kotlin
+// old version
+var revenue by remember { mutableIntStateOf(0) }
+
+// change to this:
+var revenue by rememberSaveable { mutableIntStateOf(0) }
+```
