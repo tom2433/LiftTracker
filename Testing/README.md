@@ -1335,3 +1335,73 @@ var revenue by remember { mutableIntStateOf(0) }
 // change to this:
 var revenue by rememberSaveable { mutableIntStateOf(0) }
 ```
+
+### ViewModels
+
+A ```ViewModel``` is like the operational brain - it acts as a bridge between the raw app data and the visual UI layouts that the user interacts with. Compose is good at rendering layout but it is bad at remembering data long term, which is where the ViewModel comes in.
+
+ViewModels keep data safely cached in memory during configuration changes, etc. to avoid using a million ```remember``` functions that may not even work.
+
+To use a ```ViewModel```, add this to the ```libs.versions.toml```:
+
+```TOML
+androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose" }
+```
+
+... and add this to the ```build.gradle.kts (Module :app)``` file's dependency section:
+
+```Kotlin
+implementation(libs.androidx.lifecycle.viewmodel.compose)
+```
+
+Create a ```ViewModel``` like so. This is an example from a word unscrambler game app:
+
+```Kotlin
+package com.example.lifttracker.ui
+
+import androidx.lifecycle.ViewModel
+import com.example.lifttracker.data.allWords
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+
+// Game UI state
+private val _uiState = MutableStateFlow(GameUiState)
+val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
+
+class GameViewModel : ViewModel() {
+    private lateinit var currentWord: String
+    private var usedWords: MutableSet<String> = mutableSetOf()
+
+    private fun pickRandomWordAndShuffle(): String {
+        // ...
+    }
+
+    private fun shuffleCurrentWord(word: String): String {
+        // ...
+    }
+
+    fun resetGame() {
+        usedWords.clear()
+        _uiState.value = GameUiState(currentScrambledWord = pickRandomWordAndShuffle())
+    }
+
+    init {
+        resetGame()
+    }
+}
+```
+
+The GameUiState is defined in a different file, also in ```com.example.lifttracker.ui```:
+
+```Kotlin
+package com.example.lifttracker.ui
+
+data class GameUiState(
+    cal currentScrambledWord: String = ""
+)
+```
+
+**Why not just use a normal class for ```GameViewModel```?**
+
+With ```: ViewModel()```, the android framework recognizes this class as a special lifecycle aware component. When the activity is destroyed during a configuration update like a rotation, Android retains the ViewModel in memory, and when the activity recreates itself, it hooks back up to the exact same instance of this class. 
