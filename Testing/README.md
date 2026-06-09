@@ -1367,9 +1367,9 @@ import kotlinx.coroutines.flow.asStateFlow
 
 // Game UI state
 private val _uiState = MutableStateFlow(GameUiState)
-val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
 
 class GameViewModel : ViewModel() {
+    val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
     private lateinit var currentWord: String
     private var usedWords: MutableSet<String> = mutableSetOf()
 
@@ -1402,6 +1402,129 @@ data class GameUiState(
 )
 ```
 
+The currently scrambled word can be accessed in the UI like so:
+
+```Kotlin
+import androidx.lifecycle.viewmodel.compose.viewModel
+
+@Composable
+fun GameScreen(
+    gameViewModel: GameViewModel = viewModel()
+) {
+    val gameUiState by gameViewModel.uiState.collectAsState()
+
+    Text(
+        text = gameUiState.currentScrambledWord,
+        style = MaterialTheme.typography.displayMedium
+    )
+}
+```
+
 **Why not just use a normal class for ```GameViewModel```?**
 
-With ```: ViewModel()```, the android framework recognizes this class as a special lifecycle aware component. When the activity is destroyed during a configuration update like a rotation, Android retains the ViewModel in memory, and when the activity recreates itself, it hooks back up to the exact same instance of this class. 
+With ```: ViewModel()```, the android framework recognizes this class as a special lifecycle aware component. When the activity is destroyed during a configuration update like a rotation, Android retains the ViewModel in memory, and when the activity recreates itself, it hooks back up to the exact same instance of this class.
+
+**Text fields can be updated using a GameViewModel as well:**
+
+In UI:
+
+```Kotlin
+OutlinedTextField(
+    value = gameViewModel.userGuess,
+    singleLine = true,
+    shape = shapes.large,
+    modifier = Modifier.fillMaxWidth(),
+    colors = TextFieldDefaults.colors(
+        focusedContainerColor = colorScheme.surface,
+        unfocusedContainerColor = colorScheme.surface,
+        disabledContainerColor = colorScheme.surface
+    ),
+    onValueChange = { gameViewModel.updateUserGuess(it) },
+    label = {
+        if (gameUiState.isGuessedWordWrong) {
+            Text(stringResource(R.string.wrong_guess))
+        } else {
+            Text(stringResource(R.string.enter_your_word))
+        }
+    },
+    isError = gameUiState.isGuessedWordWrong,
+    keyboardOptions = KeyboardOptions.Default.copy(
+        imeAction = ImeAction.Done
+    ),
+    keyboardActions = KeyboardActions(
+        onDone = { gameViewModel.checkUserGuess }
+    )
+)
+```
+
+In GameViewModel:
+
+```Kotlin
+private val _uiState = MutableStateFlow(GameUiState())
+
+class GameViewModel : ViewModel() {
+    val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
+    private lateinit var currentWord: String
+    private var usedWords: MutableSet<String> = mutableSetOf()
+    var userGuess by mutableStateOf("")
+        private set
+
+    private fun pickRandomWordAndShuffle(): String {
+        // ...
+    }
+
+    private fun shuffleCurrentWord(word: String): String {
+        // ...
+    }
+
+    fun updateUserGuess(guessedWord: String) {
+        userGuess = guessedWord
+    }
+
+    fun checkUserGuess() {
+        if (userGuess.equals(currentWord, ignoreCase = true)) {
+            // user guess is right. update score
+            val updatedScore = _uiState.value.score.plus(SCORE_INCREASE)
+            updateGameState(updatedScore)
+        } else {
+            // user guess is wrong. show an error
+            _uiState.update { currentState ->
+                currentState.copy(isGuessedWordWrong = true)
+            }
+        }
+
+        // reset user guess
+        updateUserGuess("")
+    }
+
+    private fun updateGameState(updatedScore: Int) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                isGuessedWordWrong = false,
+                currentScrambledWord = pickRandomWordAndShuffle(),
+                score = updatedScore,
+                currentWordCount = currentState.currentWordCount.inc()
+            )
+        }
+    }
+
+    fun resetGame() {
+        // ...
+    }
+
+    init {
+        // ...
+    }
+}
+```
+
+In GameUiState:
+
+```Kotlin
+data class GameUiState(
+    val currentScrambledWord: String = "",
+    val isGuessedWordWrong: Boolean = false,
+    val score: Int = 0,
+    val currentWordCount: Int = 1,
+)
+```
