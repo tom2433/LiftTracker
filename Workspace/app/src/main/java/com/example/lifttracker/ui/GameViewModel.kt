@@ -65,6 +65,7 @@ class GameViewModel : ViewModel() {
     }
 
     private fun updateGameState(updatedScore: Int) {
+        // check if max number of words has been reached
         if (usedWords.size == MAX_NO_OF_WORDS) {
             // last round in the game, update isGameOver to true and don't pick a word
             _uiState.update { currentState ->
@@ -74,14 +75,15 @@ class GameViewModel : ViewModel() {
                     isGameOver = true,
                 )
             }
-        }
-        _uiState.update { currentState ->
-            currentState.copy(
-                isGuessedWordWrong = false,
-                currentScrambledWord = pickRandomWordAndShuffle(),
-                score = updatedScore,
-                currentWordCount = currentState.currentWordCount.inc()
-            )
+        } else {
+            _uiState.update { currentState ->
+                currentState.copy(
+                    isGuessedWordWrong = false,
+                    currentScrambledWord = pickRandomWordAndShuffle(),
+                    score = updatedScore,
+                    currentWordCount = currentState.currentWordCount.inc()
+                )
+            }
         }
     }
 
