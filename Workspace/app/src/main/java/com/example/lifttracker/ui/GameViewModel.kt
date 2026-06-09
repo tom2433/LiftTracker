@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import com.example.lifttracker.data.MAX_NO_OF_WORDS
 import com.example.lifttracker.data.SCORE_INCREASE
 import com.example.lifttracker.data.allWords
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,6 +13,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
 // Game UI state
+@Suppress("ObjectPropertyName")
 private val _uiState = MutableStateFlow(GameUiState())
 
 class GameViewModel : ViewModel() {
@@ -63,6 +65,16 @@ class GameViewModel : ViewModel() {
     }
 
     private fun updateGameState(updatedScore: Int) {
+        if (usedWords.size == MAX_NO_OF_WORDS) {
+            // last round in the game, update isGameOver to true and don't pick a word
+            _uiState.update { currentState ->
+                currentState.copy(
+                    isGuessedWordWrong = false,
+                    score = updatedScore,
+                    isGameOver = true,
+                )
+            }
+        }
         _uiState.update { currentState ->
             currentState.copy(
                 isGuessedWordWrong = false,
@@ -71,6 +83,14 @@ class GameViewModel : ViewModel() {
                 currentWordCount = currentState.currentWordCount.inc()
             )
         }
+    }
+
+    fun skipWord() {
+        // update game state with new word, same score, and add one more to current word count
+        updateGameState(_uiState.value.score)
+
+        // reset user guess
+        updateUserGuess("")
     }
 
     fun resetGame() {
