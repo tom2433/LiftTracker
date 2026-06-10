@@ -1398,7 +1398,7 @@ The GameUiState is defined in a different file, also in ```com.example.lifttrack
 package com.example.lifttracker.ui
 
 data class GameUiState(
-    cal currentScrambledWord: String = ""
+    val currentScrambledWord: String = ""
 )
 ```
 
