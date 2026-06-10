@@ -1528,3 +1528,151 @@ data class GameUiState(
     val currentWordCount: Int = 1,
 )
 ```
+
+---
+
+## Nav Hosts
+
+```NavHost``` objects can be used for navigating through pages in an application. The screens are represented with string variables, which ideally are further represented with enums. The ```NavHost``` object takes in a ```NavController```, a start destination (represented by a string), and a modifier as its parameters. A navhost will stack each screen on top of the previous one as they are introduced. You generally want to avoid passing the ```NavController``` around as it holds a lot of power. This is why we state hoist.
+
+An example of how to use the ```NavHost``` is below. This example is for a CupcakeApp:
+
+```Kotlin
+enum class CupcakeScreen() {
+    Start,
+    Flavor,
+    Pickup,
+    Summary
+}
+
+@Composable
+fun CupcakeApp(
+    viewModel: OrderViewModel = viewModel(),
+    navController: NavHostController = rememberNavController()
+) {
+    Scaffold(
+        topBar = {
+            CupcakeAppBar(
+                canNavigateBack = false,
+                navigateUp = { /*TODO: implement back navigation*/ }
+            )
+        }
+    ) { innerPadding ->
+        val uiState by viewModel.uiState.collectAsState()
+
+        NavHost(
+            navController = navController,
+            startDestination = CupcakeScreen.Start.name,
+            modifier = Modifier.padding(innerPadding)
+        ) {
+            // Start Order Screen
+            composable(route = CupcakeScreen.Start.name) {
+                StartOrderScreen(
+                    quantityOptions = DataSource.quantityOptions,
+                    onNextButtonClicked = {
+                        viewModel.setQuantity(it)
+                        navController.navigate(CupcakeScreen.Flavor.name)
+                    },
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(dimensionResource(R.dimen.padding_medium))
+                )
+            }
+
+            // Select Flavor Screen (which is an instance of the SelectOption Screen)
+            composable(route = CupcakeScreen.Flavor.name) {
+                val context = LocalContext.current
+                SelectOptionScreen(
+                    subtotal = uiState.price,
+                    onNextButtonClicked = {
+                        navController.navigate(CupcakeScreen.Pickup.name)
+                    },
+                    onCancelButtonClicked = {
+                        cancelOrderAndNavigateToStart(viewModel, navController)
+                    },
+                    options = DataSource.flavors.map { id -> context.resources.getString(id) },
+                    onSelectionChanged = { viewModel.setFlavor(it) },
+                    modifier = Modifier.fillMaxHeight()
+                )
+            }
+
+            // Pickup date screen (which is an instance of the SelectOption Screen)
+            composable(route = CupcakeScreen.Pickup.name) {
+                SelectOptionScreen(
+                    subtotal = uiState.price,
+                    onNextButtonClicked = {
+                        navController.navigate(CupcakeScreen.Summary.name)
+                    },
+                    onCancelButtonClicked = {
+                        cancelOrderAndNavigateToStart(viewModel, navController)
+                    },
+                    options = uiState.pickupOptions,
+                    onSelectionChanged = { viewModel.setDate(it) },
+                    modifier = Modifier.fillMaxHeight()
+                )
+            }
+
+            // Order Summary Screen
+            composable(route = CupcakeScreen.Summary.name) {
+                OrderSummaryScreen(
+                    orderUiState = uiState,
+                    onCancelButtonClicked = {
+                        cancelOrderAndNavigateToStart(viewModel, navController)
+                    },
+                    onSendButtonClicked = { subject: String, summary: String -> 
+                        // here we can use the subject and summary variables.
+                        // this will also execute an intent, which is discussed further below.
+                    },
+                    modifier = Modifier.fillMaxHeight()
+                )
+            }
+        }
+    }
+}
+
+private fun cancelOrderAndNavigateToStart(
+    viewModel: OrderViewModel,
+    navController: NavHostController
+) {
+    viewModel.resetOrder()
+    navController.popBackStack(
+        route = CupcakeScreen.Start.name,
+        inclusive = false
+    )
+}
+```
+
+## Intents
+
+An intent is a request for the system to perform some action, commonly presenting a new activity. There are many different [intents](https://developer.android.com/guide/components/intents-filters) but we'll be looking at ```ACTION_SEND```:
+
+```Kotlin
+fun makeAnIntent(subject: String, summary: String) {
+    val context = LocalContext.current
+
+    shareOrder(
+        context = context,
+        subject = subject,
+        summary = summary
+    )
+}
+
+fun shareOrder(
+    context: Context,
+    subject: String,
+    summary: String
+) {
+    val intent = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_SUBJECT, subject)
+        putExtra(Intent.EXTRA_TEXT, summary)
+    }
+
+    context.startActivity(
+        Intent.createChooser(
+            intent,
+            context.getString(R.string.new_cupcake_order)
+        )
+    )
+}
+```
