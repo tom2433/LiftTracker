@@ -5,13 +5,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -34,6 +37,8 @@ import com.example.lifttracker.ui.theme.LiftTrackerTheme
 @Composable
 fun OrderSummaryScreen(
     orderUiState: OrderUiState,
+    onCancelButtonClicked: () -> Unit,
+    onSendButtonClicked: (String, String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val resources = LocalContext.current.resources
@@ -93,13 +98,13 @@ fun OrderSummaryScreen(
             ) {
                 Button(
                     modifier = Modifier.fillMaxWidth(),
-                    onClick = {}
+                    onClick = { onSendButtonClicked(newOrder, orderSummary) }
                 ) {
                     Text(stringResource(R.string.send))
                 }
                 OutlinedButton(
                     modifier = Modifier.fillMaxWidth(),
-                    onClick = {}
+                    onClick = onCancelButtonClicked
                 ) {
                     Text(stringResource(R.string.cancel))
                 }
@@ -112,9 +117,16 @@ fun OrderSummaryScreen(
 @Composable
 fun OrderSummaryPreview() {
     LiftTrackerTheme {
-        OrderSummaryScreen(
-            orderUiState = OrderUiState(0, "Test", "Test", "$300.00"),
-            modifier = Modifier.fillMaxHeight()
-        )
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            OrderSummaryScreen(
+                orderUiState = OrderUiState(0, "Test", "Test", "$300.00"),
+                onSendButtonClicked = { subject: String, summary: String -> },
+                onCancelButtonClicked = {},
+                modifier = Modifier.fillMaxHeight()
+            )
+        }
     }
 }

@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -33,7 +34,8 @@ import com.example.lifttracker.ui.theme.LiftTrackerTheme
  */
 @Composable
 fun StartOrderScreen(
-    quantityOptions: List<Pair<Int, Int>>,
+    quantityOptions: List<Pair<Int, Int>>,  // string resource ID, actual quantity
+    onNextButtonClicked: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -68,7 +70,7 @@ fun StartOrderScreen(
             quantityOptions.forEach { item ->
                 SelectQuantityButton(
                     labelResourceId = item.first,
-                    onClick = {}
+                    onClick = { onNextButtonClicked(item.second) }
                 )
             }
         }
@@ -97,11 +99,17 @@ fun SelectQuantityButton(
 @Composable
 fun StartOrderPreview() {
     LiftTrackerTheme {
-        StartOrderScreen(
-            quantityOptions = DataSource.quantityOptions,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(dimensionResource(R.dimen.padding_medium))
-        )
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            StartOrderScreen(
+                quantityOptions = DataSource.quantityOptions,
+                onNextButtonClicked = {},
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(dimensionResource(R.dimen.padding_medium))
+            )
+        }
     }
 }

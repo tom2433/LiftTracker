@@ -4,14 +4,17 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.Button
 import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -38,7 +41,9 @@ fun SelectOptionScreen(
     subtotal: String,
     options: List<String>,
     modifier: Modifier = Modifier,
-    onSelectionChanged: (String) -> Unit = {}
+    onSelectionChanged: (String) -> Unit = {},
+    onCancelButtonClicked: () -> Unit = {},
+    onNextButtonClicked: () -> Unit = {},
 ) {
     var selectedValue by rememberSaveable { mutableStateOf("") }
 
@@ -92,7 +97,7 @@ fun SelectOptionScreen(
         ) {
             OutlinedButton(
                 modifier = Modifier.weight(1f),
-                onClick = {}
+                onClick = onCancelButtonClicked
             ) {
                 Text(stringResource(R.string.cancel))
             }
@@ -100,7 +105,7 @@ fun SelectOptionScreen(
                 modifier = Modifier.weight(1f),
                 // the button is enabled when the user makes a selection
                 enabled = selectedValue.isNotEmpty(),
-                onClick = {}
+                onClick = onNextButtonClicked
             ) {
                 Text(stringResource(R.string.next))
             }
@@ -112,10 +117,15 @@ fun SelectOptionScreen(
 @Composable
 fun SelectOptionPreview() {
     LiftTrackerTheme {
-        SelectOptionScreen(
-            subtotal = "299.99",
-            options = listOf("Option 1", "Option 2", "Option 3", "Option 4"),
-            modifier = Modifier.fillMaxHeight()
-        )
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            SelectOptionScreen(
+                subtotal = "299.99",
+                options = listOf("Option 1", "Option 2", "Option 3", "Option 4"),
+                modifier = Modifier.fillMaxHeight()
+            )
+        }
     }
 }
