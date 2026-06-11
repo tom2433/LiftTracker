@@ -13,6 +13,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -23,6 +26,7 @@ import com.example.lifttracker.ui.theme.LiftTrackerTheme
 private const val TAG = "MainActivity"
 
 class MainActivity : ComponentActivity() {
+    @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {        // onCreate = main
         super.onCreate(savedInstanceState)
 
@@ -45,7 +49,8 @@ class MainActivity : ComponentActivity() {
                         ),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    ReplyApp()
+                    val windowSize = calculateWindowSizeClass(this)
+                    ReplyApp(windowSize = windowSize.widthSizeClass)
                 }
             }
         }
@@ -77,14 +82,39 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@Preview
+@OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
+@Preview(widthDp = 411, heightDp = 923, name = "Pixel")
 @Composable
-fun ReplyAppCompactPreview() {
+fun ReplyAppCompactPreviewPixel() {
     LiftTrackerTheme(dynamicColor = false, darkTheme = true) {
         Surface(
             color = MaterialTheme.colorScheme.background
         ) {
-            ReplyApp()
+            ReplyApp(WindowWidthSizeClass.Compact)
+        }
+    }
+}
+
+@Preview(widthDp = 673, heightDp = 841, name = "Foldable")
+@Composable
+fun ReplyAppCompactPreviewFoldable() {
+    LiftTrackerTheme(dynamicColor = false, darkTheme = true) {
+        Surface(
+            color = MaterialTheme.colorScheme.background
+        ) {
+            ReplyApp(WindowWidthSizeClass.Medium)
+        }
+    }
+}
+
+@Preview(widthDp = 1280, heightDp = 800, name = "Tablet")
+@Composable
+fun ReplyAppCompactPreviewTablet() {
+    LiftTrackerTheme(dynamicColor = false, darkTheme = true) {
+        Surface(
+            color = MaterialTheme.colorScheme.background
+        ) {
+            ReplyApp(WindowWidthSizeClass.Expanded)
         }
     }
 }

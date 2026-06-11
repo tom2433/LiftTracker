@@ -1682,3 +1682,117 @@ fun shareOrder(
     )
 }
 ```
+
+## Dynamic navigation for adapting to different screen ratios
+
+Here we'll cover how to use 3 different types of navigation for 3 different types of screen aspect ratios. The three types of navigation are ```BOTTOM_NAVIGATION```, ```NAVIGATION_RAIL```, and ```PERMANENT_NAVIGATION_DRAWER```. These should be declared as enums in a file called ```WindowStateUtils.kt```. This example was taken from the Reply app practice:
+
+```Kotlin
+package com.example.lifttracker.ui.utils
+
+enum class ReplyNavigationType {
+    BOTTOM_NAVIGATION,
+    NAVIGATION_RAIL,
+    PERMANENT_NAVIGATION_DRAWER
+}
+```
+
+In ```MainActivity.kt```, determine the window size like so:
+
+```Kotlin
+class MainActivity : ComponentActivity() {
+    @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        enableEdgeToEdge()
+        setContent {
+            LiftTrackerTheme {
+                val layoutDirection = LocalLayoutDirection.current
+
+                Surface(
+                    modifier = Modifier
+                        .padding(
+                            start = WindowInsets.safeDrawing.asPaddingValues()
+                                .calculateStartPadding(layoutDirection),
+                            end = WindowInsets.safeDrawing.asPaddingValues()
+                                .calculateEndPadding(layoutDirection)
+                        ),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    val windowSize = calculateWindowSizeClass(this)
+                    ReplyApp(windowSize = windowSize.widthSizeClass)
+                }
+            }
+        }
+    }
+}
+```
+
+This window size is passed to the ```ReplyApp``` composable. We can then check the navigation type here like so:
+
+```Kotlin
+fun ReplyApp(
+    windowSize: WindowWidthSizeClass,
+    modifier: Modifier = Modifier
+) {
+    // ...
+
+    val navigationType: ReplyNavigationType = when (windowSize) {
+        WindowWidthSizeClass.Compact -> {
+            ReplyNavigationType.BOTTOM_NAVIGATION
+        }
+        WindowWidthSizeClass.Medium -> {
+            ReplyNavigationType.NAVIGATION_RAIL
+        }
+        WindowWidthSizeClass.Expanded -> {
+            ReplyNavigationType.PERMANENT_NAVIGATION_DRAWER
+        }
+        else -> {           // keep the bottom navigation as a default
+            ReplyNavigationType.BOTTOM_NAVIGATION
+        }
+    }
+}
+```
+
+Now that the ```navigationType``` has been defined, it is now passed to the ```ReplyHomeScreen()``` composable. Inside ```ReplyHomeScreen()```, we check to see if the ```navigationType``` is a permanent navigation drawer and if the user is on the home screen. If both are the case, then we implement it right away, putting the ```ReplyAppContent()``` composable inside while passing the ```navigationType``` here too.
+
+Otherwise, we check to see if the user is on the homepage, and if they are, then we simply just call the ```ReplyAppContent()``` composable while passing the ```navigationType``` in, otherwise, we pull up the ```ReplyDetailsScreen()``` composable since the user must have clicked an email to read. The reason we check for the permanent navigation drawer here is because the other navigation types do not require the app content to be passed into it.
+
+Here is the ```ReplyHomeScreen()``` composable, which begins checking the navigation type:
+
+```Kotlin
+@Composable
+fun ReplyHomeScreen(
+    navigationType: ReplyNavigationType,
+    replyUiState: ReplyUiState,
+    onTabPressed: (MailboxType) -> Unit,
+    onEmailCardPressed: (Email) -> Unit,
+    onDetailScreenBackPressed: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val navigationItemContentList = listOf(
+        NavigationItemContent(
+            mailboxType = MailboxType.Inbox,
+            icon = Icons.Default.Inbox,
+            text = stringResource(id = R.string.tab_inbox)
+        ),
+        ...
+    )
+
+    if (navigationType == ReplyNavigationType.PERMANENT_NAVIGATION_DRAWER
+        && replyUiState.isShowingHomepage
+    ) {
+        PermanentNavigationDrawer(
+            drawerContent = {
+                PermanentDrawerSheet(Modifier.width(dimensionResource(R.dimen.drawer_width))) {
+                    NavigationDrawerContent(
+                        selectedDestination = replyUiState.currentMailbox,
+                        onTabPressed = FINISH THIS!!
+                    )
+                }
+            }
+        )
+    }
+}
+```
