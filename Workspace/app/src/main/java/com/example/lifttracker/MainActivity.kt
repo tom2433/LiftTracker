@@ -6,9 +6,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.tooling.preview.Preview
 import com.example.lifttracker.ui.theme.LiftTrackerTheme
 
 private const val TAG = "MainActivity"
@@ -59,3 +63,17 @@ class MainActivity : ComponentActivity() {
         Log.d(TAG, "onDesto")
     }
 }
+
+@Preview
+@Composable
+fun LunchTrayAppPreview() {
+    LiftTrackerTheme(dynamicColor = false, darkTheme = true) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            LunchTrayApp()
+        }
+    }
+}
+

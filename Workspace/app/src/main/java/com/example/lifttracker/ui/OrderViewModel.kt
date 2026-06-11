@@ -1,10 +1,10 @@
 package com.example.lifttracker.ui
 
-import android.view.MenuItem
 import androidx.lifecycle.ViewModel
 import com.example.lifttracker.model.MenuItem.AccompanimentItem
 import com.example.lifttracker.model.MenuItem.EntreeItem
 import com.example.lifttracker.model.MenuItem.SideDishItem
+import com.example.lifttracker.model.MenuItem
 import com.example.lifttracker.model.OrderUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -49,10 +49,10 @@ class OrderViewModel : ViewModel() {
                 itemTotalPrice = itemTotalPrice,
                 orderTax = tax,
                 orderTotalPrice = itemTotalPrice + tax,
-                entree = if (newItem is EntreeItem) newItem else currentState.entree,
-                sideDish = if (newItem is SideDishItem) newItem else currentState.sideDish,
+                entree = newItem as? EntreeItem ?: currentState.entree,
+                sideDish = newItem as? SideDishItem ?: currentState.sideDish,
                 accompaniment =
-                    if (newItem is AccompanimentItem) newItem else currentState.accompaniment
+                    newItem as? AccompanimentItem ?: currentState.accompaniment
             )
         }
     }
