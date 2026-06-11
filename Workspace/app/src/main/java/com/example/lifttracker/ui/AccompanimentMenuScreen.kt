@@ -24,6 +24,7 @@ fun AccompanimentMenuScreen(
     onSelectionChanged: (AccompanimentItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    @Suppress("UNCHECKED_CAST")
     BaseMenuScreen(
         options = options,
         onCancelButtonClicked = onCancelButtonClicked,

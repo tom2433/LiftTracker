@@ -56,6 +56,14 @@ class OrderViewModel : ViewModel() {
             )
         }
     }
+
+    fun finishOrder() {
+        _uiState.update { currentState ->
+            currentState.copy(
+                orderIsFinished = true
+            )
+        }
+    }
 }
 
 fun Double.formatPrice(): String {

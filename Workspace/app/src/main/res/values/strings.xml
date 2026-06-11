@@ -14,4 +14,6 @@
     <string name="total">Total: %s</string>
     <string name="submit">Submit</string>
     <string name="lunch_tray_app_name">Lunch Tray</string>
+    <string name="order_confirm_dialog_title">Thank you for your order!</string>
+    <string name="order_confirm_dialog_body">Your order has been sent to the store. We will notify you once it\'s ready.</string>
 </resources>

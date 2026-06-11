@@ -1,15 +1,22 @@
 package com.example.lifttracker
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.BasicAlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -17,10 +24,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -34,8 +43,9 @@ import com.example.lifttracker.ui.EntreeMenuScreen
 import com.example.lifttracker.ui.OrderViewModel
 import com.example.lifttracker.ui.SideDishMenuScreen
 import com.example.lifttracker.ui.StartOrderScreen
+import com.example.lifttracker.ui.theme.LiftTrackerTheme
 
-enum class LunchTrayScreen(@StringRes val title: Int) {
+enum class LunchTrayScreen(@field:StringRes val title: Int) {
     Start(title = R.string.lunch_tray_app_name),
     Entree(title = R.string.choose_entree),
     SideDish(title = R.string.choose_side_dish),
@@ -170,9 +180,7 @@ fun LunchTrayApp() {
             composable(route = LunchTrayScreen.Checkout.name) {
                 CheckoutScreen(
                     orderUiState = uiState,
-                    onNextButtonClicked = {
-                        // share? idk
-                    },
+                    onNextButtonClicked = { viewModel.finishOrder() },
                     onCancelButtonClicked = {
                         cancelOrderAndNavigateToStart(viewModel, navController)
                     },
@@ -181,6 +189,68 @@ fun LunchTrayApp() {
                         .padding(dimensionResource(R.dimen.padding_medium))
                 )
             }
+        }
+
+        // if show dialog is true, show dialog here
+        if (uiState.orderIsFinished) {
+            OrderSubmittedDialog(
+                onConfirm = {
+                    cancelOrderAndNavigateToStart(viewModel, navController)
+                }
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun OrderSubmittedDialog(
+    onConfirm: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    BasicAlertDialog(
+        onDismissRequest = {},
+        modifier = modifier,
+        properties = DialogProperties(),
+    ) {
+        Surface(
+            shape = MaterialTheme.shapes.medium,
+            tonalElevation = 6.dp
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.order_confirm_dialog_title),
+                    style = MaterialTheme.typography.headlineSmall
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = stringResource(R.string.order_confirm_dialog_body),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = onConfirm,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Ok")
+                }
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun OrderSubmittedDialogPreview() {
+    LiftTrackerTheme(dynamicColor = false, darkTheme = true) {
+        Surface(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            OrderSubmittedDialog(
+                onConfirm = {}
+            )
         }
     }
 }

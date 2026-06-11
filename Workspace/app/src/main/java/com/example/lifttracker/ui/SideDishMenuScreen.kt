@@ -24,6 +24,7 @@ fun SideDishMenuScreen(
     onSelectionChanged: (SideDishItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    @Suppress("UNCHECKED_CAST")
     BaseMenuScreen(
         options = options,
         onCancelButtonClicked = onCancelButtonClicked,
