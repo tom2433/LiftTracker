@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -33,7 +35,8 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    SportsApp()
+                    val windowSize = calculateWindowSizeClass(this)
+                    SportsApp(windowSize = windowSize.widthSizeClass)
                 }
             }
         }
@@ -68,39 +71,39 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
 @Preview(widthDp = 411, heightDp = 923, name = "Pixel")
 @Composable
-fun ReplyAppCompactPreviewPixel() {
+fun SportsAppCompactPreviewPixel() {
     LiftTrackerTheme(dynamicColor = false, darkTheme = true) {
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            SportsApp()
+            SportsApp(WindowWidthSizeClass.Compact)
         }
     }
 }
 
 @Preview(widthDp = 673, heightDp = 841, name = "Foldable")
 @Composable
-fun ReplyAppCompactPreviewFoldable() {
+fun SportsAppCompactPreviewFoldable() {
     LiftTrackerTheme(dynamicColor = false, darkTheme = true) {
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            SportsApp()
+            SportsApp(WindowWidthSizeClass.Medium)
         }
     }
 }
 
 @Preview(widthDp = 1280, heightDp = 800, name = "Tablet")
 @Composable
-fun ReplyAppCompactPreviewTablet() {
+fun SportsAppCompactPreviewTablet() {
     LiftTrackerTheme(dynamicColor = false, darkTheme = true) {
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            SportsApp()
+            SportsApp(WindowWidthSizeClass.Expanded)
         }
     }
 }

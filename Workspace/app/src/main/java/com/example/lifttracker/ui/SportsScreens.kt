@@ -32,6 +32,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -53,16 +54,30 @@ import com.example.lifttracker.R
 import com.example.lifttracker.data.LocalSportsDataProvider
 import com.example.lifttracker.model.Sport
 import com.example.lifttracker.ui.theme.LiftTrackerTheme
+import com.example.lifttracker.utils.SportsContentType
 
 /**
  * Main composable that serves as container
  * which displays content according to uiState and windowSize
  */
 @Composable
-fun SportsApp(
-) {
+fun SportsApp(windowSize: WindowWidthSizeClass) {
     val viewModel: SportsViewModel = viewModel()
     val uiState by viewModel.uiState.collectAsState()
+    val contentType: SportsContentType = when(windowSize) {
+        WindowWidthSizeClass.Compact -> {
+            SportsContentType.LIST_ONLY
+        }
+        WindowWidthSizeClass.Medium -> {
+            SportsContentType.LIST_ONLY
+        }
+        WindowWidthSizeClass.Expanded -> {
+            SportsContentType.LIST_AND_DETAIL
+        }
+        else -> {
+            SportsContentType.LIST_ONLY
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -134,7 +149,9 @@ fun SportsAppBar(
             { Box {} }
         },
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.primary
+            containerColor = MaterialTheme.colorScheme.primary,
+            titleContentColor = MaterialTheme.colorScheme.onPrimary,
+            navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
         ),
         modifier = modifier,
     )

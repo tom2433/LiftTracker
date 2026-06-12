@@ -1947,3 +1947,9 @@ val displayToast = { text: String ->
 displayToast("Here is a toast popup")
 displayToast("Here is another toast popup")
 ```
+
+---
+
+## Changing Content layout based on screen ratio/size
+
+
