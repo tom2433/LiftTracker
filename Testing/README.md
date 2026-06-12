@@ -1759,6 +1759,53 @@ Now that the ```navigationType``` has been defined, it is now passed to the ```R
 
 Otherwise, we check to see if the user is on the homepage, and if they are, then we simply just call the ```ReplyAppContent()``` composable while passing the ```navigationType``` in, otherwise, we pull up the ```ReplyDetailsScreen()``` composable since the user must have clicked an email to read. The reason we check for the permanent navigation drawer here is because the other navigation types do not require the app content to be passed into it.
 
+Here is how the ```PermanentNavigationDrawer()``` composable is implemented. Note that some things here are undefined, but this is the general structure for learning purposes:
+
+```Kotlin
+PermanentNavigationDrawer(
+    drawerContent = {
+        PermanentDrawerSheet(Modifier.width(dimensionResource(R.dimen.drawer_width))) {
+            // inside components of the navigation drawer here.
+            Column() {
+                // navigation drawer header here
+                // ...
+
+                for (navItem in navigationItemContentList) {
+                    NavigationDrawerItem(
+                        selected = selectedDestination == navItem.MailboxType,
+                        label = {
+                            Text(
+                                text = navItem.text,
+                                modifier = Modifier.padding(horizontal = 16.dp)
+                            )
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = navItem.icon,
+                                contentDescription = navItem.text
+                            )
+                        },
+                        colors = NavigationDrawerItemDefaults.colors(
+                            unselectedContainerColor = Color.Transparent
+                        ),
+                        onClick = { onTabPressed(navItem.mailboxType) }
+                    )
+                }
+            }
+        }
+    }
+) {
+    ReplyAppContent(
+        navigationType = navigationType,
+        replyUiState = replyUiState,
+        onTabPressed = onTabPressed,
+        onEmailCardPressed = onEmailCardPressed,
+        navigationItemContentList = navigationItemContentList,
+        modifier = modifier
+    )
+}
+```
+
 Here is the ```ReplyHomeScreen()``` composable, which begins checking the navigation type:
 
 ```Kotlin
@@ -1780,19 +1827,97 @@ fun ReplyHomeScreen(
         ...
     )
 
+    // implement navigation drawer
     if (navigationType == ReplyNavigationType.PERMANENT_NAVIGATION_DRAWER
         && replyUiState.isShowingHomepage
     ) {
-        PermanentNavigationDrawer(
-            drawerContent = {
-                PermanentDrawerSheet(Modifier.width(dimensionResource(R.dimen.drawer_width))) {
-                    NavigationDrawerContent(
-                        selectedDestination = replyUiState.currentMailbox,
-                        onTabPressed = FINISH THIS!!
+        // navigation drawer (code above) goes here
+    } else {
+        // only show if homepage is showing
+        if (replyUiState.isShowingHomepage) {
+            ReplyAppContent(
+                navigationType = navigationType,
+                replyUiState = replyUiState,
+                onTabPressed = onTabPressed,
+                onEmailCardPressed = onEmailCardPressed,
+                navigationItemContentList = navigationItemContentList,
+                modifier = modifier
+            )
+        } else {
+            ReplyDetailsScreen(
+                replyUiState = replyUiState,
+                onBackPressed = onDetailScreenBackPressed,
+                modifier = modifier
+            )
+        }
+    }
+}
+```
+
+In the event that the navigation drawer is not supposed to be shown, the ```navigationType``` parameter is passed from ```ReplyHomeScreen()``` to ```ReplyAppContent()``` since the other navigation types can be a part of this content. The ```ReplyDetailsScreen()``` doesn't have to worry about this since it is independent of the navigation. It only includes a back button.
+
+In the ```ReplyAppContent()``` composable, we use ```AnimatedVisibility()``` composables to decide whether we show or hide certain navigation types. You can see how this is implemented here:
+
+```Kotlin
+@Composable
+private fun ReplyAppContent(
+    navigationType: ReplyNavigationType,
+    replyUiState: ReplyUiState,
+    onTabPressed: ((MailboxType) -> Unit),
+    onEmailCardPressed: (Email) -> Unit,
+    navigationItemContentList: List<NavigationItemContent>,
+    modifier: Modifier = Modifier
+) {
+    Row(modifier = modifier) {
+        // set navigation rail visible if that is the navigation type
+        AnimatedVisibility(visible = navigationType == ReplyNavigationType.NAVIGATION_RAIL) {
+            NavigationRail(
+                modifier = Modifier.testTag("Navigation Rail")
+            ) {
+                for (navItem in navigationItemContentList) {
+                    NavigationRailItem(
+                        selected = currentTab == newItem.mailboxType,
+                        onClick = { onTabPressed(navItem.mailboxType) },
+                        icon = {
+                            Icon(
+                                imageVector = navItem.icon,
+                                contentDescription = navItem.text
+                            )
+                        }
                     )
                 }
             }
-        )
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.inverseOnSurface)
+        ) {
+            // rest of app content goes here
+            // this will display no matter what the navigation type is
+            // ...
+
+            // now set the bottom navigation bar visible only if that is the navigation type
+            AnimatedVisibility(
+                visible = navigationType == ReplyNavigationType.BOTTOM_NAVIGATION
+            ) {
+                NavigationBar(modifier = Modifier.fillMaxWidth()) {
+                    for (navItem in navigationItemContentList) {
+                        NavigationBarItem(
+                            selected = currentTab == navItem.mailboxType,
+                            onClick = { onTabPressed(navItem.mailboxType) },
+                            icon = {
+                                Icon(
+                                    imageVector = navItem.icon,
+                                    contentDescription = navItem.text
+                                )
+                            }
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 ```
