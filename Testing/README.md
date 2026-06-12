@@ -191,7 +191,7 @@ val name: String? = null    // this is not illegal
 ```
 
 ### Safe calls
- 
+
 ```Kotlin
 val length = name?.length
 ```
@@ -577,11 +577,11 @@ Color(0.5f, 0.5f, 0.5f)
 
 #### Material Design colors
 
-All material design colors can be accessed using ```MaterialTheme.colorScheme.``` followed by a color, like ```MaterialTheme.colorScheme.primary```. 
+All material design colors can be accessed using ```MaterialTheme.colorScheme.``` followed by a color, like ```MaterialTheme.colorScheme.primary```.
 
 Primary colors are used for key components across the UI. Secondary colors are used for less prominent components. Tertiary colors are used for contrasting accents that can be used to balance primary and secondary colors or bring heightened attention to an element such as an input field.
 
-The **on** color elements appear on top of other colors in the palette, and are primarily applied to text, iconography, and strokes. 
+The **on** color elements appear on top of other colors in the palette, and are primarily applied to text, iconography, and strokes.
 
 Below are all of the material design color options and their usages:
 
@@ -1290,7 +1290,7 @@ You can also override other methods when logging:
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {    // creates the app
         super.onCreate(savedInstanceState)
-        
+
         enableEdgeToEdge()
         setContent{
             // ...
@@ -1625,7 +1625,7 @@ fun CupcakeApp(
                     onCancelButtonClicked = {
                         cancelOrderAndNavigateToStart(viewModel, navController)
                     },
-                    onSendButtonClicked = { subject: String, summary: String -> 
+                    onSendButtonClicked = { subject: String, summary: String ->
                         // here we can use the subject and summary variables.
                         // this will also execute an intent, which is discussed further below.
                     },
@@ -1920,4 +1920,30 @@ private fun ReplyAppContent(
         }
     }
 }
+```
+
+---
+
+## Toast
+
+A Toast is a very small popup that displays some text. It can be called very easily like so:
+
+```Kotlin
+val context = LocalContext.current
+val text = "This is a toast"
+
+Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
+```
+
+You can also create it with a string parameter to call it later, with varying strings:
+
+```Kotlin
+val context = LocalContext.current
+
+val displayToast = { text: String ->
+    Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
+}
+
+displayToast("Here is a toast popup")
+displayToast("Here is another toast popup")
 ```
