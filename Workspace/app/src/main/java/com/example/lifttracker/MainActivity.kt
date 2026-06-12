@@ -5,22 +5,14 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
-import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
-import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.lifttracker.ui.ReplyApp
+import com.example.lifttracker.ui.SportsApp
 import com.example.lifttracker.ui.theme.LiftTrackerTheme
 
 private const val TAG = "MainActivity"
@@ -36,21 +28,12 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             LiftTrackerTheme(dynamicColor = false) {
-                val layoutDirection = LocalLayoutDirection.current
-
                 // surface container using background color from the theme
                 Surface(
-                    modifier = Modifier
-                        .padding(
-                            start = WindowInsets.safeDrawing.asPaddingValues()
-                                .calculateStartPadding(layoutDirection),
-                            end = WindowInsets.safeDrawing.asPaddingValues()
-                                .calculateEndPadding(layoutDirection)
-                        ),
+                    modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    val windowSize = calculateWindowSizeClass(this)
-                    ReplyApp(windowSize = windowSize.widthSizeClass)
+                    SportsApp()
                 }
             }
         }
@@ -88,9 +71,10 @@ class MainActivity : ComponentActivity() {
 fun ReplyAppCompactPreviewPixel() {
     LiftTrackerTheme(dynamicColor = false, darkTheme = true) {
         Surface(
+            modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            ReplyApp(WindowWidthSizeClass.Compact)
+            SportsApp()
         }
     }
 }
@@ -100,9 +84,10 @@ fun ReplyAppCompactPreviewPixel() {
 fun ReplyAppCompactPreviewFoldable() {
     LiftTrackerTheme(dynamicColor = false, darkTheme = true) {
         Surface(
+            modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            ReplyApp(WindowWidthSizeClass.Medium)
+            SportsApp()
         }
     }
 }
@@ -112,9 +97,10 @@ fun ReplyAppCompactPreviewFoldable() {
 fun ReplyAppCompactPreviewTablet() {
     LiftTrackerTheme(dynamicColor = false, darkTheme = true) {
         Surface(
+            modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            ReplyApp(WindowWidthSizeClass.Expanded)
+            SportsApp()
         }
     }
 }
