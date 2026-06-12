@@ -1,8 +1,6 @@
 package com.example.lifttracker.ui
 
 import android.annotation.SuppressLint
-import android.app.Activity
-import androidx.compose.ui.graphics.Color
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -29,14 +27,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import com.example.lifttracker.data.Email
 import com.example.lifttracker.R
+import com.example.lifttracker.data.Email
 import com.example.lifttracker.data.local.LocalAccountsDataProvider
 
 @Composable
@@ -104,7 +102,8 @@ fun ReplyListAndDetailContent(
                 )
             }
         }
-        val activity = LocalContext.current as Activity
+        // TODO: determine what to do with this statement here
+//        val activity = LocalContext.current as Activity
         ReplyDetailsScreen(
             replyUiState = replyUiState,
             modifier = Modifier
