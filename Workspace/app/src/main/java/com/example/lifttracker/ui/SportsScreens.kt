@@ -84,25 +84,37 @@ fun SportsApp(windowSize: WindowWidthSizeClass) {
             SportsAppBar(
                 isShowingListPage = uiState.isShowingListPage,
                 onBackButtonClick = { viewModel.navigateToListPage() },
+                contentType = contentType
             )
         }
     ) { innerPadding ->
-        if (uiState.isShowingListPage) {
-            SportsList(
-                sports = uiState.sportsList,
-                onClick = {
-                    viewModel.updateCurrentSport(it)
-                    viewModel.navigateToDetailPage()
-                },
-                contentPadding = innerPadding,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        top = dimensionResource(R.dimen.padding_medium),
-                        start = dimensionResource(R.dimen.padding_medium),
-                        end = dimensionResource(R.dimen.padding_medium),
+        if (uiState.isShowingListPage || contentType == SportsContentType.LIST_AND_DETAIL) {
+            Row {
+                SportsList(
+                    sports = uiState.sportsList,
+                    onClick = {
+                        viewModel.updateCurrentSport(it)
+                        viewModel.navigateToDetailPage()
+                    },
+                    contentPadding = innerPadding,
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(
+                            top = dimensionResource(R.dimen.padding_medium),
+                            start = dimensionResource(R.dimen.padding_medium),
+                            end = dimensionResource(R.dimen.padding_medium),
+                        )
+                )
+
+                if (contentType == SportsContentType.LIST_AND_DETAIL) {
+                    SportsDetail(
+                        selectedSport = uiState.currentSport,
+                        contentPadding = innerPadding,
+                        onBackPressed = {},
+                        modifier = Modifier.weight(1.5f)
                     )
-            )
+                }
+            }
         } else {
             SportsDetail(
                 selectedSport = uiState.currentSport,
@@ -123,20 +135,21 @@ fun SportsApp(windowSize: WindowWidthSizeClass) {
 fun SportsAppBar(
     onBackButtonClick: () -> Unit,
     isShowingListPage: Boolean,
+    contentType: SportsContentType,
     modifier: Modifier = Modifier
 ) {
     TopAppBar(
         title = {
             Text(
                 text =
-                    if (!isShowingListPage) {
-                        stringResource(R.string.detail_fragment_label)
-                    } else {
+                    if (contentType == SportsContentType.LIST_AND_DETAIL || isShowingListPage) {
                         stringResource(R.string.list_fragment_label)
+                    } else {
+                        stringResource(R.string.detail_fragment_label)
                     }
             )
         },
-        navigationIcon = if (!isShowingListPage) {
+        navigationIcon = if (!isShowingListPage && contentType == SportsContentType.LIST_ONLY) {
             {
                 IconButton(onClick = onBackButtonClick) {
                     Icon(

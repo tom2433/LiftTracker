@@ -72,7 +72,7 @@ class MainActivity : ComponentActivity() {
 @Preview(widthDp = 411, heightDp = 923, name = "Pixel")
 @Composable
 fun SportsAppCompactPreviewPixel() {
-    LiftTrackerTheme(dynamicColor = false, darkTheme = true) {
+    LiftTrackerTheme(dynamicColor = false, darkTheme = false) {
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
@@ -85,7 +85,7 @@ fun SportsAppCompactPreviewPixel() {
 @Preview(widthDp = 673, heightDp = 841, name = "Foldable")
 @Composable
 fun SportsAppCompactPreviewFoldable() {
-    LiftTrackerTheme(dynamicColor = false, darkTheme = true) {
+    LiftTrackerTheme(dynamicColor = false, darkTheme = false) {
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
@@ -98,7 +98,7 @@ fun SportsAppCompactPreviewFoldable() {
 @Preview(widthDp = 1280, heightDp = 800, name = "Tablet")
 @Composable
 fun SportsAppCompactPreviewTablet() {
-    LiftTrackerTheme(dynamicColor = false, darkTheme = true) {
+    LiftTrackerTheme(dynamicColor = false, darkTheme = false) {
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
