@@ -114,6 +114,7 @@ The ```users``` table has 3 columns:
     - Ability to switch between light/dark theme or use system default
     - Potentially providing insights on certain lift days based on probability distributions
     - Ability to add a lift to multiple muscle groups?
+    - Add the option to use time metrics instead of reps!!
 - Backend:
     - Add start time and end time to each Day
     - Add names to each day (user-specified)
