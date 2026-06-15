@@ -1,6 +1,7 @@
 package com.example.lifttracker.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -28,7 +29,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -47,13 +47,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.lifttracker.R
-import com.example.lifttracker.data.LocalSportsDataProvider
 import com.example.lifttracker.model.Sport
-import com.example.lifttracker.ui.theme.LiftTrackerTheme
 import com.example.lifttracker.utils.SportsContentType
 
 /**
@@ -92,6 +89,8 @@ fun SportsApp(windowSize: WindowWidthSizeClass) {
             Row {
                 SportsList(
                     sports = uiState.sportsList,
+                    currentSport = uiState.currentSport,
+                    contentType = contentType,
                     onClick = {
                         viewModel.updateCurrentSport(it)
                         viewModel.navigateToDetailPage()
@@ -174,6 +173,7 @@ fun SportsAppBar(
 @Composable
 private fun SportsListItem(
     sport: Sport,
+    color: Color,
     onItemClick: (Sport) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -181,6 +181,15 @@ private fun SportsListItem(
         elevation = CardDefaults.cardElevation(),
         modifier = modifier,
         shape = RoundedCornerShape(dimensionResource(R.dimen.card_corner_radius)),
+        colors = CardDefaults.cardColors(
+            containerColor = color,
+            contentColor =
+                if (color == MaterialTheme.colorScheme.primaryContainer) {
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                } else {
+                    MaterialTheme.colorScheme.onTertiaryContainer
+                }
+        ),
         onClick = { onItemClick(sport) }
     ) {
         Row(
@@ -252,6 +261,8 @@ private fun SportsListImageItem(sport: Sport, modifier: Modifier = Modifier) {
 @Composable
 private fun SportsList(
     sports: List<Sport>,
+    currentSport: Sport,
+    contentType: SportsContentType,
     onClick: (Sport) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
@@ -262,8 +273,18 @@ private fun SportsList(
         modifier = modifier,
     ) {
         items(sports, key = { sport -> sport.id }) { sport ->
+            // animate the color of the card if the card is the currently selected sport
+            val color by animateColorAsState(
+                targetValue = if (sport == currentSport && contentType == SportsContentType.LIST_AND_DETAIL) {
+                    MaterialTheme.colorScheme.primaryContainer
+                } else {
+                    MaterialTheme.colorScheme.tertiaryContainer
+                }
+            )
+
             SportsListItem(
                 sport = sport,
+                color = color,
                 onItemClick = onClick
             )
         }
@@ -356,26 +377,26 @@ private fun SportsDetail(
     }
 }
 
-@Preview
-@Composable
-fun SportsListItemPreview() {
-    LiftTrackerTheme {
-        SportsListItem(
-            sport = LocalSportsDataProvider.defaultSport,
-            onItemClick = {}
-        )
-    }
-}
-
-@Preview
-@Composable
-fun SportsListPreview() {
-    LiftTrackerTheme {
-        Surface {
-            SportsList(
-                sports = LocalSportsDataProvider.getSportsData(),
-                onClick = {},
-            )
-        }
-    }
-}
+//@Preview
+//@Composable
+//fun SportsListItemPreview() {
+//    LiftTrackerTheme {
+//        SportsListItem(
+//            sport = LocalSportsDataProvider.defaultSport,
+//            onItemClick = {}
+//        )
+//    }
+//}
+//
+//@Preview
+//@Composable
+//fun SportsListPreview() {
+//    LiftTrackerTheme {
+//        Surface {
+//            SportsList(
+//                sports = LocalSportsDataProvider.getSportsData(),
+//                onClick = {},
+//            )
+//        }
+//    }
+//}

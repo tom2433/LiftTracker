@@ -1206,7 +1206,7 @@ To animate the color of a container, use the ```animateColorAsState()``` functio
 ```Kotlin
 Card() {
     var expanded by remember { mutableStateOf(false) }
-    var color by animateColorAsState(
+    val color by animateColorAsState(
         targetValue = if (expanded) {
             MaterialTheme.colorScheme.primaryContainer
         } else {
@@ -1226,6 +1226,9 @@ Card() {
     )
 }
 ```
+
+> [!NOTE]
+> When using ```animateColorAsState()```, you must assign it to a ```val``` variable.
 
 ## Accessibility
 
