@@ -1234,6 +1234,8 @@ Card() {
 
 Transition animations can be used to transform a card into a card detail page. This is accomplished via a ```SharedTransitionLayout() {}```, an ```AnimatedContent() {}``` composable, an ```AnimatedVisibilityScope``` object, a ```SharedTransitionScope``` object, the ```Modifier.sharedElement()``` function, and the ```rememberSharedContentState()``` function with a ```key``` String as an argument.
 
+Keep in mind that the card and the card detail must have similar layouts, and it's best if they share the same major elemnts, like an image and a title.
+
 Let's start with the ```SharedTransitionLayout() {}```. This must use an ```AnimatedContent() {}``` composable with a ```targetState``` and a ```label```. The following is an example from a sports app, which has cards that each correspond to a detail screen:
 
 ```Kotlin
