@@ -1230,6 +1230,144 @@ Card() {
 > [!NOTE]
 > When using ```animateColorAsState()```, you must assign it to a ```val``` variable.
 
+### Transition Animations
+
+Transition animations can be used to transform a card into a card detail page. This is accomplished via a ```SharedTransitionLayout() {}```, an ```AnimatedContent() {}``` composable, an ```AnimatedVisibilityScope``` object, a ```SharedTransitionScope``` object, the ```Modifier.sharedElement()``` function, and the ```rememberSharedContentState()``` function with a ```key``` String as an argument.
+
+Let's start with the ```SharedTransitionLayout() {}```. This must use an ```AnimatedContent() {}``` composable with a ```targetState``` and a ```label```. The following is an example from a sports app, which has cards that each correspond to a detail screen:
+
+```Kotlin
+Scaffold(
+    topBar = {
+        SportsAppBar(
+            isShowingListPage = uiState.isShowingListPage,
+            onBackButtonClick = { viewModel.navigateToListPag() },
+            contentType = contentType
+        )
+    }
+) { innerPadding ->
+    // if being used with a smaller screen, it only shows the card list.
+    // this is the only event in which the transition animation will be used
+    if (contentType == SportsContentType.LIST_ONLY) {
+        SharedTransitionLayout {
+            AnimatedContent(
+                targetState = uiState.isShowingListPage,
+                label = "ContainerTransform"
+            ) { showList -> // represents the targetState boolean
+                if (showList) {
+                    SportsList(
+                        sports = uiState.sportsList,
+                        currentSport = uiState.currentSport,
+                        contentType = contentType,
+                        animatedVisibilityScope = this@AnimatedContent,
+                        sharedTransitionScope = this@SharedTransitionLayout,
+                        onClick = {
+                            viewModel.updateCurrentSport(it),
+                            viewModel.navigateToDetailPage()
+                        },
+                        contentPadding = innerPadding,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(
+                                top = dimensionResource(R.dimen.padding_medium),
+                                start = dimensionResource(R.dimen.padding_medium),
+                                end = dimensionResource(R.dimen.padding_medium)
+                            )
+                    )
+                } else {
+                    SportsDetail(
+                        selectedSport = uiState.currentSport,
+                        contentPadding = innerPadding,
+                        animatedVisibilityScope = this@AnimatedContent,
+                        sharedTransitionScope = this@SharedTransitionLayout,
+                        onBackPressed = {
+                            viewModel.navigateToListPage()
+                        }
+                    )
+                }
+            }
+        }
+    } else {
+        // when screen ratio is used for list and detail,
+        // the transition animation is not applicable.
+    }
+}
+```
+
+As you can see above, both the ```AnimatedVisibilityScope``` and the ```SharedTransitionScope``` are both passed into the custom composables ```SportsList()``` and ```SportsDetail()```. These arguments are used in order to link the list elements with their corresponding detail screens. Let's start with ```SportsList()```:
+
+```Kotlin
+@Composable
+private fun SportsList(
+    sports: List<Sport>,
+    currentSport: Sport,
+    contentType: SportsContentType,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    onClick: (Sport) -> Unit,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(0.dp)
+) {
+    LazyColumn(
+        contentPadding = contentPadding,
+        verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.padding_medium)),
+        modifier = modifier
+    ) {
+        items(sports, key = { sport -> sport.id }) { sport ->
+            with (sharedTransitionScope) {
+                SportsListItem(
+                    sport = sport,
+                    onItemClick = onClick,
+                    modifier = Modifier
+                        .sharedElement(
+                            rememberSharedContentState(key = sport.id.toString()),
+                            animatedVisibilityScope = animatedVisibilityScope
+                        )
+                )
+            }
+        }
+    }
+}
+```
+
+Keep in mind that ```SportsListItem()``` is just a composable with only a ```Card() {}``` composable inside it that takes in the ```modifier``` argument passed to ```SportsListItem()``` as a parameter.
+
+The ```SportsDetail()``` composable also takes in the ```SharedTransitionScope``` and ```AnimatedVisbilityScope``` objects to link itself to the appropriate cards:
+
+```Kotlin
+@Composable
+private fun SportsDetail(
+    selectedSport: Sport,
+    onBackPressed: () -> Unit,
+    contentPadding: PaddingValues,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    sharedTransitionScope: SharedTransitionScope,
+    modifier: Modifier = Modifier
+) {
+    BackHandler {
+        onBackPressed()
+    }
+    val scrollState = rememberScrollState()
+    val layoutDirection = LocalLayoutDirection.current
+
+    with(sharedTransitionScope) {
+        Box(
+            modifier = modifier
+                .verticalScroll(state = scrollState)
+                .padding(top = contentPadding.calculateTopPadding())
+                .sharedElement(
+                    rememberSharedContentState(key = selectedSport.id.toString()),
+                    animatedVisibilityScope = animatedVisibilityScope
+                )
+        ) {
+            // detail contents go here.
+        }
+    }
+}
+```
+
+Keep in mind that the Modifier.sharedElement() function can be used on other containers like surfaces, columns, etc., as long as they are wrapped within a ```with(sharedTransitionScope) {}```.
+
 ## Accessibility
 
 Go to [here](https://developer.android.com/codelabs/basic-android-kotlin-compose-test-accessibility?continue=https%3A%2F%2Fdeveloper.android.com%2Fcourses%2Fpathways%2Fandroid-basics-compose-unit-3-pathway-3%23codelab-https%3A%2F%2Fdeveloper.android.com%2Fcodelabs%2Fbasic-android-kotlin-compose-test-accessibility#0) to learn about accessibility.

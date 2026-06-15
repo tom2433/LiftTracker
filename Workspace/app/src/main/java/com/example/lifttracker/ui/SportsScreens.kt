@@ -3,12 +3,14 @@ package com.example.lifttracker.ui
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.BoundsTransform
+import androidx.compose.animation.EnterExitState
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Transition
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -48,7 +50,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -133,7 +138,31 @@ fun SportsApp(windowSize: WindowWidthSizeClass) {
                 }
             }
         } else {
+            Row {
+                SportsList(
+                    sports = uiState.sportsList,
+                    currentSport = uiState.currentSport,
+                    contentType = contentType,
+                    onClick = {
+                        viewModel.updateCurrentSport(it)
+                    },
+                    contentPadding = innerPadding,
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(
+                            top = dimensionResource(R.dimen.padding_medium),
+                            start = dimensionResource(R.dimen.padding_medium),
+                            end = dimensionResource(R.dimen.padding_medium)
+                        )
+                )
 
+                SportsDetail(
+                    selectedSport = uiState.currentSport,
+                    contentPadding = innerPadding,
+                    onBackPressed = {},
+                    modifier = Modifier.weight(1.5f)
+                )
+            }
         }
 
 //        if (uiState.isShowingListPage || contentType == SportsContentType.LIST_AND_DETAIL) {
@@ -314,10 +343,10 @@ private fun SportsList(
     sports: List<Sport>,
     currentSport: Sport,
     contentType: SportsContentType,
-    sharedTransitionScope: SharedTransitionScope,
-    animatedVisibilityScope: AnimatedVisibilityScope,
     onClick: (Sport) -> Unit,
     modifier: Modifier = Modifier,
+    sharedTransitionScope: SharedTransitionScope = DisabledTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope = DisabledVisibilityScope,
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
     LazyColumn(
@@ -334,6 +363,7 @@ private fun SportsList(
                     MaterialTheme.colorScheme.tertiaryContainer
                 }
             )
+
             with(sharedTransitionScope) {
                 SportsListItem(
                     sport = sport,
@@ -355,9 +385,9 @@ private fun SportsDetail(
     selectedSport: Sport,
     onBackPressed: () -> Unit,
     contentPadding: PaddingValues,
-    animatedVisibilityScope: AnimatedVisibilityScope,
-    sharedTransitionScope: SharedTransitionScope,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    animatedVisibilityScope: AnimatedVisibilityScope = DisabledVisibilityScope,
+    sharedTransitionScope: SharedTransitionScope = DisabledTransitionScope,
 ) {
     BackHandler {
         onBackPressed()
@@ -442,6 +472,69 @@ private fun SportsDetail(
                 )
             }
         }
+    }
+}
+
+object DisabledVisibilityScope: AnimatedVisibilityScope {
+    override val transition: Transition<EnterExitState>
+        get() = TODO("Not needed for dummy")
+}
+
+object DisabledTransitionScope : SharedTransitionScope {
+    override fun Modifier.sharedElement(
+        sharedContentState: SharedTransitionScope.SharedContentState,
+        animatedVisibilityScope: AnimatedVisibilityScope,
+        boundsTransform: BoundsTransform,
+        placeholderSize: SharedTransitionScope.PlaceholderSize,
+        renderInOverlayDuringTransition: Boolean,
+        zIndexInOverlay: Float,
+        clipInOverlayDuringTransition: SharedTransitionScope.OverlayClip
+    ): Modifier = this
+
+    override val isTransitionActive: Boolean
+        get() = TODO("Not needed for dummy")
+
+    override fun Modifier.skipToLookaheadSize(
+        enabled: () -> Boolean
+    ): Modifier = this
+
+    override fun Modifier.renderInSharedTransitionScopeOverlay(
+        zIndexInOverlay: Float,
+        renderInOverlay: () -> Boolean
+    ): Modifier = this
+
+    override fun Modifier.sharedBounds(
+        sharedContentState: SharedTransitionScope.SharedContentState,
+        animatedVisibilityScope: AnimatedVisibilityScope,
+        enter: EnterTransition,
+        exit: ExitTransition,
+        boundsTransform: BoundsTransform,
+        resizeMode: SharedTransitionScope.ResizeMode,
+        placeholderSize: SharedTransitionScope.PlaceholderSize,
+        renderInOverlayDuringTransition: Boolean,
+        zIndexInOverlay: Float,
+        clipInOverlayDuringTransition: SharedTransitionScope.OverlayClip
+    ): Modifier = this
+
+    override fun Modifier.sharedElementWithCallerManagedVisibility(
+        sharedContentState: SharedTransitionScope.SharedContentState,
+        visible: Boolean,
+        boundsTransform: BoundsTransform,
+        placeholderSize: SharedTransitionScope.PlaceholderSize,
+        renderInOverlayDuringTransition: Boolean,
+        zIndexInOverlay: Float,
+        clipInOverlayDuringTransition: SharedTransitionScope.OverlayClip
+    ): Modifier = this
+
+    override fun OverlayClip(clipShape: Shape): SharedTransitionScope.OverlayClip {
+        TODO("Not needed for dummy")
+    }
+
+    override val Placeable.PlacementScope.lookaheadScopeCoordinates: LayoutCoordinates
+        get() = TODO("Not needed for dummy")
+
+    override fun LayoutCoordinates.toLookaheadCoordinates(): LayoutCoordinates {
+        TODO("Not needed for dummy")
     }
 }
 
