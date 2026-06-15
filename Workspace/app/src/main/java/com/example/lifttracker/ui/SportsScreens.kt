@@ -1,7 +1,14 @@
 package com.example.lifttracker.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -12,6 +19,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -85,44 +93,87 @@ fun SportsApp(windowSize: WindowWidthSizeClass) {
             )
         }
     ) { innerPadding ->
-        if (uiState.isShowingListPage || contentType == SportsContentType.LIST_AND_DETAIL) {
-            Row {
-                SportsList(
-                    sports = uiState.sportsList,
-                    currentSport = uiState.currentSport,
-                    contentType = contentType,
-                    onClick = {
-                        viewModel.updateCurrentSport(it)
-                        viewModel.navigateToDetailPage()
-                    },
-                    contentPadding = innerPadding,
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(
-                            top = dimensionResource(R.dimen.padding_medium),
-                            start = dimensionResource(R.dimen.padding_medium),
-                            end = dimensionResource(R.dimen.padding_medium),
+        if (contentType == SportsContentType.LIST_ONLY) {
+            SharedTransitionLayout {
+                AnimatedContent(
+                    targetState = uiState.isShowingListPage,
+                    label = "ContainerTransform"
+                ) { showList ->
+                    if (showList) {
+                        SportsList(
+                            sports = uiState.sportsList,
+                            currentSport = uiState.currentSport,
+                            contentType = contentType,
+                            animatedVisibilityScope = this@AnimatedContent,
+                            sharedTransitionScope = this@SharedTransitionLayout,
+                            onClick = {
+                                viewModel.updateCurrentSport(it)
+                                viewModel.navigateToDetailPage()
+                            },
+                            contentPadding = innerPadding,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(
+                                    top = dimensionResource(R.dimen.padding_medium),
+                                    start = dimensionResource(R.dimen.padding_medium),
+                                    end = dimensionResource(R.dimen.padding_medium)
+                                )
                         )
-                )
-
-                if (contentType == SportsContentType.LIST_AND_DETAIL) {
-                    SportsDetail(
-                        selectedSport = uiState.currentSport,
-                        contentPadding = innerPadding,
-                        onBackPressed = {},
-                        modifier = Modifier.weight(1.5f)
-                    )
+                    } else {
+                        SportsDetail(
+                            selectedSport = uiState.currentSport,
+                            contentPadding = innerPadding,
+                            animatedVisibilityScope = this@AnimatedContent,
+                            sharedTransitionScope = this@SharedTransitionLayout,
+                            onBackPressed = {
+                                viewModel.navigateToListPage()
+                            }
+                        )
+                    }
                 }
             }
         } else {
-            SportsDetail(
-                selectedSport = uiState.currentSport,
-                contentPadding = innerPadding,
-                onBackPressed = {
-                    viewModel.navigateToListPage()
-                }
-            )
+
         }
+
+//        if (uiState.isShowingListPage || contentType == SportsContentType.LIST_AND_DETAIL) {
+//            Row {
+//                SportsList(
+//                    sports = uiState.sportsList,
+//                    currentSport = uiState.currentSport,
+//                    contentType = contentType,
+//                    onClick = {
+//                        viewModel.updateCurrentSport(it)
+//                        viewModel.navigateToDetailPage()
+//                    },
+//                    contentPadding = innerPadding,
+//                    modifier = Modifier
+//                        .weight(1f)
+//                        .padding(
+//                            top = dimensionResource(R.dimen.padding_medium),
+//                            start = dimensionResource(R.dimen.padding_medium),
+//                            end = dimensionResource(R.dimen.padding_medium),
+//                        )
+//                )
+//
+//                if (contentType == SportsContentType.LIST_AND_DETAIL) {
+//                    SportsDetail(
+//                        selectedSport = uiState.currentSport,
+//                        contentPadding = innerPadding,
+//                        onBackPressed = {},
+//                        modifier = Modifier.weight(1.5f)
+//                    )
+//                }
+//            }
+//        } else {
+//            SportsDetail(
+//                selectedSport = uiState.currentSport,
+//                contentPadding = innerPadding,
+//                onBackPressed = {
+//                    viewModel.navigateToListPage()
+//                }
+//            )
+//        }
     }
 }
 
@@ -263,6 +314,8 @@ private fun SportsList(
     sports: List<Sport>,
     currentSport: Sport,
     contentType: SportsContentType,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     onClick: (Sport) -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
@@ -281,12 +334,18 @@ private fun SportsList(
                     MaterialTheme.colorScheme.tertiaryContainer
                 }
             )
-
-            SportsListItem(
-                sport = sport,
-                color = color,
-                onItemClick = onClick
-            )
+            with(sharedTransitionScope) {
+                SportsListItem(
+                    sport = sport,
+                    color = color,
+                    onItemClick = onClick,
+                    modifier = Modifier
+                        .sharedElement(
+                            rememberSharedContentState(key = sport.id.toString()),
+                            animatedVisibilityScope = animatedVisibilityScope
+                        )
+                )
+            }
         }
     }
 }
@@ -296,6 +355,8 @@ private fun SportsDetail(
     selectedSport: Sport,
     onBackPressed: () -> Unit,
     contentPadding: PaddingValues,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    sharedTransitionScope: SharedTransitionScope,
     modifier: Modifier = Modifier
 ) {
     BackHandler {
@@ -303,76 +364,83 @@ private fun SportsDetail(
     }
     val scrollState = rememberScrollState()
     val layoutDirection = LocalLayoutDirection.current
-    Box(
-        modifier = modifier
-            .verticalScroll(state = scrollState)
-            .padding(top = contentPadding.calculateTopPadding())
-    ) {
-        Column(
-            modifier = Modifier
-                .padding(
-                    bottom = contentPadding.calculateTopPadding(),
-                    start = contentPadding.calculateStartPadding(layoutDirection),
-                    end = contentPadding.calculateEndPadding(layoutDirection)
+
+    with(sharedTransitionScope) {
+        Box(
+            modifier = modifier
+                .verticalScroll(state = scrollState)
+                .padding(top = contentPadding.calculateTopPadding())
+                .sharedElement(
+                    rememberSharedContentState(key = selectedSport.id.toString()),
+                    animatedVisibilityScope = animatedVisibilityScope
                 )
         ) {
-            Box {
+            Column(
+                modifier = Modifier
+                    .padding(
+                        bottom = contentPadding.calculateTopPadding(),
+                        start = contentPadding.calculateStartPadding(layoutDirection),
+                        end = contentPadding.calculateEndPadding(layoutDirection)
+                    )
+            ) {
                 Box {
-                    Image(
-                        painter = painterResource(selectedSport.sportsImageBanner),
-                        contentDescription = null,
-                        alignment = Alignment.TopCenter,
-                        contentScale = ContentScale.FillWidth,
-                    )
-                }
-                Column(
-                    Modifier
-                        .align(Alignment.BottomStart)
-                        .fillMaxWidth()
-                        .background(
-                            Brush.verticalGradient(
-                                listOf(Color.Transparent, MaterialTheme.colorScheme.scrim),
-                                0f,
-                                400f
-                            )
-                        )
-                ) {
-                    Text(
-                        text = stringResource(selectedSport.titleResourceId),
-                        style = MaterialTheme.typography.headlineLarge,
-                        color = MaterialTheme.colorScheme.inverseOnSurface,
-                        modifier = Modifier
-                            .padding(horizontal = dimensionResource(R.dimen.padding_small))
-                    )
-                    Row(
-                        modifier = Modifier.padding(dimensionResource(R.dimen.padding_small))
-                    ) {
-                        Text(
-                            text = pluralStringResource(
-                                R.plurals.player_count_caption,
-                                selectedSport.playerCount,
-                                selectedSport.playerCount
-                            ),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.inverseOnSurface,
-                        )
-                        Spacer(Modifier.weight(1f))
-                        Text(
-                            text = stringResource(R.string.olympic_caption),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.inverseOnSurface,
+                    Box {
+                        Image(
+                            painter = painterResource(selectedSport.sportsImageBanner),
+                            contentDescription = null,
+                            alignment = Alignment.TopCenter,
+                            contentScale = ContentScale.FillWidth,
                         )
                     }
+                    Column(
+                        Modifier
+                            .align(Alignment.BottomStart)
+                            .fillMaxWidth()
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(Color.Transparent, MaterialTheme.colorScheme.scrim),
+                                    0f,
+                                    400f
+                                )
+                            )
+                    ) {
+                        Text(
+                            text = stringResource(selectedSport.titleResourceId),
+                            style = MaterialTheme.typography.headlineLarge,
+                            color = MaterialTheme.colorScheme.inverseOnSurface,
+                            modifier = Modifier
+                                .padding(horizontal = dimensionResource(R.dimen.padding_small))
+                        )
+                        Row(
+                            modifier = Modifier.padding(dimensionResource(R.dimen.padding_small))
+                        ) {
+                            Text(
+                                text = pluralStringResource(
+                                    R.plurals.player_count_caption,
+                                    selectedSport.playerCount,
+                                    selectedSport.playerCount
+                                ),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.inverseOnSurface,
+                            )
+                            Spacer(Modifier.weight(1f))
+                            Text(
+                                text = stringResource(R.string.olympic_caption),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.inverseOnSurface,
+                            )
+                        }
+                    }
                 }
-            }
-            Text(
-                text = stringResource(selectedSport.sportDetails),
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(
-                    vertical = dimensionResource(R.dimen.padding_detail_content_vertical),
-                    horizontal = dimensionResource(R.dimen.padding_detail_content_horizontal)
+                Text(
+                    text = stringResource(selectedSport.sportDetails),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(
+                        vertical = dimensionResource(R.dimen.padding_detail_content_vertical),
+                        horizontal = dimensionResource(R.dimen.padding_detail_content_horizontal)
+                    )
                 )
-            )
+            }
         }
     }
 }
