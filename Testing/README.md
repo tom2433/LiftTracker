@@ -24,7 +24,7 @@ Declare using 'var':
 
 ```Kotlin
 var name = "tom"
-name = "Tom
+name = "Tom"
 ```
 
 ---
@@ -416,6 +416,7 @@ Question(questionText=Quoth the raven ___, answer=nevermore, difficulty=MEDIUM)
 Singleton objects are used for when a class will only have one instance, i.e. player stats in a game for one user; an object to access a remote data source like a database; authentication, where only one user should be logged in at a time. Singleton objects do not have constructors since you cannot create instances of them.
 
 Syntax:
+
 ```Kotlin
 object StudentProgress {
     var total: Int = 10
@@ -465,6 +466,7 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 
 > [!NOTE]
 > Every composable function must include an optional ```modifier``` parameter like so:
+>
 > ```Kotlin
 > @Composable
 > fun AComposableFunction(modifier: Modifier = Modifier)
@@ -521,6 +523,7 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 
 > [!NOTE]
 > Layouts like ```Box```, ```Row```, and ```Column``` use Trailing Lambda Syntax, which means that they use curly braces directly after the layout name instead of parentheses. Ex:
+>
 > ```Kotlin
 > Box {
 >   // UI components
@@ -713,7 +716,7 @@ fun GreetingImage(modifier: Modifier = Modifier) {
     val image = painterResource(R.drawable.background)
 
     Image(
-        painter = image
+        painter = image,
         contentDescription = null
     )
 }
@@ -726,11 +729,11 @@ fun GreetingImage(modifier: Modifier = Modifier) {
 
 ### Other useful image hacks
 
-To wrap a surface around an image such that the surface is only as wide as its child (useful for adding a background to a transparent image), use ```Modifier.wrapContentWidth``` as follows:
+To wrap a surface around an image such that the surface is only as wide as its child (useful for adding a background to a transparent image), use ```Modifier.wrapContentWidth()``` as follows:
 
 ```Kotlin
 Surface(
-    modifier = Modifier.wrapContentWidth
+    modifier = Modifier.wrapContentWidth()
 ) {
     Image(
         // ...
@@ -2095,4 +2098,152 @@ displayToast("Here is another toast popup")
 
 ## Changing Content layout based on screen ratio/size
 
+See SportsApp branch.
+
+---
+
+## Persist Data with Room
+
+Room has three main components:
+
+- Room entities: represent tables in your app's database. Can update existing rows and create new rows.
+- Room DAOs (Data Access Objects): provide methods that your app uses to retrieve, update, insert, and delete data in the database.
+- Room Database class: database class that provides your app with instance of the DAOs associated with that database.
+
+So, the Room Database Class is farthest away from your code but it provides the DAOs, and the DAOs provide you with the entities.
+
+### Add Room dependency to project
+
+The process of adding the dependency for Room may change in the future. Consult [this link](https://developer.android.com/jetpack/androidx/releases/room) for any updates.
+
+To add Room to your project, add this line to the ```build.gradle.kts (Project: Lift_Tracker)``` under the ```plugins``` section:
+
+```kts
+alias(libs.plugins.ksp) apply false
+```
+
+Then add this line to the ```build.gradle.kts (Module :app)``` under the ```plugins``` section:
+
+```kts
+alias(libs.plugins.ksp)
+```
+
+And then add these lines to the ```libs.versions.toml``` file under the ```versions``` section:
+
+```toml
+room = "2.6.1"
+ksp = "2.2.10-2.0.2"
+```
+
+Add these lines to the ```libs.versions.toml``` file under the ```libraries``` section:
+
+```toml
+androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
+androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
+androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
+```
+
+And finally add this line to the ```libs.versions.toml``` file under the ```plugins``` section:
+
+```toml
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+```
+
+### How to create an Entity class
+
+As mentioned, entities represent tables in your app's database. here is a sample entity. See how it is denoted with ```@Entity``` and contains an auto-generated primary key:
+
+```Kotlin
+@Entity(tableName = "items")    // the tableName is optional and will default to the class name
+data class Item(
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,
+    val name: String,
+    val price: Double,
+    val quantity: Int
+)
+```
+
+### How to create the Data Access Object (DAO)
+
+As mentioned, the DAO separates the persistence layer from the rest of the application by providing an abstract interface.
+
+A DAO is an interface, so it should be defined like so, with the ```@Dao``` annotation:
+
+```Kotlin
+@Dao
+interface ItemDao {
+}
+```
+
+The annotations to use when writing functions for this interface are ```@Insert```, ```@Update```, ```@Delete```, and ```@Query```. These functions are also defined using ```suspend```, which lets the function run on a separate thread.
+
+The onConflict argument tells the Room what to do in case of a conflict. Look [here](https://developer.android.com/reference/androidx/room/OnConflictStrategy.html) for the ```OnConflictStrategy``` documentation. Here are some examples on how to implement these functions:
+
+```Kotlin
+@Dao
+interface ItemDao {
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insert(item: Item)
+
+    // the entity that's updated has the same primary key as the entity that's passed in.
+    // you can update some or all of the entity's other properties.
+    @Update
+    suspend fun update(item: Item)
+
+    // @Delete annotation deletes an item or a list of items.
+    // You need to pass the entities you want to delete
+    // If you don't have the entity, you might have to fetch it before calling the delete() function.
+    @Delete
+    suspend fun delete(item: Item)
+
+    @Query("SELECT * FROM items WHERE id = :id")
+    fun getItem(id: Int): Flow<Item>
+
+    @Query("SELECT * FROM items ORDER BY name ASC")
+    fun getAllItems(): Flow<List<Item>>
+}
+```
+
+Notice the ```:id``` in the query. This references the ```id``` parameter in ```getItem()```. The ```Flow``` return type gives a notification in some way whenever the data in the database changes. This allows you to observe the data and update your UI accordingly. The ```Flow``` return type also allows the query to run on the background thread, which is why you don't need to explicitly make it a ```suspend``` function and call it inside a coroutine scope.
+
+### How to create a Room Database class
+
+The ```RoomDatabase``` class defines the list of entities and DAOs and provides the app with instances of DAOs that you define. Then the app can use the DAOs to retrieve data from the database as instances of the associated data entity objects, and also use the data entities to update rows from the corresponding tables or create new rows for insertion.
+
+Here is an example of the ```RoomDatabase``` class being implemented:
+
+```Kotlin
+/**
+ * Database class with a singleton Instance object.
+ */
+@Database(entities = [Item::class], version = 1, exportSchema = false)
+abstract class InventoryDatabase : RoomDatabase() {
+    abstract fun itemDao(): ItemDao
+
+    companion object {
+        @Volatile
+        private var Instance: InventoryDatabase? = null
+        fun getDatabase(context: Context): InventoryDatabase {
+            // if the Instance is not null, return it, otherwise create a new database instance.
+            return Instance ?: synchronized(this) {
+                Room.databaseBuilder(context, InventoryDatabase::class.java, "item_database")
+                    .build()
+                    .also { Instance = it }
+            }
+        }
+    }
+}
+```
+
+A few notes:
+
+- In the ```@Database()``` annotation:
+    - the ```entities``` parameter specifies the data class entities (tables) in the database
+    - the ```version``` parameter increases whenever the schema of the database table is changed
+    - the ```exportSchema``` parameter indicates whether to keep schema version history backups
+- The ```companion object {}``` allows access to the methods to create or get the database and uses the class name as the qualifier.
+    - The ```Instance``` variable keeps only one reference to the database once it has been created, which helps to maintain a single instance of the database opened at any given time.
+    - The ```@Volatile``` annotation means that the ```Instance``` variable is never cached, so all reads and writes are to and from the main memory, so that the value of ```Instance``` is always up to date. Changes made by one thread to ```Instance``` are immediately visible to all other threads.
+- Inside the ```getDatabase()``` function, a ```synchronized{}``` block is used to ensure that only one thread can enter this block of code at a time, which makes sure that the database only gets initialized once.
 
