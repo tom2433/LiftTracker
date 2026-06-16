@@ -25,11 +25,8 @@ The ```lift_days``` table has 5 columns:
 
 - ```lift_day_id``` (INTEGER): primary key. This is the main identifier that the ```lift_sets``` table uses to associate set data with a specific day.
 - ```day_number``` (INTEGER): the number of the day; e.g. ```1```, ```2```, ```3```, etc.
-- ```day_label``` (TEXT): the name of the day; e.g. ```"Day 1"```, ```"Day 2"```, ```"Day 3"```, etc.
+- ```day_label``` (TEXT): the name of the day; e.g. ```"Day 1"```, ```"Day 2"```, ```"Day 3"```, etc. as default. The user may be able to change this name in future versions.
 - ```note``` (TEXT): a user-written note for the day, may be blank
-
-> [!WARNING]
-> The ```lift_days``` table must be modified to remove the day label since it can be generated at runtime.
 
 #### lift_sets
 
@@ -41,11 +38,8 @@ The ```lift_sets``` table has 6 columns:
 - ```lift_day_id``` (INTEGER): foreign key referring to ```lift_days```. This is what links this set to a particular day.
 - ```lift_id``` (INTEGER): foreign key referring to ```lifts```. This is what links this set to a particular lift (e.g., bicep curls).
 - ```set_number``` (INTEGER): this set number identifies when this set took place, only in relation to the other sets completed for this specific lift on this specific day.
-- ```set_label``` (TEXT): just a string containing the name of the set (e.g., ```"Set 1"```, ```"Set 2"```, ```"Set 3"```, etc.)
+- ```set_label``` (TEXT): just a string containing the name of the set (e.g., ```"Set 1"```, ```"Set 2"```, ```"Set 3"```, etc. as default). The user may be able to change this label in future versions.
 - ```set_note``` (TEXT): a user-written note for the set, may be blank
-
-> [!WARNING]
-> The ```lift_sets``` table must be modified to remove the set_label since it can be generated at runtime, and it also needs an overall set number to track when the set was completed in relation to all sets completed on the specific day.
 
 #### lifts
 
@@ -57,6 +51,9 @@ The ```lifts``` table has 4 columns:
 - ```muscle_group_id``` (INTEGER): foreign key referring to the ```muscle_groups``` table. This is what links each lift to its corresponding muscle group.
 - ```name``` (TEXT): the user-specified name for the lift.
 - ```note``` (TEXT): a user-written note for the lift, may be blank
+
+> [!WARNING]
+> The ```lifts``` table will eventually need to be updated to include a ```metric_type``` column, which will indicate whether the lift data will be measured in reps or time.
 
 #### muscle_groups
 
@@ -78,12 +75,9 @@ The ```set_metrics``` table has 6 columns:
 - ```metric_id``` (INTEGER): primary key. This is the main identifier for each set metric.
 - ```set_id``` (INTEGER): foreign key referring to the ```lift_sets``` table. This is what links each lift metric to its corresponding set.
 - ```metric_position``` (INTEGER): this indicates whether the metric is a weight value or a rep value. ```1``` indicates weight, and ```2``` indicates reps.
-- ```metric_name``` (TEXT): this indicates whether the metric is a weight value or a rep value (e.g., ```"weight"``` or ```"reps"```)
+- ```metric_name``` (TEXT): this indicates whether the metric is a weight value or a rep value (e.g., ```"weight"``` or ```"reps"```). In future versions, ```"reps"``` may be replaced with ```"time"``` depending on the user's discretion.
 - ```value``` (REAL): this indicates the number of reps performed, or the weight value for the specific set.
 - ```note``` (TEXT): a user-written note for the metric, may be blank.
-
-> [!WARNING]
-> The ```set_metrics``` table must be edited to remove the ```metric_name``` column since it is redundant. The metric name can be determined from the ```metric_position```, which indicates ```1``` for weight and ```2``` for reps.
 
 #### users
 
@@ -94,9 +88,6 @@ The ```users``` table has 3 columns:
 - ```user_id``` (INTEGER): primary key. This is the main identifier used to distinguish between each profile.
 - ```name``` (TEXT): the user-written name for the profile.
 - ```note``` (TEXT): a user-written note for the profile, may be blank.
-
-> [!WARNING]
-> The name of the ```users``` table must be changed to ```profiles``` since the name ```users``` is now obsolete. This change will also require a modification to the name of the ```user_id``` column in the ```muscle_groups``` table so that it will become ```profile_id```.
 
 ---
 
