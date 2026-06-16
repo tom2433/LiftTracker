@@ -17,11 +17,6 @@
 <resources>
     <dimen name="padding_small">8dp</dimen>
     <dimen name="padding_medium">16dp</dimen>
-
-    <dimen name="card_corner_radius">20dp</dimen>
-    <dimen name="card_image_height">128dp</dimen>
-    <dimen name="card_text_vertical_space">4dp</dimen>
-
-    <dimen name="padding_detail_content_horizontal">40dp</dimen>
-    <dimen name="padding_detail_content_vertical">24dp</dimen>
+    <dimen name="padding_large">20dp</dimen>
+    <dimen name="padding_extra_large">32dp</dimen>
 </resources>

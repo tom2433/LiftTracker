@@ -9,12 +9,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
-import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
-import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.lifttracker.ui.SportsApp
 import com.example.lifttracker.ui.theme.LiftTrackerTheme
 
 private const val TAG = "MainActivity"
@@ -35,8 +32,8 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    val windowSize = calculateWindowSizeClass(this)
-                    SportsApp(windowSize = windowSize.widthSizeClass)
+//                    val windowSize = calculateWindowSizeClass(this)
+                    InventoryApp()
                 }
             }
         }
@@ -68,43 +65,56 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
-@Preview(widthDp = 411, heightDp = 923, name = "Pixel")
+@Preview(showBackground = true)
 @Composable
-fun SportsAppCompactPreviewPixel() {
+fun InventoryAppPreview() {
     LiftTrackerTheme(dynamicColor = false, darkTheme = true) {
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            SportsApp(WindowWidthSizeClass.Compact)
+            InventoryApp()
         }
     }
 }
 
-@Preview(widthDp = 673, heightDp = 841, name = "Foldable")
-@Composable
-fun SportsAppCompactPreviewFoldable() {
-    LiftTrackerTheme(dynamicColor = false, darkTheme = true) {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
-        ) {
-            SportsApp(WindowWidthSizeClass.Medium)
-        }
-    }
-}
-
-@Preview(widthDp = 1280, heightDp = 800, name = "Tablet")
-@Composable
-fun SportsAppCompactPreviewTablet() {
-    LiftTrackerTheme(dynamicColor = false, darkTheme = true) {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
-        ) {
-            SportsApp(WindowWidthSizeClass.Expanded)
-        }
-    }
-}
+//@OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
+//@Preview(widthDp = 411, heightDp = 923, name = "Pixel")
+//@Composable
+//fun SportsAppCompactPreviewPixel() {
+//    LiftTrackerTheme(dynamicColor = false, darkTheme = true) {
+//        Surface(
+//            modifier = Modifier.fillMaxSize(),
+//            color = MaterialTheme.colorScheme.background
+//        ) {
+//            SportsApp(WindowWidthSizeClass.Compact)
+//        }
+//    }
+//}
+//
+//@Preview(widthDp = 673, heightDp = 841, name = "Foldable")
+//@Composable
+//fun SportsAppCompactPreviewFoldable() {
+//    LiftTrackerTheme(dynamicColor = false, darkTheme = true) {
+//        Surface(
+//            modifier = Modifier.fillMaxSize(),
+//            color = MaterialTheme.colorScheme.background
+//        ) {
+//            SportsApp(WindowWidthSizeClass.Medium)
+//        }
+//    }
+//}
+//
+//@Preview(widthDp = 1280, heightDp = 800, name = "Tablet")
+//@Composable
+//fun SportsAppCompactPreviewTablet() {
+//    LiftTrackerTheme(dynamicColor = false, darkTheme = true) {
+//        Surface(
+//            modifier = Modifier.fillMaxSize(),
+//            color = MaterialTheme.colorScheme.background
+//        ) {
+//            SportsApp(WindowWidthSizeClass.Expanded)
+//        }
+//    }
+//}
 
