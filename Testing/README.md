@@ -2110,7 +2110,7 @@ Room has three main components:
 - Room DAOs (Data Access Objects): provide methods that your app uses to retrieve, update, insert, and delete data in the database.
 - Room Database class: database class that provides your app with instance of the DAOs associated with that database.
 
-So, the Room Database Class is farthest away from your code but it provides the DAOs, and the DAOs provide you with the entities.
+So, the Room Database Class is farthest away from your code but it provides the DAOs, and the DAOs provide you with the entities. Keep in mind that all of these are located in the ```com.example.lifttracker.data``` package.
 
 ### Add Room dependency to project
 
@@ -2246,4 +2246,57 @@ A few notes:
     - The ```Instance``` variable keeps only one reference to the database once it has been created, which helps to maintain a single instance of the database opened at any given time.
     - The ```@Volatile``` annotation means that the ```Instance``` variable is never cached, so all reads and writes are to and from the main memory, so that the value of ```Instance``` is always up to date. Changes made by one thread to ```Instance``` are immediately visible to all other threads.
 - Inside the ```getDatabase()``` function, a ```synchronized{}``` block is used to ensure that only one thread can enter this block of code at a time, which makes sure that the database only gets initialized once.
+
+### How to use the Room Database, Entities, and DAOs in practice
+
+Consider creating one single class that uses the DAO to perform its functions. In this example (the InventoryApp), we make an interface for a "repository" class and then implement it like so:
+
+**The Interface**
+
+```Kotlin
+interface ItemsRepository {
+    /**
+     * Retrieve all the items from the given data source.
+     */
+    fun getAllItemsStream(): Flow<List<Item>>
+
+    /**
+     * Retrieve an item from the given data source that matches with the id.
+     */
+    fun getItemStream(id: Int): Flow<Item?>
+
+    /**
+     * Insert item in the data source
+     */
+    suspend fun insertItem(item: Item)
+
+    /**
+     * Delete item form the data source
+     */
+    suspend fun deleteItem(item: Item)
+
+    /**
+     * Update item in the data source
+     */
+    suspend fun updateItem(item: Item)
+}
+```
+
+**The Implementation**
+
+```Kotlin
+class OfflineItemsRepository(private val itemDao: ItemDao) : ItemsRepository {
+    override fun getAllItemsStream(): Flow<List<Item>> = itemDao.getAllItems()
+    override fun getItemStream(id: Int): Flow<Item?> = itemDao.getItem(id)
+    override suspend fun insertItem(item: Item) = itemDao.insert(item)
+    override suspend fun deleteItem(item: Item) = itemDao.delete(item)
+    override suspend fun updateItem(item: Item) = itemDao.update(item)
+}
+```
+
+#### What the hell is a repository?
+
+I'm glad you asked so politely. Repositories are useful when your app has multiple data sources. The ```ViewModel``` talks with the ```Repository```, and the ```Repository``` talks with the ```Room```. If there are multiple data sources, the ```Repository``` will talk with all of those, and the ```ViewModel``` will still just have to talk with the ```Repository```.
+
+So, just call ```OfflineItemsRepository.getAllItems()``` right? No.
 

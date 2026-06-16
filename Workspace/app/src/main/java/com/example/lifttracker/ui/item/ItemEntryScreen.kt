@@ -17,6 +17,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalLocale
@@ -28,7 +29,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.lifttracker.InventoryTopAppBar
 import com.example.lifttracker.R
 import com.example.lifttracker.ui.AppViewModelProvider
+import com.example.lifttracker.ui.item.ItemEntryBody
 import com.example.lifttracker.ui.navigation.NavigationDestination
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import java.util.Currency
 
 object ItemEntryDestination : NavigationDestination {
@@ -44,6 +48,8 @@ fun ItemEntryScreen(
     canNavigateBack: Boolean = true,
     viewModel: ItemEntryViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
+    val coroutineScope = rememberCoroutineScope()
+
     Scaffold(
         topBar = {
             InventoryTopAppBar(
@@ -56,7 +62,12 @@ fun ItemEntryScreen(
         ItemEntryBody(
             itemUiState = viewModel.itemUiState,
             onItemValueChange = viewModel::updateUiState,
-            onSaveClick = { },
+            onSaveClick = {
+                coroutineScope.launch {
+                    viewModel.saveItem()
+                    navigateBack()
+                }
+            },
             modifier = Modifier
                 .padding(
                     start = innerPadding.calculateStartPadding(LocalLayoutDirection.current),
