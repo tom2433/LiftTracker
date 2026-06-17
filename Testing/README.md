@@ -2238,6 +2238,7 @@ abstract class InventoryDatabase : RoomDatabase() {
 
 A few notes:
 
+- The ```abstract fun itemDao(): ItemDao``` is what links the database to the DAO.
 - In the ```@Database()``` annotation:
     - the ```entities``` parameter specifies the data class entities (tables) in the database
     - the ```version``` parameter increases whenever the schema of the database table is changed
@@ -2249,7 +2250,7 @@ A few notes:
 
 ### How to use the Room Database, Entities, and DAOs in practice
 
-Consider creating one single class that uses the DAO to perform its functions. In this example (the InventoryApp), we make an interface for a "repository" class and then implement it like so:
+Consider creating one single class that wraps the DAO to perform its functions. In this example (the InventoryApp), we make an interface for a "repository" class and then implement it like so:
 
 **The Interface**
 
@@ -2294,9 +2295,307 @@ class OfflineItemsRepository(private val itemDao: ItemDao) : ItemsRepository {
 }
 ```
 
+This interface and class are defined as separate files in the ```data``` package.
+
 #### What the hell is a repository?
 
 I'm glad you asked so politely. Repositories are useful when your app has multiple data sources. The ```ViewModel``` talks with the ```Repository```, and the ```Repository``` talks with the ```Room```. If there are multiple data sources, the ```Repository``` will talk with all of those, and the ```ViewModel``` will still just have to talk with the ```Repository```.
 
 So, just call ```OfflineItemsRepository.getAllItems()``` right? No.
 
+This example application uses dependency injection. That's why the ```OfflineItemsRepository``` needs an ```ItemDao``` to function, and why the **AppContainer** and **AppDataContainer** exist (to provide the ```ItemDao``` to the ```OfflineItemsRepository```). ```AppContainer.kt```, located in the ```data``` package, contains the manual dependency injection setup. The ```AppContainer``` interface provides a place where shared dependencies live, and one of those dependencies is ```itemsRepository```:
+
+```Kotlin
+/**
+ * App Container for dependency injection.
+ */
+interface AppContainer() {
+    val itemsRepository: ItemsRepository
+}
+
+/**
+ * AppContainer implementation that provides an instance of OfflineItemsRepository
+ */
+class AppDataContainer(private val context: Context) : AppContainer {
+    override val itemsRepository: ItemsRepository by lazy {
+        OfflineItemsRepository(
+            itemDao = InventoryDatabase.getDatabase(context).itemDao()
+        )
+    }
+}
+```
+
+A few notes:
+- The ```ItemsRepository``` is defined ```by lazy``` so that it is not created until it is needed.
+- So when someone asks for the ```itemsRepository```, ```AppDataContainer``` will:
+    - get the room database
+    - get the DAO from the database
+    - create an ```OfflineItemsRepository``` using that DAO, and continue to use that repository afterward.
+- All of this seems unnecessarily complicated because it is using **dependency injection**, which is a good coding practice where a class depends on an object, but it doesn't create that object itself.
+    - An ```OfflineItemsRepository``` is built from the ```ItemsRepository``` and depends on an ```ItemDao```, but it doesn't create an ```ItemDao```. The ```RoomDatabase``` does.
+
+So, just call ```AppDataContainer.itemsRepository.getAllItems()``` right? Still no.
+
+The Application itself depends on an ```AppContainer``` since the ```AppDataContainer``` needs a ```Context```, but the compiler doesn't know that yet. There's a hidden ```Application()``` class in the background. So let's override it in the original package ```com.example.lifttracker```:
+
+```Kotlin
+class InventoryApplication : Application() {
+    /**
+     * AppContainer instance used by the rest of the classes to obtain dependencies
+     */
+    lateinit var container: AppContainer
+
+    override fun onCreate() {
+        super.onCreate()
+        container = AppDataContainer(
+            context = this
+        )
+    }
+}
+```
+
+Having a custom ```Application``` now is all fine and dandy, but the compiler doesn't know that it exists yet, so we have to tell it that it does in the ```AndroidManifest.xml``` file.
+
+To do this, we add ```android:name=".InventoryApplication"``` to the ```<application>``` tag in ```AndroidManifest.xml```. Inside the ```<application>``` tag exists an ```<activity>``` tag, which also has an ```android:name``` attribute. Now that the Android Manifest is updated, the startup order will look something like this:
+
+1. Android starts the app process.
+2. Android looks at ```<application android:name=".InventoryApplication">```.
+3. Android creates ```InventoryApplication```.
+4. ```InventoryApplication.onCreate()``` runs.
+5. The ```AppDataContainer``` gets created.
+6. Android launches ```MainActivity```.
+7. ```MainActivity.onCreate()``` runs.
+8. Compose UI starts.
+9. UI asks for ViewModels.
+10. ViewModels can access the repository through the ```InventoryApplication```'s ```AppDataContainer```.
+
+All of the above might make sense except for the last part. How does a viewmodel even access the ```InventoryApplication``` in order to retreive the ```OfflineItemsRepository```?
+
+#### How does a ViewModel access the custom Application class?
+
+Thought things were already unnecessarily complicated? It's actually a lot worse than you think! A ```ViewModel``` can't actually access the ```InventoryApplication``` on its own, so it needs a ```ViewModelFactory``` to hold its pathetic, useless little hand. Here's how it works:
+
+Let's say we want a ```ViewModel``` to have access to an ItemsRepository, so we define it like so inside the ui package:
+
+```Kotlin
+class ItemEntryViewModel(private val itemsRepository: ItemsRepository) : ViewModel() {
+    // Item UI state
+    var itemUiState by mutableStateOf(ItemUiState())
+        private set
+
+    fun updateUiState(itemDetails: ItemDetails) {
+        itemUiState = ItemUiState(
+            itemDetails = itemDetails,
+            isEntryValid = validateInput(itemDetails)
+        )
+    }
+
+    private fun validateInput(uiState: ItemDetails = itemUiState.itemDetails): Boolean {
+        return with(uiState) {
+            name.isNotBlank() && price.isNotBlank() && quantity.isNotBlank()
+        }
+    }
+
+    suspend fun saveItem() {
+        if (validateInput()) {
+            // remember that Item is an entity (row in a table),
+            // so uiState.itemDetails must be converted to that
+            itemsRepository.insertItem(itemUiState.itemDetails.toItem())
+        }
+    }
+}
+
+data class ItemUiState(
+    val itemDetails: ItemDetails = ItemDetails(),
+    val isEntryValid: Boolean = false
+)
+
+data class ItemDetails(
+    val id: Int,
+    val name: String = "",
+    val price: String = "",
+    val quantity: String = ""
+)
+```
+
+But where the flying fuck do we get an ```ItemsRepository``` to give to an ```ItemEntryViewModel```? The answer lies in a ```ViewModelFactory```, which is responsible for injecting repositories into ```ViewModel```s.
+
+#### View Model Factories
+
+The purpose of a ```ViewModelFactory``` is to provide instances of ```ViewModel```s, which becomes necessary when a ```ViewModel``` requires constructor arguments (like repositories).
+
+You can create a View Model Factory inside a View Model Provider like so in the ui package. Keep in mind that ```CreationExtras``` is a container of objects provided by android, and it exists only during the creation process. It stores things like ```Application```, ```SavedStateRegistryOwner```, ```ViewModelStoreOwner```, etc. This is why it can access the ```InventoryApplication```. Don't worry about it.
+
+```Kotlin
+/**
+ * Provides a factory to create instances of ViewModel for the entire app.
+ */
+object AppViewModelProvider {
+    val Factory = viewModelFactory {
+        /**
+         * An initializer is a function that is executed with a CreationExtras as its receiver.
+         * It returns a ViewModel.
+         */
+
+        // initializer for ItemEditViewModel
+        initializer {
+            ItemEditViewModel(
+                savedStateHandle = this.createSavedStateHandle()
+            )
+        }
+
+        // initializer for ItemEntryViewModel
+        initializer {
+            ItemEntryViewModel(inventoryApplication().container.itemsRepository)
+        }
+
+        // initializer for ItemDetailsViewModel
+        initializer {
+            ItemDetailsViewModel(
+                savedStateHandle = this.createSavedStateHandle()
+            )
+        }
+
+        // initializer for HomeViewModel
+        initializer {
+            HomeViewModel()
+        }
+    }
+}
+
+/**
+ * This is an extension function on CreationExtras.
+ * That means that it lets any CreationExtras object call it as if this function belongs to it.
+ * Since initializer is executed with a CreationExtras as its receiver, it can also use this function.
+ */
+fun CreationExtras.inventoryApplication(): InventoryApplication =
+    (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as InventoryApplication)
+```
+
+Read the comments in the above code to understand it better. An ```initializer``` is a type of function that is executed with a ```CreationExtras``` as its receiver and returns a ```ViewModel```. You can see this in its source code if you really feel like looking at it.
+
+Are we done? No.
+
+We need to figure out how to create a view model in a UI screen, but we can't create it directly. We need to use the ```AppViewModelProvider```. Also, whenever we call a function from a ```ViewModel``` that begins with ```suspend```, we need to call it using ```coroutineScope.launch {}```, and we define the coroutine scope like ```val coroutineScope = rememberCoroutineScope()```.
+
+Here is an example of how the ```ItemEntryViewModel``` is used in the ```ItemEntryScreen```:
+
+```Kotlin
+@Composable
+fun ItemEntryScreen(
+    navigateBack: () -> Unit,
+    onNavigateUp: () -> Unit,
+    canNavigateBack: Boolean = true,
+    viewModel: ItemEntryViewModel = viewModel(factory = AppViewModelProvider.Factory)
+) {
+    val coroutineScope = rememberCoroutineScope()
+
+    Scaffold(
+        topBar = {
+            InventoryTopAppBar(
+                title = stringResource(R.string.item_entry_title),
+                canNavigateBack = canNavigateBack,
+                navigateUp = onNavigateUp
+            )
+        }
+    ) { innerPadding ->
+        ItemEntryBody(
+            itemUiState = viewModel.itemUiState,
+            onItemValueChange = viewModel::updateUiState,
+            onSaveClick = {
+                coroutineScope.launch {
+                    viewModel.saveItem()
+                    navigateBack()
+                }
+            },
+            modifier = Modifier
+                .padding(
+                    start = innerPadding.calculateStartPadding(LocalLayoutDirection.current),
+                    end = innerPadding.calculateEndPadding(LocalLayoutDirection.current),
+                    top = innerPadding.calculateTopPadding()
+                )
+                .verticalScroll(rememberScrollState())
+                .fillMaxWidth()
+        )
+    }
+}
+```
+
+In conclusion, ```ViewModels``` inevitably perish under the infinitely massive weight of being a stateless object. In order to stay alive and do what they're supposed to do, ```ViewModels``` need to rely on their friends like ```ViewModelProviders```, ```ViewModelFactories```, ```CreationExtras``` instances, ```Application()``` overriding classes, Repositories, and ```AppContainers```.
+
+Here is the whole thing in a simple flow:
+
+### Summary of Flow when using Room
+
+When the app starts, Android reads the manifest (```AndroidManifest.xml```). When the manifest reads:
+
+```xml
+<application
+    android:name=".InventoryApplication"
+    ...>
+```
+
+Android overrides the default ```Application()``` class with ```InventoryApplication()```.
+
+Then, Android runs the ```onCreate()``` function that we overrode in ```InventoryApplication()```:
+
+```Kotlin
+override fun onCreate() {
+    super.onCreate()
+    container = AppDataContainer(this)
+}
+```
+
+So now the app has one shared container. This ```AppDataContainer``` now knows how to create the repository since we've supplied it with the context from ```InventoryApplication()```:
+
+```Kotlin
+/**
+ * AppDataContainer gets the Room database, asks the database for the DAO,
+ * and finally gives that DAO to the OfflineItemsRepository.
+ */
+override val itemsRepository: ItemsRepository by lazy {
+    OfflineItemsRepository(
+        itemDao = InventoryDatabase.getDatabase(context).itemDao()
+    )
+}
+```
+
+Now the entire data side of the application is connected like this:
+
+1. The ```InventoryDatabase``` creates and provides the ```ItemDao```.
+2. The ```ItemDao``` has insert, update, delete, and other query functions.
+3. The ```OfflineItemsRepository``` receives the ```ItemDao``` and calls its functions.
+
+Then, Android launches the ```MainActivity```. ```MainActivity``` shows your compose UI and it eventually asks for a ```ViewModel```:
+
+```Kotlin
+viewModel(factory = AppViewModelProvider.Factory)
+```
+
+The factory then realizes that it needs the repository to create the ```ItemEntryViewModel```. It knows that it's an ```ItemEntryViewModel``` because it's an ```ItemEntryViewModel```. So the factory does this:
+
+```Kotlin
+ItemEntryViewModel(
+    inventoryApplication().container.itemsRepository
+)
+```
+
+Then ```inventoryApplication()``` (a function) gets the already-created ```InventoryApplication``` from ```CreationExtras```. Then it grabs the ```AppContainer``` because it is an ```InventoryApplication```, and that is what an ```InventoryApplication``` does. It then finds that the ```AppContainer``` is in fact an ```AppDataContainer```, which contains the repository, so it grabs that and passes it into the ```ViewModel```.
+
+So then when the user taps 'Save':
+
+1. ```ItemEntryScreen``` calls ```viewModel.saveItem()```
+2. ```ItemEntryViewModel``` calls ```itemsRepository.insertItem(item)```
+3. ```OfflineItemsRepository``` calls ```itemDao.insert(item)```
+4. Room DAO inserts into SQL database
+
+*OR*, you could just do ...
+
+```Kotlin
+val database = InventoryDatabase.getDatabase(context)
+val dao = database.itemDao()
+val repository = OfflineItemsRepository(dao)
+val viewModel = ItemEntryViewModel(repository)
+```
+
+to avoid literally all of this, but it would slow the crap out of your phone and would probably result in some backend errors. Using the former strategy, the app builds these things once at startup and lets the View Model factory hand them to each ```ViewModel``` when needed.
