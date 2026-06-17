@@ -15,9 +15,8 @@ foundation = "1.11.2"
 uiTextGoogleFonts = "1.11.2"
 navigationRuntimeKtx = "2.9.8"
 navigationCompose = "2.9.8"
-roomKtx = "2.8.4"
+room = "2.8.4"
 runtime = "1.11.2"
-room = "2.6.1"
 ksp = "2.2.10-2.0.2"
 
 [libraries]
