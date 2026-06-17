@@ -1079,7 +1079,7 @@ fun AffirmationList(affirmationList: List<Affirmation>, modifier: Modifier = Mod
 ```
 
 > [!WARNING]
-> Don't actually use lazy columns. They're terrible.
+> Don't actually use lazy columns. They're terrible. I will not elaborate.
 
 ## Padding for lists
 
