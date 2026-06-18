@@ -2250,7 +2250,7 @@ A few notes:
 
 ### How to use the Room Database, Entities, and DAOs in practice
 
-Consider banging your head against a well before we begin. Then create one single class that wraps the DAO to perform its functions. In this example (the InventoryApp), we make an interface for a "repository" class and then implement it like so:
+Consider banging your head against a wall before we begin. Then create one single class that wraps the DAO to perform its functions. In this example (the InventoryApp), we make an interface for a "repository" class and then implement it like so:
 
 **The Interface**
 
