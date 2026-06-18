@@ -2236,6 +2236,9 @@ abstract class InventoryDatabase : RoomDatabase() {
 }
 ```
 
+> [!NOTE]
+> A ```companion object``` inside of a class provides **class-level members** which belong to the class itself rather than to any particular instance. It's like Kotlin's replacement for Java's ```static```.
+
 A few notes:
 
 - The ```abstract fun itemDao(): ItemDao``` is what links the database to the DAO.
@@ -2599,3 +2602,80 @@ val viewModel = ItemEntryViewModel(repository)
 ```
 
 to avoid literally all of this, but it would slow the crap out of your phone and would probably result in some backend errors. Using the former strategy, the app builds these things once at startup and lets the View Model factory hand them to each ```ViewModel``` when needed.
+
+### Retrieving data from Room
+
+As you've seen above, the ```itemsRepository``` has many functions to Create/Read/Update/Delete (CRUD). So far, we've Created by using the function ```itemsRepository.insertItem()``` via the function ```ItemEntryViewModel.saveItem()```. The latter function was called within a ```coroutineScope.launch {}``` block, trigggered by an onClick of the save button.
+
+Here, we're working with The ```HomeScreen```. Since we want ```HomeScreen``` to display items from the database, we need to tell ```AppViewModelProvider``` to create ```HomeScreen```'s ```ViewModel``` with the ```ItemsRepository```:
+
+```Kotlin
+object AppViewModelProvider {
+    val Factory = viewModelFactory {
+        // initializer for ItemEditViewModel
+        // ...
+
+        // initializer for ItemEntryViewModel
+        // ...
+
+        // initializer for ItemDetails
+        // ...
+
+        // initializer for HomeViewModel
+        initializer {
+            HomeViewModel(inventoryApplication().container.itemsRepository)
+        }
+    }
+}
+```
+
+Now that it's injected into the constructor, we can define the items in the actual ```HomeViewModel```:
+
+```Kotlin
+class HomeViewModel(itemsRepository: ItemsRepository) : ViewModel() {
+    val homeUiState: StateFlow<HomeUiState> = itemsRepository.getAllItemsStream()
+        .map { HomeUiState(it) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(TIMEOUT_MILLIS),
+            initialValue = HomeUiState()
+        )
+
+    companion object {
+        private const val TIMEOUT_MILLIS = 5_000L
+    }
+}
+
+data class HomeUiState(val itemList: List<Item> = listOf())
+```
+
+> [!INFO]
+> A **```StateFlow```** is a stream that always has one current value. Its initial value is ```HomeUiState(itemList = emptyList())```, but when Room emits a new item list, the ```StateFlow``` object is updated.
+>
+> The ```getAllItemsStream()``` function returns a ```Flow<List<Item>>``` which will emit a list of items; however, it does not do this right away, which makes it a cold flow. The ```Flow<List<Item>>``` object initially only represents a description of what it will eventually hold. When ```stateIn()``` begins collecting that flow, Room runs the query.
+>
+> The ```map``` function transforms a list whenever it is emitted. ```it``` is the emitted ```List<Item>```. At this point in the code (after the ```map```), the resulting type is ```Flow<HomeUiState>```.
+>
+> The ```stateIn()``` converts this regular ```Flow``` into a ```StateFlow<HomeUiState>```, and its arguments control this conversion:
+>
+> - ```scope = viewModelScope```
+>   - This means that the ```StateFlow<HomeUiState>``` belongs to the View Model. Once the ViewModel is destroyed, the ```StateFlow<HomeUiState>``` is cleaned up.
+> - ```started = SharingStarted.WhileSubscribed(TIMEOUT_MILLIS)```
+>   - The database stream remains active while someone is observing it.
+>   - The ```5_000L``` means that when the last observer disappears, it waits 5 seconds before stopping. This helps with temporary events like configuration changes.
+> - ```initialValue = HomeUiState()```
+>   - The ```initialValue``` parameter exists for when Room has not produced its first value yet.
+>   - In this event, ```HomeUiState()``` is just created with an empty list.
+
+Now, ```HomeUiState()``` can be used in ```HomeScreen``` like normal, as if it didn't have all of this crap happening in the background:
+
+```Kotlin
+@Composable
+fun HomeScreen(viewModel: viewModel(factory = AppViewModelFactory.Factory)) {
+    val homeUiState by viewModel.homeUiState.collectAsState()
+
+    HomeBody(
+        itemList = homeUiState.itemList
+    )
+}
+```
