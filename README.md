@@ -1,6 +1,10 @@
 # LiftTracker
 A prototype of the Lift Tracker project. This is an evolving document. Everything in here is subject to change.
 
+> [!WARNING]
+>
+> The delete item functionality is not working for the ItemDetailScreen in InventoryApp. Test before making any more commits.
+
 ---
 
 # Basic Structure
