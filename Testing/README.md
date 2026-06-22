@@ -3035,3 +3035,76 @@ fun ItemDetailsScreen(
     }
 }
 ```
+
+You can see in the above code block that there is an empty ```onDelete``` argument passed to the ```ItemDetailsBody``` composable.
+
+### How do I delete an entry in the database?
+
+To fill this empty argument in the above code block, we need to add a ```deleteItem()``` function to the ```ItemDetailsViewModel```. This one looks a bit different, since we want the screen to navigate back **after** the entry is successfully deleted.
+
+This means that we need to delete the entry and then navigate back, in that order, inside a ```launch``` block. Since the ```navigateBack()``` function is only accessible in ```ItemDetailsScreen```, we omit the ```launch``` block from this function and precede it with ```suspend``` instead:
+
+```Kotlin
+package com.example.lifttracker.ui.item
+
+class ItemDetailsViewModel(
+    ...
+) {
+    private val itemId = ...
+    val uiState = ...
+
+    ...
+
+    fun reduceQuantityByOne() {
+        viewModelScope.launch {
+            val currentItem = uiState.value.itemDetails.toItem()
+            if (currentItem.quantity > 0) {
+                itemsRepository.updateItem(
+                    currentItem.copy(quantity = currentItem.quantity - 1)
+                )
+            }
+        }
+    }
+
+    // here we use 'suspend' since we can't call navigateBack here
+    suspend fun deleteItem() {
+        itemsRepository.deleteItem(uiState.value.itemDetails.toItem())
+    }
+}
+```
+
+Now we can call it using ```coroutineScope.launch {}``` in the ```ItemDetailsScreen```:
+
+```Kotlin
+package com.example.lifttracker.ui.item
+
+object ItemDetailsDestination : NavigationDestination {
+    ...
+}
+
+@Composable
+fun ItemDetailsScreen(
+    ...
+) {
+    val uiState = ...
+    // we need to retrieve a coroutine scope bound to the composition where onDelete is called
+    val coroutineScope = rememberCoroutineScope
+
+    Scaffold(
+        ...
+    ) { innerPadding ->
+        ItemDetailsBody(
+            itemUiState = uiState.value,
+            onSellItem = { viewModel.reduceQuantityByOne },
+            onDelete = {
+                // then we launch deleteItem() from viewModel on a separate thread
+                coroutineScope.lauch {
+                    viewModel.deleteItem()
+                    navigateBack()
+                }
+            },
+            modifier = ...
+        )
+    }
+}
+```
