@@ -2154,6 +2154,8 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 As mentioned, entities represent tables in your app's database. here is a sample entity. See how it is denoted with ```@Entity``` and contains an auto-generated primary key:
 
 ```Kotlin
+package com.example.lifttracker.data
+
 @Entity(tableName = "items")    // the tableName is optional and will default to the class name
 data class Item(
     @PrimaryKey(autoGenerate = true)
@@ -2171,6 +2173,8 @@ As mentioned, the DAO separates the persistence layer from the rest of the appli
 A DAO is an interface, so it should be defined like so, with the ```@Dao``` annotation:
 
 ```Kotlin
+package com.example.lifttracker.data
+
 @Dao
 interface ItemDao {
 }
@@ -2181,6 +2185,8 @@ The annotations to use when writing functions for this interface are ```@Insert`
 The onConflict argument tells the Room what to do in case of a conflict. Look [here](https://developer.android.com/reference/androidx/room/OnConflictStrategy.html) for the ```OnConflictStrategy``` documentation. Here are some examples on how to implement these functions:
 
 ```Kotlin
+package com.example.lifttracker.data
+
 @Dao
 interface ItemDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
@@ -2214,6 +2220,8 @@ The ```RoomDatabase``` class defines the list of entities and DAOs and provides 
 Here is an example of the ```RoomDatabase``` class being implemented:
 
 ```Kotlin
+package com.example.lifttracker.data
+
 /**
  * Database class with a singleton Instance object.
  */
@@ -2258,6 +2266,8 @@ Consider banging your head against a wall before we begin. Then create one singl
 **The Interface**
 
 ```Kotlin
+package com.example.lifttracker.data
+
 interface ItemsRepository {
     /**
      * Retrieve all the items from the given data source.
@@ -2289,6 +2299,8 @@ interface ItemsRepository {
 **The Implementation**
 
 ```Kotlin
+package com.example.lifttracker.data
+
 class OfflineItemsRepository(private val itemDao: ItemDao) : ItemsRepository {
     override fun getAllItemsStream(): Flow<List<Item>> = itemDao.getAllItems()
     override fun getItemStream(id: Int): Flow<Item?> = itemDao.getItem(id)
@@ -2309,6 +2321,8 @@ So, just call ```OfflineItemsRepository.getAllItems()``` right? No.
 This example application uses dependency injection. That's why the ```OfflineItemsRepository``` needs an ```ItemDao``` to function, and why the **AppContainer** and **AppDataContainer** exist (to provide the ```ItemDao``` to the ```OfflineItemsRepository```). ```AppContainer.kt```, located in the ```data``` package, contains the manual dependency injection setup. The ```AppContainer``` interface provides a place where shared dependencies live, and one of those dependencies is ```itemsRepository```:
 
 ```Kotlin
+package com.example.lifttracker.data
+
 /**
  * App Container for dependency injection.
  */
@@ -2342,6 +2356,8 @@ So, just call ```AppDataContainer.itemsRepository.getAllItems()``` right? Still 
 The Application itself depends on an ```AppContainer``` since the ```AppDataContainer``` needs a ```Context```, but the compiler doesn't know that yet. There's a hidden ```Application()``` class in the background. So let's override it in the original package ```com.example.lifttracker```:
 
 ```Kotlin
+package com.example.lifttracker
+
 class InventoryApplication : Application() {
     /**
      * AppContainer instance used by the rest of the classes to obtain dependencies
@@ -2381,6 +2397,8 @@ Thought things were already unnecessarily complicated? It's actually a lot worse
 Let's say we want a ```ViewModel``` to have access to an ItemsRepository, so we define it like so inside the ui package:
 
 ```Kotlin
+package com.example.lifttracker.ui.item
+
 class ItemEntryViewModel(private val itemsRepository: ItemsRepository) : ViewModel() {
     // Item UI state
     var itemUiState by mutableStateOf(ItemUiState())
@@ -2430,6 +2448,8 @@ The purpose of a ```ViewModelFactory``` is to provide instances of ```ViewModel`
 You can create a View Model Factory inside a View Model Provider like so in the ui package. Keep in mind that ```CreationExtras``` is a container of objects provided by android, and it exists only during the creation process. It stores things like ```Application```, ```SavedStateRegistryOwner```, ```ViewModelStoreOwner```, etc. This is why it can access the ```InventoryApplication```. Don't worry about it.
 
 ```Kotlin
+package com.example.lifttracker.ui
+
 /**
  * Provides a factory to create instances of ViewModel for the entire app.
  */
@@ -2484,6 +2504,8 @@ We need to figure out how to create a view model in a UI screen, but we can't cr
 Here is an example of how the ```ItemEntryViewModel``` is used in the ```ItemEntryScreen```:
 
 ```Kotlin
+package com.example.lifttracker.ui.item
+
 @Composable
 fun ItemEntryScreen(
     navigateBack: () -> Unit,
@@ -2610,6 +2632,8 @@ As you've seen above, the ```itemsRepository``` has many functions to Create/Rea
 Here, we're working with The ```HomeScreen```. Since we want ```HomeScreen``` to display items from the database, we need to tell ```AppViewModelProvider``` to create ```HomeScreen```'s ```ViewModel``` with the ```ItemsRepository```:
 
 ```Kotlin
+package com.example.lifttracker.ui
+
 object AppViewModelProvider {
     val Factory = viewModelFactory {
         // initializer for ItemEditViewModel
@@ -2632,6 +2656,8 @@ object AppViewModelProvider {
 Now that it's injected into the constructor, we can define the items in the actual ```HomeViewModel```:
 
 ```Kotlin
+package com.example.lifttracker.ui.home
+
 class HomeViewModel(itemsRepository: ItemsRepository) : ViewModel() {
     val homeUiState: StateFlow<HomeUiState> = itemsRepository.getAllItemsStream()
         .map { HomeUiState(it) }
@@ -2649,7 +2675,7 @@ class HomeViewModel(itemsRepository: ItemsRepository) : ViewModel() {
 data class HomeUiState(val itemList: List<Item> = listOf())
 ```
 
-> [!INFO]
+> [!NOTE]
 > A **```StateFlow```** is a stream that always has one current value. Its initial value is ```HomeUiState(itemList = emptyList())```, but when Room emits a new item list, the ```StateFlow``` object is updated.
 >
 > The ```getAllItemsStream()``` function returns a ```Flow<List<Item>>``` which will emit a list of items; however, it does not do this right away, which makes it a cold flow (a hot flow produces data regardless of whether anyone is collecting, and a cold flow starts producing data only when someone collects it). The ```Flow<List<Item>>``` object initially only represents a description of what it will eventually hold. When ```stateIn()``` begins collecting that flow, Room runs the query.
@@ -2670,6 +2696,8 @@ data class HomeUiState(val itemList: List<Item> = listOf())
 Now, ```HomeUiState()``` can be used in ```HomeScreen``` like normal, as if it didn't have all of this crap happening in the background:
 
 ```Kotlin
+package com.example.ui.navigation.home
+
 @Composable
 fun HomeScreen(viewModel: viewModel(factory = AppViewModelFactory.Factory)) {
     val homeUiState by viewModel.homeUiState.collectAsState()
@@ -2689,6 +2717,8 @@ It all starts in ```HomeScreen.kt``` in the ```InventoryList``` composable. This
 Here is how the ```InventoryList``` is displayed in the ```HomeScreen``` along with each item's corresponding ```id```:
 
 ```Kotlin
+package com.example.lifttracker.ui.home
+
 @Composable
 private fun InventoryList(
     itemList: List<Item>,
@@ -2712,13 +2742,15 @@ private fun InventoryList(
 }
 ```
 
-> [!INFO]
+> [!NOTE]
 >
 > The ```Modifier``` passed to each ```InventoryItem``` is applied to a ```Card```.
 
 The ```InventoryList``` composable is called inside of ```HomeBody```. When the state here is hoisted, it morphs into the item's ```id```:
 
 ```Kotlin
+package com.example.lifttracker.ui.home
+
 @Composable
 private fun HomeBody(
     itemList: List<Item>,
@@ -2749,6 +2781,8 @@ private fun HomeBody(
 ```HomeBody``` is called inside of ```HomeScreen```, which passes in the ```navigateToItemUpdate``` function, which continues to pass along the item's ```id```:
 
 ```Kotlin
+package com.example.lifttracker.ui.home
+
 @Composable
 fun HomeScreen(
     navigateToItemEntry: () -> Unit,
@@ -2779,6 +2813,8 @@ fun HomeScreen(
 Going further up the ladder of function calls, this ```HomeScreen``` composable is expectedly called inside the ```NavHost```. The ```navigateToItemUpdate``` function that is passed into ```HomeScreen``` takes the item's ```id``` and uses it as part of a route to navigate to:
 
 ```Kotlin
+package com.example.lifttracker.ui.navigation
+
 /**
  * Provides Navigation graph for the application.
  */
@@ -2823,9 +2859,11 @@ fun InventoryNavHost(
 }
 ```
 
-To see how a ```navArgument``` is defined, we need to look at the ```ItemDetailsDestination``` singleton object:
+To see how a ```navArgument``` is defined, we need to look at the ```ItemDetailsDestination``` singleton object inside the ```ItemDetailsScreen.kt``` file:
 
 ```Kotlin
+package com.example.lifttracker.ui.item
+
 object ItemDetailsDestination : NavigationDestination {
     override val route = "item_details"
     override val titleRes = R.string.item_detail_title
@@ -2834,11 +2872,13 @@ object ItemDetailsDestination : NavigationDestination {
 }
 ```
 
-> [!INFO]
+> [!NOTE]
 >
 > Every route that you see in the ```NavHost``` is an attribute of a singleton object inheriting ```NavigationDestination```. This interface is defined in ```com.example.lifttracker.ui.navigation```:
 >
 > ```Kotlin
+> package com.example.lifttracker.ui.navigation
+>
 > /**
 >  * Interface to describe the navigation destinations for the app
 >  */
@@ -2892,7 +2932,7 @@ object AppViewModelProvider {
 }
 ```
 
-> [!INFO]
+> [!NOTE]
 >
 > The way that the ```SavedStateHandle``` knows to store the item ```id``` in its dictionary is through some magic inside ```CreationExtras```. ```CreationExtras``` carries the behind-the-scenes information needed to build the handle, including the ```SavedStateRegistryOwner```, the ```ViewModelStoreOwner```, and the navigation destination's default arguments like ```itemId```.
 
@@ -2930,6 +2970,68 @@ data class ItemDetailsUiState(
 )
 ```
 
-> [!INFO]
+> [!NOTE]
 >
 > The ```StateFlow<ItemDetailsUiState>``` here is defined in a similar way that ```StateFlow<HomeUiState>``` was defined in the [HomeViewModel](#retrieving-data-with-room), except this time, we're retrieving a flow containing only values from the original flow that are not null.
+
+### How do I update an entry in the database?
+
+In our InventoryApp example, the ```ItemDetails``` screen has a button that allwos the user to sell an item. In this event, the quantity of the item will decrease by 1, and if the quantity ends up being zero, the item will be deleted from the database. We begin by adding a function called ```reduceQuantityByOne()``` in the screen's corresponding viewModel called ```ItemDetailsViewModel```:
+
+```Kotlin
+package com.example.lifttracker.ui.item
+
+class ItemDetailsViewModel(
+    savedStateHandle: SavedStateHandle,
+    private val itemsRepository: ItemsRepository
+) : ViewModel() {
+    private val itemId: Int = ...
+    val uiState: StateFlow<ItemDetailsUiState> = ...
+
+    ...
+
+    fun reduceQuantityByOne() {
+        // database operations MUST be ran inside a coroutine
+        viewModelScope.launch {
+            val currentItem = uiState.value.itemDetails.toItem()
+            if (currentItem.quantity > 0) {
+                itemsRepository.updateItem(
+                    currentItem.copy(quantity = currentItem.quantity - 1)
+                )
+            }
+        }
+    }
+}
+
+private class ItemDetailsUiState(
+    ...
+)
+```
+
+Then we can use this function inside the ```ItemDetailsScreen.kt``` file like so:
+
+```Kotlin
+package com.example.lifttracker.ui.item
+
+fun ItemDetailsScreen(
+    ...
+) {
+    ...
+    Scaffold(
+        ...
+    ) { innerPadding ->
+        ItemDetailsBody(
+            itemDetailsUiState = uiState.value,
+            onSellItem = { viewModel.reduceQuantityByOne() },
+            onDelete = { },
+            modifier = Modifier
+                .padding(
+                    start = innerPadding.calculateStartPadding(LocalLayoutDirection.current),
+                    end = innerPadding.calculateEndPadding(LocalLayoutDirection.current),
+                    top = innerPadding.calculateTopPadding()
+                )
+                .verticalScroll(rememberScrollState())
+        )
+    }
+}
+```
