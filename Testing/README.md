@@ -2603,7 +2603,7 @@ val viewModel = ItemEntryViewModel(repository)
 
 to avoid literally all of this, but it would slow the crap out of your phone and would probably result in some backend errors. Using the former strategy, the app builds these things once at startup and lets the View Model factory hand them to each ```ViewModel``` when needed.
 
-### Retrieving data from Room
+### Retrieving data with Room
 
 As you've seen above, the ```itemsRepository``` has many functions to Create/Read/Update/Delete (CRUD). So far, we've Created by using the function ```itemsRepository.insertItem()``` via the function ```ItemEntryViewModel.saveItem()```. The latter function was called within a ```coroutineScope.launch {}``` block, trigggered by an onClick of the save button.
 
@@ -2652,7 +2652,7 @@ data class HomeUiState(val itemList: List<Item> = listOf())
 > [!INFO]
 > A **```StateFlow```** is a stream that always has one current value. Its initial value is ```HomeUiState(itemList = emptyList())```, but when Room emits a new item list, the ```StateFlow``` object is updated.
 >
-> The ```getAllItemsStream()``` function returns a ```Flow<List<Item>>``` which will emit a list of items; however, it does not do this right away, which makes it a cold flow. The ```Flow<List<Item>>``` object initially only represents a description of what it will eventually hold. When ```stateIn()``` begins collecting that flow, Room runs the query.
+> The ```getAllItemsStream()``` function returns a ```Flow<List<Item>>``` which will emit a list of items; however, it does not do this right away, which makes it a cold flow (a hot flow produces data regardless of whether anyone is collecting, and a cold flow starts producing data only when someone collects it). The ```Flow<List<Item>>``` object initially only represents a description of what it will eventually hold. When ```stateIn()``` begins collecting that flow, Room runs the query.
 >
 > The ```map``` function transforms a list whenever it is emitted. ```it``` is the emitted ```List<Item>```. At this point in the code (after the ```map```), the resulting type is ```Flow<HomeUiState>```.
 >
@@ -2679,3 +2679,257 @@ fun HomeScreen(viewModel: viewModel(factory = AppViewModelFactory.Factory)) {
     )
 }
 ```
+
+### How does the ItemDetailsScreen know what info to display?
+
+Let's say a user clicks on an item in the homescreen, which directs them to the item's corresponding ```ItemDetailsScreen```. How does this ```ItemDetailsScreen``` know which item was clicked in order to determine what detail to display?
+
+It all starts in ```HomeScreen.kt``` in the ```InventoryList``` composable. This composable contains a ```LazyColumn``` which uses the ```items()``` function to add a list of items. This function generates a list of composables from a list of objects - in this case, ```Item``` objects (which is an entity). The ```items()``` function also has a unique key for each item - in this case, it's the ```Item``` object's id.
+
+Here is how the ```InventoryList``` is displayed in the ```HomeScreen``` along with each item's corresponding ```id```:
+
+```Kotlin
+@Composable
+private fun InventoryList(
+    itemList: List<Item>,
+    onItemClick: (Item) -> Unit,
+    contentPadding: PaddingValues,
+    modifier: Modifier = Modifier
+) {
+    LazyColumn (
+        modifier = modifier,
+        contentPadding = contentPadding
+    ) {
+        items(items = itemList, key = { it.id }) { item ->
+            InventoryItem(
+                item = item,
+                modifier = Modifier
+                    .padding(8.dp)
+                    .clickable { onItemClick(item) }
+            )
+        }
+    }
+}
+```
+
+> [!INFO]
+>
+> The ```Modifier``` passed to each ```InventoryItem``` is applied to a ```Card```.
+
+The ```InventoryList``` composable is called inside of ```HomeBody```. When the state here is hoisted, it morphs into the item's ```id```:
+
+```Kotlin
+@Composable
+private fun HomeBody(
+    itemList: List<Item>,
+    onItemClick: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(0.dp)
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+    ) {
+        if (itemList.isEmpty()) {
+            // display "inventory is empty" message ...
+        } else {
+            InventoryList(
+                itemList = itemList,
+                // InventoryList uses the onItemClick function with the item itself.
+                // This function uses onItemClick with the item's id.
+                onItemClick = { onItemClick(it.id) },
+                contentPadding = contentPadding,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
+        }
+    }
+}
+```
+
+```HomeBody``` is called inside of ```HomeScreen```, which passes in the ```navigateToItemUpdate``` function, which continues to pass along the item's ```id```:
+
+```Kotlin
+@Composable
+fun HomeScreen(
+    navigateToItemEntry: () -> Unit,
+    // notice how the navigateToItemUpdate takes in an 'Int'
+    // the 'Int' is the item's id
+    navigateToItemUpdate: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory)
+) {
+    val homeUiState by viewModel.homeUiState.collectAsState()
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+
+    Scaffold(
+        // modifier, topBar and floatingActionButton
+        // ...
+    ) { innerPadding ->
+        // display list header and list of items
+        HomeBody(
+            itemList = homeUiState.itemList,
+            onItemClick = navigateToItemUpdate,
+            modifier = modifier.fillMaxSize(),
+            contentPadding = innerPadding
+        )
+    }
+}
+```
+
+Going further up the ladder of function calls, this ```HomeScreen``` composable is expectedly called inside the ```NavHost```. The ```navigateToItemUpdate``` function that is passed into ```HomeScreen``` takes the item's ```id``` and uses it as part of a route to navigate to:
+
+```Kotlin
+/**
+ * Provides Navigation graph for the application.
+ */
+@Composable
+fun InventoryNavHost(
+    navController: NavHostController,
+    modifier: Modifier = Modifier
+) {
+    NavHost(
+        navController = navController,
+        startDestination = HomeDestination.route,
+        modifier = modifier
+    ) {
+        // route for home screen
+        composable(route = HomeDestination.route) {
+            HomeScreen(
+                navigateToItemEntry = {
+                    navController.navigate(ItemEntryDestination.route)
+                },
+                navigateToItemUpdate = {
+                    // the item's id is used as a navArgument
+                    navController.navigate("${ItemDetailsDestination.route}/${it}")
+                }
+            )
+        }
+
+        // route for Item Details Screen; uses nav argument
+        composable(
+            route = ItemDetailsDestination.routeWithArgs,
+            arguments = listOf(navArgument(ItemDetailDestination.itemIdArg) {
+                type = NavType.IntType
+            })
+        ) {
+            ItemDetailsScreen(
+                navigateToEditItem = {
+                    navController.navigate("${ItemEditDestination.route}/$it")
+                },
+                navigateBack = { navController.navigateUp() }
+            )
+        }
+    }
+}
+```
+
+To see how a ```navArgument``` is defined, we need to look at the ```ItemDetailsDestination``` singleton object:
+
+```Kotlin
+object ItemDetailsDestination : NavigationDestination {
+    override val route = "item_details"
+    override val titleRes = R.string.item_detail_title
+    const val itemIdArg = "itemId"
+    val routeWithArgs = "$route/{$itemIdArg}"
+}
+```
+
+> [!INFO]
+>
+> Every route that you see in the ```NavHost``` is an attribute of a singleton object inheriting ```NavigationDestination```. This interface is defined in ```com.example.lifttracker.ui.navigation```:
+>
+> ```Kotlin
+> /**
+>  * Interface to describe the navigation destinations for the app
+>  */
+> interface NavigationDestination {
+>     // unique name to define the path for a composable
+>     val route: String
+>
+>     // String resource id that contains title to be displayed for the screen
+>     val titleRes: Int
+> }
+> ```
+
+So far, the ```id``` of the clicked item is sent from the ```InventoryItem``` composable inside the ```LazyColumn``` of the ```InventoryList``` composable inside ```HomeScreen``` via lambda arguments to ```HomeBody``` composable, then to ```HomeScreen``` composable, and finally to the home screen's ```composable``` inside the ```NavHost```. The ```navigateToItemUpdate``` then calls the ```navigate``` function belonging to the ```NavHostController```, which is used inside ```InventoryNavHost``` but is created in the ```InventoryApp.kt``` file located in ```com.example.lifttracker```:
+
+```Kotlin
+package com.example.lifttracker
+
+fun InventoryApp(
+    navController: NavHostController = rememberNavController()
+) {
+    InventoryNavHost(navController = navController)
+}
+```
+
+Almost done.
+
+Now, in order for the ```ItemDetailsViewModel``` to access this item's ```id```, it uses the ```SavedStateHandle``` created in the ```AppViewModelProvider``` and passed to the ```ItemDetailsViewModel``` when it is created:
+
+```Kotlin
+package com.example.lifttracker.ui
+
+object AppViewModelProvider {
+    val Factory = viewModelFactory {
+        // Initializer for ItemEditViewModel
+        // ...
+
+        // Initializer for ItemEntryViewModel
+        // ...
+
+        // Initializer for ItemDetailsViewModel
+        initializer {
+            ItemDetailsViewModel(
+                this.createSavedStateHandle(),
+                inventoryApplication().container.itemsRepository
+            )
+        }
+
+        // Initializer for HomeViewModel
+        // ...
+    }
+}
+```
+
+> [!INFO]
+>
+> The way that the ```SavedStateHandle``` knows to store the item ```id``` in its dictionary is through some magic inside ```CreationExtras```. ```CreationExtras``` carries the behind-the-scenes information needed to build the handle, including the ```SavedStateRegistryOwner```, the ```ViewModelStoreOwner```, and the navigation destination's default arguments like ```itemId```.
+
+```ItemDetailsViewModel``` uses the ```SavedStateHandle``` like so:
+
+```Kotlin
+package com.example.lifttracker.ui.item
+
+class ItemDetailsViewModel(
+    savedStateHandle: SavedStateHandle,
+    private val itemsRepository: ItemsRepository
+): ViewModel() {
+    private val itemId: Int = checkNotNull(savedStateHandle[ItemDetailsDestination.itemIdArg])
+
+    val uiState: StateFlow<ItemDetailsUiState> = itemsRepository
+        .getItemStream(itemId)
+        .filterNotNull()
+        .map {
+            ItemDetailsUiState(itemDetails = it.toItemDetails)
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(TIMEOUT_MILLIS),
+            initialValue = ItemDetailsUiState()
+        )
+
+    companion object {
+        private const val TIMOUT_MILLIS = 5_000L
+    }
+}
+
+data class ItemDetailsUiState(
+    val outOfStock: Boolean = true,
+    val itemDetails: ItemDetails = ItemDetails()
+)
+```
+
+> [!INFO]
+>
+> The ```StateFlow<ItemDetailsUiState>``` here is defined in a similar way that ```StateFlow<HomeUiState>``` was defined in the [HomeViewModel](#retrieving-data-with-room), except this time, we're retrieving a flow containing only values from the original flow that are not null.
