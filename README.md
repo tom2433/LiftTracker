@@ -3,6 +3,12 @@ A prototype of the Lift Tracker project. This is an evolving document. Everythin
 
 ---
 
+# Development
+
+## Features:
+
+1. Complete backend database design (F1)
+
 # Basic Structure
 
 3 main sections:
@@ -79,13 +85,13 @@ The ```set_metrics``` table has 6 columns:
 - ```value``` (REAL): this indicates the number of reps performed, or the weight value for the specific set.
 - ```note``` (TEXT): a user-written note for the metric, may be blank.
 
-#### users
+#### profiles
 
-The purpose of the ```users``` table is to store the names of all the profiles that the user has created. The profile is linked to its data via the ```muscle_groups``` table.
+The purpose of the ```profiles``` table is to store the names of all the profiles that the user has created. The profile is linked to its data via the ```muscle_groups``` table.
 
-The ```users``` table has 3 columns:
+The ```profiles``` table has 3 columns:
 
-- ```user_id``` (INTEGER): primary key. This is the main identifier used to distinguish between each profile.
+- ```id``` (INTEGER): primary key. This is the main identifier used to distinguish between each profile.
 - ```name``` (TEXT): the user-written name for the profile.
 - ```note``` (TEXT): a user-written note for the profile, may be blank.
 

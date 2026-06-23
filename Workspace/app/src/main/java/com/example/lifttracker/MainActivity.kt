@@ -32,8 +32,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-//                    val windowSize = calculateWindowSizeClass(this)
-//                    InventoryApp()
+                    // TODO: Everything
                 }
             }
         }
