@@ -2976,7 +2976,7 @@ data class ItemDetailsUiState(
 
 ### How do I update an entry in the database?
 
-In our InventoryApp example, the ```ItemDetails``` screen has a button that allwos the user to sell an item. In this event, the quantity of the item will decrease by 1, and if the quantity ends up being zero, the item will be deleted from the database. We begin by adding a function called ```reduceQuantityByOne()``` in the screen's corresponding viewModel called ```ItemDetailsViewModel```:
+In our InventoryApp example, the ```ItemDetails``` screen has a button that allows the user to sell an item. In this event, the quantity of the item will decrease by 1. We begin by adding a function called ```reduceQuantityByOne()``` in the screen's corresponding viewModel called ```ItemDetailsViewModel```:
 
 ```Kotlin
 package com.example.lifttracker.ui.item
@@ -3100,6 +3100,266 @@ fun ItemDetailsScreen(
                 // then we launch deleteItem() from viewModel on a separate thread
                 coroutineScope.lauch {
                     viewModel.deleteItem()
+                    navigateBack()
+                }
+            },
+            modifier = ...
+        )
+    }
+}
+```
+
+### How do I edit an entry in the database?
+
+In this InventoryApp example, the system shall provide edit functionality of the selected item via the floating action button (FAB) on the ItemDetailsScreen. This will open the ItemEditScreen.
+
+In order for the ItemEditScreen to gain access to the item's data, we need to give it the data. To begin, we look for the lambda argument that we pass to ```FloatingActionButton``` via ```onClick``` in ```ItemDetailsScreen``` composable and call ```navigateToEditItem()```, passing the item id as the argument:
+
+```Kotlin
+package com.example.lifttracker.ui.item
+
+object ItemDetailsDestination : NavigationDestination {
+    override val route = "item_details"
+    override val titleRes = R.string.item_detail_title
+    const val itemIdArg = "itemId"
+    val routeWithArgs = "$route/{$itemIdArg}"
+}
+
+@Composable
+fun ItemDetailScreen(
+    navigateToEditItem: (Int) -> Unit,
+    navigateBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: ItemDetailsViewModel = viewModel(factory = AppViewModelProvider.Factory)
+) {
+    val uiState = viewModel.uiState.collectAsState()
+    val coroutineScope = rememberCoroutineScope()
+
+    Scaffold(
+        topBar = {
+            InventoryTopAppBar(
+                title = stringResource(ItemDetailsDestination.titleRes),
+                canNavigateBack = true,
+                navigateUp = navigateBack
+            )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                // navigate to edit item with the item's id
+                onClick = { navigateToEditItem(uiState.value.itemDetails.id) },
+                shape = MaterialTheme.shapes.medium,
+                modifier = Modifier.padding(dimensionResource(id = R.dimen.padding_large))
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = stringResource(R.string.edit_item_title)
+                )
+            }
+        },
+        modifier = modifier
+    ) { innerPadding ->
+        ...
+    }
+}
+```
+
+Now that we've passed an id to ```navigateToEditItem()```, we need to ensure that the ItemEditScreen can handle this. First we go to ```ItemEditViewModel```:
+
+```Kotlin
+package com.example.lifttracker.ui.item
+
+class ItemEditViewModel(
+    savedStateHandle: SavedStateHandle,
+    // inject the itemsRepository so the item can be accessed
+    private val itemsRepository: ItemsRepository
+) : ViewModel() {
+    var itemUiState by mutableStateOf(ItemUiState())
+        private set
+
+    // retrieve the item id in a similar way that we retrieved the item id for
+    // the ItemDetailsViewModel.
+    private val itemId: Int = checkNotNull(savedStateHandle[ItemEditDestination.itemIdArg])
+
+    private fun validateInput(uiState: ItemDetails = itemUiState.itemDetails): Boolean {
+        return with(uiState) {
+            name.isNotBlank() && price.isNotBlank() && quantity.isNotBlank()
+        }
+    }
+
+    // this view model will define the itemUiState on initialization
+    init {
+        viewModelScope.launch {
+            itemUiState = itemsRepository.getItemStream(itemId)
+                .filterNotNull()
+                .first()
+                .toItemUiState(true)
+        }
+    }
+}
+```
+
+> [!NOTE]
+>
+> See how this format of the ```ItemEditViewModel``` is very similar to the ```ItemEntryViewModel```. The difference here is that the ```ItemEditViewModel``` must define the ```itemUiState``` upon initialization, whereas ```ItemEntryViewModel``` simply leaves it as an empty ```ItemUiState()```. ```ItemEntryViewModel``` still updates the UI state, just like we'll implement with this view model soon.
+
+And then we go to ```AppViewModelProvider``` to make sure that the ```itemsRepository``` is injected into the view model by the ```InventoryApplication```:
+
+```Kotlin
+package com.example.lifttracker.ui
+
+object AppViewModelProvider {
+    val Factory = viewModelFactory {
+        // initializer for ItemEditViewModel
+        initializer {
+            ItemEditViewModel(
+                this.createSavedStateHandle(),
+                inventoryApplication().container.itemsRepository
+            )
+        }
+
+        // initializer for ItemEntryViewModel
+        ...
+
+        // initializer for ItemDetailsViewModel
+        ...
+
+        // initializer for HomeViewModel
+        ...
+    }
+}
+
+...
+```
+
+Now, we can see that because of the way that the ```itemId``` is accessed in the ```ItemEditViewModel```, the ```ItemEditDestination``` must have a route with arguments. In ```ItemEditScreen.kt```, the ```ItemEditDestination``` is defined like this:
+
+```Kotlin
+package com.example.lifttracker.ui.item
+
+object ItemEditDestination : NavigationDestination {
+    override val route = "item_edit"
+    override val titleRes = R.string.edit_item_title,
+    const val itemIdArg = "itemId"
+    val routeWithArgs = "$route/{$itemIdArg}"
+}
+
+...
+```
+
+This is the exact same way that ```ItemDetailsDestination``` retrieves the ```itemId```. We can see how this ```itemId``` is injected into ```ItemEditDestination``` by looking at the ```InventoryNavHost``` inside ```InventoryNavGraph.kt```:
+
+```Kotlin
+package com.example.lifttracker.ui.navigation
+
+@Composable
+fun InventoryNavHost(
+    navController: NavHostController,
+    modifier: Modifier = Modifier
+) {
+    NavHost(
+        navController = navController,
+        startDestination = HomeDestination.route,
+        modifier = modifier
+    ) {
+        // composable for HomeScreen
+        ...
+
+        // composable for ItemEntryScreen
+        ...
+
+        // composable for ItemDetailsScreen
+        composable(
+            route = ItemDetailsDestination.routeWithArgs,
+            arguments = listOf(navArgument(ItemDetailsDestination.itemIdArg) {
+                type = NavType.IntType
+            })
+        ) {
+            ItemDetailsScreen(
+                navigateToEditItem = {
+                    navController.navigate("${ItemEditDestination.route}/$it")
+                },
+                navigateBack = { navController.navigateUp() }
+            )
+        }
+
+        // composable for ItemEditScreen
+        composable(
+            route = ItemEditDestination.routeWithArgs,
+            arguments = listOf(navArgument(ItemEditDestination.itemIdArg) {
+                type = NavType.IntType
+            })
+        ) {
+            ItemEditScreen(
+                navigateBack = { navController.popBackStack() },
+                onNavigateUp = { navController.navigateUp() }
+            )
+        }
+    }
+}
+```
+
+Now, the fields on the ItemEditScreen should populate with the information contained in the ```ItemDetails``` object pointed to by the ```id``` that was passed in. Now we need to make it so that the user can update these item details when typing in the input form.
+
+To do this, we first provide the ```ItemEditViewModel``` with a function that updates the ```ItemDetails``` that it stores with what the user is writing in the text boxes:
+
+```Kotlin
+package com.example.lifttracker.ui.item
+
+class ItemEditViewModel(
+    savedStateHandle: SavedStateHandle,
+    private val itemsRepository: ItemsRepository
+) {
+    var itemUiState by mutableStateOf(ItemUiState())
+        private set
+
+    private val itemId: ...
+
+    private fun validateInput(...) { ... }
+
+    // here we provide ItemEditScreen with a function that updates the itemDetails
+    fun updateUiState(itemDetails: ItemDetails) {
+        itemUiState = ItemUiState(
+            itemDetails = itemDetails,
+            isEntryValid = validateInput(itemDetails)
+        )
+    }
+
+    // and here we provide a function that updates the item in the database
+    suspend fun updateItem() {
+        if (validateInput(itemUiState.itemDetails)) {
+            itemsRepository.updateItem(itemUiState.itemDetails.toItem())
+        }
+    }
+
+    init { ... }
+}
+```
+
+And now that we've provided the function, we need to use it for whenever the user edits the inputs. ```ItemEditScreen``` uses the same ```ItemEntryBody``` composable that the ```ItemEntryScreen``` uses for the input fields, except the ```ItemEditScreen``` has a different ```onSaveClick``` argument, since it will be updating instead of creating. The ```ItemEntryBody``` composable is stored in the ```ItemEntryScreen.kt``` file, but we'll implement it this way:
+
+```Kotlin
+package com.example.lifttracker.ui.item
+
+object ItemEditDestination : NavigationDestination { ... }
+
+@Composable
+fun ItemEditScreen(
+    navigateBack: () -> Unit,
+    onNavigateUp: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: ItemEditViewModel = viewModel(factory = AppViewModelProvider.Factory)
+) {
+    val coroutineScope = rememberCoroutineScope()
+
+    Scaffold(
+        ...
+    ) { innerPadding ->
+        ItemEntryBody(
+            itemUiState = viewModel.itemUiState,
+            onItemValueChange = viewModel::updateUiState,
+            onSaveClick = {
+                coroutineScope.launch {
+                    viewModel.updateItem()
                     navigateBack()
                 }
             },
