@@ -12,7 +12,7 @@
 
 Declare using 'val':
 
-```Kotlin
+```kotlin
 val name = "Tom"
 ```
 
@@ -22,7 +22,7 @@ val name = "Tom"
 
 Declare using 'var':
 
-```Kotlin
+```kotlin
 var name = "tom"
 name = "Tom"
 ```
@@ -33,7 +33,7 @@ name = "Tom"
 
 Usually inferred automatically, but can be specified:
 
-```Kotlin
+```kotlin
 val x: Int = 5
 val y: Double = 3.14
 val name: String = "Tom"
@@ -46,14 +46,14 @@ val isCool: Boolean = false
 
 Can be used instead of concatenation:
 
-```Kotlin
+```kotlin
 val name = "Tom"
 println("Hello $name")
 ```
 
 Can be used for expressions:
 
-```Kotlin
+```kotlin
 println("${2 + 2}")
 ```
 
@@ -61,7 +61,7 @@ println("${2 + 2}")
 
 ## Input
 
-```Kotlin
+```kotlin
 fun main() {
     print("Enter name: ")
     val name = readLine()
@@ -74,7 +74,7 @@ fun main() {
 
 ## If statements
 
-```Kotlin
+```kotlin
 val x = 5
 
 if (x > 3) {
@@ -86,7 +86,7 @@ if (x > 3) {
 
 ### Conditional statements for return values
 
-```Kotlin
+```kotlin
 val max = if (a > b) a else b
 ```
 
@@ -96,7 +96,7 @@ val max = if (a > b) a else b
 
 ### While loop
 
-```Kotlin
+```kotlin
 var i = 0
 
 while (i < 5) {
@@ -107,7 +107,7 @@ while (i < 5) {
 
 ### Loops over collections
 
-```Kotlin
+```kotlin
 for (n in nums) {
     println(n)
 }
@@ -115,7 +115,7 @@ for (n in nums) {
 
 ### For range loop
 
-```Kotlin
+```kotlin
 for (i in 1..5) {
     println(i)
 }
@@ -131,7 +131,7 @@ prints:
 
 #### Downward
 
-```Kotlin
+```kotlin
 for (i in 5 downTo 1) {
     println(i)
 }
@@ -139,7 +139,7 @@ for (i in 5 downTo 1) {
 
 #### Step
 
-```Kotlin
+```kotlin
 for (i in 0..10 step 2) {
     println(i)
 }
@@ -149,7 +149,7 @@ for (i in 0..10 step 2) {
 
 ## Functions
 
-```Kotlin
+```kotlin
 fun add(a: Int, b: Int): Int {
     return a + b
 }
@@ -157,7 +157,7 @@ fun add(a: Int, b: Int): Int {
 
 Void functions are indicated by ```Unit``` or you can just omit it:
 
-```Kotlin
+```kotlin
 fun doAbsolutelyNothing(): Unit {
     println("e");
 }
@@ -165,7 +165,7 @@ fun doAbsolutelyNothing(): Unit {
 
 ### Short version
 
-```Kotlin
+```kotlin
 fun add(a: Int, b: Int) = a + b
 ```
 
@@ -177,7 +177,7 @@ Kotlin <em>LOVES</em> null safety
 
 Normal variables cannot be null:
 
-```Kotlin
+```kotlin
 val name: String = "Tom"
 name = null                 // this is illegal
 ```
@@ -186,13 +186,13 @@ name = null                 // this is illegal
 
 ```?``` means nullable
 
-```Kotlin
+```kotlin
 val name: String? = null    // this is not illegal
 ```
 
 ### Safe calls
 
-```Kotlin
+```kotlin
 val length = name?.length
 ```
 
@@ -201,7 +201,7 @@ This is ok since ```val``` can also hold a nullable type if it needs to.
 
 ### Elvis operator
 
-```Kotlin
+```kotlin
 val length = name?.length ?: 0
 ```
 
@@ -213,13 +213,13 @@ This means that if the result is not null, then it will assign the actual length
 
 ### Immutable list
 
-```Kotlin
+```kotlin
 val nums = listOf(1, 2, 3)
 ```
 
 ### Mutable list
 
-```Kotlin
+```kotlin
 val nums = mutableListOf(1, 2, 3)
 
 nums.add(4)
@@ -227,7 +227,7 @@ nums.add(4)
 
 ### Looping over a collection
 
-```Kotlin
+```kotlin
 for (n in nums) {
     println(n)
 }
@@ -237,7 +237,7 @@ for (n in nums) {
 
 ## Classes
 
-```Kotlin
+```kotlin
 class Person(
     val name: String,
     var age: Int
@@ -256,7 +256,7 @@ fun main() {
 
 Kotlin <em>LOVES</em> data classes.
 
-```Kotlin
+```kotlin
 data class Lift(
     val name: String,
     val weight: Double
@@ -276,7 +276,7 @@ This automatically gives:
 
 Like switch but better I guess:
 
-```Kotlin
+```kotlin
 when (x) {
     1 -> println("One")
     2 -> println("Two")
@@ -289,7 +289,7 @@ when (x) {
 
 ## Collections AND lambdas
 
-```Kotlin
+```kotlin
 val nums = listOf(1, 2, 3, 4)
 val doubled = nums.map { it * 2 }
 println(doubled)
@@ -302,7 +302,7 @@ println(evens)
 
 ## Creating and storing state
 
-```Kotlin
+```kotlin
 var count by remember { mutableStateOf(0) }
 ```
 
@@ -321,11 +321,11 @@ This is shorthand for creating and storing state that survives recompositions.
 
 Generic data types can be used when a property of a certain class may vary depending on what the class is implemented for. An example is for a quiz when you have questions that may be numeric, true/false, or fill-in-the-blank. You might define all three classes:
 
-```Kotlin
+```kotlin
 class NumericQuestion(
     val questionText: String,
     val answer: Int,
-    val difficutly: String
+    val difficulty: String
 )
 
 class TrueOrFalseQuestion(
@@ -343,7 +343,7 @@ class FillInTheBlankQuestion(
 
 Or you could just define one class to solve this:
 
-```Kotlin
+```kotlin
 class Question<T>(
     val questionText: String,
     val answer: T,
@@ -363,7 +363,7 @@ fun main() {
 
 Enum classes are used for data types that have a limited set of values. Think about cardinal directions, for example - they only have North, South, East, and West. This can be used with our quiz question example:
 
-```Kotlin
+```kotlin
 enum class Difficulty {
     EASY, MEDIUM, HARD
 }
@@ -385,7 +385,7 @@ fun main() {
 
 Data classes are classes that only contain data. Defining one as such allows the compiler to make certain assumptions and automatically implement some methods like ```toString()```. You can convert the question class into a data class like so:
 
-```Kotlin
+```kotlin
 data class Question<T>(
     val questionText: String,
     val answer: T,
@@ -417,7 +417,7 @@ Singleton objects are used for when a class will only have one instance, i.e. pl
 
 Syntax:
 
-```Kotlin
+```kotlin
 object StudentProgress {
     var total: Int = 10
     var answered: Int = 3
@@ -426,7 +426,7 @@ object StudentProgress {
 
 Usage (```companion object```'s are objects that you can place inside of a class)
 
-```Kotlin
+```kotlin
 class Quiz
 ```
 
@@ -454,7 +454,7 @@ For debugging tutorial, visit [this link](https://developer.android.com/codelabs
 - composable function names are capitalized
 - composable functions can't return anything
 
-```Kotlin
+```kotlin
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
     Text(
@@ -467,7 +467,7 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 > [!NOTE]
 > Every composable function must include an optional ```modifier``` parameter like so:
 >
-> ```Kotlin
+> ```kotlin
 > @Composable
 > fun AComposableFunction(modifier: Modifier = Modifier)
 > ```
@@ -476,7 +476,7 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 
 A Surface is one, Row or Column are some others:
 
-```Kotlin
+```kotlin
 @Composable
 fun Greeting() {
     Column {
@@ -491,7 +491,7 @@ fun Greeting() {
 - tells android studio that this composable should be shown in the design view of this file
 - takes in a boolean parameter called showBackground
 
-```Kotlin
+```kotlin
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
@@ -509,7 +509,7 @@ fun GreetingPreview() {
 - default container is box layout, but you can change it to surface
 - Surface() takes in a color parameter
 
-```Kotlin
+```kotlin
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
     Surface(color = Color.Cyan) {
@@ -524,7 +524,7 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 > [!NOTE]
 > Layouts like ```Box```, ```Row```, and ```Column``` use Trailing Lambda Syntax, which means that they use curly braces directly after the layout name instead of parentheses. Ex:
 >
-> ```Kotlin
+> ```kotlin
 > Box {
 >   // UI components
 > }
@@ -532,7 +532,7 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 
 Change the ```setContent{}``` in ```onCreate()``` to also use a Surface:
 
-```Kotlin
+```kotlin
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -556,7 +556,7 @@ class MainActivity : ComponentActivity() {
 
 Color class has some preset values:
 
-```Kotlin
+```kotlin
 Color.Black
 Color.DarkGray
 Color.Gray
@@ -569,12 +569,12 @@ Color.Yellow
 Color.Cyan
 Color.Magenta
 Color.Transparent
-Color.Unspecified           // transparent
+Color.Unspecified           // use whatever color the component decides
 ```
 
 Or you can create your own with rgb, hsl, or hsv:
 
-```Kotlin
+```kotlin
 Color(0.5f, 0.5f, 0.5f)
 ```
 
@@ -673,7 +673,7 @@ Go to the [Material Theme Builder](https://material-foundation.github.io/materia
 
 Adding a padding to the modifier with a size of 24 dp:
 
-```Kotlin
+```kotlin
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
     Surface(color = Color.Cyan) {
@@ -710,7 +710,7 @@ Go [here](https://developer.android.com/codelabs/basic-android-kotlin-compose-co
 
 Example:
 
-```Kotlin
+```kotlin
 @Composable
 fun GreetingImage(modifier: Modifier = Modifier) {
     val image = painterResource(R.drawable.background)
@@ -731,7 +731,7 @@ fun GreetingImage(modifier: Modifier = Modifier) {
 
 To wrap a surface around an image such that the surface is only as wide as its child (useful for adding a background to a transparent image), use ```Modifier.wrapContentWidth()``` as follows:
 
-```Kotlin
+```kotlin
 Surface(
     modifier = Modifier.wrapContentWidth()
 ) {
@@ -747,13 +747,13 @@ Surface(
 
 List of some obvious modifiers:
 
-```Kotlin
+```kotlin
 Modifier.background(color = Color.Green)
 ```
 
 To arrange objects in a parent Row or Column:
 
-```Kotlin
+```kotlin
 // to set childrens' position in a row, use horizontalArrangement and verticalAignment
 // for column, use vertical Arrangment and horizontalAlignment
 
@@ -782,7 +782,7 @@ verticalAlignment = Alignment.Bottom
 
 Padding example usages:
 
-```Kotlin
+```kotlin
 Modifier.padding(
     start = 16.dp,
     top = 16.dp,
@@ -797,7 +797,7 @@ Use ```Arrangement.spacedBy()``` for the verticalArrangement parameter.
 
 Ex:
 
-```Kotlin
+```kotlin
 Column(
     modifier = Modifier.fillMaxWidth(),
     verticalArrangement = Arrangement.spacedBy(
@@ -815,7 +815,7 @@ Column(
 
 ### Text Alignment
 
-```Kotlin
+```kotlin
 textAlign = TextAlign.Center
 ```
 
@@ -825,7 +825,7 @@ textAlign = TextAlign.Center
 
 It's usually used with a composable that takes up the entire screen like so:
 
-```Kotlin
+```kotlin
 @Preview(showBackground = true)
 @Composable
 fun DiceWithButtonAndImage(modifier: Modifier = Modifier
@@ -840,7 +840,7 @@ fun DiceWithButtonAndImage(modifier: Modifier = Modifier
 
 To add scrolling functionality to a column, just add a ```verticalScroll()``` function to the modifier parameter like so:
 
-```Kotlin
+```kotlin
 Column (
     modifier = Modifier.verticalScroll(rememberScrollState())
 ) {
@@ -860,7 +860,7 @@ BorderStroke class:
 
 Ex:
 
-```Kotlin
+```kotlin
 Surface(
     modifier = Modifier.fillMaxSize(),
     border = BorderStroke(4.dp, Color.Red)
@@ -877,7 +877,7 @@ Used to make spacing more explicit. Takes ```Modifier``` as a parameter, can use
 
 Ex:
 
-```Kotlin
+```kotlin
 Column(
     modifier = Modifier.fillMaxSize(),
     verticalArrangement = Arrangement.Top,
@@ -903,25 +903,25 @@ Column(
 
 For variables to survive a refresh of UI (when a composable is redrawn), you need to store the state of that variable. This is done using something like this:
 
-```Kotlin
+```kotlin
 var count by remember { mutableStateOf(0) }
 ```
 
 This means that ```count``` starts as 0, and whenever ```count``` is updated, compose automatically refreshes anything that depends on it. You can then feel free to update count inside the composable directly:
 
-```Kotlin
+```kotlin
 count++
 ```
 
 You can also use this syntax:
 
-```Kotlin
+```kotlin
 val result = remember { mutableStateOf(0) }
 ```
 
 But that would mean that ```result``` is now a ```MutableState``` object, and you can only modify its value like this:
 
-```Kotlin
+```kotlin
 result.value++
 println(result.value)
 ```
@@ -934,7 +934,7 @@ The delegation version is used more frequently because it's easier to use and it
 
 ```TextField()```s must have ```value``` and ```onValueChange``` parameters. ```value``` is the initial value in the text field, and ```onValueChange``` is a lambda that contains functionality that executes when the value is changed. The obvious functionality that should be implemented is that the content in the text field should be updated as the user types:
 
-```Kotlin
+```kotlin
 fun NormalTextField(modifier: Modifier = Modifier) {
     var inputtedText by remember { mutableStateOf("") }
 
@@ -950,7 +950,7 @@ fun NormalTextField(modifier: Modifier = Modifier) {
 
 The ```label``` parameter takes in a lambda which should contain a composable, like ```Text```. The ```singleLine``` parameter takes in a boolean indicating if the text field is one long scrollable line instead of multiple lines. ```keyboardOptions``` is important for the Lift Tracker since it can bring up the number keypad instead of just the text one. A number textfield might look like this:
 
-```Kotlin
+```kotlin
 @Composable
 fun EditNumberField(modifier: Modifier = Modifier) {
     var amountInput by remember { mutableStateOf("") }
@@ -977,7 +977,7 @@ The ```KeyBoardOptions()``` constructor can also take in a ```imeAction``` param
 
 Usage:
 
-```Kotlin
+```kotlin
 TextField(
     keyboardOptions = KeyboardOptions.Default.copy(
         keyBoardType = KeyboardType.Number,
@@ -999,7 +999,7 @@ In the above example, if an element in a parent container needed access to the v
 
 This can be done like so:
 
-```Kotlin
+```kotlin
 @Composable
 fun ParentContainer(modifier: Modifier = Modifier) {
     // amountInput can now be accessed by parent container
@@ -1040,7 +1040,7 @@ fun EditNumberField(
 
 To use icons, import the following resources:
 
-```Kotlin
+```kotlin
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.Icon
 import androidx.compose.material.icons.Icons
@@ -1049,7 +1049,7 @@ import androidx.compose.material.icons.rounded.*
 
 Icons can now be added like so, with a tint:
 
-```Kotlin
+```kotlin
 Icon(
     imageVector = Icons.Rounded.AttachMoney,
     contentDescription = "Attach Money",
@@ -1065,7 +1065,7 @@ A ```LazyColumn``` composable can be used in place of a regular ```Column``` com
 
 To add items to the ```LazyColumn```, unlike the regular ```Column```, you add an ```items()``` method with a list as the argument, and you create a lambda function to add composables to the ```LazyColumn``` like so:
 
-```Kotlin
+```kotlin
 fun AffirmationList(affirmationList: List<Affirmation>, modifier: Modifier = Modifier) {
     LazyColumn(modifier = modifier) {
         items(affirmationList) { affirmation ->
@@ -1085,7 +1085,7 @@ fun AffirmationList(affirmationList: List<Affirmation>, modifier: Modifier = Mod
 
 Use a LayoutDirection object to configure start and end padding for lists like so:
 
-```Kotlin
+```kotlin
 @Composable
 fun AffirmationsApp() {
     val layoutDirection = LocalLayoutDirection.current
@@ -1116,7 +1116,7 @@ Scaffolds are like a structural blueprint to hold the top app bar, bottom naviga
 
 The minimum code you need to use a scaffold is below:
 
-```Kotlin
+```kotlin
 Scaffold(
     modifier = Modifier
         .fillMaxSize()
@@ -1132,7 +1132,7 @@ Scaffold(
 
 To add a top app bar:
 
-```Kotlin
+```kotlin
 Scaffold(
     topBar = {
         MyTopAppBar()
@@ -1151,7 +1151,7 @@ Scaffold(
 
 Create a top app bar:
 
-```Kotlin
+```kotlin
 @Composable
 fun MyTopAppBar(modifier: Modifier = Modifier) {
     CenterAlignedTopAppBar(
@@ -1182,7 +1182,7 @@ fun MyTopAppBar(modifier: Modifier = Modifier) {
 
 To animate the size of a container, add the ```animateContentSize()``` function to the ```Modifier``` parameter like so:
 
-```Kotlin
+```kotlin
 Card() {
     var expanded by remember { mutableStateOf(false) }
 
@@ -1206,7 +1206,7 @@ Card() {
 
 To animate the color of a container, use the ```animateColorAsState()``` function, assign it to a variable, and use that variable to define the color of a container like so:
 
-```Kotlin
+```kotlin
 Card() {
     var expanded by remember { mutableStateOf(false) }
     val color by animateColorAsState(
@@ -1241,7 +1241,7 @@ Keep in mind that the card and the card detail must have similar layouts, and it
 
 Let's start with the ```SharedTransitionLayout() {}```. This must use an ```AnimatedContent() {}``` composable with a ```targetState``` and a ```label```. The following is an example from a sports app, which has cards that each correspond to a detail screen:
 
-```Kotlin
+```kotlin
 Scaffold(
     topBar = {
         SportsAppBar(
@@ -1301,7 +1301,7 @@ Scaffold(
 
 As you can see above, both the ```AnimatedVisibilityScope``` and the ```SharedTransitionScope``` are both passed into the custom composables ```SportsList()``` and ```SportsDetail()```. These arguments are used in order to link the list elements with their corresponding detail screens. Let's start with ```SportsList()```:
 
-```Kotlin
+```kotlin
 @Composable
 private fun SportsList(
     sports: List<Sport>,
@@ -1339,7 +1339,7 @@ Keep in mind that ```SportsListItem()``` is just a composable with only a ```Car
 
 The ```SportsDetail()``` composable also takes in the ```SharedTransitionScope``` and ```AnimatedVisbilityScope``` objects to link itself to the appropriate cards:
 
-```Kotlin
+```kotlin
 @Composable
 private fun SportsDetail(
     selectedSport: Sport,
@@ -1387,7 +1387,7 @@ Apps are supposed to be one activity which starts with the ```onCreate()``` meth
 
 - **Initialized** - the app is opened and calls the ```onCreate()``` method
 - **Created** - the ```onCreate()``` method has been called and the Activity has been created
-- **Started** - the ```onStart()``` method is called to make the activity visible; or, the ```onRestart()``` method is called to make the activity visible again. ```onRestart()``` is not called every time the state tansitions between **Created** and **Started**. It is only called if ```onStop()``` was called (like when the user goes to their home screen) and the activity is subsequently restarted.
+- **Started** - the ```onStart()``` method is called to make the activity visible; or, the ```onRestart()``` method is called to make the activity visible again. ```onRestart()``` is not called every time the state transitions between **Created** and **Started**. It is only called if ```onStop()``` was called (like when the user goes to their home screen) and the activity is subsequently restarted.
 - **Resumed** - the ```onResume()``` method is called (even if it is being started for the first time), and the activity now has focus. Activity is still visible.
 - Back to **Started** - the ```onPause()``` method is called, and the activity no longer has focus but is still visible.
 - Back to **Created** - the ```onStop()``` method is called, and the activity is no longer visible.
@@ -1398,7 +1398,7 @@ Apps are supposed to be one activity which starts with the ```onCreate()``` meth
 
 The Logcat is the console for logging messages. A simple log instruction may look like this:
 
-```Kotlin
+```kotlin
 // put this line at the top of the file, underneath the import statements, before the MainActivity class
 private const val TAG = "MainActivity"
 
@@ -1432,7 +1432,7 @@ Log instructions have a priority. In the above case, ```Log.d()``` logs debug me
 
 You can also override other methods when logging:
 
-```Kotlin
+```kotlin
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {    // creates the app
         super.onCreate(savedInstanceState)
@@ -1465,7 +1465,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        Log.d(TAG, "onDesto")
+        Log.d(TAG, "onDestroy Called")
     }
 }
 ```
@@ -1474,7 +1474,7 @@ class MainActivity : ComponentActivity() {
 
 Sometimes when a configuration changes (i.e., the user rotates their device from portrait mode into landscape mode), the activity is shut down and then re-created. This resets all values back to default. To avoid this, use the ```rememberSaveable``` function in place of the ```remember``` function like so:
 
-```Kotlin
+```kotlin
 // old version
 var revenue by remember { mutableIntStateOf(0) }
 
@@ -1496,13 +1496,13 @@ androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "l
 
 ... and add this to the ```build.gradle.kts (Module :app)``` file's dependency section:
 
-```Kotlin
+```kotlin
 implementation(libs.androidx.lifecycle.viewmodel.compose)
 ```
 
 Create a ```ViewModel``` like so. This is an example from a word unscrambler game app:
 
-```Kotlin
+```kotlin
 package com.example.lifttracker.ui
 
 import androidx.lifecycle.ViewModel
@@ -1540,7 +1540,7 @@ class GameViewModel : ViewModel() {
 
 The GameUiState is defined in a different file, also in ```com.example.lifttracker.ui```:
 
-```Kotlin
+```kotlin
 package com.example.lifttracker.ui
 
 data class GameUiState(
@@ -1550,7 +1550,7 @@ data class GameUiState(
 
 The currently scrambled word can be accessed in the UI like so:
 
-```Kotlin
+```kotlin
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
@@ -1574,7 +1574,7 @@ With ```: ViewModel()```, the android framework recognizes this class as a speci
 
 In UI:
 
-```Kotlin
+```kotlin
 OutlinedTextField(
     value = gameViewModel.userGuess,
     singleLine = true,
@@ -1605,7 +1605,7 @@ OutlinedTextField(
 
 In GameViewModel:
 
-```Kotlin
+```kotlin
 private val _uiState = MutableStateFlow(GameUiState())
 
 class GameViewModel : ViewModel() {
@@ -1666,7 +1666,7 @@ class GameViewModel : ViewModel() {
 
 In GameUiState:
 
-```Kotlin
+```kotlin
 data class GameUiState(
     val currentScrambledWord: String = "",
     val isGuessedWordWrong: Boolean = false,
@@ -1683,7 +1683,7 @@ data class GameUiState(
 
 An example of how to use the ```NavHost``` is below. This example is for a CupcakeApp:
 
-```Kotlin
+```kotlin
 enum class CupcakeScreen(@StringRes val title: Int) {
     Start(title = R.string.app_name),
     Flavor(title = R.string.choose_flavor),
@@ -1798,7 +1798,7 @@ private fun cancelOrderAndNavigateToStart(
 
 An intent is a request for the system to perform some action, commonly presenting a new activity. There are many different [intents](https://developer.android.com/guide/components/intents-filters) but we'll be looking at ```ACTION_SEND```:
 
-```Kotlin
+```kotlin
 fun makeAnIntent(subject: String, summary: String) {
     val context = LocalContext.current
 
@@ -1833,7 +1833,7 @@ fun shareOrder(
 
 Here we'll cover how to use 3 different types of navigation for 3 different types of screen aspect ratios. The three types of navigation are ```BOTTOM_NAVIGATION```, ```NAVIGATION_RAIL```, and ```PERMANENT_NAVIGATION_DRAWER```. These should be declared as enums in a file called ```WindowStateUtils.kt```. This example was taken from the Reply app practice:
 
-```Kotlin
+```kotlin
 package com.example.lifttracker.ui.utils
 
 enum class ReplyNavigationType {
@@ -1845,7 +1845,7 @@ enum class ReplyNavigationType {
 
 In ```MainActivity.kt```, determine the window size like so:
 
-```Kotlin
+```kotlin
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -1877,7 +1877,7 @@ class MainActivity : ComponentActivity() {
 
 This window size is passed to the ```ReplyApp``` composable. We can then check the navigation type here like so:
 
-```Kotlin
+```kotlin
 fun ReplyApp(
     windowSize: WindowWidthSizeClass,
     modifier: Modifier = Modifier
@@ -1907,7 +1907,7 @@ Otherwise, we check to see if the user is on the homepage, and if they are, then
 
 Here is how the ```PermanentNavigationDrawer()``` composable is implemented. Note that some things here are undefined, but this is the general structure for learning purposes:
 
-```Kotlin
+```kotlin
 PermanentNavigationDrawer(
     drawerContent = {
         PermanentDrawerSheet(Modifier.width(dimensionResource(R.dimen.drawer_width))) {
@@ -1954,7 +1954,7 @@ PermanentNavigationDrawer(
 
 Here is the ```ReplyHomeScreen()``` composable, which begins checking the navigation type:
 
-```Kotlin
+```kotlin
 @Composable
 fun ReplyHomeScreen(
     navigationType: ReplyNavigationType,
@@ -2004,7 +2004,7 @@ In the event that the navigation drawer is not supposed to be shown, the ```navi
 
 In the ```ReplyAppContent()``` composable, we use ```AnimatedVisibility()``` composables to decide whether we show or hide certain navigation types. You can see how this is implemented here:
 
-```Kotlin
+```kotlin
 @Composable
 private fun ReplyAppContent(
     navigationType: ReplyNavigationType,
@@ -2074,7 +2074,7 @@ private fun ReplyAppContent(
 
 A Toast is a very small popup that displays some text. It can be called very easily like so:
 
-```Kotlin
+```kotlin
 val context = LocalContext.current
 val text = "This is a toast"
 
@@ -2083,7 +2083,7 @@ Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
 
 You can also create it with a string parameter to call it later, with varying strings:
 
-```Kotlin
+```kotlin
 val context = LocalContext.current
 
 val displayToast = { text: String ->
@@ -2153,7 +2153,7 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 
 As mentioned, entities represent tables in your app's database. here is a sample entity. See how it is denoted with ```@Entity``` and contains an auto-generated primary key:
 
-```Kotlin
+```kotlin
 package com.example.lifttracker.data
 
 @Entity(tableName = "items")    // the tableName is optional and will default to the class name
@@ -2172,7 +2172,7 @@ As mentioned, the DAO separates the persistence layer from the rest of the appli
 
 A DAO is an interface, so it should be defined like so, with the ```@Dao``` annotation:
 
-```Kotlin
+```kotlin
 package com.example.lifttracker.data
 
 @Dao
@@ -2184,7 +2184,7 @@ The annotations to use when writing functions for this interface are ```@Insert`
 
 The onConflict argument tells the Room what to do in case of a conflict. Look [here](https://developer.android.com/reference/androidx/room/OnConflictStrategy.html) for the ```OnConflictStrategy``` documentation. Here are some examples on how to implement these functions:
 
-```Kotlin
+```kotlin
 package com.example.lifttracker.data
 
 @Dao
@@ -2210,8 +2210,8 @@ interface ItemDao {
     fun getAllItems(): Flow<List<Item>>
 }
 ```
-
-Notice the ```:id``` in the query. This references the ```id``` parameter in ```getItem()```. The ```Flow``` return type gives a notification in some way whenever the data in the database changes. This allows you to observe the data and update your UI accordingly. The ```Flow``` return type also allows the query to run on the background thread, which is why you don't need to explicitly make it a ```suspend``` function and call it inside a coroutine scope.
+> [!NOTE]
+> Notice the ```:id``` in the query. This references the ```id``` parameter in ```getItem()```. The ```Flow``` return type gives a notification in some way whenever the data in the database changes. This allows you to observe the data and update your UI accordingly. Room executes ```Flow``` queries asynchronously and emits updates whenever the queried tables change.
 
 ### How to create a Room Database class
 
@@ -2219,7 +2219,7 @@ The ```RoomDatabase``` class defines the list of entities and DAOs and provides 
 
 Here is an example of the ```RoomDatabase``` class being implemented:
 
-```Kotlin
+```kotlin
 package com.example.lifttracker.data
 
 /**
@@ -2265,7 +2265,7 @@ Consider banging your head against a wall before we begin. Then create one singl
 
 **The Interface**
 
-```Kotlin
+```kotlin
 package com.example.lifttracker.data
 
 interface ItemsRepository {
@@ -2285,7 +2285,7 @@ interface ItemsRepository {
     suspend fun insertItem(item: Item)
 
     /**
-     * Delete item form the data source
+     * Delete item from the data source
      */
     suspend fun deleteItem(item: Item)
 
@@ -2298,7 +2298,7 @@ interface ItemsRepository {
 
 **The Implementation**
 
-```Kotlin
+```kotlin
 package com.example.lifttracker.data
 
 class OfflineItemsRepository(private val itemDao: ItemDao) : ItemsRepository {
@@ -2320,7 +2320,7 @@ So, just call ```OfflineItemsRepository.getAllItems()``` right? No.
 
 This example application uses dependency injection. That's why the ```OfflineItemsRepository``` needs an ```ItemDao``` to function, and why the **AppContainer** and **AppDataContainer** exist (to provide the ```ItemDao``` to the ```OfflineItemsRepository```). ```AppContainer.kt```, located in the ```data``` package, contains the manual dependency injection setup. The ```AppContainer``` interface provides a place where shared dependencies live, and one of those dependencies is ```itemsRepository```:
 
-```Kotlin
+```kotlin
 package com.example.lifttracker.data
 
 /**
@@ -2355,7 +2355,7 @@ So, just call ```AppDataContainer.itemsRepository.getAllItems()``` right? Still 
 
 The Application itself depends on an ```AppContainer``` since the ```AppDataContainer``` needs a ```Context```, but the compiler doesn't know that yet. There's a hidden ```Application()``` class in the background. So let's override it in the original package ```com.example.lifttracker```:
 
-```Kotlin
+```kotlin
 package com.example.lifttracker
 
 class InventoryApplication : Application() {
@@ -2396,7 +2396,7 @@ Thought things were already unnecessarily complicated? It's actually a lot worse
 
 Let's say we want a ```ViewModel``` to have access to an ItemsRepository, so we define it like so inside the ui package:
 
-```Kotlin
+```kotlin
 package com.example.lifttracker.ui.item
 
 class ItemEntryViewModel(private val itemsRepository: ItemsRepository) : ViewModel() {
@@ -2447,7 +2447,7 @@ The purpose of a ```ViewModelFactory``` is to provide instances of ```ViewModel`
 
 You can create a View Model Factory inside a View Model Provider like so in the ui package. Keep in mind that ```CreationExtras``` is a container of objects provided by android, and it exists only during the creation process. It stores things like ```Application```, ```SavedStateRegistryOwner```, ```ViewModelStoreOwner```, etc. This is why it can access the ```InventoryApplication```. Don't worry about it.
 
-```Kotlin
+```kotlin
 package com.example.lifttracker.ui
 
 /**
@@ -2503,7 +2503,7 @@ We need to figure out how to create a view model in a UI screen, but we can't cr
 
 Here is an example of how the ```ItemEntryViewModel``` is used in the ```ItemEntryScreen```:
 
-```Kotlin
+```kotlin
 package com.example.lifttracker.ui.item
 
 @Composable
@@ -2564,7 +2564,7 @@ Android overrides the default ```Application()``` class with ```InventoryApplica
 
 Then, Android runs the ```onCreate()``` function that we overrode in ```InventoryApplication()```:
 
-```Kotlin
+```kotlin
 override fun onCreate() {
     super.onCreate()
     container = AppDataContainer(this)
@@ -2573,7 +2573,7 @@ override fun onCreate() {
 
 So now the app has one shared container. This ```AppDataContainer``` now knows how to create the repository since we've supplied it with the context from ```InventoryApplication()```:
 
-```Kotlin
+```kotlin
 /**
  * AppDataContainer gets the Room database, asks the database for the DAO,
  * and finally gives that DAO to the OfflineItemsRepository.
@@ -2593,13 +2593,13 @@ Now the entire data side of the application is connected like this:
 
 Then, Android launches the ```MainActivity```. ```MainActivity``` shows your compose UI and it eventually asks for a ```ViewModel```:
 
-```Kotlin
+```kotlin
 viewModel(factory = AppViewModelProvider.Factory)
 ```
 
 The factory then realizes that it needs the repository to create the ```ItemEntryViewModel```. It knows that it's an ```ItemEntryViewModel``` because it's an ```ItemEntryViewModel```. So the factory does this:
 
-```Kotlin
+```kotlin
 ItemEntryViewModel(
     inventoryApplication().container.itemsRepository
 )
@@ -2616,7 +2616,7 @@ So then when the user taps 'Save':
 
 *OR*, you could just do ...
 
-```Kotlin
+```kotlin
 val database = InventoryDatabase.getDatabase(context)
 val dao = database.itemDao()
 val repository = OfflineItemsRepository(dao)
@@ -2631,7 +2631,7 @@ As you've seen above, the ```itemsRepository``` has many functions to Create/Rea
 
 Here, we're working with The ```HomeScreen```. Since we want ```HomeScreen``` to display items from the database, we need to tell ```AppViewModelProvider``` to create ```HomeScreen```'s ```ViewModel``` with the ```ItemsRepository```:
 
-```Kotlin
+```kotlin
 package com.example.lifttracker.ui
 
 object AppViewModelProvider {
@@ -2655,7 +2655,7 @@ object AppViewModelProvider {
 
 Now that it's injected into the constructor, we can define the items in the actual ```HomeViewModel```:
 
-```Kotlin
+```kotlin
 package com.example.lifttracker.ui.home
 
 class HomeViewModel(itemsRepository: ItemsRepository) : ViewModel() {
@@ -2695,7 +2695,7 @@ data class HomeUiState(val itemList: List<Item> = listOf())
 
 Now, ```HomeUiState()``` can be used in ```HomeScreen``` like normal, as if it didn't have all of this crap happening in the background:
 
-```Kotlin
+```kotlin
 package com.example.ui.navigation.home
 
 @Composable
@@ -2716,7 +2716,7 @@ It all starts in ```HomeScreen.kt``` in the ```InventoryList``` composable. This
 
 Here is how the ```InventoryList``` is displayed in the ```HomeScreen``` along with each item's corresponding ```id```:
 
-```Kotlin
+```kotlin
 package com.example.lifttracker.ui.home
 
 @Composable
@@ -2748,7 +2748,7 @@ private fun InventoryList(
 
 The ```InventoryList``` composable is called inside of ```HomeBody```. When the state here is hoisted, it morphs into the item's ```id```:
 
-```Kotlin
+```kotlin
 package com.example.lifttracker.ui.home
 
 @Composable
@@ -2780,7 +2780,7 @@ private fun HomeBody(
 
 ```HomeBody``` is called inside of ```HomeScreen```, which passes in the ```navigateToItemUpdate``` function, which continues to pass along the item's ```id```:
 
-```Kotlin
+```kotlin
 package com.example.lifttracker.ui.home
 
 @Composable
@@ -2812,7 +2812,7 @@ fun HomeScreen(
 
 Going further up the ladder of function calls, this ```HomeScreen``` composable is expectedly called inside the ```NavHost```. The ```navigateToItemUpdate``` function that is passed into ```HomeScreen``` takes the item's ```id``` and uses it as part of a route to navigate to:
 
-```Kotlin
+```kotlin
 package com.example.lifttracker.ui.navigation
 
 /**
@@ -2861,7 +2861,7 @@ fun InventoryNavHost(
 
 To see how a ```navArgument``` is defined, we need to look at the ```ItemDetailsDestination``` singleton object inside the ```ItemDetailsScreen.kt``` file:
 
-```Kotlin
+```kotlin
 package com.example.lifttracker.ui.item
 
 object ItemDetailsDestination : NavigationDestination {
@@ -2876,7 +2876,7 @@ object ItemDetailsDestination : NavigationDestination {
 >
 > Every route that you see in the ```NavHost``` is an attribute of a singleton object inheriting ```NavigationDestination```. This interface is defined in ```com.example.lifttracker.ui.navigation```:
 >
-> ```Kotlin
+> ```kotlin
 > package com.example.lifttracker.ui.navigation
 >
 > /**
@@ -2893,7 +2893,7 @@ object ItemDetailsDestination : NavigationDestination {
 
 So far, the ```id``` of the clicked item is sent from the ```InventoryItem``` composable inside the ```LazyColumn``` of the ```InventoryList``` composable inside ```HomeScreen``` via lambda arguments to ```HomeBody``` composable, then to ```HomeScreen``` composable, and finally to the home screen's ```composable``` inside the ```NavHost```. The ```navigateToItemUpdate``` then calls the ```navigate``` function belonging to the ```NavHostController```, which is used inside ```InventoryNavHost``` but is created in the ```InventoryApp.kt``` file located in ```com.example.lifttracker```:
 
-```Kotlin
+```kotlin
 package com.example.lifttracker
 
 fun InventoryApp(
@@ -2907,7 +2907,7 @@ Almost done.
 
 Now, in order for the ```ItemDetailsViewModel``` to access this item's ```id```, it uses the ```SavedStateHandle``` created in the ```AppViewModelProvider``` and passed to the ```ItemDetailsViewModel``` when it is created:
 
-```Kotlin
+```kotlin
 package com.example.lifttracker.ui
 
 object AppViewModelProvider {
@@ -2938,7 +2938,7 @@ object AppViewModelProvider {
 
 ```ItemDetailsViewModel``` uses the ```SavedStateHandle``` like so:
 
-```Kotlin
+```kotlin
 package com.example.lifttracker.ui.item
 
 class ItemDetailsViewModel(
@@ -2978,7 +2978,7 @@ data class ItemDetailsUiState(
 
 In our InventoryApp example, the ```ItemDetails``` screen has a button that allows the user to sell an item. In this event, the quantity of the item will decrease by 1. We begin by adding a function called ```reduceQuantityByOne()``` in the screen's corresponding viewModel called ```ItemDetailsViewModel```:
 
-```Kotlin
+```kotlin
 package com.example.lifttracker.ui.item
 
 class ItemDetailsViewModel(
@@ -3010,7 +3010,7 @@ private class ItemDetailsUiState(
 
 Then we can use this function inside the ```ItemDetailsScreen.kt``` file like so:
 
-```Kotlin
+```kotlin
 package com.example.lifttracker.ui.item
 
 fun ItemDetailsScreen(
@@ -3044,7 +3044,7 @@ To fill this empty argument in the above code block, we need to add a ```deleteI
 
 This means that we need to delete the entry and then navigate back, in that order, inside a ```launch``` block. Since the ```navigateBack()``` function is only accessible in ```ItemDetailsScreen```, we omit the ```launch``` block from this function and precede it with ```suspend``` instead:
 
-```Kotlin
+```kotlin
 package com.example.lifttracker.ui.item
 
 class ItemDetailsViewModel(
@@ -3075,7 +3075,7 @@ class ItemDetailsViewModel(
 
 Now we can call it using ```coroutineScope.launch {}``` in the ```ItemDetailsScreen```:
 
-```Kotlin
+```kotlin
 package com.example.lifttracker.ui.item
 
 object ItemDetailsDestination : NavigationDestination {
@@ -3115,7 +3115,7 @@ In this InventoryApp example, the system shall provide edit functionality of the
 
 In order for the ItemEditScreen to gain access to the item's data, we need to give it the data. To begin, we look for the lambda argument that we pass to ```FloatingActionButton``` via ```onClick``` in ```ItemDetailsScreen``` composable and call ```navigateToEditItem()```, passing the item id as the argument:
 
-```Kotlin
+```kotlin
 package com.example.lifttracker.ui.item
 
 object ItemDetailsDestination : NavigationDestination {
@@ -3165,7 +3165,7 @@ fun ItemDetailScreen(
 
 Now that we've passed an id to ```navigateToEditItem()```, we need to ensure that the ItemEditScreen can handle this. First we go to ```ItemEditViewModel```:
 
-```Kotlin
+```kotlin
 package com.example.lifttracker.ui.item
 
 class ItemEditViewModel(
@@ -3204,7 +3204,7 @@ class ItemEditViewModel(
 
 And then we go to ```AppViewModelProvider``` to make sure that the ```itemsRepository``` is injected into the view model by the ```InventoryApplication```:
 
-```Kotlin
+```kotlin
 package com.example.lifttracker.ui
 
 object AppViewModelProvider {
@@ -3233,7 +3233,7 @@ object AppViewModelProvider {
 
 Now, we can see that because of the way that the ```itemId``` is accessed in the ```ItemEditViewModel```, the ```ItemEditDestination``` must have a route with arguments. In ```ItemEditScreen.kt```, the ```ItemEditDestination``` is defined like this:
 
-```Kotlin
+```kotlin
 package com.example.lifttracker.ui.item
 
 object ItemEditDestination : NavigationDestination {
@@ -3248,7 +3248,7 @@ object ItemEditDestination : NavigationDestination {
 
 This is the exact same way that ```ItemDetailsDestination``` retrieves the ```itemId```. We can see how this ```itemId``` is injected into ```ItemEditDestination``` by looking at the ```InventoryNavHost``` inside ```InventoryNavGraph.kt```:
 
-```Kotlin
+```kotlin
 package com.example.lifttracker.ui.navigation
 
 @Composable
@@ -3302,7 +3302,7 @@ Now, the fields on the ItemEditScreen should populate with the information conta
 
 To do this, we first provide the ```ItemEditViewModel``` with a function that updates the ```ItemDetails``` that it stores with what the user is writing in the text boxes:
 
-```Kotlin
+```kotlin
 package com.example.lifttracker.ui.item
 
 class ItemEditViewModel(
@@ -3337,7 +3337,7 @@ class ItemEditViewModel(
 
 And now that we've provided the function, we need to use it for whenever the user edits the inputs. ```ItemEditScreen``` uses the same ```ItemEntryBody``` composable that the ```ItemEntryScreen``` uses for the input fields, except the ```ItemEditScreen``` has a different ```onSaveClick``` argument, since it will be updating instead of creating. The ```ItemEntryBody``` composable is stored in the ```ItemEntryScreen.kt``` file, but we'll implement it this way:
 
-```Kotlin
+```kotlin
 package com.example.lifttracker.ui.item
 
 object ItemEditDestination : NavigationDestination { ... }

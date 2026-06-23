@@ -99,14 +99,54 @@ The ```users``` table has 3 columns:
     - Completed sets should show up as collapsable/expandable cards when completed.
     - All weight/rep/note data for the given session should always be able to be viewed at any point throughout the lift.
     - Sets from earlier days should be displayed as a different color.
-    - Stopwatch, potentially the ability to lap for sets/rests
+    - **maybe** Stopwatch, potentially the ability to lap for sets/rests
 - In general:
     - Ability to switch between different color schemes or turn on/off dynamic color
     - Ability to switch between light/dark theme or use system default
     - Potentially providing insights on certain lift days based on probability distributions
     - Ability to add a lift to multiple muscle groups?
     - Add the option to use time metrics instead of reps!!
+    - Sets should be able to be viewed at any point for the duration of the workout
+        - earlier sets could be displayed as a different color
+    - ability to save workout summary text and upload automatically to Garmin/Strava
+        - I think strava provides the ability to do this. Garmin does not. Maybe give the user some text to copy.
+    - Should be able to enter a previous workout day and continue it in play mode.
+    - Ability to give an unknown value for reps if you don't remember - should just average the before and after for graph points.
 - Backend:
     - Add start time and end time to each Day
     - Add names to each day (user-specified)
     - Export lift data to excel
+
+---
+
+# Product Requirements
+
+## UI Elements
+
+### Navigation Drawer via hamburger menu on TopAppBar
+
+The Left hand side will have a menu that animates from the left to allow the user to switch between screens.
+
+**Menu drawer elements**
+
+1. Begin session (change to resume session when one is in progress, with a flag icon to finish session)
+2. Muscle groups
+    - dropdown list with muscle group names/notes, each has a pencil icon to edit name/note.
+    - '+' option at the bottom to add a muscle group
+    - when a muscle group is clicked, lifts for that muscle group are displayed
+        - dropdown list with lift names/notes, each has a pencil icon to edit
+        - when a lift is clicked, days in which that lift was trained are displayed
+            - dropdown list with day names/notes, each has a pencil icon to edit
+            - when a day is clicked, the menu disappears to show the Day screen.
+3. Sessions (Days, most recent one is first)
+    - dropdown list with <= 5 most recent workout day names/notes/day #, each has a pencil icon to edit name/note.
+    - when a workout day is clicked, the menu disappears to show the Day screen.
+    - 'View More' button at the bottom of the list. when clicked, the menu disappears to display an entire list of days, most recent one first.
+4. Calendar (still deciding how to implement)
+5. Switch profile
+    - dropdown list with profile names & notes, each has a pencil icon to edit name/notes.
+    - '+' option at the bottom to add a profile
+    - when a profile is clicked, the entire UI switches to that profile.
+6. (Put at bottom) Settings
+    - Toggle dynamic color
+    - Toggle dark mode
