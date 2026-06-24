@@ -7,7 +7,19 @@ A prototype of the Lift Tracker project. This is an evolving document. Everythin
 
 ## Features:
 
-1. Complete backend database design (F1)
+1. Backend database design (F1)
+    - Add a set metric for time, in addition to weight and reps (F1A)
+2. Menu drawer with basic elements (F2):
+    - Begin Session (F2A)
+    - Muscle Groups (F2B)
+    - Sessions (F2C)
+    - Calendar (F2D)
+    - Switch Profile (F2E)
+    - Settings(bottom) (F2F)
+3. Colorscheme (F3):
+    - Default to preset colorscheme (F3A)
+    - Toggle dynamic color (F3B)
+    - Toggle Dark theme (F3C)
 
 # Basic Structure
 

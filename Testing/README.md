@@ -3368,3 +3368,32 @@ fun ItemEditScreen(
     }
 }
 ```
+
+### Foreign Keys in Room Database
+
+Foreign keys must be represented in the ```@Entity``` annotation, and they also must be indexed. The ```set_metrics``` table contains a foreign key pointing to ```lift_sets``` to link a set metric (weight/reps) to a lift set:
+
+```kotlin
+@Entity(
+    tableName = "set_metrics",
+    foreignKeys = [
+        ForeignKey(
+            entity = LiftSet::class,
+            parentColumns = ["id"],
+            childColumns = ["set_id"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [
+        Index(value = ["set_id"])
+    ]
+)
+data class SetMetric(
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,                    // primary key
+    val set_id: Int,                    // FK to lift_sets.id
+    val metric_position: Int,           // indicates whether weight (1) or reps (2)
+    val value: Double,                  // number of reps performed or weight value
+    val note: String                    // optional user-written note for metric
+)
+```

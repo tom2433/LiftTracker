@@ -38,5 +38,5 @@ data class SetMetric(
     val set_id: Int,                    // FK to lift_sets.id
     val metric_position: Int,           // indicates whether weight (1) or rep (2) value
     val value: Double,                  // number of reps performed or weight value
-    val note: String                    // optional user-written note for set
+    val note: String                    // optional user-written note for metric
 )
