@@ -1,6 +1,7 @@
 package com.example.lifttracker.ui.screens
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -10,7 +11,7 @@ import com.example.lifttracker.R
 import com.example.lifttracker.ui.navigation.NavigationDestination
 
 object AnalyticsDestination : NavigationDestination {
-    override val route = "calendar"
+    override val route = "analytics"
     override val titleRes = R.string.analytics_title
 }
 
@@ -39,7 +40,7 @@ fun AnalyticsScreen(
         navigateToSettings = navigateToSettings
     ) {
         Box(
-            modifier = modifier,
+            modifier = modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             Text(

@@ -60,6 +60,7 @@ import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.lifttracker.ui.navigation.LiftTrackerNavHost
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -236,8 +237,13 @@ fun LiftTrackerDrawer(
                     // may or may not implement in the future.
                     badge = {},
                     onClick = {
-                        isDrawerOpen = false
-                        navigateToRecordSession()
+                        coroutineScope.launch {
+                            drawerOffsetX.animateTo(
+                                targetValue = -drawerWidthPx,
+                                animationSpec = tween(durationMillis = 400)
+                            )
+                            navigateToRecordSession()
+                        }
                     }
                 )
 
@@ -253,8 +259,13 @@ fun LiftTrackerDrawer(
                     },
                     badge = {},
                     onClick = {
-                        isDrawerOpen = false
-                        navigateToMuscleGroups()
+                        coroutineScope.launch {
+                            drawerOffsetX.animateTo(
+                                targetValue = -drawerWidthPx,
+                                animationSpec = tween(durationMillis = 400)
+                            )
+                            navigateToMuscleGroups()
+                        }
                     }
                 )
 
@@ -270,8 +281,13 @@ fun LiftTrackerDrawer(
                     },
                     badge = {},
                     onClick = {
-                        isDrawerOpen = false
-                        navigateToSessions()
+                        coroutineScope.launch {
+                            drawerOffsetX.animateTo(
+                                targetValue = -drawerWidthPx,
+                                animationSpec = tween(durationMillis = 400)
+                            )
+                            navigateToSessions()
+                        }
                     }
                 )
 
@@ -287,8 +303,13 @@ fun LiftTrackerDrawer(
                     },
                     badge = {},
                     onClick = {
-                        isDrawerOpen = false
-                        navigateToCalendar()
+                        coroutineScope.launch {
+                            drawerOffsetX.animateTo(
+                                targetValue = -drawerWidthPx,
+                                animationSpec = tween(durationMillis = 400)
+                            )
+                            navigateToCalendar()
+                        }
                     }
                 )
 
@@ -321,8 +342,13 @@ fun LiftTrackerDrawer(
                     },
                     badge = {},
                     onClick = {
-                        isDrawerOpen = false
-                        navigateToAnalytics()
+                        coroutineScope.launch {
+                            drawerOffsetX.animateTo(
+                                targetValue = -drawerWidthPx,
+                                animationSpec = tween(durationMillis = 400)
+                            )
+                            navigateToAnalytics()
+                        }
                     }
                 )
 
@@ -338,8 +364,13 @@ fun LiftTrackerDrawer(
                     },
                     badge = {},
                     onClick = {
-                        isDrawerOpen = false
-                        navigateToTools()
+                        coroutineScope.launch {
+                            drawerOffsetX.animateTo(
+                                targetValue = -drawerWidthPx,
+                                animationSpec = tween(durationMillis = 400)
+                            )
+                            navigateToTools()
+                        }
                     }
                 )
 
@@ -355,8 +386,13 @@ fun LiftTrackerDrawer(
                     },
                     badge = {},
                     onClick = {
-                        isDrawerOpen = false
-                        navigateToSettings()
+                        coroutineScope.launch {
+                            drawerOffsetX.animateTo(
+                                targetValue = -drawerWidthPx,
+                                animationSpec = tween(durationMillis = 400)
+                            )
+                            navigateToSettings()
+                        }
                     }
                 )
             }

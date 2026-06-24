@@ -1,6 +1,7 @@
 package com.example.lifttracker.ui.screens
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -39,7 +40,7 @@ fun CalendarScreen(
         navigateToSettings = navigateToSettings
     ) {
         Box(
-            modifier = modifier,
+            modifier = modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             Text(
