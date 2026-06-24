@@ -1,3 +1,12 @@
 <resources>
     <string name="app_name">Lift Tracker</string>
+    <string name="begin_session_title">Begin Session</string>
+    <string name="muscle_groups_title">Muscle Groups</string>
+    <string name="sessions_title">Sessions</string>
+    <string name="calendar_title">Calendar</string>
+    <string name="switch_profile_title">Switch Profile</string>
+    <string name="settings_title">Settings</string>
+    <string name="menu">Menu</string>
+    <string name="tools_title">Tools</string>
+    <string name="analytics_title">Analytics</string>
 </resources>
