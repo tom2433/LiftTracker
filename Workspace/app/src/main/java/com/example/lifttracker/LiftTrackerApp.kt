@@ -1,5 +1,6 @@
 package com.example.lifttracker
 
+import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
@@ -70,7 +71,6 @@ fun LiftTrackerApp(navController: NavHostController = rememberNavController()) {
     LiftTrackerNavHost(navController = navController)
 }
 
-
 /**
  * Modal Navigation drawer to be displayed unconditionally
  *
@@ -82,19 +82,33 @@ fun LiftTrackerApp(navController: NavHostController = rememberNavController()) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LiftTrackerDrawer(
+    @StringRes titleRes: Int,
+    navigateToRecordSession: () -> Unit,
+    navigateToMuscleGroups: () -> Unit,
+    navigateToSessions: () -> Unit,
+    navigateToCalendar: () -> Unit,
+    navigateToAnalytics: () -> Unit,
+    navigateToTools: () -> Unit,
+    navigateToSettings: () -> Unit,
     content: @Composable (PaddingValues) -> Unit
 ) {
     var isDrawerOpen by remember { mutableStateOf(false) }
     var drawerWidthPx by remember { mutableFloatStateOf(0f) }
     val drawerOffsetX = remember { Animatable(0f) }
+    var hasInitializedDrawerOffset by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(isDrawerOpen, drawerWidthPx) {
         if (drawerWidthPx > 0f) {
-            drawerOffsetX.animateTo(
-                targetValue = if (isDrawerOpen) 0f else -drawerWidthPx,
-                animationSpec = tween(durationMillis = 700)
-            )
+            if (!hasInitializedDrawerOffset) {
+                drawerOffsetX.snapTo(if (isDrawerOpen) 0f else -drawerWidthPx)
+                hasInitializedDrawerOffset = true
+            } else {
+                drawerOffsetX.animateTo(
+                    targetValue = if (isDrawerOpen) 0f else -drawerWidthPx,
+                    animationSpec = tween(durationMillis = 700)
+                )
+            }
         }
     }
 
@@ -102,7 +116,7 @@ fun LiftTrackerDrawer(
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text(stringResource(R.string.app_name)) },
+                    title = { Text(stringResource(titleRes)) },
                     navigationIcon = {
                         IconButton(
                             onClick = {
@@ -210,7 +224,7 @@ fun LiftTrackerDrawer(
                 // nav drawer element: Begin Session (eventually dynamic for resume/quit session)
                 NavigationDrawerItem(
                     label = { Text(stringResource(R.string.begin_session_title)) },
-                    selected = false,
+                    selected = titleRes == R.string.record_session_title,
                     icon = {
                         Icon(
                             imageVector = Icons.Filled.PlayArrow,
@@ -221,16 +235,16 @@ fun LiftTrackerDrawer(
                     // the badge is displayed all the way to the right, usually some light text.
                     // may or may not implement in the future.
                     badge = {},
-                    onClick = { /* TODO: Implement begin session screen */ }
+                    onClick = {
+                        isDrawerOpen = false
+                        navigateToRecordSession()
+                    }
                 )
 
                 // nav drawer element: Muscle Groups
-                // when clicked, expands to show dropdown of muscle group names/notes w/pencil
-                // when a muscle group is clicked, expands to show dropdown of lift names/notes w/pencil
-                // when a lift is clicked, expands to show dropdown of
                 NavigationDrawerItem(
                     label = { Text(stringResource(R.string.muscle_groups_title)) },
-                    selected = false,
+                    selected = titleRes == R.string.muscle_groups_title,
                     icon = {
                         Icon(
                             imageVector = Icons.Filled.FitnessCenter,
@@ -238,13 +252,16 @@ fun LiftTrackerDrawer(
                         )
                     },
                     badge = {},
-                    onClick = { /* TODO: Implement Muscle Groups Screen */ }
+                    onClick = {
+                        isDrawerOpen = false
+                        navigateToMuscleGroups()
+                    }
                 )
 
                 // nav drawer element: Sessions
                 NavigationDrawerItem(
                     label = { Text(stringResource(R.string.sessions_title)) },
-                    selected = false,
+                    selected = titleRes == R.string.sessions_title,
                     icon = {
                         Icon(
                             imageVector = Icons.Filled.History,
@@ -252,13 +269,16 @@ fun LiftTrackerDrawer(
                         )
                     },
                     badge = {},
-                    onClick = { /* TODO: Implement Sessions screen */ }
+                    onClick = {
+                        isDrawerOpen = false
+                        navigateToSessions()
+                    }
                 )
 
                 // nav drawer element: Calendar
                 NavigationDrawerItem(
                     label = { Text(stringResource(R.string.calendar_title)) },
-                    selected = false,
+                    selected = titleRes == R.string.calendar_screen_title,
                     icon = {
                         Icon(
                             imageVector = Icons.Filled.CalendarMonth,
@@ -266,7 +286,10 @@ fun LiftTrackerDrawer(
                         )
                     },
                     badge = {},
-                    onClick = { /* TODO: Implement Calendar screen */ }
+                    onClick = {
+                        isDrawerOpen = false
+                        navigateToCalendar()
+                    }
                 )
 
                 // nav drawer element: Switch Profile
@@ -280,7 +303,7 @@ fun LiftTrackerDrawer(
                         )
                     },
                     badge = {},
-                    onClick = { /* TODO: Implement Switch Profile Screen */ }
+                    onClick = { /* TODO: Implement Switch Profile Dropdown */ }
                 )
 
                 // divider to separate
@@ -289,7 +312,7 @@ fun LiftTrackerDrawer(
                 // nav drawer element: Analytics
                 NavigationDrawerItem(
                     label = { Text(stringResource(R.string.analytics_title)) },
-                    selected = false,
+                    selected = titleRes == R.string.analytics_title,
                     icon = {
                         Icon(
                             imageVector = Icons.Filled.Timeline,
@@ -297,13 +320,16 @@ fun LiftTrackerDrawer(
                         )
                     },
                     badge = {},
-                    onClick = { /* TODO: Implement Analytics Screen */ }
+                    onClick = {
+                        isDrawerOpen = false
+                        navigateToAnalytics()
+                    }
                 )
 
                 // nav drawer element: Tools
                 NavigationDrawerItem(
                     label = { Text(stringResource(R.string.tools_title)) },
-                    selected = false,
+                    selected = titleRes == R.string.tools_title,
                     icon = {
                         Icon(
                             imageVector = Icons.Filled.Handyman,
@@ -311,13 +337,16 @@ fun LiftTrackerDrawer(
                         )
                     },
                     badge = {},
-                    onClick = { /* TODO: Implement Tools screen */ }
+                    onClick = {
+                        isDrawerOpen = false
+                        navigateToTools()
+                    }
                 )
 
                 // nav drawer element: Settings
                 NavigationDrawerItem(
                     label = { Text(stringResource(R.string.settings_title)) },
-                    selected = false,
+                    selected = titleRes == R.string.settings_title,
                     icon = {
                         Icon(
                             imageVector = Icons.Filled.Settings,
@@ -325,7 +354,10 @@ fun LiftTrackerDrawer(
                         )
                     },
                     badge = {},
-                    onClick = { /* TODO: Implement Settings Screen */ }
+                    onClick = {
+                        isDrawerOpen = false
+                        navigateToSettings()
+                    }
                 )
             }
         }

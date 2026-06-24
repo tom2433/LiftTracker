@@ -9,7 +9,7 @@ A prototype of the Lift Tracker project. This is an evolving document. Everythin
 
 1. Backend database design (F1)
     - Add a set metric for time, in addition to weight and reps (F1A)
-2. Menu drawer with basic elements (F2):
+2. (Completed) Menu drawer with basic elements (F2):
     - Begin Session (F2A)
     - Muscle Groups (F2B)
     - Sessions (F2C)
@@ -19,7 +19,7 @@ A prototype of the Lift Tracker project. This is an evolving document. Everythin
     - Analytics (F2F)
     - Tools (F2G)
     - Settings (F2H)
-3. Map menu drawer items with screens where applicable (F2-1)
+3. (In progress) Map menu drawer items with screens where applicable (F2-1)
 4. Implement dropdowns for applicable items in drawer (F2-2)
 5. (Maybe) Animate hamburger menu so that it travels and rotates into an arrow (F2-3)
 4. Colorscheme (F3):
@@ -155,7 +155,7 @@ The Left hand side will have a menu that animates from the left to allow the use
 
 1. Begin session (change to resume session when one is in progress, with a flag icon to finish session)
 2. Muscle groups
-    - dropdown list with muscle group names/notes, each has a pencil icon to edit name/note.
+    - list with muscle group names/notes, each has a pencil icon to edit name/note.
     - '+' option at the bottom to add a muscle group
     - when a muscle group is clicked, lifts for that muscle group are displayed
         - dropdown list with lift names/notes, each has a pencil icon to edit
@@ -163,9 +163,8 @@ The Left hand side will have a menu that animates from the left to allow the use
             - dropdown list with day names/notes, each has a pencil icon to edit
             - when a day is clicked, the menu disappears to show the Day screen.
 3. Sessions (Days, most recent one is first)
-    - dropdown list with <= 5 most recent workout day names/notes/day #, each has a pencil icon to edit name/note.
-    - when a workout day is clicked, the menu disappears to show the Day screen.
-    - 'View More' button at the bottom of the list. when clicked, the menu disappears to display an entire list of days, most recent one first.
+    - list with most recent workout day names/notes/day #, each has a pencil icon to edit name/note.
+    - when a workout day is clicked, the card expands to the entire screen
 4. Calendar (still deciding how to implement)
 5. Switch profile
     - dropdown list with profile names & notes, each has a pencil icon to edit name/notes.

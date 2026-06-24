@@ -3,10 +3,13 @@
     <string name="begin_session_title">Begin Session</string>
     <string name="muscle_groups_title">Muscle Groups</string>
     <string name="sessions_title">Sessions</string>
+    <string name="sessions_screen_title">Lift Sessions</string>
     <string name="calendar_title">Calendar</string>
+    <string name="calendar_screen_title">Sessions Calendar</string>
     <string name="switch_profile_title">Switch Profile</string>
     <string name="settings_title">Settings</string>
     <string name="menu">Menu</string>
     <string name="tools_title">Tools</string>
     <string name="analytics_title">Analytics</string>
+    <string name="record_session_title">Record Session</string>
 </resources>
