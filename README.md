@@ -1,5 +1,11 @@
 # LiftTracker
+
 A prototype of the Lift Tracker project. This is an evolving document. Everything in here is subject to change.
+
+> [!NOTE]
+>
+> TODO:
+> Make it so the scrim filter goes away as the drawer is also being animated when the user navigates to a different screen
 
 ---
 
