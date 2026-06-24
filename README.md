@@ -15,8 +15,14 @@ A prototype of the Lift Tracker project. This is an evolving document. Everythin
     - Sessions (F2C)
     - Calendar (F2D)
     - Switch Profile (F2E)
-    - Settings(bottom) (F2F)
-3. Colorscheme (F3):
+    - Divider ---
+    - Analytics (F2F)
+    - Tools (F2G)
+    - Settings (F2H)
+3. Map menu drawer items with screens where applicable (F2-1)
+4. Implement dropdowns for applicable items in drawer (F2-2)
+5. (Maybe) Animate hamburger menu so that it travels and rotates into an arrow (F2-3)
+4. Colorscheme (F3):
     - Default to preset colorscheme (F3A)
     - Toggle dynamic color (F3B)
     - Toggle Dark theme (F3C)

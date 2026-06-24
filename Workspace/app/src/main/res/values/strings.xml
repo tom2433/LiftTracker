@@ -7,4 +7,6 @@
     <string name="switch_profile_title">Switch Profile</string>
     <string name="settings_title">Settings</string>
     <string name="menu">Menu</string>
+    <string name="tools_title">Tools</string>
+    <string name="analytics_title">Analytics</string>
 </resources>

@@ -5,8 +5,6 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -20,19 +18,21 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.Handyman
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.PublishedWithChanges
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material3.DrawerDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -121,7 +121,7 @@ fun LiftTrackerDrawer(
             content(innerPadding)
         }
 
-        // scrim color animation
+        // scrim color animation for when drawer is closed or opened
         AnimatedVisibility(
             visible = isDrawerOpen,
             enter = fadeIn(animationSpec = tween(durationMillis = 700)),
@@ -151,8 +151,10 @@ fun LiftTrackerDrawer(
                 .offset {
                     IntOffset(drawerOffsetX.value.roundToInt(), 0)
                 }
+                // handle when the user drags the drawer with their finger
                 .pointerInput(drawerWidthPx) {
                     detectHorizontalDragGestures(
+                        // drawer shall follow the user's touch input
                         onHorizontalDrag = { _, dragAmount ->
                             if (drawerWidthPx > 0f) {
                                 val newOffset = (drawerOffsetX.value + dragAmount)
@@ -164,6 +166,8 @@ fun LiftTrackerDrawer(
                             }
                         },
                         onDragEnd = {
+                            // drawer should stay open if the trailing edge is at more than half
+                            // of the original drawer width
                             val shouldStayOpen = drawerOffsetX.value > -drawerWidthPx / 2f
                             isDrawerOpen = shouldStayOpen
 
@@ -199,6 +203,9 @@ fun LiftTrackerDrawer(
                     modifier = Modifier.padding(16.dp),
                     style = MaterialTheme.typography.titleLarge
                 )
+
+                // divider to separate app name from drawer items
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
                 // nav drawer element: Begin Session (eventually dynamic for resume/quit session)
                 NavigationDrawerItem(
@@ -276,8 +283,36 @@ fun LiftTrackerDrawer(
                     onClick = { /* TODO: Implement Switch Profile Screen */ }
                 )
 
-                // spacer to separate above elements from settings
-                Spacer(modifier = Modifier.weight(1f))
+                // divider to separate
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                // nav drawer element: Analytics
+                NavigationDrawerItem(
+                    label = { Text(stringResource(R.string.analytics_title)) },
+                    selected = false,
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Filled.Timeline,
+                            contentDescription = stringResource(R.string.analytics_title)
+                        )
+                    },
+                    badge = {},
+                    onClick = { /* TODO: Implement Analytics Screen */ }
+                )
+
+                // nav drawer element: Tools
+                NavigationDrawerItem(
+                    label = { Text(stringResource(R.string.tools_title)) },
+                    selected = false,
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Filled.Handyman,
+                            contentDescription = stringResource(R.string.tools_title)
+                        )
+                    },
+                    badge = {},
+                    onClick = { /* TODO: Implement Tools screen */ }
+                )
 
                 // nav drawer element: Settings
                 NavigationDrawerItem(
