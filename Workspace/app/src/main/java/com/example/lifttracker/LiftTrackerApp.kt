@@ -166,9 +166,9 @@ fun LiftTrackerDrawer(
                             }
                         },
                         onDragEnd = {
-                            // drawer should stay open if the trailing edge is at more than half
+                            // drawer should stay open if the trailing edge is at more than 0.9
                             // of the original drawer width
-                            val shouldStayOpen = drawerOffsetX.value > -drawerWidthPx / 2f
+                            val shouldStayOpen = drawerOffsetX.value > -drawerWidthPx * 0.1
                             isDrawerOpen = shouldStayOpen
 
                             coroutineScope.launch {
