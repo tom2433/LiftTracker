@@ -32,7 +32,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    // TODO: Everything
+                    LiftTrackerApp()
                 }
             }
         }
@@ -72,7 +72,7 @@ fun InventoryAppPreview() {
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-//            InventoryApp()
+            LiftTrackerApp()
         }
     }
 }
