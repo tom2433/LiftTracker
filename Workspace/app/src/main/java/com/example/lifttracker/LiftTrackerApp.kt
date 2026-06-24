@@ -9,6 +9,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -16,6 +17,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -110,7 +113,10 @@ fun LiftTrackerDrawer(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(DrawerDefaults.scrimColor)
-                    .clickable {
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) {
                         isDrawerOpen = false
                     }
             )
@@ -131,27 +137,29 @@ fun LiftTrackerDrawer(
         ) {
             ModalDrawerSheet(
                 // allow user to physically drag the drawer sheet in and out
-                modifier = Modifier.pointerInput(Unit) {
-                    detectHorizontalDragGestures(
-                        onDragStart = {
-                            drawerDragAmount = 0f
-                        },
-                        onHorizontalDrag = { _, dragAmount ->
-                            if (dragAmount < 0) {
-                                drawerDragAmount += dragAmount
+                modifier = Modifier
+                    .width(300.dp)
+                    .pointerInput(Unit) {
+                        detectHorizontalDragGestures(
+                            onDragStart = {
+                                drawerDragAmount = 0f
+                            },
+                            onHorizontalDrag = { _, dragAmount ->
+                                if (dragAmount < 0) {
+                                    drawerDragAmount += dragAmount
+                                }
+                            },
+                            onDragEnd = {
+                                if (drawerDragAmount < -80.dp.toPx()) {
+                                    isDrawerOpen = false
+                                }
+                                drawerDragAmount = 0f
+                            },
+                            onDragCancel = {
+                                drawerDragAmount = 0f
                             }
-                        },
-                        onDragEnd = {
-                            if (drawerDragAmount < -80.dp.toPx()) {
-                                isDrawerOpen = false
-                            }
-                            drawerDragAmount = 0f
-                        },
-                        onDragCancel = {
-                            drawerDragAmount = 0f
-                        }
-                    )
-                }
+                        )
+                    }
             ) {
                 Column(
                     modifier = Modifier
