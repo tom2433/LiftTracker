@@ -12,6 +12,7 @@ The ```profiles``` table has 3 columns:
 
 - ```id``` (INTEGER): primary key. This is the main identifier used to distinguish between each profile.
 - ```name``` (TEXT): the user-written name for the profile.
+- ```active``` (INTEGER): indicates whether the current profile is active (1) or not active (0)
 - ```note``` (TEXT): a user-written note for the profile, may be blank.
 */
 @Entity(tableName = "profiles")
@@ -19,5 +20,6 @@ data class Profile(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,                    // primary key
     val name: String,                   // name of profile
+    val active: Boolean,                // true/false indicating if profile is currently active
     val note: String                    // optional user-written note for profile
 )

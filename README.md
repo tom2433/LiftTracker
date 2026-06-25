@@ -9,7 +9,9 @@ A prototype of the Lift Tracker project. This is an evolving document. Everythin
 ## Features:
 
 1. (In progress) Backend database design (F1)
-    - Add a set metric for time, in addition to weight and reps (F1A)
+    - Add a set metric for time, in addition to weight and reps
+    - Ensure that the viewModels have access to the database
+    - Check if a user profile exists. If none do, then prompt the user to create one.
 2. (Completed) Menu drawer with basic elements (F2):
     - Begin Session (F2A)
     - Muscle Groups (F2B)
@@ -69,7 +71,7 @@ The ```lift_sets``` table has 6 columns:
 - ```set_label``` (TEXT): just a string containing the name of the set (e.g., ```"Set 1"```, ```"Set 2"```, ```"Set 3"```, etc. as default). The user may be able to change this label in future versions.
 - ```set_note``` (TEXT): a user-written note for the set, may be blank
 
-## ```lifts```
+#### ```lifts```
 
 The purpose of the ```lifts``` table is to store the names of all the different user-created lifts and link them to their corresponding muscle groups.
 
@@ -79,7 +81,7 @@ The ```lifts``` table has 4 columns:
 - ```muscle_group_id``` (INTEGER): foreign key referring to the ```muscle_groups``` table. This is what links each lift to its corresponding muscle group.
 - ```unit_id``` (INTEGER): foreign key referring to the ```units``` table. This is what links each lift to its corresponding user-written unit.
 - ```name``` (TEXT): the user-specified name for the lift.
-- ```metric_type``` (INTEGER): Int indicating if the lift will be measured in reps (1) or time (2)
+- ```metric_type``` (INTEGER): Int indicating if the lift will be measured in reps (1) or time (2). If the metric type is time, then the unit_id will be overridden.
 - ```note``` (TEXT): a user-written note for the lift, may be blank
 
 #### ```muscle_groups```
@@ -113,6 +115,7 @@ The ```profiles``` table has 3 columns:
 
 - ```id``` (INTEGER): primary key. This is the main identifier used to distinguish between each profile.
 - ```name``` (TEXT): the user-written name for the profile.
+- ```active``` (INTEGER): indicates whether the current profile is active (1) or not active (0)
 - ```note``` (TEXT): a user-written note for the profile, may be blank.
 
 #### ```units```
