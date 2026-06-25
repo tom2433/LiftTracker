@@ -73,10 +73,6 @@ fun MuscleGroupsScreen(
     val coroutineScope = rememberCoroutineScope()
 
     // check if the user has created a profile or not
-    if (muscleGroupsUiState.profileList.isEmpty()) {
-        viewModel.showWelcomeDialog()
-    }
-
     // if they haven't, then the welcome dialog will be visible
     if (muscleGroupsUiState.welcomeDialogVisible) {
         // display the welcome message
@@ -102,13 +98,10 @@ fun MuscleGroupsScreen(
                     buttonEnabled = viewModel.isValidProfileName(),
                     newProfileName = muscleGroupsUiState.newProfileName,
                     newProfileNote = muscleGroupsUiState.newProfileNote,
-                    onProfileNameValueChanged = { muscleGroupsUiState.newProfileName = it },
-                    onProfileNoteValueChanged = { muscleGroupsUiState.newProfileNote = it },
+                    onProfileNameValueChanged = { viewModel.updateNewProfileName(it) },
+                    onProfileNoteValueChanged = { viewModel.updateNewProfileNote(it) },
                     onCreateProfile = {
-                        coroutineScope.launch {
-                            viewModel.createProfile()
-                            viewModel.dismissWelcomeDialog()
-                        }
+                        viewModel.createProfile()
                     }
                 )
             }
