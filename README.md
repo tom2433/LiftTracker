@@ -144,6 +144,7 @@ The ```units``` table has two columns:
     - Sets from earlier days should be displayed as a different color.
     - **maybe** Stopwatch, potentially the ability to lap for sets/rests
 - In general:
+    - have the graphs on the lift screens, maybe not the analytics page.
     - Ability to switch between different color schemes or turn on/off dynamic color
     - Ability to switch between light/dark theme or use system default
     - Potentially providing insights on certain lift days based on probability distributions
