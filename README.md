@@ -69,7 +69,7 @@ The ```lift_sets``` table has 6 columns:
 - ```set_label``` (TEXT): just a string containing the name of the set (e.g., ```"Set 1"```, ```"Set 2"```, ```"Set 3"```, etc. as default). The user may be able to change this label in future versions.
 - ```set_note``` (TEXT): a user-written note for the set, may be blank
 
-#### ```lifts```
+## ```lifts```
 
 The purpose of the ```lifts``` table is to store the names of all the different user-created lifts and link them to their corresponding muscle groups.
 
@@ -77,6 +77,7 @@ The ```lifts``` table has 4 columns:
 
 - ```id``` (INTEGER): primary key. This is the main identifier that the ```lift_sets``` table uses to associate lift names with set data.
 - ```muscle_group_id``` (INTEGER): foreign key referring to the ```muscle_groups``` table. This is what links each lift to its corresponding muscle group.
+- ```unit_id``` (INTEGER): foreign key referring to the ```units``` table. This is what links each lift to its corresponding user-written unit.
 - ```name``` (TEXT): the user-specified name for the lift.
 - ```metric_type``` (INTEGER): Int indicating if the lift will be measured in reps (1) or time (2)
 - ```note``` (TEXT): a user-written note for the lift, may be blank
@@ -113,6 +114,19 @@ The ```profiles``` table has 3 columns:
 - ```id``` (INTEGER): primary key. This is the main identifier used to distinguish between each profile.
 - ```name``` (TEXT): the user-written name for the profile.
 - ```note``` (TEXT): a user-written note for the profile, may be blank.
+
+#### ```units```
+
+The purpose of the ```units``` table is to store the names of all the user-written units, which are added to different lifts. The units table is designed to be independent of profiles, so multiple profiles can use the same unit.
+
+The ```units``` table has two columns:
+
+- ```id``` (INTEGER): primary key. This is the main identifier that the ```lifts``` table uses to associate lifts with their appropriate units.
+- ```name``` (TEXT): the user-written name of the unit
+
+> [!NOTE]
+>
+> May need some protection to ensure that a unit that is being used by a lift cannot be deleted.
 
 ---
 

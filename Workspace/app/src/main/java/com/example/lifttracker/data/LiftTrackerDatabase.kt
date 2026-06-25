@@ -43,12 +43,10 @@ The ```lifts``` table has 4 columns:
 
 - ```id``` (INTEGER): primary key. This is the main identifier that the ```lift_sets``` table uses to associate lift names with set data.
 - ```muscle_group_id``` (INTEGER): foreign key referring to the ```muscle_groups``` table. This is what links each lift to its corresponding muscle group.
+- ```unit_id``` (INTEGER): foreign key referring to the ```units``` table. This is what links each lift to its corresponding user-written unit.
 - ```name``` (TEXT): the user-specified name for the lift.
-- ```metric_type``` (INTEGER): Int indicating if the lift will be measured in reps (1) or time (2)
+- ```metric_type``` (INTEGER): Int indicating if the lift will be measured in reps (1) or time (2). If the metric type is time, then the unit_id will be overridden.
 - ```note``` (TEXT): a user-written note for the lift, may be blank
-
-> Note:
-> The ```lifts``` table will eventually need to be updated to include a ```metric_type``` column, which will indicate whether the lift data will be measured in reps or time.
 
 ## ```muscle_groups```
 
@@ -82,6 +80,18 @@ The ```profiles``` table has 3 columns:
 - ```id``` (INTEGER): primary key. This is the main identifier used to distinguish between each profile.
 - ```name``` (TEXT): the user-written name for the profile.
 - ```note``` (TEXT): a user-written note for the profile, may be blank.
+
+## ```units```
+
+The purpose of the ```units``` table is to store the names of all the user-written units, which are added to different lifts. The units table is designed to be independent of profiles, so multiple profiles can use the same unit.
+
+The ```units``` table has two columns:
+
+- ```id``` (INTEGER): primary key. This is the main identifier that the ```lifts``` table uses to associate lifts with their appropriate units.
+- ```name``` (TEXT): the user-written name of the unit
+
+> [!NOTE]
+> May need some protection to ensure that a unit that is being used cannot be deleted.
 */
 
 @Database(
@@ -91,7 +101,8 @@ The ```profiles``` table has 3 columns:
         LiftSet::class,
         MuscleGroup::class,
         Profile::class,
-        SetMetric::class
+        SetMetric::class,
+        Unit::class
     ],
     version = 1,
     exportSchema = false
@@ -103,6 +114,7 @@ abstract class LiftTrackerDatabase : RoomDatabase() {
     abstract fun muscleGroupDao(): MuscleGroupDao
     abstract fun profileDao(): ProfileDao
     abstract fun setMetricDao(): SetMetricDao
+    abstract fun unitDao(): UnitDao
 
 
     companion object {
