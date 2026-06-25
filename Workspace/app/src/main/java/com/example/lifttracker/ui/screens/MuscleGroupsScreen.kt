@@ -109,6 +109,7 @@ fun MuscleGroupsScreen(
         // if they have an existing profile, display everything for the current active profile
         LiftTrackerDrawer(
             titleRes = MuscleGroupsDestination.titleRes,
+            profiles = muscleGroupsUiState.profileList,
             navigateToRecordSession = navigateToRecordSession,
             navigateToMuscleGroups = navigateToMuscleGroups,
             navigateToSessions = navigateToSessions,

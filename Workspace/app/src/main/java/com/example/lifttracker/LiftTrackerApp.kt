@@ -59,6 +59,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.example.lifttracker.data.Profile
 import com.example.lifttracker.ui.navigation.LiftTrackerNavHost
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -83,6 +84,7 @@ fun LiftTrackerApp(navController: NavHostController = rememberNavController()) {
 @Composable
 fun LiftTrackerDrawer(
     @StringRes titleRes: Int,
+    profiles: List<Profile>,
     navigateToRecordSession: () -> Unit,
     navigateToMuscleGroups: () -> Unit,
     navigateToSessions: () -> Unit,
@@ -312,7 +314,7 @@ fun LiftTrackerDrawer(
                     }
                 )
 
-                // nav drawer element: Switch Profile
+                // TODO: nav drawer element: Switch Profile
                 NavigationDrawerItem(
                     label = { Text(stringResource(R.string.switch_profile_title)) },
                     selected = false,
