@@ -15,16 +15,22 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Label
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -40,6 +46,7 @@ import com.example.lifttracker.ui.AppViewModelProvider
 import com.example.lifttracker.ui.navigation.NavigationDestination
 import com.example.lifttracker.ui.theme.LiftTrackerTheme
 import com.example.lifttracker.ui.viewModels.MuscleGroupsViewModel
+import kotlinx.coroutines.launch
 
 object MuscleGroupsDestination : NavigationDestination {
     override val route = "muscleGroups"
@@ -62,8 +69,8 @@ fun MuscleGroupsScreen(
     viewModel: MuscleGroupsViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val muscleGroupsUiState by viewModel.muscleGroupsUiState.collectAsState()
-
     val layoutDirection = LocalLayoutDirection.current
+    val coroutineScope = rememberCoroutineScope()
 
     // check if the user has created a profile or not
     if (muscleGroupsUiState.profileList.isEmpty()) {
@@ -89,14 +96,21 @@ fun MuscleGroupsScreen(
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                // welcome message here, do not allow user to dismiss unless they click the button
+                // welcome message here, do not allow user to dismiss unless they enter a profile name
+                // and click the create profile button
                 WelcomeDialog(
-                    onNext = {
-                        viewModel.dismissWelcomeDialog()
+                    buttonEnabled = viewModel.isValidProfileName(),
+                    newProfileName = muscleGroupsUiState.newProfileName,
+                    newProfileNote = muscleGroupsUiState.newProfileNote,
+                    onProfileNameValueChanged = { muscleGroupsUiState.newProfileName = it },
+                    onProfileNoteValueChanged = { muscleGroupsUiState.newProfileNote = it },
+                    onCreateProfile = {
+                        coroutineScope.launch {
+                            viewModel.createProfile()
+                            viewModel.dismissWelcomeDialog()
+                        }
                     }
                 )
-
-                // once user clicks next, prompt them for a profile name
             }
         }
     } else {
@@ -126,7 +140,12 @@ fun MuscleGroupsScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WelcomeDialog(
-    onNext: () -> Unit,
+    buttonEnabled: Boolean,
+    newProfileName: String,
+    newProfileNote: String,
+    onProfileNameValueChanged: (String) -> Unit,
+    onProfileNoteValueChanged: (String) -> Unit,
+    onCreateProfile: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Dialog(
@@ -139,7 +158,7 @@ fun WelcomeDialog(
         Card(
             modifier = modifier
                 .wrapContentSize()
-                .padding(20.dp),
+                .padding(4.dp),
             shape = RoundedCornerShape(16.dp)
         ) {
             Column(
@@ -160,6 +179,45 @@ fun WelcomeDialog(
                 // divider
                 HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
 
+                // profile name input
+                TextField(
+                    value = newProfileName,
+                    onValueChange = onProfileNameValueChanged,
+                    label = {
+                        Text(stringResource(R.string.profile_name_input_label))
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Label,
+                            contentDescription = stringResource(R.string.profile_name_input_label)
+                        )
+                    },
+                    modifier = Modifier
+                        .padding(bottom = 16.dp)
+                        .fillMaxWidth()
+                )
+
+                // profile note input
+                TextField(
+                    value = newProfileNote,
+                    onValueChange = onProfileNoteValueChanged,
+                    label = {
+                        Text(stringResource(R.string.profile_note_input_label))
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.Description,
+                            contentDescription = stringResource(R.string.profile_note_input_label)
+                        )
+                    },
+                    modifier = Modifier
+                        .padding(bottom = 16.dp)
+                        .fillMaxWidth()
+                )
+
+                // divider
+                HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
+
                 // welcome description (tell user to create one profile)
                 Text(
                     text = stringResource(R.string.welcome_description),
@@ -172,33 +230,16 @@ fun WelcomeDialog(
 
                 // button to create profile
                 Button(
-                    onClick = onNext,
+                    onClick = onCreateProfile,
+                    enabled = buttonEnabled,
                     modifier = Modifier
                         .fillMaxWidth()
                 ) {
-                    Text("Create a Profile")
+                    Text(stringResource(R.string.create_profile_btn_text))
                 }
             }
         }
     }
-
-//    BasicAlertDialog(
-//        onDismissRequest = {},
-//        modifier = modifier.padding(
-//            top = 16.dp,
-//            bottom = 16.dp,
-//            start = 8.dp,
-//            end = 8.dp
-//        ),
-//        properties = DialogProperties(
-//            dismissOnBackPress = false,
-//            dismissOnClickOutside = false
-//        )
-//    ) {
-//        Column() {
-//            Text(text = "Here is some text")
-//        }
-//    }
 }
 
 @Preview(showBackground = true)
@@ -223,7 +264,15 @@ fun WelcomeDialogPreview() {
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                WelcomeDialog(onNext = {})
+                WelcomeDialog(
+                    buttonEnabled = true,
+                    newProfileName = "",
+                    newProfileNote = "",
+                    onProfileNameValueChanged = {},
+                    onProfileNoteValueChanged = {},
+                    onCreateProfile = {},
+                    modifier = Modifier
+                )
             }
         }
     }
