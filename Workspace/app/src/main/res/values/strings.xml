@@ -12,4 +12,9 @@
     <string name="tools_title">Tools</string>
     <string name="analytics_title">Analytics</string>
     <string name="record_session_title">Record Session</string>
+    <string name="welcome_description">What up big dog, it looks like you haven\'t added any profiles yet. Profiles are used to categorize all of your lift data (sessions, muscle groups, lifts) into separate blocks. If this doesn\'t sound like something you want to do, just create one profile with your name and don\'t worry about it. If you change your mind, you can always create more profiles through the menu on the left-hand side which is where you\'ll find everything else too.</string>
+    <string name="welcome_title">Welcome to Lift Tracker</string>
+    <string name="create_profile_btn_text">Create Profile</string>
+    <string name="profile_name_input_label">Profile Name</string>
+    <string name="profile_note_input_label">Profile Note (optional)</string>
 </resources>

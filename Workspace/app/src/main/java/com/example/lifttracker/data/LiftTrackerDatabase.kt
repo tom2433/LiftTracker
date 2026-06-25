@@ -15,8 +15,10 @@ The purpose of the ```lift_days``` table is to keep track of all the days that t
 The ```lift_days``` table has 5 columns:
 
 - ```id``` (INTEGER): primary key. This is the main identifier that the ```lift_sets``` table uses to associate set data with a specific day.
+- ```profile_id``` (INTEGER): foreign key. This is what links the lift day to the appropriate profile.
 - ```day_number``` (INTEGER): the number of the day; e.g. ```1```, ```2```, ```3```, etc.
 - ```day_label``` (TEXT): the name of the day; e.g. ```"Day 1"```, ```"Day 2"```, ```"Day 3"```, etc. as default. The user may be able to change this name in future versions.
+- ```date``` (TEXT): The date of the day that the session was recorded in ISO-8601 format: YYYY-MM-DD
 - ```note``` (TEXT): a user-written note for the day, may be blank
 
 ## ```lift_sets```
@@ -41,11 +43,10 @@ The ```lifts``` table has 4 columns:
 
 - ```id``` (INTEGER): primary key. This is the main identifier that the ```lift_sets``` table uses to associate lift names with set data.
 - ```muscle_group_id``` (INTEGER): foreign key referring to the ```muscle_groups``` table. This is what links each lift to its corresponding muscle group.
+- ```unit_id``` (INTEGER): foreign key referring to the ```units``` table. This is what links each lift to its corresponding user-written unit.
 - ```name``` (TEXT): the user-specified name for the lift.
+- ```metric_type``` (INTEGER): Int indicating if the lift will be measured in reps (1) or time (2). If the metric type is time, then the unit_id will be overridden.
 - ```note``` (TEXT): a user-written note for the lift, may be blank
-
-> Note:
-> The ```lifts``` table will eventually need to be updated to include a ```metric_type``` column, which will indicate whether the lift data will be measured in reps or time.
 
 ## ```muscle_groups```
 
@@ -67,7 +68,7 @@ The ```set_metrics``` table has 6 columns:
 - ```id``` (INTEGER): primary key. This is the main identifier for each set metric.
 - ```set_id``` (INTEGER): foreign key referring to the ```lift_sets``` table. This is what links each lift metric to its corresponding set.
 - ```metric_position``` (INTEGER): this indicates whether the metric is a weight value or a rep value. ```1``` indicates weight, and ```2``` indicates reps.
-- ```value``` (REAL): this indicates the number of reps performed, or the weight value for the specific set.
+- ```value``` (REAL): this indicates the number of reps performed, the weight value, or the time value for the specific set. Time values will be stored as doubles representing minutes, e.g. 1 minute and 30 seconds = 1.5 minutes
 - ```note``` (TEXT): a user-written note for the metric, may be blank.
 
 ## ```profiles```
@@ -78,7 +79,20 @@ The ```profiles``` table has 3 columns:
 
 - ```id``` (INTEGER): primary key. This is the main identifier used to distinguish between each profile.
 - ```name``` (TEXT): the user-written name for the profile.
+- ```active``` (INTEGER): indicates whether the current profile is active (1) or not active (0)
 - ```note``` (TEXT): a user-written note for the profile, may be blank.
+
+## ```units```
+
+The purpose of the ```units``` table is to store the names of all the user-written units, which are added to different lifts. The units table is designed to be independent of profiles, so multiple profiles can use the same unit.
+
+The ```units``` table has two columns:
+
+- ```id``` (INTEGER): primary key. This is the main identifier that the ```lifts``` table uses to associate lifts with their appropriate units.
+- ```name``` (TEXT): the user-written name of the unit
+
+> [!NOTE]
+> May need some protection to ensure that a unit that is being used cannot be deleted.
 */
 
 @Database(
@@ -88,7 +102,8 @@ The ```profiles``` table has 3 columns:
         LiftSet::class,
         MuscleGroup::class,
         Profile::class,
-        SetMetric::class
+        SetMetric::class,
+        Unit::class
     ],
     version = 1,
     exportSchema = false
@@ -100,6 +115,7 @@ abstract class LiftTrackerDatabase : RoomDatabase() {
     abstract fun muscleGroupDao(): MuscleGroupDao
     abstract fun profileDao(): ProfileDao
     abstract fun setMetricDao(): SetMetricDao
+    abstract fun unitDao(): UnitDao
 
 
     companion object {

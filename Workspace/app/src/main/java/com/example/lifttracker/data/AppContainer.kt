@@ -12,6 +12,7 @@ interface AppContainer {
     val muscleGroupRepository: MuscleGroupRepository
     val profileRepository: ProfileRepository
     val setMetricRepository: SetMetricRepository
+    val unitRepository: UnitRepository
 }
 
 /**
@@ -43,5 +44,9 @@ class AppDataContainer(private val context: Context) : AppContainer {
 
     override val setMetricRepository: SetMetricRepository by lazy {
         OfflineSetMetricRepository(LiftTrackerDatabase.getDatabase(context).setMetricDao())
+    }
+
+    override val unitRepository: UnitRepository by lazy {
+        OfflineUnitRepository(LiftTrackerDatabase.getDatabase(context).unitDao())
     }
 }

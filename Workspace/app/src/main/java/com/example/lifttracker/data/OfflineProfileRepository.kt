@@ -11,4 +11,6 @@ class OfflineProfileRepository(private val profileDao: ProfileDao) : ProfileRepo
 
     override fun getProfileStream(id: Int): Flow<Profile?> = profileDao.getProfile(id)
 
+    override fun getAllProfilesStream(): Flow<List<Profile>> = profileDao.getAllProfiles()
+
 }
