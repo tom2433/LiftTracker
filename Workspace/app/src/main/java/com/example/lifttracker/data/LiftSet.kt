@@ -21,6 +21,7 @@ The ```lift_sets``` table has 6 columns:
 - ```set_note``` (TEXT): a user-written note for the set, may be blank
 */
 
+@Suppress("PropertyName")
 @Entity(
     tableName = "lift_sets",
     foreignKeys = [

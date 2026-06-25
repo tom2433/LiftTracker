@@ -18,6 +18,7 @@ The ```set_metrics``` table has 6 columns:
 - ```value``` (REAL): this indicates the number of reps performed, the weight value, or the time value for the specific set. Time values will be stored as doubles representing minutes, e.g. 1 minute and 30 seconds = 1.5 minutes
 - ```note``` (TEXT): a user-written note for the metric, may be blank.
 */
+@Suppress("PropertyName")
 @Entity(
     tableName = "set_metrics",
     foreignKeys = [

@@ -8,7 +8,7 @@ A prototype of the Lift Tracker project. This is an evolving document. Everythin
 
 ## Features:
 
-1. (In progress) Backend database design (F1)
+1. (Completed) Backend database design (F1)
     - Add a set metric for time, in addition to weight and reps
     - Ensure that the viewModels have access to the database
     - Check if a user profile exists. If none do, then prompt the user to create one.
@@ -29,6 +29,7 @@ A prototype of the Lift Tracker project. This is an evolving document. Everythin
     - Default to preset colorscheme (F3A)
     - Toggle dynamic color (F3B)
     - Toggle Dark theme (F3C)
+5. (In Progress) Implement Switch Profile functionality (F4)
 
 # Basic Structure
 

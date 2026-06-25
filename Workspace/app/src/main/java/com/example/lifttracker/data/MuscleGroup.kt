@@ -17,6 +17,7 @@ The ```muscle_groups``` table has 4 columns:
 - ```name``` (TEXT): the user-specified name for the muscle group.
 - ```note``` (TEXT): a user-written note for the muscle group, may be blank.
 */
+@Suppress("PropertyName")
 @Entity(
     tableName = "muscle_groups",
     foreignKeys = [

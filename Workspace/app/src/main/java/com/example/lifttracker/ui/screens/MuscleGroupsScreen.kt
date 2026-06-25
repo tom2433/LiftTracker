@@ -31,7 +31,6 @@ import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -48,7 +47,6 @@ import com.example.lifttracker.ui.AppViewModelProvider
 import com.example.lifttracker.ui.navigation.NavigationDestination
 import com.example.lifttracker.ui.theme.LiftTrackerTheme
 import com.example.lifttracker.ui.viewModels.MuscleGroupsViewModel
-import kotlinx.coroutines.launch
 
 object MuscleGroupsDestination : NavigationDestination {
     override val route = "muscleGroups"
@@ -72,7 +70,6 @@ fun MuscleGroupsScreen(
 ) {
     val muscleGroupsUiState by viewModel.muscleGroupsUiState.collectAsState()
     val layoutDirection = LocalLayoutDirection.current
-    val coroutineScope = rememberCoroutineScope()
 
     // check if the user has created a profile or not
     // if they haven't, then the welcome dialog will be visible

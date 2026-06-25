@@ -18,6 +18,7 @@ The ```lift_days``` table has 5 columns:
 - ```date``` (TEXT): The date of the day that the session was recorded in ISO-8601 format: YYYY-MM-DD
 - ```note``` (TEXT): a user-written note for the day, may be blank
 */
+@Suppress("PropertyName")
 @Entity(
     tableName = "lift_days",
     foreignKeys = [

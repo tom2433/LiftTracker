@@ -19,6 +19,7 @@ The ```lifts``` table has 4 columns:
 - ```metric_type``` (INTEGER): Int indicating if the lift will be measured in reps (1) or time (2). If the metric type is time, then the unit_id will be overridden.
 - ```note``` (TEXT): a user-written note for the lift, may be blank
 */
+@Suppress("PropertyName")
 @Entity(
     tableName = "lifts",
     foreignKeys = [
