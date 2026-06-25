@@ -15,6 +15,7 @@ The ```lift_days``` table has 5 columns:
 - ```profile_id``` (INTEGER): foreign key. This is what links the lift day to the appropriate profile.
 - ```day_number``` (INTEGER): the number of the day; e.g. ```1```, ```2```, ```3```, etc.
 - ```day_label``` (TEXT): the name of the day; e.g. ```"Day 1"```, ```"Day 2"```, ```"Day 3"```, etc. as default. The user may be able to change this name in future versions.
+- ```date``` (TEXT): The date of the day that the session was recorded in ISO-8601 format: YYYY-MM-DD
 - ```note``` (TEXT): a user-written note for the day, may be blank
 */
 @Entity(
@@ -34,5 +35,6 @@ data class LiftDay(
     val profile_id: Int,                // FK to profiles.id
     val day_number: Int,                // chronological number of lift day
     val day_label: String,              // name of the Lift Day (default to "Day 1", "Day 2", etc.)
+    val date: String,                   // date that the session was recorded in ISO-8601 format
     val note: String                    // optional user-written note for lift day
 )
