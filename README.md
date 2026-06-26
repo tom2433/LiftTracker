@@ -23,13 +23,18 @@ A prototype of the Lift Tracker project. This is an evolving document. Everythin
     - Tools (F2G)
     - Settings (F2H)
 3. (Completed) Map menu drawer items with screens where applicable (F2-1)
-4. Implement dropdowns for applicable items in drawer (F2-2)
 5. (Maybe) Animate hamburger menu so that it travels and rotates into an arrow (F2-3)
 4. Colorscheme (F3):
     - Default to preset colorscheme (F3A)
     - Toggle dynamic color (F3B)
     - Toggle Dark theme (F3C)
-5. (In Progress) Implement Switch Profile functionality (F4)
+5. (Completed) Implement Switch Profile functionality (F4)
+6. (In progress) Allow user to add, edit, and delete muscle groups in the muscle groups screen. (F5)
+    - each muscle group will be displayed as a card.
+    - each card will display the muscle group name and note, as well as the following:
+        - number of lifts
+        - number of days trained
+    - When a muscle group card is clicked, it animates a dropdown container with cards representing all lifts for that muscle group
 
 # Basic Structure
 
