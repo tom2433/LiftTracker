@@ -42,7 +42,8 @@ class DrawerViewModel(
     fun toggleDrawer() {
         _drawerUiState.update { currentState ->
             currentState.copy(
-                isDrawerOpen = !currentState.isDrawerOpen
+                isDrawerOpen = !currentState.isDrawerOpen,
+                switchProfileSelected = false
             )
         }
     }
@@ -50,7 +51,8 @@ class DrawerViewModel(
     fun closeDrawer() {
         _drawerUiState.update { currentState ->
             currentState.copy(
-                isDrawerOpen = false
+                isDrawerOpen = false,
+                switchProfileSelected = false
             )
         }
     }
@@ -66,7 +68,8 @@ class DrawerViewModel(
     fun updateIsDrawerOpen(newVal: Boolean) {
         _drawerUiState.update { currentState ->
             currentState.copy(
-                isDrawerOpen = newVal
+                isDrawerOpen = newVal,
+                switchProfileSelected = false
             )
         }
     }

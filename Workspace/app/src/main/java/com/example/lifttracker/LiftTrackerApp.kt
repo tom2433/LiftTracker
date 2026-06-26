@@ -7,8 +7,10 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -16,10 +18,14 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
@@ -30,6 +36,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -226,12 +233,6 @@ fun LiftTrackerDrawer(
                         horizontal = 16.dp
                     )
                     .verticalScroll(rememberScrollState())
-                    .animateContentSize(
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioLowBouncy,
-                            stiffness = Spring.StiffnessMediumLow
-                        )
-                    )
             ) {
                 // nav drawer title
                 Spacer(Modifier.height(12.dp))
@@ -352,102 +353,142 @@ fun LiftTrackerDrawer(
                 )
 
                 // display list of profiles if user selected to switch profiles
-                if (drawerUiState.switchProfileSelected) {
-                    HorizontalDivider(modifier = Modifier.padding(start = 16.dp))
+                AnimatedVisibility(
+                    visible = drawerUiState.switchProfileSelected,
+                    enter = expandVertically(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioLowBouncy,
+                            stiffness = Spring.StiffnessMediumLow
+                        )
+                    ) + fadeIn(),
+                    exit = shrinkVertically(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioLowBouncy,
+                            stiffness = Spring.StiffnessMediumLow
+                        )
+                    ) + fadeOut()
+                ) {
+                    Column {
+                        HorizontalDivider(modifier = Modifier.padding(start = 16.dp, top = 8.dp, bottom = 8.dp))
 
-                    for (profile in drawerUiState.profileList) {
-                        Row(
-                            modifier = Modifier
-                                .padding(start = 16.dp)
-                                .wrapContentSize(),
-                            horizontalArrangement = Arrangement.Start,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            // card for profile name/note
-                            Card(
+                        for (profile in drawerUiState.profileList) {
+                            Row(
                                 modifier = Modifier
-                                    .heightIn(min = 56.dp)
-                                    .weight(5f)
-                                    .clickable(
-                                        onClick = { /* TODO: onClick switch to this profile if not active */ }
-                                    ),
-                                shape = RoundedCornerShape(
-                                    topStart = 16.dp,
-                                    bottomStart = 16.dp
-                                ),
-//                                colors = CardDefaults.cardColors(
-//                                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-//                                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-//                                )
+                                    .padding(start = 16.dp, bottom = 8.dp)
+                                    .height(IntrinsicSize.Min),
+                                horizontalArrangement = Arrangement.Start,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                // put name and note here
-                                Column(
-                                    verticalArrangement = Arrangement.Center,
-                                    horizontalAlignment = Alignment.Start
-                                ) {
-                                    Text(
-                                        text = profile.name,
-                                        style = MaterialTheme.typography.titleSmall,
-                                        modifier = Modifier.padding(bottom = 4.dp)
+                                // card for profile name/note
+                                Card(
+                                    modifier = Modifier
+                                        .weight(3f)
+                                        .defaultMinSize(minHeight = 56.dp)
+                                        .clickable(
+                                            onClick = { /* TODO: onClick switch to this profile if not active */ }
+                                        ),
+                                    shape = RoundedCornerShape(
+                                        topStart = 16.dp,
+                                        bottomStart = 16.dp
                                     )
-                                    if (profile.note.isNotBlank()) {
+                                ) {
+                                    // put name and note here
+                                    Column(
+                                        verticalArrangement = Arrangement.Center,
+                                        horizontalAlignment = Alignment.Start,
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(horizontal = 12.dp)
+                                    ) {
                                         Text(
-                                            text = profile.note,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            text = profile.name,
+                                            style = MaterialTheme.typography.titleMedium
+                                        )
+                                        if (profile.note.isNotBlank()) {
+                                            Text(
+                                                text = profile.note,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+                                }
+
+                                // card for edit/delete
+                                Card(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxHeight()
+                                        .defaultMinSize(minHeight = 56.dp)
+                                        .clickable(
+                                            onClick = { /* TODO: onClick edit/delete this profile */ }
+                                        ),
+                                    shape = RoundedCornerShape(
+                                        topEnd = 16.dp,
+                                        bottomEnd = 16.dp
+                                    ),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = if (profile.active) {
+                                            MaterialTheme.colorScheme.tertiaryContainer
+                                        } else {
+                                            MaterialTheme.colorScheme.errorContainer
+                                        },
+                                        contentColor = if (profile.active) {
+                                            MaterialTheme.colorScheme.onTertiaryContainer
+                                        } else {
+                                            MaterialTheme.colorScheme.onErrorContainer
+                                        }
+                                    )
+                                ) {
+                                    // Trash can if not active, pencil if active
+                                    Box(
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = if (profile.active) {
+                                                Icons.Filled.Edit
+                                            } else {
+                                                Icons.Filled.Delete
+                                            },
+                                            contentDescription = if (profile.active) {
+                                                stringResource(R.string.edit_profile)
+                                            } else {
+                                                stringResource(R.string.delete_profile)
+                                            }
                                         )
                                     }
                                 }
                             }
+                        }
 
-                            // card for edit/delete
-                            Card(
-                                modifier = Modifier
-                                    .heightIn(min = 56.dp)
-                                    .weight(1f)
-                                    .clickable(
-                                        onClick = { /* TODO: onClick edit/delete this profile */ }
-                                    ),
-                                shape = RoundedCornerShape(
-                                    topEnd = 16.dp,
-                                    bottomEnd = 16.dp
+                        // add button to add new profile
+                        Card(
+                            modifier = Modifier
+                                .padding(start = 16.dp, bottom = 8.dp)
+                                .fillMaxWidth()
+                                .height(48.dp)
+                                .clickable(
+                                    onClick = { /* TODO: implement add profile */ }
                                 ),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = if (profile.active) {
-                                        MaterialTheme.colorScheme.tertiaryContainer
-                                    } else {
-                                        MaterialTheme.colorScheme.errorContainer
-                                    },
-                                    contentColor = if (profile.active) {
-                                        MaterialTheme.colorScheme.onTertiaryContainer
-                                    } else {
-                                        MaterialTheme.colorScheme.onErrorContainer
-                                    }
-                                )
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
+                        ) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
                             ) {
-                                // Trash can if not active, pencil if active
-                                Box(
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = if (profile.active) {
-                                            Icons.Filled.Edit
-                                        } else {
-                                            Icons.Filled.Delete
-                                        },
-                                        contentDescription = if (profile.active) {
-                                            stringResource(R.string.edit_profile)
-                                        } else {
-                                            stringResource(R.string.delete_profile)
-                                        }
-                                    )
-                                }
+                                Icon(
+                                    imageVector = Icons.Filled.Add,
+                                    contentDescription = stringResource(R.string.create_profile_btn_text)
+                                )
                             }
                         }
-                    }
 
-                    HorizontalDivider(modifier = Modifier.padding(start = 16.dp))
+                        HorizontalDivider(modifier = Modifier.padding(start = 16.dp))
+                    }
                 }
 
                 // divider to separate
