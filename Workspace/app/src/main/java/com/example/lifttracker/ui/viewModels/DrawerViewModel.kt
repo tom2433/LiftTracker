@@ -1,7 +1,9 @@
 package com.example.lifttracker.ui.viewModels
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.lifttracker.R
 import com.example.lifttracker.data.Profile
 import com.example.lifttracker.data.ProfileRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -260,6 +262,22 @@ class DrawerViewModel(
             }
         }
     }
+
+    fun checkScreenForFab(@StringRes titleRes: Int) {
+        if (titleRes == R.string.muscle_groups_title) {
+            _drawerUiState.update { currentState ->
+                currentState.copy(
+                    showFab = true
+                )
+            }
+        } else {
+            _drawerUiState.update { currentState ->
+                currentState.copy(
+                    showFab = false
+                )
+            }
+        }
+    }
 }
 
 /**
@@ -276,5 +294,6 @@ data class DrawerUiState(
     val newProfileName: String = "",
     val newProfileNote: String = "",
     val deleteProfileDialogVisible: Boolean = false,
-    val profileToDelete: Profile? = null
+    val profileToDelete: Profile? = null,
+    val showFab: Boolean = false
 )

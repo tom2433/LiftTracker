@@ -41,7 +41,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.lifttracker.LiftTrackerDrawer
 import com.example.lifttracker.R
 import com.example.lifttracker.ui.AppViewModelProvider
 import com.example.lifttracker.ui.navigation.NavigationDestination
@@ -58,13 +57,6 @@ object MuscleGroupsDestination : NavigationDestination {
  */
 @Composable
 fun MuscleGroupsScreen(
-    navigateToRecordSession: () -> Unit,
-    navigateToMuscleGroups: () -> Unit,
-    navigateToSessions: () -> Unit,
-    navigateToCalendar: () -> Unit,
-    navigateToAnalytics: () -> Unit,
-    navigateToTools: () -> Unit,
-    navigateToSettings: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MuscleGroupsViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
@@ -76,7 +68,7 @@ fun MuscleGroupsScreen(
     if (muscleGroupsUiState.welcomeDialogVisible) {
         // display the welcome message
         Surface(
-            modifier = Modifier.fillMaxSize(),
+            modifier = modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
             Box(
@@ -107,24 +99,13 @@ fun MuscleGroupsScreen(
         }
     } else {
         // if they have an existing profile, display everything for the current active profile
-        LiftTrackerDrawer(
-            titleRes = MuscleGroupsDestination.titleRes,
-            navigateToRecordSession = navigateToRecordSession,
-            navigateToMuscleGroups = navigateToMuscleGroups,
-            navigateToSessions = navigateToSessions,
-            navigateToCalendar = navigateToCalendar,
-            navigateToAnalytics = navigateToAnalytics,
-            navigateToTools = navigateToTools,
-            navigateToSettings = navigateToSettings
+        Box(
+            modifier = modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
         ) {
-            Box(
-                modifier = modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Muscle groups will show up here, we also need a FAB"
-                )
-            }
+            Text(
+                text = "Muscle groups will show up here, we also need a FAB"
+            )
         }
     }
 }

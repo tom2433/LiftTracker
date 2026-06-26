@@ -10,6 +10,8 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -56,6 +58,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DrawerDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -76,8 +79,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -89,26 +95,58 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.lifttracker.data.Profile
 import com.example.lifttracker.ui.AppViewModelProvider
 import com.example.lifttracker.ui.navigation.LiftTrackerNavHost
+import com.example.lifttracker.ui.screens.AnalyticsDestination
+import com.example.lifttracker.ui.screens.CalendarDestination
+import com.example.lifttracker.ui.screens.MuscleGroupsDestination
+import com.example.lifttracker.ui.screens.RecordSessionDestination
+import com.example.lifttracker.ui.screens.SessionsDestination
+import com.example.lifttracker.ui.screens.SettingsDestination
+import com.example.lifttracker.ui.screens.ToolsDestination
 import com.example.lifttracker.ui.theme.LiftTrackerTheme
 import com.example.lifttracker.ui.viewModels.DrawerViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import kotlinx.coroutines.delay
 
 /**
  * Top level composable that represents screens for the application
  */
 @Composable
 fun LiftTrackerApp(navController: NavHostController = rememberNavController()) {
-    LiftTrackerNavHost(navController = navController)
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
+    val titleRes = when (currentRoute) {
+        MuscleGroupsDestination.route -> MuscleGroupsDestination.titleRes
+        RecordSessionDestination.route -> RecordSessionDestination.titleRes
+        SessionsDestination.route -> SessionsDestination.titleRes
+        CalendarDestination.route -> CalendarDestination.titleRes
+        AnalyticsDestination.route -> AnalyticsDestination.titleRes
+        ToolsDestination.route -> ToolsDestination.titleRes
+        SettingsDestination.route -> SettingsDestination.titleRes
+        else -> R.string.app_name
+    }
+
+    LiftTrackerDrawer(
+        titleRes = titleRes,
+        navigateToRecordSession = { navController.navigate(RecordSessionDestination.route) },
+        navigateToMuscleGroups = { navController.navigate(MuscleGroupsDestination.route) },
+        navigateToSessions = { navController.navigate(SessionsDestination.route) },
+        navigateToCalendar = { navController.navigate(CalendarDestination.route) },
+        navigateToAnalytics = { navController.navigate(AnalyticsDestination.route) },
+        navigateToTools = { navController.navigate(ToolsDestination.route) },
+        navigateToSettings = { navController.navigate(SettingsDestination.route) },
+    ) { innerPadding ->
+        LiftTrackerNavHost(
+            navController = navController,
+            modifier = Modifier.padding(innerPadding)
+        )
+    }
 }
 
 /**
@@ -116,8 +154,6 @@ fun LiftTrackerApp(navController: NavHostController = rememberNavController()) {
  *
  * Will eventually need parameters for:
  *  - sessionIsActive (Boolean)
- *
- * Might need to add a viewModel specifically for this Composable
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -136,6 +172,7 @@ fun LiftTrackerDrawer(
     val drawerUiState by viewModel.drawerUiState.collectAsState()
     val drawerOffsetX = remember { Animatable(0f) }
     val coroutineScope = rememberCoroutineScope()
+    viewModel.checkScreenForFab(titleRes)
 
     LaunchedEffect(drawerUiState.isDrawerOpen, drawerUiState.drawerWidthPx) {
         if (drawerUiState.drawerWidthPx > 0f) {
@@ -170,6 +207,30 @@ fun LiftTrackerDrawer(
                         }
                     }
                 )
+            },
+            floatingActionButton = {
+                AnimatedVisibility(
+                    visible = drawerUiState.showFab,
+                    enter = slideInVertically(
+                        initialOffsetY = { it * 2 },
+                        animationSpec = tween(300)
+                    ) + fadeIn(),
+                    exit = slideOutVertically(
+                        targetOffsetY = { it * 2 },
+                        animationSpec = tween(220)
+                    ) + fadeOut()
+                ) {
+                    FloatingActionButton(
+                        onClick = { /* TODO */ },
+                        shape = MaterialTheme.shapes.large,
+                        modifier = Modifier.padding(20.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Add,
+                            contentDescription = "" // TODO
+                        )
+                    }
+                }
             }
         ) { innerPadding ->
             content(innerPadding)
@@ -279,10 +340,8 @@ fun LiftTrackerDrawer(
                     badge = {},
                     onClick = {
                         coroutineScope.launch {
-                            drawerOffsetX.animateTo(
-                                targetValue = -drawerUiState.drawerWidthPx,
-                                animationSpec = tween(durationMillis = 400)
-                            )
+                            viewModel.closeDrawer()
+                            delay(200)
                             navigateToRecordSession()
                         }
                     }
@@ -301,10 +360,8 @@ fun LiftTrackerDrawer(
                     badge = {},
                     onClick = {
                         coroutineScope.launch {
-                            drawerOffsetX.animateTo(
-                                targetValue = -drawerUiState.drawerWidthPx,
-                                animationSpec = tween(durationMillis = 400)
-                            )
+                            viewModel.closeDrawer()
+                            delay(200)
                             navigateToMuscleGroups()
                         }
                     }
@@ -323,10 +380,8 @@ fun LiftTrackerDrawer(
                     badge = {},
                     onClick = {
                         coroutineScope.launch {
-                            drawerOffsetX.animateTo(
-                                targetValue = -drawerUiState.drawerWidthPx,
-                                animationSpec = tween(durationMillis = 400)
-                            )
+                            viewModel.closeDrawer()
+                            delay(200)
                             navigateToSessions()
                         }
                     }
@@ -345,10 +400,8 @@ fun LiftTrackerDrawer(
                     badge = {},
                     onClick = {
                         coroutineScope.launch {
-                            drawerOffsetX.animateTo(
-                                targetValue = -drawerUiState.drawerWidthPx,
-                                animationSpec = tween(durationMillis = 400)
-                            )
+                            viewModel.closeDrawer()
+                            delay(200)
                             navigateToCalendar()
                         }
                     }
@@ -543,10 +596,8 @@ fun LiftTrackerDrawer(
                     badge = {},
                     onClick = {
                         coroutineScope.launch {
-                            drawerOffsetX.animateTo(
-                                targetValue = -drawerUiState.drawerWidthPx,
-                                animationSpec = tween(durationMillis = 400)
-                            )
+                            viewModel.closeDrawer()
+                            delay(200)
                             navigateToAnalytics()
                         }
                     }
@@ -565,10 +616,8 @@ fun LiftTrackerDrawer(
                     badge = {},
                     onClick = {
                         coroutineScope.launch {
-                            drawerOffsetX.animateTo(
-                                targetValue = -drawerUiState.drawerWidthPx,
-                                animationSpec = tween(durationMillis = 400)
-                            )
+                            viewModel.closeDrawer()
+                            delay(200)
                             navigateToTools()
                         }
                     }
@@ -587,10 +636,8 @@ fun LiftTrackerDrawer(
                     badge = {},
                     onClick = {
                         coroutineScope.launch {
-                            drawerOffsetX.animateTo(
-                                targetValue = -drawerUiState.drawerWidthPx,
-                                animationSpec = tween(durationMillis = 400)
-                            )
+                            viewModel.closeDrawer()
+                            delay(200)
                             navigateToSettings()
                         }
                     }
