@@ -70,6 +70,24 @@ class DrawerViewModel(
             )
         }
     }
+
+    fun toggleSwitchProfileSelected() {
+        _drawerUiState.update { currentState ->
+            currentState.copy(
+                switchProfileSelected = !currentState.switchProfileSelected
+            )
+        }
+    }
+
+    fun getActiveProfile(): Profile {
+        for (profile in _drawerUiState.value.profileList) {
+            if (profile.active) {
+                return profile
+            }
+        }
+
+        return _drawerUiState.value.profileList[0]
+    }
 }
 
 /**
@@ -79,5 +97,6 @@ data class DrawerUiState(
     val profileList: List<Profile> = listOf(),
     val isDrawerOpen: Boolean = false,
     val drawerWidthPx: Float = 0f,
-    val hasInitializedDrawerOffset: Boolean = false
+    val hasInitializedDrawerOffset: Boolean = false,
+    val switchProfileSelected: Boolean = false
 )

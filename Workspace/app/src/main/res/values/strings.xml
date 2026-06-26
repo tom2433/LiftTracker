@@ -17,4 +17,6 @@
     <string name="create_profile_btn_text">Create Profile</string>
     <string name="profile_name_input_label">Profile Name</string>
     <string name="profile_note_input_label">Profile Note (optional)</string>
+    <string name="edit_profile">Edit Profile</string>
+    <string name="delete_profile">Delete Profile</string>
 </resources>
