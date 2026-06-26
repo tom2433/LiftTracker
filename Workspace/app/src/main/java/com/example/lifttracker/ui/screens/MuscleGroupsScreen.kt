@@ -243,7 +243,7 @@ fun WelcomeDialog(
 @Preview(showBackground = true)
 @Composable
 fun WelcomeDialogPreview() {
-    LiftTrackerTheme(dynamicColor = false, darkTheme = true) {
+    LiftTrackerTheme(dynamicColor = false, darkTheme = false) {
         val layoutDirection = LocalLayoutDirection.current
 
         Surface(

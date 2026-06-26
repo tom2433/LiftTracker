@@ -3,26 +3,45 @@ package com.example.lifttracker
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Label
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Handyman
 import androidx.compose.material.icons.filled.History
@@ -31,6 +50,10 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.PublishedWithChanges
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Timeline
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DrawerDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -39,29 +62,46 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.zIndex
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.example.lifttracker.data.Profile
+import com.example.lifttracker.ui.AppViewModelProvider
 import com.example.lifttracker.ui.navigation.LiftTrackerNavHost
+import com.example.lifttracker.ui.theme.LiftTrackerTheme
+import com.example.lifttracker.ui.viewModels.DrawerViewModel
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import kotlinx.coroutines.delay
 
 /**
  * Top level composable that represents screens for the application
@@ -76,8 +116,8 @@ fun LiftTrackerApp(navController: NavHostController = rememberNavController()) {
  *
  * Will eventually need parameters for:
  *  - sessionIsActive (Boolean)
- *  - current active screen (enum?)
- *  -
+ *
+ * Might need to add a viewModel specifically for this Composable
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -90,28 +130,28 @@ fun LiftTrackerDrawer(
     navigateToAnalytics: () -> Unit,
     navigateToTools: () -> Unit,
     navigateToSettings: () -> Unit,
-    content: @Composable (PaddingValues) -> Unit
+    viewModel: DrawerViewModel = viewModel(factory = AppViewModelProvider.Factory),
+    content: @Composable (PaddingValues) -> Unit,
 ) {
-    var isDrawerOpen by remember { mutableStateOf(false) }
-    var drawerWidthPx by remember { mutableFloatStateOf(0f) }
+    val drawerUiState by viewModel.drawerUiState.collectAsState()
     val drawerOffsetX = remember { Animatable(0f) }
-    var hasInitializedDrawerOffset by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
-    LaunchedEffect(isDrawerOpen, drawerWidthPx) {
-        if (drawerWidthPx > 0f) {
-            if (!hasInitializedDrawerOffset) {
-                drawerOffsetX.snapTo(if (isDrawerOpen) 0f else -drawerWidthPx)
-                hasInitializedDrawerOffset = true
+    LaunchedEffect(drawerUiState.isDrawerOpen, drawerUiState.drawerWidthPx) {
+        if (drawerUiState.drawerWidthPx > 0f) {
+            if (!drawerUiState.hasInitializedDrawerOffset) {
+                drawerOffsetX.snapTo(if (drawerUiState.isDrawerOpen) 0f else -drawerUiState.drawerWidthPx)
+                viewModel.initializeDrawerOffset()
             } else {
                 drawerOffsetX.animateTo(
-                    targetValue = if (isDrawerOpen) 0f else -drawerWidthPx,
+                    targetValue = if (drawerUiState.isDrawerOpen) 0f else -drawerUiState.drawerWidthPx,
                     animationSpec = tween(durationMillis = 700)
                 )
             }
         }
     }
 
+    // box to hold full scaffold
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             topBar = {
@@ -120,7 +160,7 @@ fun LiftTrackerDrawer(
                     navigationIcon = {
                         IconButton(
                             onClick = {
-                                isDrawerOpen = !isDrawerOpen
+                                viewModel.toggleDrawer()
                             }
                         ) {
                             Icon(
@@ -137,7 +177,7 @@ fun LiftTrackerDrawer(
 
         // scrim color animation for when drawer is closed or opened
         AnimatedVisibility(
-            visible = isDrawerOpen,
+            visible = drawerUiState.isDrawerOpen,
             enter = fadeIn(animationSpec = tween(durationMillis = 700)),
             exit = fadeOut(animationSpec = tween(durationMillis = 700)),
             modifier = Modifier.zIndex(1f)
@@ -150,29 +190,30 @@ fun LiftTrackerDrawer(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
                     ) {
-                        isDrawerOpen = false
+                        viewModel.closeDrawer()
                     }
             )
         }
 
+        // full drawer sheet
         ModalDrawerSheet(
             modifier = Modifier
                 .zIndex(2f)
                 .width(300.dp)
                 .onSizeChanged { size ->
-                    drawerWidthPx = size.width.toFloat()
+                    viewModel.updateDrawerWidthPx(size.width.toFloat())
                 }
                 .offset {
                     IntOffset(drawerOffsetX.value.roundToInt(), 0)
                 }
                 // handle when the user drags the drawer with their finger
-                .pointerInput(drawerWidthPx) {
+                .pointerInput(drawerUiState.drawerWidthPx) {
                     detectHorizontalDragGestures(
                         // drawer shall follow the user's touch input
                         onHorizontalDrag = { _, dragAmount ->
-                            if (drawerWidthPx > 0f) {
+                            if (drawerUiState.drawerWidthPx > 0f) {
                                 val newOffset = (drawerOffsetX.value + dragAmount)
-                                    .coerceIn(-drawerWidthPx, 0f)
+                                    .coerceIn(-drawerUiState.drawerWidthPx, 0f)
 
                                 coroutineScope.launch {
                                     drawerOffsetX.snapTo(newOffset)
@@ -182,12 +223,13 @@ fun LiftTrackerDrawer(
                         onDragEnd = {
                             // drawer should stay open if the trailing edge is at more than 0.9
                             // of the original drawer width
-                            val shouldStayOpen = drawerOffsetX.value > -drawerWidthPx * 0.1
-                            isDrawerOpen = shouldStayOpen
+                            val shouldStayOpen =
+                                drawerOffsetX.value > -drawerUiState.drawerWidthPx * 0.1
+                            viewModel.updateIsDrawerOpen(shouldStayOpen)
 
                             coroutineScope.launch {
                                 drawerOffsetX.animateTo(
-                                    targetValue = if (shouldStayOpen) 0f else -drawerWidthPx,
+                                    targetValue = if (shouldStayOpen) 0f else -drawerUiState.drawerWidthPx,
                                     animationSpec = tween(durationMillis = 700)
                                 )
                             }
@@ -195,7 +237,7 @@ fun LiftTrackerDrawer(
                         onDragCancel = {
                             coroutineScope.launch {
                                 drawerOffsetX.animateTo(
-                                    targetValue = if (isDrawerOpen) 0f else -drawerWidthPx,
+                                    targetValue = if (drawerUiState.isDrawerOpen) 0f else -drawerUiState.drawerWidthPx,
                                     animationSpec = tween(durationMillis = 700)
                                 )
                             }
@@ -238,7 +280,7 @@ fun LiftTrackerDrawer(
                     onClick = {
                         coroutineScope.launch {
                             drawerOffsetX.animateTo(
-                                targetValue = -drawerWidthPx,
+                                targetValue = -drawerUiState.drawerWidthPx,
                                 animationSpec = tween(durationMillis = 400)
                             )
                             navigateToRecordSession()
@@ -260,7 +302,7 @@ fun LiftTrackerDrawer(
                     onClick = {
                         coroutineScope.launch {
                             drawerOffsetX.animateTo(
-                                targetValue = -drawerWidthPx,
+                                targetValue = -drawerUiState.drawerWidthPx,
                                 animationSpec = tween(durationMillis = 400)
                             )
                             navigateToMuscleGroups()
@@ -282,7 +324,7 @@ fun LiftTrackerDrawer(
                     onClick = {
                         coroutineScope.launch {
                             drawerOffsetX.animateTo(
-                                targetValue = -drawerWidthPx,
+                                targetValue = -drawerUiState.drawerWidthPx,
                                 animationSpec = tween(durationMillis = 400)
                             )
                             navigateToSessions()
@@ -304,7 +346,7 @@ fun LiftTrackerDrawer(
                     onClick = {
                         coroutineScope.launch {
                             drawerOffsetX.animateTo(
-                                targetValue = -drawerWidthPx,
+                                targetValue = -drawerUiState.drawerWidthPx,
                                 animationSpec = tween(durationMillis = 400)
                             )
                             navigateToCalendar()
@@ -312,10 +354,10 @@ fun LiftTrackerDrawer(
                     }
                 )
 
-                // nav drawer element: Switch Profile
+                // TODO: nav drawer element: Switch Profile
                 NavigationDrawerItem(
                     label = { Text(stringResource(R.string.switch_profile_title)) },
-                    selected = false,
+                    selected = drawerUiState.switchProfileSelected,
                     icon = {
                         Icon(
                             imageVector = Icons.Filled.PublishedWithChanges,
@@ -323,8 +365,167 @@ fun LiftTrackerDrawer(
                         )
                     },
                     badge = {},
-                    onClick = { /* TODO: Implement Switch Profile Dropdown */ }
+                    onClick = {
+                        viewModel.toggleSwitchProfileSelected()
+                    }
                 )
+
+                // display list of profiles if user selected to switch profiles
+                AnimatedVisibility(
+                    visible = drawerUiState.switchProfileSelected,
+                    enter = expandVertically(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioLowBouncy,
+                            stiffness = Spring.StiffnessMediumLow
+                        )
+                    ) + fadeIn(),
+                    exit = shrinkVertically(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioLowBouncy,
+                            stiffness = Spring.StiffnessMediumLow
+                        )
+                    ) + fadeOut()
+                ) {
+                    Column {
+                        HorizontalDivider(modifier = Modifier.padding(start = 16.dp, top = 8.dp, bottom = 8.dp))
+
+                        for (profile in drawerUiState.profileList) {
+                            Row(
+                                modifier = Modifier
+                                    .padding(start = 16.dp, bottom = 8.dp)
+                                    .height(IntrinsicSize.Min),
+                                horizontalArrangement = Arrangement.Start,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                // card for profile name/note
+                                Card(
+                                    modifier = Modifier
+                                        .weight(3f)
+                                        .defaultMinSize(minHeight = 56.dp)
+                                        .clickable(
+                                            onClick = { viewModel.changeActiveProfile(profile) }
+                                        ),
+                                    shape = RoundedCornerShape(
+                                        topStart = 16.dp,
+                                        bottomStart = 16.dp
+                                    ),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = if (profile.active) {
+                                            MaterialTheme.colorScheme.tertiaryContainer
+                                        } else {
+                                            MaterialTheme.colorScheme.surfaceContainer
+                                        },
+                                        contentColor = if (profile.active) {
+                                            MaterialTheme.colorScheme.onTertiaryContainer
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurface
+                                        }
+                                    )
+                                ) {
+                                    // put name and note here
+                                    Column(
+                                        verticalArrangement = Arrangement.Center,
+                                        horizontalAlignment = Alignment.Start,
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(horizontal = 12.dp)
+                                    ) {
+                                        Text(
+                                            text = profile.name,
+                                            style = MaterialTheme.typography.titleMedium
+                                        )
+                                        if (profile.note.isNotBlank()) {
+                                            Text(
+                                                text = profile.note,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+                                }
+
+                                // card for edit/delete
+                                Card(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxHeight()
+                                        .defaultMinSize(minHeight = 56.dp)
+                                        .clickable(
+                                            onClick = {
+                                                if (profile.active) {
+                                                    viewModel.editProfileBtnClicked(profileToEdit = profile)
+                                                } else {
+                                                    viewModel.setProfileToDelete(deletedProfile = profile)
+                                                }
+                                            }
+                                        ),
+                                    shape = RoundedCornerShape(
+                                        topEnd = 16.dp,
+                                        bottomEnd = 16.dp
+                                    ),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = if (profile.active) {
+                                            MaterialTheme.colorScheme.tertiaryContainer
+                                        } else {
+                                            MaterialTheme.colorScheme.errorContainer
+                                        },
+                                        contentColor = if (profile.active) {
+                                            MaterialTheme.colorScheme.onTertiaryContainer
+                                        } else {
+                                            MaterialTheme.colorScheme.onErrorContainer
+                                        }
+                                    )
+                                ) {
+                                    // Trash can if not active, pencil if active
+                                    Box(
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = if (profile.active) {
+                                                Icons.Filled.Edit
+                                            } else {
+                                                Icons.Filled.Delete
+                                            },
+                                            contentDescription = if (profile.active) {
+                                                stringResource(R.string.edit_profile)
+                                            } else {
+                                                stringResource(R.string.delete_profile)
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        // add button to add new profile
+                        Card(
+                            modifier = Modifier
+                                .padding(start = 16.dp, bottom = 8.dp)
+                                .fillMaxWidth()
+                                .height(48.dp)
+                                .clickable(
+                                    onClick = { viewModel.addProfileBtnClicked() }
+                                ),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
+                        ) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Add,
+                                    contentDescription = stringResource(R.string.create_profile_btn_text)
+                                )
+                            }
+                        }
+
+                        HorizontalDivider(modifier = Modifier.padding(start = 16.dp))
+                    }
+                }
 
                 // divider to separate
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
@@ -343,7 +544,7 @@ fun LiftTrackerDrawer(
                     onClick = {
                         coroutineScope.launch {
                             drawerOffsetX.animateTo(
-                                targetValue = -drawerWidthPx,
+                                targetValue = -drawerUiState.drawerWidthPx,
                                 animationSpec = tween(durationMillis = 400)
                             )
                             navigateToAnalytics()
@@ -365,7 +566,7 @@ fun LiftTrackerDrawer(
                     onClick = {
                         coroutineScope.launch {
                             drawerOffsetX.animateTo(
-                                targetValue = -drawerWidthPx,
+                                targetValue = -drawerUiState.drawerWidthPx,
                                 animationSpec = tween(durationMillis = 400)
                             )
                             navigateToTools()
@@ -387,7 +588,7 @@ fun LiftTrackerDrawer(
                     onClick = {
                         coroutineScope.launch {
                             drawerOffsetX.animateTo(
-                                targetValue = -drawerWidthPx,
+                                targetValue = -drawerUiState.drawerWidthPx,
                                 animationSpec = tween(durationMillis = 400)
                             )
                             navigateToSettings()
@@ -395,6 +596,271 @@ fun LiftTrackerDrawer(
                     }
                 )
             }
+        }
+
+        // profile entry dialog
+        if (drawerUiState.profileEntryDialogVisible) {
+            ShowProfileEntryDialog(
+                buttonEnabled = viewModel.isProfileValid(),
+                newProfileName = drawerUiState.newProfileName,
+                newProfileNote = drawerUiState.newProfileNote,
+                onProfileNameValueChanged = {
+                    viewModel.updateNewProfileName(it)
+                },
+                onProfileNoteValueChanged = {
+                    viewModel.updateNewProfileNote(it)
+                },
+                onSubmit = {
+                    viewModel.submitProfileEntryDialog()
+                },
+                onDismissRequest = {
+                    viewModel.dismissProfileEntryDialog()
+                },
+                userIsAddingProfile = drawerUiState.userIsAddingProfile,
+            )
+        }
+
+        // delete profile dialog
+        if (drawerUiState.deleteProfileDialogVisible) {
+            ShowDeleteProfileDialog(
+                onDismissRequest = {
+                    viewModel.dismissDeleteProfileDialog()
+                },
+                onDelete = {
+                    viewModel.deleteProfile()
+                },
+                profileToDelete = drawerUiState.profileToDelete
+            )
+        }
+    }
+}
+
+@Composable
+fun ShowDeleteProfileDialog(
+    onDismissRequest: () -> Unit,
+    onDelete: () -> Unit,
+    profileToDelete: Profile?,
+    modifier: Modifier = Modifier
+) {
+    Dialog(
+        onDismissRequest = onDismissRequest,
+        properties = DialogProperties(
+            dismissOnBackPress = true,
+            dismissOnClickOutside = true
+        )
+    ) {
+        Card(
+            modifier = modifier
+                .wrapContentSize()
+                .padding(4.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .wrapContentHeight()
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // title
+                Text(
+                    text = "Delete \"${profileToDelete?.name ?: "null (something bad happend. help)"} \"?",
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                // divider
+                HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
+
+                // warning description
+                Text(
+                    text = stringResource(R.string.delete_profile_warning),
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                // divider
+                HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
+
+                // button to delete
+                Button(
+                    onClick = onDelete,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                ) {
+                    Text(
+                        text = stringResource(R.string.delete_profile_btn_text),
+                        textAlign = TextAlign.Center
+                    )
+                }
+
+                // button to dismiss
+                OutlinedButton(
+                    onClick = onDismissRequest,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = stringResource(R.string.cancel_profile_deletion_btn_text)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ShowProfileEntryDialog(
+    buttonEnabled: Boolean,
+    newProfileName: String,
+    newProfileNote: String,
+    onProfileNameValueChanged: (String) -> Unit,
+    onProfileNoteValueChanged: (String) -> Unit,
+    onSubmit: () -> Unit,
+    onDismissRequest: () -> Unit,
+    userIsAddingProfile: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    // focus requester to pop up the keyboard when the user selects to edit or add a profile
+    val profileNameFocusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+    LaunchedEffect(Unit) {
+        delay(100)
+        profileNameFocusRequester.requestFocus()
+        keyboardController?.show()
+    }
+
+    Dialog(
+        onDismissRequest = onDismissRequest,
+        properties = DialogProperties(
+            dismissOnBackPress = true,
+            dismissOnClickOutside = true
+        )
+    ) {
+        Card(
+            modifier = modifier
+                .wrapContentSize()
+                .padding(4.dp),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .wrapContentHeight()
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // title
+                Text(
+                    text = stringResource(if (userIsAddingProfile) {
+                        R.string.create_profile_btn_text
+                    } else {
+                        R.string.edit_profile
+                    }),
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                // divider
+                HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
+
+                // profile name input
+                TextField(
+                    value = newProfileName,
+                    onValueChange = onProfileNameValueChanged,
+                    label = {
+                        Text(stringResource(R.string.profile_name_input_label))
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Label,
+                            contentDescription = stringResource(R.string.profile_name_input_label)
+                        )
+                    },
+                    keyboardOptions = KeyboardOptions.Default.copy(
+                        imeAction = ImeAction.Done
+                    ),
+                    modifier = Modifier
+                        .focusRequester(profileNameFocusRequester)
+                        .padding(bottom = 16.dp)
+                        .fillMaxWidth()
+                )
+
+                // profile note input
+                TextField(
+                    value = newProfileNote,
+                    onValueChange = onProfileNoteValueChanged,
+                    label = {
+                        Text(stringResource(R.string.profile_note_input_label))
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.Description,
+                            contentDescription = stringResource(R.string.profile_note_input_label)
+                        )
+                    },
+                    keyboardOptions = KeyboardOptions.Default.copy(
+                        imeAction = ImeAction.Done
+                    ),
+                    modifier = Modifier
+                        .padding(bottom = 16.dp)
+                        .fillMaxWidth()
+                )
+
+                // divider
+                HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
+
+                // button to submit profile
+                Button(
+                    onClick = onSubmit,
+                    enabled = buttonEnabled,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
+                ) {
+                    Text(stringResource(if (userIsAddingProfile) {
+                        R.string.create_profile_btn_text
+                    } else {
+                        R.string.update_profile_btn_text
+                    }))
+                }
+
+                // button to dismiss
+                OutlinedButton(
+                    onClick = onDismissRequest,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun LiftTrackerDrawerPreview() {
+    LiftTrackerTheme(dynamicColor = false, darkTheme = true) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            LiftTrackerDrawer(
+                titleRes = R.string.app_name,
+                navigateToRecordSession = {},
+                navigateToMuscleGroups = {},
+                navigateToSessions = {},
+                navigateToCalendar = {},
+                navigateToAnalytics = {},
+                navigateToTools = {},
+                navigateToSettings = {},
+                content = {},
+            )
         }
     }
 }
