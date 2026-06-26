@@ -7,6 +7,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.lifttracker.LiftTrackerApplication
 import com.example.lifttracker.ui.viewModels.AnalyticsViewModel
 import com.example.lifttracker.ui.viewModels.CalendarViewModel
+import com.example.lifttracker.ui.viewModels.DrawerViewModel
 import com.example.lifttracker.ui.viewModels.MuscleGroupsViewModel
 import com.example.lifttracker.ui.viewModels.RecordSessionViewModel
 import com.example.lifttracker.ui.viewModels.SessionsViewModel
@@ -63,6 +64,13 @@ object AppViewModelProvider {
         // initializer for ToolsViewModel
         initializer {
             ToolsViewModel(
+                profileRepository = liftTrackerApplication().container.profileRepository
+            )
+        }
+
+        // initializer for DrawerViewModel
+        initializer {
+            DrawerViewModel(
                 profileRepository = liftTrackerApplication().container.profileRepository
             )
         }

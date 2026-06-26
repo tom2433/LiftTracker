@@ -44,6 +44,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -57,10 +58,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.lifttracker.data.Profile
+import com.example.lifttracker.ui.AppViewModelProvider
 import com.example.lifttracker.ui.navigation.LiftTrackerNavHost
+import com.example.lifttracker.ui.viewModels.DrawerViewModel
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -77,14 +81,13 @@ fun LiftTrackerApp(navController: NavHostController = rememberNavController()) {
  *
  * Will eventually need parameters for:
  *  - sessionIsActive (Boolean)
- *  - current active screen (enum?)
- *  -
+ *
+ * Might need to add a viewModel specifically for this Composable
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LiftTrackerDrawer(
     @StringRes titleRes: Int,
-    profiles: List<Profile>,
     navigateToRecordSession: () -> Unit,
     navigateToMuscleGroups: () -> Unit,
     navigateToSessions: () -> Unit,
@@ -92,22 +95,21 @@ fun LiftTrackerDrawer(
     navigateToAnalytics: () -> Unit,
     navigateToTools: () -> Unit,
     navigateToSettings: () -> Unit,
-    content: @Composable (PaddingValues) -> Unit
+    content: @Composable (PaddingValues) -> Unit,
+    viewModel: DrawerViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
-    var isDrawerOpen by remember { mutableStateOf(false) }
-    var drawerWidthPx by remember { mutableFloatStateOf(0f) }
+    val drawerUiState by viewModel.drawerUiState.collectAsState()
     val drawerOffsetX = remember { Animatable(0f) }
-    var hasInitializedDrawerOffset by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
-    LaunchedEffect(isDrawerOpen, drawerWidthPx) {
-        if (drawerWidthPx > 0f) {
-            if (!hasInitializedDrawerOffset) {
-                drawerOffsetX.snapTo(if (isDrawerOpen) 0f else -drawerWidthPx)
-                hasInitializedDrawerOffset = true
+    LaunchedEffect(drawerUiState.isDrawerOpen, drawerUiState.drawerWidthPx) {
+        if (drawerUiState.drawerWidthPx > 0f) {
+            if (!drawerUiState.hasInitializedDrawerOffset) {
+                drawerOffsetX.snapTo(if (drawerUiState.isDrawerOpen) 0f else -drawerUiState.drawerWidthPx)
+                viewModel.initializeDrawerOffset()
             } else {
                 drawerOffsetX.animateTo(
-                    targetValue = if (isDrawerOpen) 0f else -drawerWidthPx,
+                    targetValue = if (drawerUiState.isDrawerOpen) 0f else -drawerUiState.drawerWidthPx,
                     animationSpec = tween(durationMillis = 700)
                 )
             }
@@ -122,7 +124,7 @@ fun LiftTrackerDrawer(
                     navigationIcon = {
                         IconButton(
                             onClick = {
-                                isDrawerOpen = !isDrawerOpen
+                                viewModel.toggleDrawer()
                             }
                         ) {
                             Icon(
@@ -139,7 +141,7 @@ fun LiftTrackerDrawer(
 
         // scrim color animation for when drawer is closed or opened
         AnimatedVisibility(
-            visible = isDrawerOpen,
+            visible = drawerUiState.isDrawerOpen,
             enter = fadeIn(animationSpec = tween(durationMillis = 700)),
             exit = fadeOut(animationSpec = tween(durationMillis = 700)),
             modifier = Modifier.zIndex(1f)
@@ -152,7 +154,7 @@ fun LiftTrackerDrawer(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
                     ) {
-                        isDrawerOpen = false
+                        viewModel.closeDrawer()
                     }
             )
         }
@@ -162,19 +164,19 @@ fun LiftTrackerDrawer(
                 .zIndex(2f)
                 .width(300.dp)
                 .onSizeChanged { size ->
-                    drawerWidthPx = size.width.toFloat()
+                    viewModel.updateDrawerWidthPx(size.width.toFloat())
                 }
                 .offset {
                     IntOffset(drawerOffsetX.value.roundToInt(), 0)
                 }
                 // handle when the user drags the drawer with their finger
-                .pointerInput(drawerWidthPx) {
+                .pointerInput(drawerUiState.drawerWidthPx) {
                     detectHorizontalDragGestures(
                         // drawer shall follow the user's touch input
                         onHorizontalDrag = { _, dragAmount ->
-                            if (drawerWidthPx > 0f) {
+                            if (drawerUiState.drawerWidthPx > 0f) {
                                 val newOffset = (drawerOffsetX.value + dragAmount)
-                                    .coerceIn(-drawerWidthPx, 0f)
+                                    .coerceIn(-drawerUiState.drawerWidthPx, 0f)
 
                                 coroutineScope.launch {
                                     drawerOffsetX.snapTo(newOffset)
@@ -184,12 +186,12 @@ fun LiftTrackerDrawer(
                         onDragEnd = {
                             // drawer should stay open if the trailing edge is at more than 0.9
                             // of the original drawer width
-                            val shouldStayOpen = drawerOffsetX.value > -drawerWidthPx * 0.1
-                            isDrawerOpen = shouldStayOpen
+                            val shouldStayOpen = drawerOffsetX.value > -drawerUiState.drawerWidthPx * 0.1
+                            viewModel.updateIsDrawerOpen(shouldStayOpen)
 
                             coroutineScope.launch {
                                 drawerOffsetX.animateTo(
-                                    targetValue = if (shouldStayOpen) 0f else -drawerWidthPx,
+                                    targetValue = if (shouldStayOpen) 0f else -drawerUiState.drawerWidthPx,
                                     animationSpec = tween(durationMillis = 700)
                                 )
                             }
@@ -197,7 +199,7 @@ fun LiftTrackerDrawer(
                         onDragCancel = {
                             coroutineScope.launch {
                                 drawerOffsetX.animateTo(
-                                    targetValue = if (isDrawerOpen) 0f else -drawerWidthPx,
+                                    targetValue = if (drawerUiState.isDrawerOpen) 0f else -drawerUiState.drawerWidthPx,
                                     animationSpec = tween(durationMillis = 700)
                                 )
                             }
@@ -240,7 +242,7 @@ fun LiftTrackerDrawer(
                     onClick = {
                         coroutineScope.launch {
                             drawerOffsetX.animateTo(
-                                targetValue = -drawerWidthPx,
+                                targetValue = -drawerUiState.drawerWidthPx,
                                 animationSpec = tween(durationMillis = 400)
                             )
                             navigateToRecordSession()
@@ -262,7 +264,7 @@ fun LiftTrackerDrawer(
                     onClick = {
                         coroutineScope.launch {
                             drawerOffsetX.animateTo(
-                                targetValue = -drawerWidthPx,
+                                targetValue = -drawerUiState.drawerWidthPx,
                                 animationSpec = tween(durationMillis = 400)
                             )
                             navigateToMuscleGroups()
@@ -284,7 +286,7 @@ fun LiftTrackerDrawer(
                     onClick = {
                         coroutineScope.launch {
                             drawerOffsetX.animateTo(
-                                targetValue = -drawerWidthPx,
+                                targetValue = -drawerUiState.drawerWidthPx,
                                 animationSpec = tween(durationMillis = 400)
                             )
                             navigateToSessions()
@@ -306,7 +308,7 @@ fun LiftTrackerDrawer(
                     onClick = {
                         coroutineScope.launch {
                             drawerOffsetX.animateTo(
-                                targetValue = -drawerWidthPx,
+                                targetValue = -drawerUiState.drawerWidthPx,
                                 animationSpec = tween(durationMillis = 400)
                             )
                             navigateToCalendar()
@@ -345,7 +347,7 @@ fun LiftTrackerDrawer(
                     onClick = {
                         coroutineScope.launch {
                             drawerOffsetX.animateTo(
-                                targetValue = -drawerWidthPx,
+                                targetValue = -drawerUiState.drawerWidthPx,
                                 animationSpec = tween(durationMillis = 400)
                             )
                             navigateToAnalytics()
@@ -367,7 +369,7 @@ fun LiftTrackerDrawer(
                     onClick = {
                         coroutineScope.launch {
                             drawerOffsetX.animateTo(
-                                targetValue = -drawerWidthPx,
+                                targetValue = -drawerUiState.drawerWidthPx,
                                 animationSpec = tween(durationMillis = 400)
                             )
                             navigateToTools()
@@ -389,7 +391,7 @@ fun LiftTrackerDrawer(
                     onClick = {
                         coroutineScope.launch {
                             drawerOffsetX.animateTo(
-                                targetValue = -drawerWidthPx,
+                                targetValue = -drawerUiState.drawerWidthPx,
                                 animationSpec = tween(durationMillis = 400)
                             )
                             navigateToSettings()
