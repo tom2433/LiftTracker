@@ -97,6 +97,11 @@ import com.example.lifttracker.ui.theme.LiftTrackerTheme
 import com.example.lifttracker.ui.viewModels.DrawerViewModel
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import kotlinx.coroutines.delay
 
 /**
  * Top level composable that represents screens for the application
@@ -720,8 +725,17 @@ fun ShowProfileEntryDialog(
     userIsAddingProfile: Boolean,
     modifier: Modifier = Modifier,
 ) {
+    // focus requester to pop up the keyboard when the user selects to edit or add a profile
+    val profileNameFocusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+    LaunchedEffect(Unit) {
+        delay(100)
+        profileNameFocusRequester.requestFocus()
+        keyboardController?.show()
+    }
+
     Dialog(
-        onDismissRequest = { onDismissRequest },
+        onDismissRequest = onDismissRequest,
         properties = DialogProperties(
             dismissOnBackPress = true,
             dismissOnClickOutside = true
@@ -772,6 +786,7 @@ fun ShowProfileEntryDialog(
                         imeAction = ImeAction.Done
                     ),
                     modifier = Modifier
+                        .focusRequester(profileNameFocusRequester)
                         .padding(bottom = 16.dp)
                         .fillMaxWidth()
                 )
