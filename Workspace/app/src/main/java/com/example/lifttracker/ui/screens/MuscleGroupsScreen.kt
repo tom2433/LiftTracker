@@ -46,6 +46,7 @@ import com.example.lifttracker.ui.AppViewModelProvider
 import com.example.lifttracker.ui.navigation.NavigationDestination
 import com.example.lifttracker.ui.theme.LiftTrackerTheme
 import com.example.lifttracker.ui.viewModels.MuscleGroupsViewModel
+import com.example.lifttracker.data.Profile
 
 object MuscleGroupsDestination : NavigationDestination {
     override val route = "muscleGroups"
@@ -99,12 +100,18 @@ fun MuscleGroupsScreen(
         }
     } else {
         // if they have an existing profile, display everything for the current active profile
-        Box(
-            modifier = modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
+        Column(
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.Start,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp)
         ) {
+            val activeProfile: Profile? = viewModel.getActiveProfile()
             Text(
-                text = "Muscle groups will show up here, we also need a FAB"
+                text = "Displaying Muscle Groups for Profile: ${activeProfile?.name ?: "not loaded yet"}${if (activeProfile?.note?.isNotBlank() ?: false) " (${activeProfile.note})" else ""}",
+                color = MaterialTheme.colorScheme.outline,
+                style = MaterialTheme.typography.bodySmall,
             )
         }
     }

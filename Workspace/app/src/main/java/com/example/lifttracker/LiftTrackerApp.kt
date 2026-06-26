@@ -213,11 +213,17 @@ fun LiftTrackerDrawer(
                     visible = drawerUiState.showFab,
                     enter = slideInVertically(
                         initialOffsetY = { it * 2 },
-                        animationSpec = tween(300)
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioLowBouncy,
+                            stiffness = Spring.StiffnessMediumLow
+                        )
                     ) + fadeIn(),
                     exit = slideOutVertically(
                         targetOffsetY = { it * 2 },
-                        animationSpec = tween(220)
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioLowBouncy,
+                            stiffness = Spring.StiffnessMediumLow
+                        )
                     ) + fadeOut()
                 ) {
                     FloatingActionButton(

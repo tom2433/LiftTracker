@@ -77,6 +77,15 @@ class MuscleGroupsViewModel(
             }
         }
     }
+
+    fun getActiveProfile(): Profile? {
+        for (profile in _muscleGroupsUiState.value.profileList) {
+            if (profile.active) {
+                return profile
+            }
+        }
+        return null
+    }
 }
 
 /**
