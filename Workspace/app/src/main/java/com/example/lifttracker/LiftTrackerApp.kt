@@ -40,30 +40,29 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import com.example.lifttracker.data.Profile
 import com.example.lifttracker.ui.AppViewModelProvider
 import com.example.lifttracker.ui.navigation.LiftTrackerNavHost
+import com.example.lifttracker.ui.theme.LiftTrackerTheme
 import com.example.lifttracker.ui.viewModels.DrawerViewModel
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -95,8 +94,8 @@ fun LiftTrackerDrawer(
     navigateToAnalytics: () -> Unit,
     navigateToTools: () -> Unit,
     navigateToSettings: () -> Unit,
+    viewModel: DrawerViewModel = viewModel(factory = AppViewModelProvider.Factory),
     content: @Composable (PaddingValues) -> Unit,
-    viewModel: DrawerViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val drawerUiState by viewModel.drawerUiState.collectAsState()
     val drawerOffsetX = remember { Animatable(0f) }
@@ -399,6 +398,29 @@ fun LiftTrackerDrawer(
                     }
                 )
             }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun LiftTrackerDrawerPreview() {
+    LiftTrackerTheme(dynamicColor = false, darkTheme = true) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
+        ) {
+            LiftTrackerDrawer(
+                titleRes = R.string.app_name,
+                navigateToRecordSession = {},
+                navigateToMuscleGroups = {},
+                navigateToSessions = {},
+                navigateToCalendar = {},
+                navigateToAnalytics = {},
+                navigateToTools = {},
+                navigateToSettings = {},
+                content = {},
+            )
         }
     }
 }

@@ -39,7 +39,6 @@ fun CalendarScreen(
 
     LiftTrackerDrawer(
         titleRes = CalendarDestination.titleRes,
-        profiles = calendarUiState.profileList,
         navigateToRecordSession = navigateToRecordSession,
         navigateToMuscleGroups = navigateToMuscleGroups,
         navigateToSessions = navigateToSessions,

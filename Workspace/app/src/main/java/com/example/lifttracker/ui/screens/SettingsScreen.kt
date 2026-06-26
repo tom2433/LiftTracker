@@ -39,7 +39,6 @@ fun SettingsScreen(
 
     LiftTrackerDrawer(
         titleRes = SettingsDestination.titleRes,
-        profiles = settingsUiState.profileList,
         navigateToRecordSession = navigateToRecordSession,
         navigateToMuscleGroups = navigateToMuscleGroups,
         navigateToSessions = navigateToSessions,

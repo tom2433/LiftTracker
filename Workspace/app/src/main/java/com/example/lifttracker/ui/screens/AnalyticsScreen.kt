@@ -39,7 +39,6 @@ fun AnalyticsScreen(
 
     LiftTrackerDrawer(
         titleRes = AnalyticsDestination.titleRes,
-        profiles = analyticsUiState.profileList,
         navigateToRecordSession = navigateToRecordSession,
         navigateToMuscleGroups = navigateToMuscleGroups,
         navigateToSessions = navigateToSessions,

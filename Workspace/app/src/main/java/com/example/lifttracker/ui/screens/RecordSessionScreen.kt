@@ -39,7 +39,6 @@ fun RecordSessionScreen(
 
     LiftTrackerDrawer(
         titleRes = RecordSessionDestination.titleRes,
-        profiles = recordSessionUiState.profileList,
         navigateToRecordSession = navigateToRecordSession,
         navigateToMuscleGroups = navigateToMuscleGroups,
         navigateToSessions = navigateToSessions,

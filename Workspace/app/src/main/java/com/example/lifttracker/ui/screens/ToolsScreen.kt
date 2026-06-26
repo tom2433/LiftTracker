@@ -39,7 +39,6 @@ fun ToolsScreen(
 
     LiftTrackerDrawer(
         titleRes = ToolsDestination.titleRes,
-        profiles = toolsUiState.profileList,
         navigateToRecordSession = navigateToRecordSession,
         navigateToMuscleGroups = navigateToMuscleGroups,
         navigateToSessions = navigateToSessions,
