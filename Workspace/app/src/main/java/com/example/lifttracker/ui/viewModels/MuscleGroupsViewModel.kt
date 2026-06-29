@@ -46,9 +46,9 @@ class MuscleGroupsViewModel(
                 // Capture today once per database emission so every card uses the same rolling-week boundary. - Codex
                 val today = getCurrentIsoDate()
 
-                // Convert the database aggregates into the complete values consumed by the UI state. - Codex
-                val muscleGroupDetails = detailData.map { data ->
-                    createMuscleGroupDetail(data, today)
+                // Key each calculated detail by its muscle-groups table ID while preserving the query order. - Codex
+                val muscleGroupDetails = detailData.associate { data ->
+                    data.id to createMuscleGroupDetail(data, today)
                 }
 
                 // Publish the newly calculated immutable list so Compose can react to the database change. - Codex
@@ -139,7 +139,6 @@ class MuscleGroupsViewModel(
 
         // Build the display model while preserving the stored name and note exactly as Room returned them. - Codex
         return MuscleGroupDetail(
-            id = data.id,
             name = data.name,
             note = data.note,
             numLifts = data.numLifts,
@@ -259,6 +258,26 @@ class MuscleGroupsViewModel(
         const val DAYS_PER_MONTH = 28L
         const val DAYS_PER_YEAR = 12L * DAYS_PER_MONTH
     }
+
+    fun muscleGroupCardClicked(id: Int) {
+        _muscleGroupsUiState.update { currentState ->
+            if (id !in currentState.muscleGroupList) {
+                return@update currentState
+            }
+
+            currentState.copy(
+                muscleGroupList = currentState.muscleGroupList.mapValues { (muscleGroupId, muscleGroupDetail) ->
+                    muscleGroupDetail.copy(
+                        cardIsOpen = if (muscleGroupId == id) {
+                            !muscleGroupDetail.cardIsOpen
+                        } else {
+                            false
+                        }
+                    )
+                }
+            )
+        }
+    }
 }
 
 /**
@@ -266,14 +285,13 @@ class MuscleGroupsViewModel(
  */
 data class MuscleGroupsUiState(
     val profileList: List<Profile> = listOf(),
-    val muscleGroupList: List<MuscleGroupDetail> = listOf(),
+    val muscleGroupList: Map<Int, MuscleGroupDetail> = emptyMap(),
     var welcomeDialogVisible: Boolean = false,
     var newProfileName: String = "",
     var newProfileNote: String = ""
 )
 
 data class MuscleGroupDetail(
-    val id: Int,
     val name: String,
     val note: String,
     val numLifts: Int,
@@ -282,5 +300,6 @@ data class MuscleGroupDetail(
     val avgNumSetsPerSession: Double,
     val avgNumSetsPerWeek: Double,
     val avgNumRepsPerSet: Double,
-    val lastDateTrained: String
+    val lastDateTrained: String,
+    val cardIsOpen: Boolean = false
 )

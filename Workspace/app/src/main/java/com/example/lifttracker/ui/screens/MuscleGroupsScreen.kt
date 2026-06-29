@@ -1,7 +1,13 @@
 package com.example.lifttracker.ui.screens
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.clickable
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,9 +25,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Card
-import androidx.compose.material3.Divider
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -31,14 +35,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.lifttracker.R
-import com.example.lifttracker.data.MuscleGroup
 import com.example.lifttracker.data.Profile
 import com.example.lifttracker.ui.AppViewModelProvider
 import com.example.lifttracker.ui.navigation.NavigationDestination
@@ -116,7 +118,7 @@ fun MuscleGroupsScreen(
             )
 
             // muscle group cards
-            for (muscleGroupDetail in muscleGroupsUiState.muscleGroupList) {
+            for ((muscleGroupId, muscleGroupDetail) in muscleGroupsUiState.muscleGroupList) {
                 // each muscle group has card design
                 Card(
                     shape = RoundedCornerShape(16.dp),
@@ -124,7 +126,7 @@ fun MuscleGroupsScreen(
                         .fillMaxWidth()
                         .defaultMinSize(minHeight = 168.dp)
                         .padding(bottom = 16.dp),
-                    onClick = { /* TODO */ }
+                    onClick = { viewModel.muscleGroupCardClicked(muscleGroupId) }
                 ) {
                     // column to hold card contents, 16.dp padding
                     Column(
@@ -203,6 +205,26 @@ fun MuscleGroupsScreen(
                             label = R.string.last_date_trained_label,
                             value = muscleGroupDetail.lastDateTrained
                         )
+
+                        // animated dropdown for when the user clicks on this card
+                        AnimatedVisibility(
+                            visible = muscleGroupsUiState.muscleGroupList[muscleGroupId]?.cardIsOpen
+                                ?: false,
+                            enter = expandVertically(
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioLowBouncy,
+                                    stiffness = Spring.StiffnessMediumLow
+                                )
+                            ) + fadeIn(),
+                            exit = shrinkVertically(
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioLowBouncy,
+                                    stiffness = Spring.StiffnessMediumLow
+                                )
+                            ) + fadeOut()
+                        ) {
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
+                        }
                     }
                 }
             }

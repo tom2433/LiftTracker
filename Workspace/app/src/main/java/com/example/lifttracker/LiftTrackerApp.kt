@@ -408,6 +408,7 @@ fun LiftTrackerDrawer(
                     }
                 )
 
+                // nav drawer element: Switch Profiles dropdown
                 NavigationDrawerItem(
                     label = { Text(stringResource(R.string.switch_profile_title)) },
                     selected = drawerUiState.switchProfileSelected,
