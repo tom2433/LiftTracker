@@ -15,6 +15,7 @@ import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -171,6 +172,117 @@ fun ShowElementEntryDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(stringResource(R.string.cancel))
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun WelcomeDialog(
+    buttonEnabled: Boolean,
+    newProfileName: String,
+    newProfileNote: String,
+    onProfileNameValueChanged: (String) -> Unit,
+    onProfileNoteValueChanged: (String) -> Unit,
+    onCreateProfile: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Dialog(
+        onDismissRequest = {},
+        properties = DialogProperties(
+            dismissOnBackPress = false,
+            dismissOnClickOutside = false
+        ),
+    ) {
+        Card(
+            modifier = modifier
+                .wrapContentSize()
+                .padding(4.dp),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .wrapContentHeight()
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // welcome title
+                Text(
+                    text = stringResource(R.string.welcome_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                // divider
+                HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
+
+                // profile name input
+                TextField(
+                    value = newProfileName,
+                    onValueChange = onProfileNameValueChanged,
+                    label = {
+                        Text(stringResource(R.string.profile_name_input_label))
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Label,
+                            contentDescription = stringResource(R.string.profile_name_input_label)
+                        )
+                    },
+                    keyboardOptions = KeyboardOptions.Default.copy(
+                        imeAction = ImeAction.Done
+                    ),
+                    modifier = Modifier
+                        .padding(bottom = 16.dp)
+                        .fillMaxWidth()
+                )
+
+                // profile note input
+                TextField(
+                    value = newProfileNote,
+                    onValueChange = onProfileNoteValueChanged,
+                    label = {
+                        Text(stringResource(R.string.profile_note_input_label))
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.Description,
+                            contentDescription = stringResource(R.string.profile_note_input_label)
+                        )
+                    },
+                    keyboardOptions = KeyboardOptions.Default.copy(
+                        imeAction = ImeAction.Done
+                    ),
+                    modifier = Modifier
+                        .padding(bottom = 16.dp)
+                        .fillMaxWidth()
+                )
+
+                // divider
+                HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
+
+                // welcome description (tell user to create one profile)
+                Text(
+                    text = stringResource(R.string.welcome_description),
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                // divider
+                HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
+
+                // button to create profile
+                Button(
+                    onClick = onCreateProfile,
+                    enabled = buttonEnabled,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                ) {
+                    Text(stringResource(R.string.create_profile_btn_text))
                 }
             }
         }

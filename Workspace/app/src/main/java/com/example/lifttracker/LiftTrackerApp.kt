@@ -408,7 +408,6 @@ fun LiftTrackerDrawer(
                     }
                 )
 
-                // TODO: nav drawer element: Switch Profile
                 NavigationDrawerItem(
                     label = { Text(stringResource(R.string.switch_profile_title)) },
                     selected = drawerUiState.switchProfileSelected,
@@ -455,10 +454,7 @@ fun LiftTrackerDrawer(
                                 Card(
                                     modifier = Modifier
                                         .weight(3f)
-                                        .defaultMinSize(minHeight = 56.dp)
-                                        .clickable(
-                                            onClick = { viewModel.changeActiveProfile(profile) }
-                                        ),
+                                        .defaultMinSize(minHeight = 56.dp),
                                     shape = RoundedCornerShape(
                                         topStart = 16.dp,
                                         bottomStart = 16.dp
@@ -474,7 +470,8 @@ fun LiftTrackerDrawer(
                                         } else {
                                             MaterialTheme.colorScheme.onSurface
                                         }
-                                    )
+                                    ),
+                                onClick = { viewModel.changeActiveProfile(profile) }
                                 ) {
                                     // put name and note here
                                     Column(
@@ -503,16 +500,7 @@ fun LiftTrackerDrawer(
                                     modifier = Modifier
                                         .weight(1f)
                                         .fillMaxHeight()
-                                        .defaultMinSize(minHeight = 56.dp)
-                                        .clickable(
-                                            onClick = {
-                                                if (profile.active) {
-                                                    viewModel.editProfileBtnClicked(profileToEdit = profile)
-                                                } else {
-                                                    viewModel.setProfileToDelete(deletedProfile = profile)
-                                                }
-                                            }
-                                        ),
+                                        .defaultMinSize(minHeight = 56.dp),
                                     shape = RoundedCornerShape(
                                         topEnd = 16.dp,
                                         bottomEnd = 16.dp
@@ -528,7 +516,14 @@ fun LiftTrackerDrawer(
                                         } else {
                                             MaterialTheme.colorScheme.onErrorContainer
                                         }
-                                    )
+                                    ),
+                                    onClick = {
+                                        if (profile.active) {
+                                            viewModel.editProfileBtnClicked(profileToEdit = profile)
+                                        } else {
+                                            viewModel.setProfileToDelete(deletedProfile = profile)
+                                        }
+                                    }
                                 ) {
                                     // Trash can if not active, pencil if active
                                     Box(
@@ -557,14 +552,12 @@ fun LiftTrackerDrawer(
                             modifier = Modifier
                                 .padding(start = 16.dp, bottom = 8.dp)
                                 .fillMaxWidth()
-                                .height(48.dp)
-                                .clickable(
-                                    onClick = { viewModel.addProfileBtnClicked() }
-                                ),
+                                .height(48.dp),
                             colors = CardDefaults.cardColors(
                                 containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                                 contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                            )
+                            ),
+                            onClick = { viewModel.addProfileBtnClicked() }
                         ) {
                             Box(
                                 modifier = Modifier.fillMaxSize(),

@@ -28,4 +28,12 @@
     <string name="create_muscle_group">Create Muscle Group</string>
     <string name="muscle_group_name">Muscle Group Name</string>
     <string name="muscle_group_note">Muscle Group Note (optional)</string>
+    <string name="num_of_lifts_label"># of lifts</string>
+    <string name="num_of_sessions_trained_label"># of sessions trained</string>
+    <string name="avg_num_sessions_per_week_label">Avg. # of sessions/week</string>
+    <string name="avg_num_sessions_per_month_label">Avg. # of sessions/month</string>
+    <string name="avg_num_sets_per_session_label">Avg. # of sets/session</string>
+    <string name="avg_num_sets_per_week_label">Avg. # of sets/week</string>
+    <string name="avg_num_reps_per_set_label">Avg. # of reps/set</string>
+    <string name="last_date_trained_label">Last date trained</string>
 </resources>

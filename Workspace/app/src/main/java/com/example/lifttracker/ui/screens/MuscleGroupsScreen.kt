@@ -1,54 +1,50 @@
 package com.example.lifttracker.ui.screens
 
+import androidx.annotation.StringRes
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Label
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Divider
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.lifttracker.R
+import com.example.lifttracker.data.MuscleGroup
+import com.example.lifttracker.data.Profile
 import com.example.lifttracker.ui.AppViewModelProvider
 import com.example.lifttracker.ui.navigation.NavigationDestination
 import com.example.lifttracker.ui.theme.LiftTrackerTheme
+import com.example.lifttracker.ui.utils.WelcomeDialog
 import com.example.lifttracker.ui.viewModels.MuscleGroupsViewModel
-import com.example.lifttracker.data.Profile
 
 object MuscleGroupsDestination : NavigationDestination {
     override val route = "muscleGroups"
@@ -110,124 +106,133 @@ fun MuscleGroupsScreen(
                 .padding(horizontal = 16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
+            // display active profile
             val activeProfile: Profile? = viewModel.getActiveProfile()
             Text(
                 text = "Displaying Muscle Groups for Profile: ${activeProfile?.name ?: "not loaded yet"}${if (activeProfile?.note?.isNotBlank() ?: false) " (${activeProfile.note})" else ""}",
                 color = MaterialTheme.colorScheme.outline,
-                style = MaterialTheme.typography.bodySmall
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(bottom = 16.dp)
             )
+
+            // muscle group cards
+            for (muscleGroup in muscleGroupsUiState.muscleGroupList) {
+                // each muscle group has card design
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .defaultMinSize(minHeight = 168.dp)
+                        .padding(bottom = 16.dp),
+                    onClick = { /* TODO */ }
+                ) {
+                    // column to hold card contents, 16.dp padding
+                    Column(
+                        verticalArrangement = Arrangement.Top,
+                        horizontalAlignment = Alignment.Start,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp)
+                    ) {
+                        // muscle group name (title)
+                        Text(
+                            text = muscleGroup.name,
+                            style = MaterialTheme.typography.titleLarge,
+                            modifier = if (muscleGroup.note.isBlank()) {
+                                Modifier.padding(bottom = 32.dp)
+                            } else {
+                                Modifier
+                            }
+                        )
+
+                        // muscle group note (if applicable)
+                        if (muscleGroup.note.isNotBlank()) {
+                            Text(
+                                text = muscleGroup.note,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.outline,
+                                modifier = Modifier.padding(bottom = 32.dp)
+                            )
+                        }
+
+                        // muscle group stats
+                        // # of lifts
+                        MuscleGroupDetailRow(
+                            label = R.string.num_of_lifts_label,
+                            value = "0"
+                        )
+
+                        // # of days trained (total)
+                        MuscleGroupDetailRow(
+                            label = R.string.num_of_sessions_trained_label,
+                            value = "0"
+                        )
+
+                        // avg # of sessions/week
+                        MuscleGroupDetailRow(
+                            label = R.string.avg_num_sessions_per_week_label,
+                            value = "0"
+                        )
+
+                        // avg # of sets/session
+                        MuscleGroupDetailRow(
+                            label = R.string.avg_num_sets_per_session_label,
+                            value = "0"
+                        )
+
+                        // avg # of sets/week
+                        MuscleGroupDetailRow(
+                            label = R.string.avg_num_sets_per_week_label,
+                            value = "0"
+                        )
+
+                        // avg # of reps/set
+                        MuscleGroupDetailRow(
+                            label = R.string.avg_num_reps_per_set_label,
+                            value = "0"
+                        )
+
+                        // last date trained (Today, Yesterday, 2 days ago, 3, ..., 6, 1 week ago,
+                        // 2 weeks ago, ..., 1 month ago, Over 1 month ago, 2 months ago, 3, 4, ...,
+                        // 1 year ago, Over 1 year ago, Never)
+                        MuscleGroupDetailRow(
+                            label = R.string.last_date_trained_label,
+                            value = "Never"
+                        )
+                    }
+                }
+            }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WelcomeDialog(
-    buttonEnabled: Boolean,
-    newProfileName: String,
-    newProfileNote: String,
-    onProfileNameValueChanged: (String) -> Unit,
-    onProfileNoteValueChanged: (String) -> Unit,
-    onCreateProfile: () -> Unit,
-    modifier: Modifier = Modifier
+fun MuscleGroupDetailRow(
+    @StringRes label: Int,
+    value: String
 ) {
-    Dialog(
-        onDismissRequest = {},
-        properties = DialogProperties(
-            dismissOnBackPress = false,
-            dismissOnClickOutside = false
-        ),
+    Row(
+        horizontalArrangement = Arrangement.Start,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Card(
-            modifier = modifier
-                .wrapContentSize()
-                .padding(4.dp),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Column(
-                modifier = Modifier
-                    .wrapContentHeight()
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // welcome title
-                Text(
-                    text = stringResource(R.string.welcome_title),
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
+        // label for detail metric
+        Text(
+            text = stringResource(label),
+            style = MaterialTheme.typography.bodyMedium
+        )
 
-                // divider
-                HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
+        // divider to link label to metric
+        HorizontalDivider(
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 4.dp)
+        )
 
-                // profile name input
-                TextField(
-                    value = newProfileName,
-                    onValueChange = onProfileNameValueChanged,
-                    label = {
-                        Text(stringResource(R.string.profile_name_input_label))
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Label,
-                            contentDescription = stringResource(R.string.profile_name_input_label)
-                        )
-                    },
-                    keyboardOptions = KeyboardOptions.Default.copy(
-                        imeAction = ImeAction.Done
-                    ),
-                    modifier = Modifier
-                        .padding(bottom = 16.dp)
-                        .fillMaxWidth()
-                )
-
-                // profile note input
-                TextField(
-                    value = newProfileNote,
-                    onValueChange = onProfileNoteValueChanged,
-                    label = {
-                        Text(stringResource(R.string.profile_note_input_label))
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Filled.Description,
-                            contentDescription = stringResource(R.string.profile_note_input_label)
-                        )
-                    },
-                    keyboardOptions = KeyboardOptions.Default.copy(
-                        imeAction = ImeAction.Done
-                    ),
-                    modifier = Modifier
-                        .padding(bottom = 16.dp)
-                        .fillMaxWidth()
-                )
-
-                // divider
-                HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
-
-                // welcome description (tell user to create one profile)
-                Text(
-                    text = stringResource(R.string.welcome_description),
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-
-                // divider
-                HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
-
-                // button to create profile
-                Button(
-                    onClick = onCreateProfile,
-                    enabled = buttonEnabled,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                ) {
-                    Text(stringResource(R.string.create_profile_btn_text))
-                }
-            }
-        }
+        // metric
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium
+        )
     }
 }
 

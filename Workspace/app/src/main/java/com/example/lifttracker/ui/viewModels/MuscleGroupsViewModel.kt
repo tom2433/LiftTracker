@@ -2,6 +2,7 @@ package com.example.lifttracker.ui.viewModels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.lifttracker.data.MuscleGroup
 import com.example.lifttracker.data.MuscleGroupRepository
 import com.example.lifttracker.data.Profile
@@ -24,7 +25,7 @@ class MuscleGroupsViewModel(
 
     init {
         viewModelScope.launch {
-            // retrieve all profiles
+            // retrieve all profiles. this is an infinite collection
             profileRepository.getAllProfilesStream().collect { profiles ->
                 _muscleGroupsUiState.update { currentState ->
                     currentState.copy(
@@ -33,7 +34,9 @@ class MuscleGroupsViewModel(
                     )
                 }
             }
+        }
 
+        viewModelScope.launch {
             // retrieve all muscle groups for the active profile (active profile found in backend)
             muscleGroupRepository.getAllMuscleGroupsForActiveProfileStream().collect { muscleGroups ->
                 _muscleGroupsUiState.update { currentState ->
@@ -110,4 +113,16 @@ data class MuscleGroupsUiState(
     var welcomeDialogVisible: Boolean = false,
     var newProfileName: String = "",
     var newProfileNote: String = ""
+)
+
+data class MuscleGroupDetail(
+    val name: String,
+    val note: String,
+    val numLifts: Int,
+    val numSessions: Int,
+    val avgNumSessionsPerWeek: Double,
+    val avgNumSetsPerSession: Double,
+    val avgNumSetsPerWeek: Double,
+    val avgNumRepsPerSet: Double,
+    val lastDateTrained: String
 )

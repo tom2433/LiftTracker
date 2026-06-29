@@ -32,12 +32,19 @@ A prototype of the Lift Tracker project. This is an evolving document. Everythin
 6. (In progress) Allow user to add, edit, and delete muscle groups in the muscle groups screen. (F5)
     - each muscle group will be displayed as a card.
     - each card will display the muscle group name and note, as well as the following:
-        - number of lifts
-        - number of days trained
+        - number of lifts created
+        - number of days trained (total)
+        - average number of sessions/week
+        - average number of sessions/month trained
+        - average number of sets/session
+        - average number of sets/week
+        - average number of reps per set
+        - last date trained (today, yesterday, two days ago, three, ... six, one week, over a week, one month, over a month, two months...)
         - button to edit
         - button to delete
         - eventually:
             - a minimal line graph showing average progress over time (user can change timeframe in preferences)
+            - color representing status of improving, maintaining, or declining
     - When a muscle group card is clicked, it animates a dropdown container with cards representing all lifts for that muscle group
 
 # Basic Structure
