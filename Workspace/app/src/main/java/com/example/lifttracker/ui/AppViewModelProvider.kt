@@ -22,7 +22,8 @@ object AppViewModelProvider {
         // initializer for MuscleGroupsViewModel
         initializer {
             MuscleGroupsViewModel(
-                profileRepository = liftTrackerApplication().container.profileRepository
+                profileRepository = liftTrackerApplication().container.profileRepository,
+                muscleGroupRepository = liftTrackerApplication().container.muscleGroupRepository
             )
         }
 

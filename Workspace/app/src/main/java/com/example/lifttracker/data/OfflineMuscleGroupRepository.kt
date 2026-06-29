@@ -10,4 +10,6 @@ class OfflineMuscleGroupRepository(private val muscleGroupDao: MuscleGroupDao) :
     override suspend fun deleteMuscleGroup(muscleGroup: MuscleGroup) = muscleGroupDao.delete(muscleGroup)
 
     override fun getMuscleGroupStream(id: Int): Flow<MuscleGroup?> = muscleGroupDao.getMuscleGroup(id)
+
+    override fun getAllMuscleGroupsForActiveProfileStream(): Flow<List<MuscleGroup>> = muscleGroupDao.getAllMuscleGroupsForActiveProfile()
 }

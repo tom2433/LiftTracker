@@ -35,14 +35,11 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Handyman
@@ -69,7 +66,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -79,13 +75,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
@@ -108,6 +100,7 @@ import com.example.lifttracker.ui.screens.SessionsDestination
 import com.example.lifttracker.ui.screens.SettingsDestination
 import com.example.lifttracker.ui.screens.ToolsDestination
 import com.example.lifttracker.ui.theme.LiftTrackerTheme
+import com.example.lifttracker.ui.utils.ShowElementEntryDialog
 import com.example.lifttracker.ui.viewModels.DrawerViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -653,14 +646,26 @@ fun LiftTrackerDrawer(
 
         // profile entry dialog
         if (drawerUiState.profileEntryDialogVisible) {
-            ShowProfileEntryDialog(
+            ShowElementEntryDialog(
+                dialogTitle = if (drawerUiState.userIsAddingProfile) {
+                    R.string.create_profile_btn_text
+                } else {
+                    R.string.edit_profile
+                },
+                submitBtnText = if (drawerUiState.userIsAddingProfile) {
+                    R.string.create_profile_btn_text
+                } else {
+                    R.string.update_profile_btn_text
+                },
+                elementNameInputLabel = R.string.profile_name_input_label,
+                elementNoteInputLabel = R.string.profile_note_input_label,
                 buttonEnabled = viewModel.isProfileValid(),
-                newProfileName = drawerUiState.newProfileName,
-                newProfileNote = drawerUiState.newProfileNote,
-                onProfileNameValueChanged = {
+                newElementName = drawerUiState.newProfileName,
+                newElementNote = drawerUiState.newProfileNote,
+                onElementNameValueChanged = {
                     viewModel.updateNewProfileName(it)
                 },
-                onProfileNoteValueChanged = {
+                onElementNoteValueChanged = {
                     viewModel.updateNewProfileNote(it)
                 },
                 onSubmit = {
@@ -668,8 +673,7 @@ fun LiftTrackerDrawer(
                 },
                 onDismissRequest = {
                     viewModel.dismissProfileEntryDialog()
-                },
-                userIsAddingProfile = drawerUiState.userIsAddingProfile,
+                }
             )
         }
 
@@ -760,135 +764,6 @@ fun ShowDeleteProfileDialog(
                     Text(
                         text = stringResource(R.string.cancel_profile_deletion_btn_text)
                     )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun ShowProfileEntryDialog(
-    buttonEnabled: Boolean,
-    newProfileName: String,
-    newProfileNote: String,
-    onProfileNameValueChanged: (String) -> Unit,
-    onProfileNoteValueChanged: (String) -> Unit,
-    onSubmit: () -> Unit,
-    onDismissRequest: () -> Unit,
-    userIsAddingProfile: Boolean,
-    modifier: Modifier = Modifier,
-) {
-    // focus requester to pop up the keyboard when the user selects to edit or add a profile
-    val profileNameFocusRequester = remember { FocusRequester() }
-    val keyboardController = LocalSoftwareKeyboardController.current
-    LaunchedEffect(Unit) {
-        delay(100)
-        profileNameFocusRequester.requestFocus()
-        keyboardController?.show()
-    }
-
-    Dialog(
-        onDismissRequest = onDismissRequest,
-        properties = DialogProperties(
-            dismissOnBackPress = true,
-            dismissOnClickOutside = true
-        )
-    ) {
-        Card(
-            modifier = modifier
-                .wrapContentSize()
-                .padding(4.dp),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Column(
-                modifier = Modifier
-                    .wrapContentHeight()
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // title
-                Text(
-                    text = stringResource(if (userIsAddingProfile) {
-                        R.string.create_profile_btn_text
-                    } else {
-                        R.string.edit_profile
-                    }),
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-
-                // divider
-                HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
-
-                // profile name input
-                TextField(
-                    value = newProfileName,
-                    onValueChange = onProfileNameValueChanged,
-                    label = {
-                        Text(stringResource(R.string.profile_name_input_label))
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Label,
-                            contentDescription = stringResource(R.string.profile_name_input_label)
-                        )
-                    },
-                    keyboardOptions = KeyboardOptions.Default.copy(
-                        imeAction = ImeAction.Done
-                    ),
-                    modifier = Modifier
-                        .focusRequester(profileNameFocusRequester)
-                        .padding(bottom = 16.dp)
-                        .fillMaxWidth()
-                )
-
-                // profile note input
-                TextField(
-                    value = newProfileNote,
-                    onValueChange = onProfileNoteValueChanged,
-                    label = {
-                        Text(stringResource(R.string.profile_note_input_label))
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Filled.Description,
-                            contentDescription = stringResource(R.string.profile_note_input_label)
-                        )
-                    },
-                    keyboardOptions = KeyboardOptions.Default.copy(
-                        imeAction = ImeAction.Done
-                    ),
-                    modifier = Modifier
-                        .padding(bottom = 16.dp)
-                        .fillMaxWidth()
-                )
-
-                // divider
-                HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
-
-                // button to submit profile
-                Button(
-                    onClick = onSubmit,
-                    enabled = buttonEnabled,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 16.dp)
-                ) {
-                    Text(stringResource(if (userIsAddingProfile) {
-                        R.string.create_profile_btn_text
-                    } else {
-                        R.string.update_profile_btn_text
-                    }))
-                }
-
-                // button to dismiss
-                OutlinedButton(
-                    onClick = onDismissRequest,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(stringResource(R.string.cancel))
                 }
             }
         }

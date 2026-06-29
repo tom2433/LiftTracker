@@ -2,6 +2,8 @@ package com.example.lifttracker.ui.viewModels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.lifttracker.data.MuscleGroup
+import com.example.lifttracker.data.MuscleGroupRepository
 import com.example.lifttracker.data.Profile
 import com.example.lifttracker.data.ProfileRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,18 +16,29 @@ import kotlinx.coroutines.launch
  * ViewModel to retrieve all profiles in the Room database
  */
 class MuscleGroupsViewModel(
-    private val profileRepository: ProfileRepository
+    private val profileRepository: ProfileRepository,
+    private val muscleGroupRepository: MuscleGroupRepository
 ) : ViewModel() {
     private val _muscleGroupsUiState = MutableStateFlow(MuscleGroupsUiState())
     val muscleGroupsUiState: StateFlow<MuscleGroupsUiState> = _muscleGroupsUiState.asStateFlow()
 
     init {
         viewModelScope.launch {
+            // retrieve all profiles
             profileRepository.getAllProfilesStream().collect { profiles ->
                 _muscleGroupsUiState.update { currentState ->
                     currentState.copy(
                         profileList = profiles,
                         welcomeDialogVisible = profiles.isEmpty()
+                    )
+                }
+            }
+
+            // retrieve all muscle groups for the active profile (active profile found in backend)
+            muscleGroupRepository.getAllMuscleGroupsForActiveProfileStream().collect { muscleGroups ->
+                _muscleGroupsUiState.update { currentState ->
+                    currentState.copy(
+                        muscleGroupList = muscleGroups
                     )
                 }
             }
@@ -93,6 +106,7 @@ class MuscleGroupsViewModel(
  */
 data class MuscleGroupsUiState(
     val profileList: List<Profile> = listOf(),
+    val muscleGroupList: List<MuscleGroup> = listOf(),
     var welcomeDialogVisible: Boolean = false,
     var newProfileName: String = "",
     var newProfileNote: String = ""

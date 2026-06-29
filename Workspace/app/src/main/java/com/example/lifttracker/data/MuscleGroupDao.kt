@@ -21,4 +21,13 @@ interface MuscleGroupDao {
 
     @Query("SELECT * FROM muscle_groups WHERE id = :id")
     fun getMuscleGroup(id: Int): Flow<MuscleGroup?>
+
+    @Query("""
+        SELECT mg.*
+        FROM muscle_groups AS mg
+        INNER JOIN profiles AS p
+            ON mg.profile_id = p.id
+        WHERE p.active = 1
+    """)
+    fun getAllMuscleGroupsForActiveProfile(): Flow<List<MuscleGroup>>
 }

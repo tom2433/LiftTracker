@@ -14,8 +14,10 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.filled.Description
@@ -106,12 +108,13 @@ fun MuscleGroupsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 16.dp)
+                .verticalScroll(rememberScrollState())
         ) {
             val activeProfile: Profile? = viewModel.getActiveProfile()
             Text(
                 text = "Displaying Muscle Groups for Profile: ${activeProfile?.name ?: "not loaded yet"}${if (activeProfile?.note?.isNotBlank() ?: false) " (${activeProfile.note})" else ""}",
                 color = MaterialTheme.colorScheme.outline,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodySmall
             )
         }
     }
