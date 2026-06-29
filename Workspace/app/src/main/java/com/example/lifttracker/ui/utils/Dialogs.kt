@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Label
@@ -52,11 +53,12 @@ fun ShowElementEntryDialog(
     modifier: Modifier = Modifier,
 ) {
     // focus requester to pop up the keyboard when the user selects to edit or add an element
-    val profileNameFocusRequester = remember { FocusRequester() }
+    val elementNameFocusRequester = remember { FocusRequester() }
+    val elementNoteFocusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
     LaunchedEffect(Unit) {
         delay(100)
-        profileNameFocusRequester.requestFocus()
+        elementNameFocusRequester.requestFocus()
         keyboardController?.show()
     }
 
@@ -104,11 +106,17 @@ fun ShowElementEntryDialog(
                             contentDescription = stringResource(elementNameInputLabel)
                         )
                     },
+                    singleLine = true,
                     keyboardOptions = KeyboardOptions.Default.copy(
-                        imeAction = ImeAction.Done
+                        imeAction = ImeAction.Next
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onNext = {
+                            elementNoteFocusRequester.requestFocus()
+                        }
                     ),
                     modifier = Modifier
-                        .focusRequester(profileNameFocusRequester)
+                        .focusRequester(elementNameFocusRequester)
                         .padding(bottom = 16.dp)
                         .fillMaxWidth()
                 )
@@ -126,10 +134,19 @@ fun ShowElementEntryDialog(
                             contentDescription = stringResource(elementNoteInputLabel)
                         )
                     },
+                    singleLine = true,
                     keyboardOptions = KeyboardOptions.Default.copy(
                         imeAction = ImeAction.Done
                     ),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            if (buttonEnabled) {
+                                onSubmit()
+                            }
+                        }
+                    ),
                     modifier = Modifier
+                        .focusRequester(elementNoteFocusRequester)
                         .padding(bottom = 16.dp)
                         .fillMaxWidth()
                 )

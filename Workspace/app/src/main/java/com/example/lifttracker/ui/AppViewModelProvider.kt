@@ -72,7 +72,8 @@ object AppViewModelProvider {
         // initializer for DrawerViewModel
         initializer {
             DrawerViewModel(
-                profileRepository = liftTrackerApplication().container.profileRepository
+                profileRepository = liftTrackerApplication().container.profileRepository,
+                muscleGroupRepository = liftTrackerApplication().container.muscleGroupRepository
             )
         }
     }

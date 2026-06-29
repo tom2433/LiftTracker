@@ -25,4 +25,7 @@
     <string name="delete_profile_btn_text">Yes, delete this profile and all data associated with it.</string>
     <string name="cancel_profile_deletion_btn_text">Oops I goofed</string>
     <string name="add_muscle_group">Add Muscle Group</string>
+    <string name="create_muscle_group">Create Muscle Group</string>
+    <string name="muscle_group_name">Muscle Group Name</string>
+    <string name="muscle_group_note">Muscle Group Note (optional)</string>
 </resources>

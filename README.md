@@ -34,6 +34,10 @@ A prototype of the Lift Tracker project. This is an evolving document. Everythin
     - each card will display the muscle group name and note, as well as the following:
         - number of lifts
         - number of days trained
+        - button to edit
+        - button to delete
+        - eventually:
+            - a minimal line graph showing average progress over time (user can change timeframe in preferences)
     - When a muscle group card is clicked, it animates a dropdown container with cards representing all lifts for that muscle group
 
 # Basic Structure

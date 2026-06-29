@@ -220,7 +220,9 @@ fun LiftTrackerDrawer(
                     ) + fadeOut()
                 ) {
                     FloatingActionButton(
-                        onClick = { /* TODO */ },
+                        onClick = {
+                            viewModel.showAddMuscleGroupDialog()
+                        },
                         shape = MaterialTheme.shapes.large,
                         modifier = Modifier.padding(20.dp)
                     ) {
@@ -687,6 +689,31 @@ fun LiftTrackerDrawer(
                     viewModel.deleteProfile()
                 },
                 profileToDelete = drawerUiState.profileToDelete
+            )
+        }
+
+        // add muscle group dialog
+        if (drawerUiState.muscleGroupEntryDialogVisible) {
+            ShowElementEntryDialog(
+                dialogTitle = R.string.add_muscle_group,
+                submitBtnText = R.string.create_muscle_group,
+                elementNameInputLabel = R.string.muscle_group_name,
+                elementNoteInputLabel = R.string.muscle_group_note,
+                buttonEnabled = viewModel.isMuscleGroupValid(),
+                newElementName = drawerUiState.newMuscleGroupName,
+                newElementNote = drawerUiState.newMuscleGroupNote,
+                onElementNameValueChanged = {
+                    viewModel.updateNewMuscleGroupName(it)
+                },
+                onElementNoteValueChanged = {
+                    viewModel.updateNewMuscleGroupNote(it)
+                },
+                onSubmit = {
+                    viewModel.submitMuscleGroupEntryDialog()
+                },
+                onDismissRequest = {
+                    viewModel.dismissMuscleGroupEntryDialog()
+                }
             )
         }
     }
