@@ -116,7 +116,7 @@ fun MuscleGroupsScreen(
             )
 
             // muscle group cards
-            for (muscleGroup in muscleGroupsUiState.muscleGroupList) {
+            for (muscleGroupDetail in muscleGroupsUiState.muscleGroupList) {
                 // each muscle group has card design
                 Card(
                     shape = RoundedCornerShape(16.dp),
@@ -136,9 +136,9 @@ fun MuscleGroupsScreen(
                     ) {
                         // muscle group name (title)
                         Text(
-                            text = muscleGroup.name,
+                            text = muscleGroupDetail.name,
                             style = MaterialTheme.typography.titleLarge,
-                            modifier = if (muscleGroup.note.isBlank()) {
+                            modifier = if (muscleGroupDetail.note.isBlank()) {
                                 Modifier.padding(bottom = 32.dp)
                             } else {
                                 Modifier
@@ -146,9 +146,9 @@ fun MuscleGroupsScreen(
                         )
 
                         // muscle group note (if applicable)
-                        if (muscleGroup.note.isNotBlank()) {
+                        if (muscleGroupDetail.note.isNotBlank()) {
                             Text(
-                                text = muscleGroup.note,
+                                text = muscleGroupDetail.note,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.outline,
                                 modifier = Modifier.padding(bottom = 32.dp)
@@ -159,37 +159,41 @@ fun MuscleGroupsScreen(
                         // # of lifts
                         MuscleGroupDetailRow(
                             label = R.string.num_of_lifts_label,
-                            value = "0"
+                            value = muscleGroupDetail.numLifts.toString()
                         )
 
                         // # of days trained (total)
                         MuscleGroupDetailRow(
                             label = R.string.num_of_sessions_trained_label,
-                            value = "0"
+                            value = muscleGroupDetail.numSessions.toString()
                         )
 
                         // avg # of sessions/week
                         MuscleGroupDetailRow(
                             label = R.string.avg_num_sessions_per_week_label,
-                            value = "0"
+                            value = "%.2f".format(muscleGroupDetail.avgNumSessionsPerWeek)
                         )
 
                         // avg # of sets/session
                         MuscleGroupDetailRow(
                             label = R.string.avg_num_sets_per_session_label,
-                            value = "0"
+                            value = "%.2f".format(muscleGroupDetail.avgNumSetsPerSession)
                         )
 
                         // avg # of sets/week
                         MuscleGroupDetailRow(
                             label = R.string.avg_num_sets_per_week_label,
-                            value = "0"
+                            value = "%.2f".format(muscleGroupDetail.avgNumSetsPerWeek)
                         )
 
                         // avg # of reps/set
                         MuscleGroupDetailRow(
                             label = R.string.avg_num_reps_per_set_label,
-                            value = "0"
+                            value = if (muscleGroupDetail.avgNumRepsPerSet != -1.0) {
+                                "%.2f".format(muscleGroupDetail.avgNumRepsPerSet)
+                            } else {
+                                "N/A"
+                            }
                         )
 
                         // last date trained (Today, Yesterday, 2 days ago, 3, ..., 6, 1 week ago,
@@ -197,7 +201,7 @@ fun MuscleGroupsScreen(
                         // 1 year ago, Over 1 year ago, Never)
                         MuscleGroupDetailRow(
                             label = R.string.last_date_trained_label,
-                            value = "Never"
+                            value = muscleGroupDetail.lastDateTrained
                         )
                     }
                 }

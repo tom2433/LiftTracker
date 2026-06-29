@@ -8,4 +8,7 @@ interface MuscleGroupRepository {
     suspend fun deleteMuscleGroup(muscleGroup: MuscleGroup)
     fun getMuscleGroupStream(id: Int): Flow<MuscleGroup?>
     fun getAllMuscleGroupsForActiveProfileStream(): Flow<List<MuscleGroup>>
+
+    // This stream exposes the reactive database aggregates used to calculate muscle-group details. - Codex
+    fun getAllMuscleGroupDetailDataForActiveProfileStream(): Flow<List<MuscleGroupDetailData>>
 }
