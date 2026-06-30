@@ -10,6 +10,8 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -33,14 +35,11 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Handyman
@@ -56,6 +55,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DrawerDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -66,7 +66,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -79,7 +78,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
@@ -89,26 +87,59 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.lifttracker.data.Profile
 import com.example.lifttracker.ui.AppViewModelProvider
 import com.example.lifttracker.ui.navigation.LiftTrackerNavHost
+import com.example.lifttracker.ui.screens.AnalyticsDestination
+import com.example.lifttracker.ui.screens.CalendarDestination
+import com.example.lifttracker.ui.screens.MuscleGroupsDestination
+import com.example.lifttracker.ui.screens.RecordSessionDestination
+import com.example.lifttracker.ui.screens.SessionsDestination
+import com.example.lifttracker.ui.screens.SettingsDestination
+import com.example.lifttracker.ui.screens.ToolsDestination
 import com.example.lifttracker.ui.theme.LiftTrackerTheme
+import com.example.lifttracker.ui.utils.ShowElementDeleteDialog
+import com.example.lifttracker.ui.utils.ShowElementEntryDialog
 import com.example.lifttracker.ui.viewModels.DrawerViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import kotlinx.coroutines.delay
 
 /**
  * Top level composable that represents screens for the application
  */
 @Composable
 fun LiftTrackerApp(navController: NavHostController = rememberNavController()) {
-    LiftTrackerNavHost(navController = navController)
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
+    val titleRes = when (currentRoute) {
+        MuscleGroupsDestination.route -> MuscleGroupsDestination.titleRes
+        RecordSessionDestination.route -> RecordSessionDestination.titleRes
+        SessionsDestination.route -> SessionsDestination.titleRes
+        CalendarDestination.route -> CalendarDestination.titleRes
+        AnalyticsDestination.route -> AnalyticsDestination.titleRes
+        ToolsDestination.route -> ToolsDestination.titleRes
+        SettingsDestination.route -> SettingsDestination.titleRes
+        else -> R.string.app_name
+    }
+
+    LiftTrackerDrawer(
+        titleRes = titleRes,
+        navigateToRecordSession = { navController.navigate(RecordSessionDestination.route) },
+        navigateToMuscleGroups = { navController.navigate(MuscleGroupsDestination.route) },
+        navigateToSessions = { navController.navigate(SessionsDestination.route) },
+        navigateToCalendar = { navController.navigate(CalendarDestination.route) },
+        navigateToAnalytics = { navController.navigate(AnalyticsDestination.route) },
+        navigateToTools = { navController.navigate(ToolsDestination.route) },
+        navigateToSettings = { navController.navigate(SettingsDestination.route) },
+    ) { innerPadding ->
+        LiftTrackerNavHost(
+            navController = navController,
+            modifier = Modifier.padding(innerPadding)
+        )
+    }
 }
 
 /**
@@ -116,8 +147,6 @@ fun LiftTrackerApp(navController: NavHostController = rememberNavController()) {
  *
  * Will eventually need parameters for:
  *  - sessionIsActive (Boolean)
- *
- * Might need to add a viewModel specifically for this Composable
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -136,6 +165,7 @@ fun LiftTrackerDrawer(
     val drawerUiState by viewModel.drawerUiState.collectAsState()
     val drawerOffsetX = remember { Animatable(0f) }
     val coroutineScope = rememberCoroutineScope()
+    viewModel.checkScreenForFab(titleRes)
 
     LaunchedEffect(drawerUiState.isDrawerOpen, drawerUiState.drawerWidthPx) {
         if (drawerUiState.drawerWidthPx > 0f) {
@@ -170,6 +200,38 @@ fun LiftTrackerDrawer(
                         }
                     }
                 )
+            },
+            floatingActionButton = {
+                AnimatedVisibility(
+                    visible = drawerUiState.showFab,
+                    enter = slideInVertically(
+                        initialOffsetY = { it * 2 },
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioLowBouncy,
+                            stiffness = Spring.StiffnessMediumLow
+                        )
+                    ) + fadeIn(),
+                    exit = slideOutVertically(
+                        targetOffsetY = { it * 2 },
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioLowBouncy,
+                            stiffness = Spring.StiffnessMediumLow
+                        )
+                    ) + fadeOut()
+                ) {
+                    FloatingActionButton(
+                        onClick = {
+                            viewModel.showAddMuscleGroupDialog()
+                        },
+                        shape = MaterialTheme.shapes.large,
+                        modifier = Modifier.padding(20.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Add,
+                            contentDescription = "" // TODO
+                        )
+                    }
+                }
             }
         ) { innerPadding ->
             content(innerPadding)
@@ -279,10 +341,8 @@ fun LiftTrackerDrawer(
                     badge = {},
                     onClick = {
                         coroutineScope.launch {
-                            drawerOffsetX.animateTo(
-                                targetValue = -drawerUiState.drawerWidthPx,
-                                animationSpec = tween(durationMillis = 400)
-                            )
+                            viewModel.closeDrawer()
+                            delay(200)
                             navigateToRecordSession()
                         }
                     }
@@ -301,10 +361,8 @@ fun LiftTrackerDrawer(
                     badge = {},
                     onClick = {
                         coroutineScope.launch {
-                            drawerOffsetX.animateTo(
-                                targetValue = -drawerUiState.drawerWidthPx,
-                                animationSpec = tween(durationMillis = 400)
-                            )
+                            viewModel.closeDrawer()
+                            delay(200)
                             navigateToMuscleGroups()
                         }
                     }
@@ -323,10 +381,8 @@ fun LiftTrackerDrawer(
                     badge = {},
                     onClick = {
                         coroutineScope.launch {
-                            drawerOffsetX.animateTo(
-                                targetValue = -drawerUiState.drawerWidthPx,
-                                animationSpec = tween(durationMillis = 400)
-                            )
+                            viewModel.closeDrawer()
+                            delay(200)
                             navigateToSessions()
                         }
                     }
@@ -345,16 +401,14 @@ fun LiftTrackerDrawer(
                     badge = {},
                     onClick = {
                         coroutineScope.launch {
-                            drawerOffsetX.animateTo(
-                                targetValue = -drawerUiState.drawerWidthPx,
-                                animationSpec = tween(durationMillis = 400)
-                            )
+                            viewModel.closeDrawer()
+                            delay(200)
                             navigateToCalendar()
                         }
                     }
                 )
 
-                // TODO: nav drawer element: Switch Profile
+                // nav drawer element: Switch Profiles dropdown
                 NavigationDrawerItem(
                     label = { Text(stringResource(R.string.switch_profile_title)) },
                     selected = drawerUiState.switchProfileSelected,
@@ -387,7 +441,13 @@ fun LiftTrackerDrawer(
                     ) + fadeOut()
                 ) {
                     Column {
-                        HorizontalDivider(modifier = Modifier.padding(start = 16.dp, top = 8.dp, bottom = 8.dp))
+                        HorizontalDivider(
+                            modifier = Modifier.padding(
+                                start = 16.dp,
+                                top = 8.dp,
+                                bottom = 8.dp
+                            )
+                        )
 
                         for (profile in drawerUiState.profileList) {
                             Row(
@@ -401,10 +461,7 @@ fun LiftTrackerDrawer(
                                 Card(
                                     modifier = Modifier
                                         .weight(3f)
-                                        .defaultMinSize(minHeight = 56.dp)
-                                        .clickable(
-                                            onClick = { viewModel.changeActiveProfile(profile) }
-                                        ),
+                                        .defaultMinSize(minHeight = 56.dp),
                                     shape = RoundedCornerShape(
                                         topStart = 16.dp,
                                         bottomStart = 16.dp
@@ -420,7 +477,8 @@ fun LiftTrackerDrawer(
                                         } else {
                                             MaterialTheme.colorScheme.onSurface
                                         }
-                                    )
+                                    ),
+                                    onClick = { viewModel.changeActiveProfile(profile) }
                                 ) {
                                     // put name and note here
                                     Column(
@@ -449,16 +507,7 @@ fun LiftTrackerDrawer(
                                     modifier = Modifier
                                         .weight(1f)
                                         .fillMaxHeight()
-                                        .defaultMinSize(minHeight = 56.dp)
-                                        .clickable(
-                                            onClick = {
-                                                if (profile.active) {
-                                                    viewModel.editProfileBtnClicked(profileToEdit = profile)
-                                                } else {
-                                                    viewModel.setProfileToDelete(deletedProfile = profile)
-                                                }
-                                            }
-                                        ),
+                                        .defaultMinSize(minHeight = 56.dp),
                                     shape = RoundedCornerShape(
                                         topEnd = 16.dp,
                                         bottomEnd = 16.dp
@@ -474,7 +523,14 @@ fun LiftTrackerDrawer(
                                         } else {
                                             MaterialTheme.colorScheme.onErrorContainer
                                         }
-                                    )
+                                    ),
+                                    onClick = {
+                                        if (profile.active) {
+                                            viewModel.editProfileBtnClicked(profileToEdit = profile)
+                                        } else {
+                                            viewModel.setProfileToDelete(deletedProfile = profile)
+                                        }
+                                    }
                                 ) {
                                     // Trash can if not active, pencil if active
                                     Box(
@@ -503,14 +559,12 @@ fun LiftTrackerDrawer(
                             modifier = Modifier
                                 .padding(start = 16.dp, bottom = 8.dp)
                                 .fillMaxWidth()
-                                .height(48.dp)
-                                .clickable(
-                                    onClick = { viewModel.addProfileBtnClicked() }
-                                ),
+                                .height(48.dp),
                             colors = CardDefaults.cardColors(
                                 containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                                 contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                            )
+                            ),
+                            onClick = { viewModel.addProfileBtnClicked() }
                         ) {
                             Box(
                                 modifier = Modifier.fillMaxSize(),
@@ -543,10 +597,8 @@ fun LiftTrackerDrawer(
                     badge = {},
                     onClick = {
                         coroutineScope.launch {
-                            drawerOffsetX.animateTo(
-                                targetValue = -drawerUiState.drawerWidthPx,
-                                animationSpec = tween(durationMillis = 400)
-                            )
+                            viewModel.closeDrawer()
+                            delay(200)
                             navigateToAnalytics()
                         }
                     }
@@ -565,10 +617,8 @@ fun LiftTrackerDrawer(
                     badge = {},
                     onClick = {
                         coroutineScope.launch {
-                            drawerOffsetX.animateTo(
-                                targetValue = -drawerUiState.drawerWidthPx,
-                                animationSpec = tween(durationMillis = 400)
-                            )
+                            viewModel.closeDrawer()
+                            delay(200)
                             navigateToTools()
                         }
                     }
@@ -587,10 +637,8 @@ fun LiftTrackerDrawer(
                     badge = {},
                     onClick = {
                         coroutineScope.launch {
-                            drawerOffsetX.animateTo(
-                                targetValue = -drawerUiState.drawerWidthPx,
-                                animationSpec = tween(durationMillis = 400)
-                            )
+                            viewModel.closeDrawer()
+                            delay(200)
                             navigateToSettings()
                         }
                     }
@@ -600,14 +648,26 @@ fun LiftTrackerDrawer(
 
         // profile entry dialog
         if (drawerUiState.profileEntryDialogVisible) {
-            ShowProfileEntryDialog(
+            ShowElementEntryDialog(
+                dialogTitle = if (drawerUiState.userIsAddingProfile) {
+                    R.string.create_profile_btn_text
+                } else {
+                    R.string.edit_profile
+                },
+                submitBtnText = if (drawerUiState.userIsAddingProfile) {
+                    R.string.create_profile_btn_text
+                } else {
+                    R.string.update_profile_btn_text
+                },
+                elementNameInputLabel = R.string.profile_name_input_label,
+                elementNoteInputLabel = R.string.profile_note_input_label,
                 buttonEnabled = viewModel.isProfileValid(),
-                newProfileName = drawerUiState.newProfileName,
-                newProfileNote = drawerUiState.newProfileNote,
-                onProfileNameValueChanged = {
+                newElementName = drawerUiState.newProfileName,
+                newElementNote = drawerUiState.newProfileNote,
+                onElementNameValueChanged = {
                     viewModel.updateNewProfileName(it)
                 },
-                onProfileNoteValueChanged = {
+                onElementNoteValueChanged = {
                     viewModel.updateNewProfileNote(it)
                 },
                 onSubmit = {
@@ -615,229 +675,48 @@ fun LiftTrackerDrawer(
                 },
                 onDismissRequest = {
                     viewModel.dismissProfileEntryDialog()
-                },
-                userIsAddingProfile = drawerUiState.userIsAddingProfile,
+                }
             )
         }
 
         // delete profile dialog
         if (drawerUiState.deleteProfileDialogVisible) {
-            ShowDeleteProfileDialog(
+            ShowElementDeleteDialog(
+                dialogTitle = "Delete \"${drawerUiState.profileToDelete?.name ?: "null (something bad happend. help)"} \"?",
+                warningDescription = R.string.delete_profile_warning,
+                deleteBtnText = R.string.delete_profile_btn_text,
                 onDismissRequest = {
                     viewModel.dismissDeleteProfileDialog()
                 },
                 onDelete = {
                     viewModel.deleteProfile()
                 },
-                profileToDelete = drawerUiState.profileToDelete
             )
         }
-    }
-}
 
-@Composable
-fun ShowDeleteProfileDialog(
-    onDismissRequest: () -> Unit,
-    onDelete: () -> Unit,
-    profileToDelete: Profile?,
-    modifier: Modifier = Modifier
-) {
-    Dialog(
-        onDismissRequest = onDismissRequest,
-        properties = DialogProperties(
-            dismissOnBackPress = true,
-            dismissOnClickOutside = true
-        )
-    ) {
-        Card(
-            modifier = modifier
-                .wrapContentSize()
-                .padding(4.dp)
-        ) {
-            Column(
-                modifier = Modifier
-                    .wrapContentHeight()
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // title
-                Text(
-                    text = "Delete \"${profileToDelete?.name ?: "null (something bad happend. help)"} \"?",
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-
-                // divider
-                HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
-
-                // warning description
-                Text(
-                    text = stringResource(R.string.delete_profile_warning),
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-
-                // divider
-                HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
-
-                // button to delete
-                Button(
-                    onClick = onDelete,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                        contentColor = MaterialTheme.colorScheme.onErrorContainer
-                    )
-                ) {
-                    Text(
-                        text = stringResource(R.string.delete_profile_btn_text),
-                        textAlign = TextAlign.Center
-                    )
+        // add muscle group dialog
+        if (drawerUiState.muscleGroupEntryDialogVisible) {
+            ShowElementEntryDialog(
+                dialogTitle = R.string.add_muscle_group,
+                submitBtnText = R.string.create_muscle_group,
+                elementNameInputLabel = R.string.muscle_group_name,
+                elementNoteInputLabel = R.string.muscle_group_note,
+                buttonEnabled = viewModel.isMuscleGroupValid(),
+                newElementName = drawerUiState.newMuscleGroupName,
+                newElementNote = drawerUiState.newMuscleGroupNote,
+                onElementNameValueChanged = {
+                    viewModel.updateNewMuscleGroupName(it)
+                },
+                onElementNoteValueChanged = {
+                    viewModel.updateNewMuscleGroupNote(it)
+                },
+                onSubmit = {
+                    viewModel.submitMuscleGroupEntryDialog()
+                },
+                onDismissRequest = {
+                    viewModel.dismissMuscleGroupEntryDialog()
                 }
-
-                // button to dismiss
-                OutlinedButton(
-                    onClick = onDismissRequest,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = stringResource(R.string.cancel_profile_deletion_btn_text)
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun ShowProfileEntryDialog(
-    buttonEnabled: Boolean,
-    newProfileName: String,
-    newProfileNote: String,
-    onProfileNameValueChanged: (String) -> Unit,
-    onProfileNoteValueChanged: (String) -> Unit,
-    onSubmit: () -> Unit,
-    onDismissRequest: () -> Unit,
-    userIsAddingProfile: Boolean,
-    modifier: Modifier = Modifier,
-) {
-    // focus requester to pop up the keyboard when the user selects to edit or add a profile
-    val profileNameFocusRequester = remember { FocusRequester() }
-    val keyboardController = LocalSoftwareKeyboardController.current
-    LaunchedEffect(Unit) {
-        delay(100)
-        profileNameFocusRequester.requestFocus()
-        keyboardController?.show()
-    }
-
-    Dialog(
-        onDismissRequest = onDismissRequest,
-        properties = DialogProperties(
-            dismissOnBackPress = true,
-            dismissOnClickOutside = true
-        )
-    ) {
-        Card(
-            modifier = modifier
-                .wrapContentSize()
-                .padding(4.dp),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Column(
-                modifier = Modifier
-                    .wrapContentHeight()
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // title
-                Text(
-                    text = stringResource(if (userIsAddingProfile) {
-                        R.string.create_profile_btn_text
-                    } else {
-                        R.string.edit_profile
-                    }),
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-
-                // divider
-                HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
-
-                // profile name input
-                TextField(
-                    value = newProfileName,
-                    onValueChange = onProfileNameValueChanged,
-                    label = {
-                        Text(stringResource(R.string.profile_name_input_label))
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Label,
-                            contentDescription = stringResource(R.string.profile_name_input_label)
-                        )
-                    },
-                    keyboardOptions = KeyboardOptions.Default.copy(
-                        imeAction = ImeAction.Done
-                    ),
-                    modifier = Modifier
-                        .focusRequester(profileNameFocusRequester)
-                        .padding(bottom = 16.dp)
-                        .fillMaxWidth()
-                )
-
-                // profile note input
-                TextField(
-                    value = newProfileNote,
-                    onValueChange = onProfileNoteValueChanged,
-                    label = {
-                        Text(stringResource(R.string.profile_note_input_label))
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Filled.Description,
-                            contentDescription = stringResource(R.string.profile_note_input_label)
-                        )
-                    },
-                    keyboardOptions = KeyboardOptions.Default.copy(
-                        imeAction = ImeAction.Done
-                    ),
-                    modifier = Modifier
-                        .padding(bottom = 16.dp)
-                        .fillMaxWidth()
-                )
-
-                // divider
-                HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
-
-                // button to submit profile
-                Button(
-                    onClick = onSubmit,
-                    enabled = buttonEnabled,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 16.dp)
-                ) {
-                    Text(stringResource(if (userIsAddingProfile) {
-                        R.string.create_profile_btn_text
-                    } else {
-                        R.string.update_profile_btn_text
-                    }))
-                }
-
-                // button to dismiss
-                OutlinedButton(
-                    onClick = onDismissRequest,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(stringResource(R.string.cancel))
-                }
-            }
+            )
         }
     }
 }

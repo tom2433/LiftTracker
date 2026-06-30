@@ -32,9 +32,20 @@ A prototype of the Lift Tracker project. This is an evolving document. Everythin
 6. (In progress) Allow user to add, edit, and delete muscle groups in the muscle groups screen. (F5)
     - each muscle group will be displayed as a card.
     - each card will display the muscle group name and note, as well as the following:
-        - number of lifts
-        - number of days trained
-    - When a muscle group card is clicked, it animates a dropdown container with cards representing all lifts for that muscle group
+        - number of lifts created
+        - number of days trained (total)
+        - average number of sessions/week
+        - average number of sessions/month trained
+        - average number of sets/session
+        - average number of sets/week
+        - average number of reps per set
+        - last date trained (today, yesterday, two days ago, three, ... six, one week, over a week, one month, over a month, two months...)
+        - button to edit
+        - button to delete
+        - eventually:
+            - a minimal line graph showing average progress over time (user can change timeframe in preferences)
+            - color representing status of improving, maintaining, or declining
+7. When a muscle group card is clicked, it animates a dropdown container with cards representing all lifts for that muscle group (F6)
 
 # Basic Structure
 
@@ -199,3 +210,87 @@ The Left hand side will have a menu that animates from the left to allow the use
 6. (Put at bottom) Settings
     - Toggle dynamic color
     - Toggle dark mode
+
+# Prompts sent to Codex for development
+
+## F5_3.1:
+
+### Calculate stats for each muscle group
+
+**The purpose of the prompt below was to calculate the muscle group statistics and store them in a list of objects that could be shown on the MuscleGroupsScreen:**
+
+Now I want you to implement the necessary code (now you will modify the project) in order to calculate and populate the muscleGroupList, which you will have to change to a list of MuscleGroupDetail objects. You may need to fully study the way that the data is formatted and stored in the database to ensure that your code works and is accurate. Each of the MuscleGroupDetail objects must contain the following fields:
+
+name (String) - the name of the muscle group.
+
+note (String) - the note of the muscle group (keep as is, even if it is blank).
+
+numLifts (Int) - the number of lifts that are stored in the lifts table with the given muscle_group_id; if the user has not added any lifts to the muscle group, this should just end up being zero.
+
+numSessions (Int) - the number of days that the user has trained this muscle group; this must be calculated by looking at the lift_sets table where you can find the specific days that lifts were trained on, then looking at the lift that the lift_set is categorized under, then looking at the muscle group that that lift belongs to, and counting the number of days that have lift_sets that are categorized under lifts that belong to the given muscle group.
+
+avgNumSessionsPerWeek (Double) - this averages the number of sessions that the user has recorded for each week; today, no matter the current day of the real calendar week, should be considered the seventh and last day of the current week; the current week should be included in this average, along with every week before it, with the last day of the second most recent week being 7 days ago (today - 7) and the first day of the second most recent week being 13 days ago (today - 13), and so on and so forth for the 3rd most recent week, 4th, 5th, 6th, etc. Keep in mind that the dates are stored in the database in ISO-8601 format.
+
+avgNumSetsPerSession (Double) - You should average the number of sets in lift_sets that belong to any lift that is categorized under the given muscle group performed on each day_id. Keep in mind that a day_id represents one and only one session. This average will be the average number of sets performed for this muscle group for each day.
+
+avgNumSetsPerWeek (Double) - You should average the number of sets that the user has performed for this muscle group for each week. Similar to the other attributes that involve weekly averages, today will always be considered the last day of the most recent week.
+
+avgNumRepsPerSet (Double) - You should average the number of reps that the user has performed for each set that has been performed for each lift that belongs to this muscle group. Note that some lifts may have a metric_type of 2, which indicates that the lift is measured in time, not reps. Ignore these lifts that use time for this calculation. If the muscle group contains only lifts that are measured in time, assign the Double value of -1.0 to this attribute.
+
+lastDateTrained (String) - This string should contain the value "Today" if the muscle group has any lift that was last performed today, "Yesterday" if it has a lift that was last performed yesterday (today - 1), "2 days ago" if it has a lift that was last performed the day before yesterday (today - 2), and so on and so forth until you reach "7 days ago", where instead of assigning "7 days ago", you shall assign "1 week ago" for this day, then "Over 1 week ago" for each day included in the range today - 8 to today - 13 inclusive, then "2 weeks ago" for today - 14, then "Over 2 weeks ago" for each day included in the range today - 15 to today - 20 inclusive, then "3 weeks ago" for today - 21, and so on and so forth until you reach what would normally be "4 weeks ago" from following this pattern, which will instead be "1 month ago". After this point, follow a similar pattern but for "Over 1 month ago", "2 months ago", "Over 2 months ago", "3 months ago", "Over 3 months ago" and so on and so forth until you reach "1 year ago", after which it will be "Over 1 year ago" which is the farthest back that shall be categorized. Everything before that point will just be considered "Over 1 year ago". If the user has not yet trained any lift belonging to this muscle group, the value should just be "N/A".
+
+You must populate this List of MuscleGroupDetail objects in the init block of MuscleGroupsViewModel such that its values may change if the database changes during runtime. Be sure to comment your new code thoroughly so it is obvious what each line does, and add " - Codex" at the end of each of your comments to show that your code was written by you. You may need to add more query functions to the DAO, and you may need to adjust some things in the MuscleGroupsViewModel, but don't forget to ensure that your code works and makes logical sense. Do NOT edit the UI. This means DO NOT TOUCH any files in com.example.lifttracker.ui.screens. Try to keep your coding style similar to what is already present, and try not to do anything outlandish, but again, make sure that your code not only WORKS, but also would make logical sense to a developer.
+
+**Output:**
+
+Implemented the reactive muscle-group detail calculations without touching ui/screens.
+
+Key changes:
+
+- Added aggregate Room projection: [MuscleGroupDetailData.kt](C:/Github/LiftTracker/Workspace/app/src/main/java/com/example/lifttracker/data/MuscleGroupDetailData.kt)
+
+- Added the multi-table aggregate query in [MuscleGroupDao.kt (line 35)](C:/Github/LiftTracker/Workspace/app/src/main/java/com/example/lifttracker/data/MuscleGroupDao.kt:35)
+
+- Exposed it through the repository.
+
+- Changed muscleGroupList to List<MuscleGroupDetail>.
+
+- Added rolling-week averages, rep handling, and relative-date formatting in [MuscleGroupsViewModel.kt (line 44)](C:/Github/LiftTracker/Workspace/app/src/main/java/com/example/lifttracker/ui/viewModels/MuscleGroupsViewModel.kt:44).
+
+- Room observes all six referenced tables, so the list recalculates when database data changes.
+
+- Weekly averages begin with the muscle group’s earliest recorded session.
+
+- Months follow the requested four-week/28-day definition.
+
+Verification passed:
+:app:compileDebugKotlin
+:app:testDebugUnitTest
+git diff --check
+
+All newly added comments have the requested - Codex suffix.
+
+Edited 4 files+241-36
+
+- data/MuscleGroupDao.ktdata/MuscleGroupDao.kt+42-2
+- data/MuscleGroupRepository.ktdata/MuscleGroupRepository.kt+5-2
+- data/OfflineMuscleGroupRepository.ktdata/OfflineMuscleGroupRepository.kt+6-2
+- ui/viewModels/MuscleGroupsViewModel.ktui/viewModels/MuscleGroupsViewModel.kt+188-30
+
+### Follow-up prompt
+
+**The purpose of this prompt was to include the muscle group id in each MuscleGroupDetail object in the muscleGroupList:**
+
+looks good - now just modify it slightly so that each MuscleGroupDetailObject also contains an id attribute of type Int which stores the muscle_groups.id for the muscle group that the object represents.
+
+**Output:**
+
+Added id: Int to MuscleGroupDetail and its Room projection, populated from muscle_groups.id.
+
+No UI screen files were changed. :app:compileDebugKotlin passes successfully.
+
+Edited 3 files+4-0
+
+data/MuscleGroupDao.ktdata/MuscleGroupDao.kt+1-0
+data/MuscleGroupDetailData.ktdata/MuscleGroupDetailData.kt+1-0
+ui/viewModels/MuscleGroupsViewModel.ktui/viewModels/MuscleGroupsViewModel.kt+2-0

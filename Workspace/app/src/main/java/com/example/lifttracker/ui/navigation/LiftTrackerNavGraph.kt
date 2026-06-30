@@ -35,191 +35,37 @@ fun LiftTrackerNavHost(
     ) {
         // Composable for muscle groups screen (home)
         composable(route = MuscleGroupsDestination.route) {
-            MuscleGroupsScreen(
-                navigateToRecordSession = {
-                    navController.navigate(RecordSessionDestination.route)
-                },
-                navigateToMuscleGroups = {
-                    navController.navigate(MuscleGroupsDestination.route)
-                },
-                navigateToSessions = {
-                    navController.navigate(SessionsDestination.route)
-                },
-                navigateToCalendar = {
-                    navController.navigate(CalendarDestination.route)
-                },
-                navigateToAnalytics = {
-                    navController.navigate(AnalyticsDestination.route)
-                },
-                navigateToTools = {
-                    navController.navigate(ToolsDestination.route)
-                },
-                navigateToSettings = {
-                    navController.navigate(SettingsDestination.route)
-                },
-            )
+            MuscleGroupsScreen()
         }
 
         // Composable for Record Session Screen
         composable(route = RecordSessionDestination.route) {
-            RecordSessionScreen(
-                navigateToRecordSession = {
-                    navController.navigate(RecordSessionDestination.route)
-                },
-                navigateToMuscleGroups = {
-                    navController.navigate(MuscleGroupsDestination.route)
-                },
-                navigateToSessions = {
-                    navController.navigate(SessionsDestination.route)
-                },
-                navigateToCalendar = {
-                    navController.navigate(CalendarDestination.route)
-                },
-                navigateToAnalytics = {
-                    navController.navigate(AnalyticsDestination.route)
-                },
-                navigateToTools = {
-                    navController.navigate(ToolsDestination.route)
-                },
-                navigateToSettings = {
-                    navController.navigate(SettingsDestination.route)
-                },
-            )
+            RecordSessionScreen()
         }
 
         // Composable for Sessions Screen
         composable(route = SessionsDestination.route) {
-            SessionsScreen(
-                navigateToRecordSession = {
-                    navController.navigate(RecordSessionDestination.route)
-                },
-                navigateToMuscleGroups = {
-                    navController.navigate(MuscleGroupsDestination.route)
-                },
-                navigateToSessions = {
-                    navController.navigate(SessionsDestination.route)
-                },
-                navigateToCalendar = {
-                    navController.navigate(CalendarDestination.route)
-                },
-                navigateToAnalytics = {
-                    navController.navigate(AnalyticsDestination.route)
-                },
-                navigateToTools = {
-                    navController.navigate(ToolsDestination.route)
-                },
-                navigateToSettings = {
-                    navController.navigate(SettingsDestination.route)
-                },
-            )
+            SessionsScreen()
         }
 
         // Composable for Calendar Screen
         composable(route = CalendarDestination.route) {
-            CalendarScreen(
-                navigateToRecordSession = {
-                    navController.navigate(RecordSessionDestination.route)
-                },
-                navigateToMuscleGroups = {
-                    navController.navigate(MuscleGroupsDestination.route)
-                },
-                navigateToSessions = {
-                    navController.navigate(SessionsDestination.route)
-                },
-                navigateToCalendar = {
-                    navController.navigate(CalendarDestination.route)
-                },
-                navigateToAnalytics = {
-                    navController.navigate(AnalyticsDestination.route)
-                },
-                navigateToTools = {
-                    navController.navigate(ToolsDestination.route)
-                },
-                navigateToSettings = {
-                    navController.navigate(SettingsDestination.route)
-                },
-            )
+            CalendarScreen()
         }
 
         // Composable for Analytics Screen
         composable(route = AnalyticsDestination.route) {
-            AnalyticsScreen(
-                navigateToRecordSession = {
-                    navController.navigate(RecordSessionDestination.route)
-                },
-                navigateToMuscleGroups = {
-                    navController.navigate(MuscleGroupsDestination.route)
-                },
-                navigateToSessions = {
-                    navController.navigate(SessionsDestination.route)
-                },
-                navigateToCalendar = {
-                    navController.navigate(CalendarDestination.route)
-                },
-                navigateToAnalytics = {
-                    navController.navigate(AnalyticsDestination.route)
-                },
-                navigateToTools = {
-                    navController.navigate(ToolsDestination.route)
-                },
-                navigateToSettings = {
-                    navController.navigate(SettingsDestination.route)
-                },
-            )
+            AnalyticsScreen()
         }
 
         // Composable for Tools Screen
         composable(route = ToolsDestination.route) {
-            ToolsScreen(
-                navigateToRecordSession = {
-                    navController.navigate(RecordSessionDestination.route)
-                },
-                navigateToMuscleGroups = {
-                    navController.navigate(MuscleGroupsDestination.route)
-                },
-                navigateToSessions = {
-                    navController.navigate(SessionsDestination.route)
-                },
-                navigateToCalendar = {
-                    navController.navigate(CalendarDestination.route)
-                },
-                navigateToAnalytics = {
-                    navController.navigate(AnalyticsDestination.route)
-                },
-                navigateToTools = {
-                    navController.navigate(ToolsDestination.route)
-                },
-                navigateToSettings = {
-                    navController.navigate(SettingsDestination.route)
-                },
-            )
+            ToolsScreen()
         }
 
         // Composable for Settings Screen
         composable(route = SettingsDestination.route) {
-            SettingsScreen(
-                navigateToRecordSession = {
-                    navController.navigate(RecordSessionDestination.route)
-                },
-                navigateToMuscleGroups = {
-                    navController.navigate(MuscleGroupsDestination.route)
-                },
-                navigateToSessions = {
-                    navController.navigate(SessionsDestination.route)
-                },
-                navigateToCalendar = {
-                    navController.navigate(CalendarDestination.route)
-                },
-                navigateToAnalytics = {
-                    navController.navigate(AnalyticsDestination.route)
-                },
-                navigateToTools = {
-                    navController.navigate(ToolsDestination.route)
-                },
-                navigateToSettings = {
-                    navController.navigate(SettingsDestination.route)
-                },
-            )
+            SettingsScreen()
         }
     }
 }

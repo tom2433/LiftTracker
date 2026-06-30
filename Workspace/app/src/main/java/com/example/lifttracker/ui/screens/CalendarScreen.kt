@@ -9,7 +9,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.lifttracker.LiftTrackerDrawer
 import com.example.lifttracker.R
 import com.example.lifttracker.ui.AppViewModelProvider
 import com.example.lifttracker.ui.navigation.NavigationDestination
@@ -25,35 +24,17 @@ object CalendarDestination : NavigationDestination {
  */
 @Composable
 fun CalendarScreen(
-    navigateToRecordSession: () -> Unit,
-    navigateToMuscleGroups: () -> Unit,
-    navigateToSessions: () -> Unit,
-    navigateToCalendar: () -> Unit,
-    navigateToAnalytics: () -> Unit,
-    navigateToTools: () -> Unit,
-    navigateToSettings: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: CalendarViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val calendarUiState by viewModel.calendarUiState.collectAsState()
 
-    LiftTrackerDrawer(
-        titleRes = CalendarDestination.titleRes,
-        navigateToRecordSession = navigateToRecordSession,
-        navigateToMuscleGroups = navigateToMuscleGroups,
-        navigateToSessions = navigateToSessions,
-        navigateToCalendar = navigateToCalendar,
-        navigateToAnalytics = navigateToAnalytics,
-        navigateToTools = navigateToTools,
-        navigateToSettings = navigateToSettings
+    Box(
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
     ) {
-        Box(
-            modifier = modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "Calendar Screen needs to be implemented here"
-            )
-        }
+        Text(
+            text = "Calendar Screen needs to be implemented here"
+        )
     }
 }

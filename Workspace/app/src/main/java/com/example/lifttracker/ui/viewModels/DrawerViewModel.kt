@@ -1,7 +1,11 @@
 package com.example.lifttracker.ui.viewModels
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.lifttracker.R
+import com.example.lifttracker.data.MuscleGroup
+import com.example.lifttracker.data.MuscleGroupRepository
 import com.example.lifttracker.data.Profile
 import com.example.lifttracker.data.ProfileRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,7 +18,8 @@ import kotlinx.coroutines.launch
  * ViewModel for LiftTrackerDrawer
  */
 class DrawerViewModel(
-    private val profileRepository: ProfileRepository
+    private val profileRepository: ProfileRepository,
+    private val muscleGroupRepository: MuscleGroupRepository
 ) : ViewModel() {
     private val _drawerUiState = MutableStateFlow(DrawerUiState())
     val drawerUiState: StateFlow<DrawerUiState> = _drawerUiState.asStateFlow()
@@ -86,10 +91,22 @@ class DrawerViewModel(
         return _drawerUiState.value.newProfileName.isNotBlank()
     }
 
+    fun isMuscleGroupValid(): Boolean {
+        return _drawerUiState.value.newMuscleGroupName.isNotBlank()
+    }
+
     fun updateNewProfileName(newName: String) {
         _drawerUiState.update { currentState ->
             currentState.copy(
                 newProfileName = newName
+            )
+        }
+    }
+
+    fun updateNewMuscleGroupName(newName: String) {
+        _drawerUiState.update { currentState ->
+            currentState.copy(
+                newMuscleGroupName = newName
             )
         }
     }
@@ -102,6 +119,14 @@ class DrawerViewModel(
         }
     }
 
+    fun updateNewMuscleGroupNote(newNote: String) {
+        _drawerUiState.update { currentState ->
+            currentState.copy(
+                newMuscleGroupNote = newNote
+            )
+        }
+    }
+
     fun dismissProfileEntryDialog() {
         _drawerUiState.update { currentState ->
             currentState.copy(
@@ -109,6 +134,16 @@ class DrawerViewModel(
                 newProfileName = "",
                 newProfileNote = "",
                 userIsAddingProfile = true
+            )
+        }
+    }
+
+    fun dismissMuscleGroupEntryDialog() {
+        _drawerUiState.update { currentState ->
+            currentState.copy(
+                muscleGroupEntryDialogVisible = false,
+                newMuscleGroupName = "",
+                newMuscleGroupNote = ""
             )
         }
     }
@@ -175,6 +210,36 @@ class DrawerViewModel(
                         )
                     }
                 }
+            }
+        }
+    }
+
+    fun submitMuscleGroupEntryDialog() {
+        // check that muscle group name is entered
+        if (!isMuscleGroupValid()) {
+            return
+        }
+
+        // retrieve profile_id FK for muscle group
+        val activeProfileId: Int = getActiveProfile().id
+
+        viewModelScope.launch {
+            // add muscle group to data for active profile
+            muscleGroupRepository.insertMuscleGroup(
+                MuscleGroup(
+                    profile_id = activeProfileId,
+                    name = _drawerUiState.value.newMuscleGroupName,
+                    note = _drawerUiState.value.newMuscleGroupNote
+                )
+            )
+
+            // update UI state
+            _drawerUiState.update { currentState ->
+                currentState.copy(
+                    muscleGroupEntryDialogVisible = false,
+                    newMuscleGroupName = "",
+                    newMuscleGroupNote = "",
+                )
             }
         }
     }
@@ -260,6 +325,30 @@ class DrawerViewModel(
             }
         }
     }
+
+    fun checkScreenForFab(@StringRes titleRes: Int) {
+        if (titleRes == R.string.muscle_groups_title) {
+            _drawerUiState.update { currentState ->
+                currentState.copy(
+                    showFab = true
+                )
+            }
+        } else {
+            _drawerUiState.update { currentState ->
+                currentState.copy(
+                    showFab = false
+                )
+            }
+        }
+    }
+
+    fun showAddMuscleGroupDialog() {
+        _drawerUiState.update { currentState ->
+            currentState.copy(
+                muscleGroupEntryDialogVisible = true
+            )
+        }
+    }
 }
 
 /**
@@ -276,5 +365,9 @@ data class DrawerUiState(
     val newProfileName: String = "",
     val newProfileNote: String = "",
     val deleteProfileDialogVisible: Boolean = false,
-    val profileToDelete: Profile? = null
+    val profileToDelete: Profile? = null,
+    val showFab: Boolean = false,
+    val muscleGroupEntryDialogVisible: Boolean = false,
+    val newMuscleGroupName: String = "",
+    val newMuscleGroupNote: String = ""
 )
