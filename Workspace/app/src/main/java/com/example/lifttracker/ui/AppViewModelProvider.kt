@@ -8,6 +8,7 @@ import com.example.lifttracker.LiftTrackerApplication
 import com.example.lifttracker.ui.viewModels.AnalyticsViewModel
 import com.example.lifttracker.ui.viewModels.CalendarViewModel
 import com.example.lifttracker.ui.viewModels.DrawerViewModel
+import com.example.lifttracker.ui.viewModels.LiftsViewModel
 import com.example.lifttracker.ui.viewModels.MuscleGroupsViewModel
 import com.example.lifttracker.ui.viewModels.RecordSessionViewModel
 import com.example.lifttracker.ui.viewModels.SessionsViewModel
@@ -24,6 +25,13 @@ object AppViewModelProvider {
             MuscleGroupsViewModel(
                 profileRepository = liftTrackerApplication().container.profileRepository,
                 muscleGroupRepository = liftTrackerApplication().container.muscleGroupRepository
+            )
+        }
+
+        // initializer for LiftsViewModel
+        initializer {
+            LiftsViewModel(
+                liftRepository = liftTrackerApplication().container.liftRepository
             )
         }
 

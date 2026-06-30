@@ -7,4 +7,5 @@ interface LiftRepository {
     suspend fun updateLift(lift: Lift)
     suspend fun deleteLift(lift: Lift)
     fun getLiftStream(id: Int): Flow<Lift?>
+    fun getAllLiftsFromMuscleGroupIdStream(muscle_group_id: Int): Flow<List<Lift>>
 }

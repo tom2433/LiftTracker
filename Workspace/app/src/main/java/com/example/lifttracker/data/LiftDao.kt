@@ -21,4 +21,10 @@ interface LiftDao {
 
     @Query("SELECT * FROM lifts WHERE id = :id")
     fun getLift(id: Int): Flow<Lift?>
+
+    @Query("""
+        SELECT * FROM lifts
+        WHERE muscle_group_id = :muscle_group_id
+    """)
+    fun getAllLiftsFromMuscleGroupId(muscle_group_id: Int): Flow<List<Lift>>
 }

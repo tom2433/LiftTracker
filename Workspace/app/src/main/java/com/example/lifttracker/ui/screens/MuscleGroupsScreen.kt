@@ -157,10 +157,10 @@ fun MuscleGroupsScreen(
                             initialOffsetY = { it },
                             animationSpec = tween(300)
                         )
-                        + expandHorizontally (
-                            expandFrom = Alignment.Start,
-                            animationSpec = tween(300)
-                        )
+//                        + expandHorizontally (
+//                            expandFrom = Alignment.Start,
+//                            animationSpec = tween(300)
+//                        )
                         + fadeIn(
                             animationSpec = tween(300)
                         ),
@@ -319,68 +319,76 @@ fun MuscleGroupsScreen(
                                         )
                                     ) + fadeOut()
                                 ) {
-//                            HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
-                                    // row to hold delete/edit buttons
-                                    Row(
-                                        modifier = Modifier
-                                            .height(IntrinsicSize.Min)
-                                            .fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.Start,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        // card to function as delete button
-                                        Card(
-                                            modifier = Modifier
-                                                .weight(1f)
-                                                .defaultMinSize(minHeight = 36.dp),
-                                            shape = RoundedCornerShape(
-                                                bottomStart = 16.dp
-                                            ),
-                                            colors = CardDefaults.cardColors(
-                                                containerColor = MaterialTheme.colorScheme.errorContainer,
-                                                contentColor = MaterialTheme.colorScheme.onErrorContainer
-                                            ),
-                                            onClick = {
-                                                viewModel.showDeleteMuscleGroupDialog(muscleGroupId)
-                                            }
-                                        ) {
-                                            // box layout to hold trash can icon
-                                            Box(
-                                                modifier = Modifier.fillMaxSize(),
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Filled.Delete,
-                                                    contentDescription = stringResource(R.string.delete_muscle_group)
-                                                )
-                                            }
-                                        }
+                                    Column {
+                                        // LiftSection for current muscle group
+                                        LiftSection(muscleGroupId)
 
-                                        // card to function as edit button
-                                        Card(
+                                        // row to hold delete/edit buttons
+                                        Row(
                                             modifier = Modifier
-                                                .weight(5f)
-                                                .defaultMinSize(minHeight = 36.dp),
-                                            shape = RoundedCornerShape(
-                                                bottomEnd = 16.dp
-                                            ),
-                                            colors = CardDefaults.cardColors(
-                                                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                                                contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                                            ),
-                                            onClick = {
-                                                viewModel.showEditMuscleGroupDialog(muscleGroupId)
-                                            }
+                                                .height(IntrinsicSize.Min)
+                                                .fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.Start,
+                                            verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            // box layout to hold pencil icon
-                                            Box(
-                                                modifier = Modifier.fillMaxSize(),
-                                                contentAlignment = Alignment.Center
+                                            // card to function as delete button
+                                            Card(
+                                                modifier = Modifier
+                                                    .weight(1f)
+                                                    .defaultMinSize(minHeight = 36.dp),
+                                                shape = RoundedCornerShape(
+                                                    bottomStart = 16.dp
+                                                ),
+                                                colors = CardDefaults.cardColors(
+                                                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                                                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                                                ),
+                                                onClick = {
+                                                    viewModel.showDeleteMuscleGroupDialog(
+                                                        muscleGroupId
+                                                    )
+                                                }
                                             ) {
-                                                Icon(
-                                                    imageVector = Icons.Filled.Edit,
-                                                    contentDescription = stringResource(R.string.edit_muscle_group)
-                                                )
+                                                // box layout to hold trash can icon
+                                                Box(
+                                                    modifier = Modifier.fillMaxSize(),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Filled.Delete,
+                                                        contentDescription = stringResource(R.string.delete_muscle_group)
+                                                    )
+                                                }
+                                            }
+
+                                            // card to function as edit button
+                                            Card(
+                                                modifier = Modifier
+                                                    .weight(5f)
+                                                    .defaultMinSize(minHeight = 36.dp),
+                                                shape = RoundedCornerShape(
+                                                    bottomEnd = 16.dp
+                                                ),
+                                                colors = CardDefaults.cardColors(
+                                                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                                                ),
+                                                onClick = {
+                                                    viewModel.showEditMuscleGroupDialog(
+                                                        muscleGroupId
+                                                    )
+                                                }
+                                            ) {
+                                                // box layout to hold pencil icon
+                                                Box(
+                                                    modifier = Modifier.fillMaxSize(),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Filled.Edit,
+                                                        contentDescription = stringResource(R.string.edit_muscle_group)
+                                                    )
+                                                }
                                             }
                                         }
                                     }

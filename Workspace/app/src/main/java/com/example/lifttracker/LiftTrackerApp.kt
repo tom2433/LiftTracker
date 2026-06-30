@@ -175,7 +175,7 @@ fun LiftTrackerDrawer(
             } else {
                 drawerOffsetX.animateTo(
                     targetValue = if (drawerUiState.isDrawerOpen) 0f else -drawerUiState.drawerWidthPx,
-                    animationSpec = tween(durationMillis = 700)
+                    animationSpec = tween(durationMillis = 500)
                 )
             }
         }
