@@ -36,4 +36,7 @@
     <string name="avg_num_sets_per_week_label">Avg. # of sets/week</string>
     <string name="avg_num_reps_per_set_label">Avg. # of reps/set</string>
     <string name="last_date_trained_label">Last date trained</string>
+    <string name="delete_muscle_group">Delete Muscle Group</string>
+    <string name="edit_muscle_group">Edit Muscle Group</string>
+    <string name="update_muscle_group">Update Muscle Group</string>
 </resources>

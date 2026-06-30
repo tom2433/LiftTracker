@@ -472,7 +472,7 @@ fun LiftTrackerDrawer(
                                             MaterialTheme.colorScheme.onSurface
                                         }
                                     ),
-                                onClick = { viewModel.changeActiveProfile(profile) }
+                                    onClick = { viewModel.changeActiveProfile(profile) }
                                 ) {
                                     // put name and note here
                                     Column(

@@ -11,6 +11,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -19,14 +20,20 @@ import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -35,6 +42,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -47,6 +55,8 @@ import com.example.lifttracker.ui.navigation.NavigationDestination
 import com.example.lifttracker.ui.theme.LiftTrackerTheme
 import com.example.lifttracker.ui.utils.WelcomeDialog
 import com.example.lifttracker.ui.viewModels.MuscleGroupsViewModel
+import com.example.lifttracker.data.MuscleGroup
+import com.example.lifttracker.ui.utils.ShowElementEntryDialog
 
 object MuscleGroupsDestination : NavigationDestination {
     override val route = "muscleGroups"
@@ -223,10 +233,100 @@ fun MuscleGroupsScreen(
                                 )
                             ) + fadeOut()
                         ) {
-                            HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
+//                            HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
+                            // row to hold delete/edit buttons
+                            Row(
+                                modifier = Modifier
+                                    .padding(vertical = 16.dp)
+                                    .height(IntrinsicSize.Min)
+                                    .fillMaxWidth(),
+                                horizontalArrangement = Arrangement.Start,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                // card to function as delete button
+                                Card(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .defaultMinSize(minHeight = 36.dp),
+                                    shape = RoundedCornerShape(
+                                        topStart = 12.dp,
+                                        bottomStart = 12.dp
+                                    ),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                                        contentColor = MaterialTheme.colorScheme.onErrorContainer
+                                    ),
+                                    onClick = { /* TODO: implement delete functionality */ }
+                                ) {
+                                    // box layout to hold trash can icon
+                                    Box(
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.Delete,
+                                            contentDescription = stringResource(R.string.delete_muscle_group)
+                                        )
+                                    }
+                                }
+
+                                // card to function as edit button
+                                Card(
+                                    modifier = Modifier
+                                        .weight(3f)
+                                        .defaultMinSize(minHeight = 36.dp),
+                                    shape = RoundedCornerShape(
+                                        topEnd = 12.dp,
+                                        bottomEnd = 12.dp
+                                    ),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                                    ),
+                                    onClick = {
+                                        viewModel.showEditMuscleGroupDialog(muscleGroupId)
+                                    }
+                                ) {
+                                    // box layout to hold pencil icon
+                                    Box(
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.Edit,
+                                            contentDescription = stringResource(R.string.edit_muscle_group)
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
+            }
+
+            // muscle group edit dialog
+            if (muscleGroupsUiState.muscleGroupEditDialogVisible) {
+                ShowElementEntryDialog(
+                    dialogTitle = R.string.edit_muscle_group,
+                    submitBtnText = R.string.update_muscle_group,
+                    elementNameInputLabel = R.string.muscle_group_name,
+                    elementNoteInputLabel = R.string.muscle_group_note,
+                    buttonEnabled = viewModel.validateMuscleGroup(),
+                    newElementName = muscleGroupsUiState.muscleGroupToEdit?.name ?: "",
+                    newElementNote = muscleGroupsUiState.muscleGroupToEdit?.note ?: "",
+                    onElementNameValueChanged = {
+                        viewModel.updateMuscleGroupName(it)
+                    },
+                    onElementNoteValueChanged = {
+                        viewModel.updateMuscleGroupNote(it)
+                    },
+                    onSubmit = {
+                        viewModel.updateMuscleGroup()
+                    },
+                    onDismissRequest = {
+                        viewModel.dismissEditMuscleGroupDialog()
+                    }
+                )
             }
         }
     }

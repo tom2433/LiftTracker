@@ -6,6 +6,8 @@ import com.example.lifttracker.data.MuscleGroupDetailData
 import com.example.lifttracker.data.MuscleGroupRepository
 import com.example.lifttracker.data.Profile
 import com.example.lifttracker.data.ProfileRepository
+import com.example.lifttracker.data.MuscleGroup
+import kotlinx.coroutines.flow.Flow
 import java.text.ParsePosition
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -278,6 +280,68 @@ class MuscleGroupsViewModel(
             )
         }
     }
+
+    fun showEditMuscleGroupDialog(id: Int) {
+        _muscleGroupsUiState.update { currentState ->
+            if (id !in currentState.muscleGroupList) {
+                return@update currentState
+            }
+
+            val activeProfile = getActiveProfile() ?: return@update currentState
+
+            currentState.copy(
+                muscleGroupToEdit = MuscleGroup(
+                    id = id,
+                    profile_id = activeProfile.id,
+                    name = currentState.muscleGroupList[id]!!.name,
+                    note = currentState.muscleGroupList[id]!!.note
+                ),
+                muscleGroupEditDialogVisible = true
+            )
+        }
+    }
+
+    fun validateMuscleGroup(): Boolean {
+        return _muscleGroupsUiState.value.muscleGroupToEdit?.name?.isNotBlank() ?: false
+    }
+
+    fun updateMuscleGroupName(newName: String) {
+        _muscleGroupsUiState.update { currentState ->
+            currentState.copy(
+                muscleGroupToEdit = currentState.muscleGroupToEdit?.copy(
+                    name = newName
+                )
+            )
+        }
+    }
+
+    fun updateMuscleGroupNote(newNote: String) {
+        _muscleGroupsUiState.update { currentState ->
+            currentState.copy(
+                muscleGroupToEdit = currentState.muscleGroupToEdit?.copy(
+                    note = newNote
+                )
+            )
+        }
+    }
+
+    fun dismissEditMuscleGroupDialog() {
+        _muscleGroupsUiState.update { currentState ->
+            currentState.copy(
+                muscleGroupToEdit = null,
+                muscleGroupEditDialogVisible = false
+            )
+        }
+    }
+
+    fun updateMuscleGroup() {
+        if (validateMuscleGroup() && _muscleGroupsUiState.value.muscleGroupToEdit != null) {
+            viewModelScope.launch {
+                muscleGroupRepository.updateMuscleGroup(_muscleGroupsUiState.value.muscleGroupToEdit!!)
+                dismissEditMuscleGroupDialog()
+            }
+        }
+    }
 }
 
 /**
@@ -286,9 +350,11 @@ class MuscleGroupsViewModel(
 data class MuscleGroupsUiState(
     val profileList: List<Profile> = listOf(),
     val muscleGroupList: Map<Int, MuscleGroupDetail> = emptyMap(),
-    var welcomeDialogVisible: Boolean = false,
-    var newProfileName: String = "",
-    var newProfileNote: String = ""
+    val welcomeDialogVisible: Boolean = false,
+    val newProfileName: String = "",
+    val newProfileNote: String = "",
+    val muscleGroupEditDialogVisible: Boolean = false,
+    val muscleGroupToEdit: MuscleGroup? = null
 )
 
 data class MuscleGroupDetail(
