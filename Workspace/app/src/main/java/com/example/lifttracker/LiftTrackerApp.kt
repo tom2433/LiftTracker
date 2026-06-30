@@ -89,7 +89,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.example.lifttracker.data.Profile
 import com.example.lifttracker.ui.AppViewModelProvider
 import com.example.lifttracker.ui.navigation.LiftTrackerNavHost
 import com.example.lifttracker.ui.screens.AnalyticsDestination
@@ -100,6 +99,7 @@ import com.example.lifttracker.ui.screens.SessionsDestination
 import com.example.lifttracker.ui.screens.SettingsDestination
 import com.example.lifttracker.ui.screens.ToolsDestination
 import com.example.lifttracker.ui.theme.LiftTrackerTheme
+import com.example.lifttracker.ui.utils.ShowElementDeleteDialog
 import com.example.lifttracker.ui.utils.ShowElementEntryDialog
 import com.example.lifttracker.ui.viewModels.DrawerViewModel
 import kotlinx.coroutines.delay
@@ -441,7 +441,13 @@ fun LiftTrackerDrawer(
                     ) + fadeOut()
                 ) {
                     Column {
-                        HorizontalDivider(modifier = Modifier.padding(start = 16.dp, top = 8.dp, bottom = 8.dp))
+                        HorizontalDivider(
+                            modifier = Modifier.padding(
+                                start = 16.dp,
+                                top = 8.dp,
+                                bottom = 8.dp
+                            )
+                        )
 
                         for (profile in drawerUiState.profileList) {
                             Row(
@@ -675,14 +681,16 @@ fun LiftTrackerDrawer(
 
         // delete profile dialog
         if (drawerUiState.deleteProfileDialogVisible) {
-            ShowDeleteProfileDialog(
+            ShowElementDeleteDialog(
+                dialogTitle = "Delete \"${drawerUiState.profileToDelete?.name ?: "null (something bad happend. help)"} \"?",
+                warningDescription = R.string.delete_profile_warning,
+                deleteBtnText = R.string.delete_profile_btn_text,
                 onDismissRequest = {
                     viewModel.dismissDeleteProfileDialog()
                 },
                 onDelete = {
                     viewModel.deleteProfile()
                 },
-                profileToDelete = drawerUiState.profileToDelete
             )
         }
 
@@ -709,84 +717,6 @@ fun LiftTrackerDrawer(
                     viewModel.dismissMuscleGroupEntryDialog()
                 }
             )
-        }
-    }
-}
-
-@Composable
-fun ShowDeleteProfileDialog(
-    onDismissRequest: () -> Unit,
-    onDelete: () -> Unit,
-    profileToDelete: Profile?,
-    modifier: Modifier = Modifier
-) {
-    Dialog(
-        onDismissRequest = onDismissRequest,
-        properties = DialogProperties(
-            dismissOnBackPress = true,
-            dismissOnClickOutside = true
-        )
-    ) {
-        Card(
-            modifier = modifier
-                .wrapContentSize()
-                .padding(4.dp)
-        ) {
-            Column(
-                modifier = Modifier
-                    .wrapContentHeight()
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // title
-                Text(
-                    text = "Delete \"${profileToDelete?.name ?: "null (something bad happend. help)"} \"?",
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-
-                // divider
-                HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
-
-                // warning description
-                Text(
-                    text = stringResource(R.string.delete_profile_warning),
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-
-                // divider
-                HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
-
-                // button to delete
-                Button(
-                    onClick = onDelete,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                        contentColor = MaterialTheme.colorScheme.onErrorContainer
-                    )
-                ) {
-                    Text(
-                        text = stringResource(R.string.delete_profile_btn_text),
-                        textAlign = TextAlign.Center
-                    )
-                }
-
-                // button to dismiss
-                OutlinedButton(
-                    onClick = onDismissRequest,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = stringResource(R.string.cancel_profile_deletion_btn_text)
-                    )
-                }
-            }
         }
     }
 }

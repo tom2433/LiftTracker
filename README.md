@@ -45,7 +45,7 @@ A prototype of the Lift Tracker project. This is an evolving document. Everythin
         - eventually:
             - a minimal line graph showing average progress over time (user can change timeframe in preferences)
             - color representing status of improving, maintaining, or declining
-    - When a muscle group card is clicked, it animates a dropdown container with cards representing all lifts for that muscle group
+7. When a muscle group card is clicked, it animates a dropdown container with cards representing all lifts for that muscle group (F6)
 
 # Basic Structure
 

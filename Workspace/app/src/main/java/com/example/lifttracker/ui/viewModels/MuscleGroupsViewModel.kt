@@ -1,12 +1,15 @@
 package com.example.lifttracker.ui.viewModels
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.lifttracker.data.MuscleGroupDetailData
 import com.example.lifttracker.data.MuscleGroupRepository
 import com.example.lifttracker.data.Profile
 import com.example.lifttracker.data.ProfileRepository
 import com.example.lifttracker.data.MuscleGroup
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import java.text.ParsePosition
 import java.text.SimpleDateFormat
@@ -16,6 +19,8 @@ import java.util.TimeZone
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -282,22 +287,36 @@ class MuscleGroupsViewModel(
     }
 
     fun showEditMuscleGroupDialog(id: Int) {
-        _muscleGroupsUiState.update { currentState ->
-            if (id !in currentState.muscleGroupList) {
-                return@update currentState
+        viewModelScope.launch {
+            val muscleGroupToEdit = muscleGroupRepository.getMuscleGroupStream(id).firstOrNull()
+
+            _muscleGroupsUiState.update { currentState ->
+                if (id !in currentState.muscleGroupList || muscleGroupToEdit == null) {
+                    return@update currentState
+                }
+
+                currentState.copy(
+                    muscleGroupToEdit = muscleGroupToEdit,
+                    muscleGroupEditDialogVisible = true
+                )
             }
+        }
+    }
 
-            val activeProfile = getActiveProfile() ?: return@update currentState
+    fun showDeleteMuscleGroupDialog(id: Int) {
+        viewModelScope.launch {
+            val muscleGroupToDelete = muscleGroupRepository.getMuscleGroupStream(id).firstOrNull()
 
-            currentState.copy(
-                muscleGroupToEdit = MuscleGroup(
-                    id = id,
-                    profile_id = activeProfile.id,
-                    name = currentState.muscleGroupList[id]!!.name,
-                    note = currentState.muscleGroupList[id]!!.note
-                ),
-                muscleGroupEditDialogVisible = true
-            )
+            _muscleGroupsUiState.update { currentState ->
+                if (id !in currentState.muscleGroupList || muscleGroupToDelete == null) {
+                    return@update currentState
+                }
+
+                currentState.copy(
+                    muscleGroupToDelete = muscleGroupToDelete,
+                    muscleGroupDeleteDialogVisible = true
+                )
+            }
         }
     }
 
@@ -334,11 +353,39 @@ class MuscleGroupsViewModel(
         }
     }
 
+    fun dismissDeleteMuscleGroupDialog() {
+        _muscleGroupsUiState.update { currentState ->
+            currentState.copy(
+                muscleGroupToDelete = null,
+                muscleGroupDeleteDialogVisible = false
+            )
+        }
+    }
+
     fun updateMuscleGroup() {
         if (validateMuscleGroup() && _muscleGroupsUiState.value.muscleGroupToEdit != null) {
             viewModelScope.launch {
                 muscleGroupRepository.updateMuscleGroup(_muscleGroupsUiState.value.muscleGroupToEdit!!)
                 dismissEditMuscleGroupDialog()
+            }
+        }
+    }
+
+    fun deleteMuscleGroup() {
+        if (_muscleGroupsUiState.value.muscleGroupToDelete != null) {
+            viewModelScope.launch {
+                // update state to tell screen to do swipe animation
+                _muscleGroupsUiState.update { currentState ->
+                    currentState.copy(
+                        muscleGroupIdToDelete = currentState.muscleGroupToDelete!!.id
+                    )
+                }
+
+                // delay for swipe animation
+                delay(300)
+
+                muscleGroupRepository.deleteMuscleGroup(_muscleGroupsUiState.value.muscleGroupToDelete!!)
+                dismissDeleteMuscleGroupDialog()
             }
         }
     }
@@ -354,7 +401,10 @@ data class MuscleGroupsUiState(
     val newProfileName: String = "",
     val newProfileNote: String = "",
     val muscleGroupEditDialogVisible: Boolean = false,
-    val muscleGroupToEdit: MuscleGroup? = null
+    val muscleGroupDeleteDialogVisible: Boolean = false,
+    val muscleGroupToEdit: MuscleGroup? = null,
+    val muscleGroupToDelete: MuscleGroup? = null,
+    val muscleGroupIdToDelete: Int = -1
 )
 
 data class MuscleGroupDetail(
