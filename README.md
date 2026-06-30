@@ -13,29 +13,28 @@ A prototype of the Lift Tracker project. This is an evolving document. Everythin
     - Ensure that the viewModels have access to the database
     - Check if a user profile exists. If none do, then prompt the user to create one.
 2. (Completed) Menu drawer with basic elements (F2):
-    - Begin Session (F2A)
-    - Muscle Groups (F2B)
-    - Sessions (F2C)
-    - Calendar (F2D)
-    - Switch Profile (F2E)
+    - Begin Session
+    - Muscle Groups
+    - Sessions
+    - Calendar
+    - Switch Profile
     - Divider ---
-    - Analytics (F2F)
-    - Tools (F2G)
-    - Settings (F2H)
+    - Analytics
+    - Tools
+    - Settings
 3. (Completed) Map menu drawer items with screens where applicable (F2-1)
 5. (Maybe) Animate hamburger menu so that it travels and rotates into an arrow (F2-3)
 4. Colorscheme (F3):
-    - Default to preset colorscheme (F3A)
-    - Toggle dynamic color (F3B)
-    - Toggle Dark theme (F3C)
+    - Default to preset colorscheme
+    - Toggle dynamic color
+    - Toggle Dark theme
 5. (Completed) Implement Switch Profile functionality (F4)
-6. (In progress) Allow user to add, edit, and delete muscle groups in the muscle groups screen. (F5)
+6. (Completed) Allow user to add, edit, and delete muscle groups in the muscle groups screen. (F5)
     - each muscle group will be displayed as a card.
     - each card will display the muscle group name and note, as well as the following:
         - number of lifts created
-        - number of days trained (total)
+        - number of sessions trained (total)
         - average number of sessions/week
-        - average number of sessions/month trained
         - average number of sets/session
         - average number of sets/week
         - average number of reps per set
@@ -45,7 +44,25 @@ A prototype of the Lift Tracker project. This is an evolving document. Everythin
         - eventually:
             - a minimal line graph showing average progress over time (user can change timeframe in preferences)
             - color representing status of improving, maintaining, or declining
-7. When a muscle group card is clicked, it animates a dropdown container with cards representing all lifts for that muscle group (F6)
+7. (In Progress) When a muscle group card is clicked, it animates a dropdown container with cards representing all lifts for that muscle group (F6)
+    - Clicking on a lift card will transition itself into a lift Dialog (LiftScreen) with all lift statistics.
+    - Lift Statistics will include:
+        - lifetime number of sets performed
+        - lifetime number of sessions trained
+        - lifetime average weight
+        - average weight from past month
+        - average weight from past year
+        - average number of reps per set
+        - last date trained (today, yesterday, two days ago, three, six, 1 week, over 1 week, one month, over 1 month, two months...)
+        - button to edit
+        - button to delete
+        - eventually:
+            - a minimal line graph showing average progress over time (user can change timeframe in preferences)
+            - color representing status of improving, maintaining, or declining.
+        - all subject to change ^ see F6_lift-screen branch for updates.
+8. Implement Minimal Line Graphs for Muscle Group Cards and Lift Cards. Determine if this makes the Analytics page obsolete.
+    - user must be able to change timeframe in preferences
+    - show color representing status of improving, maintaining, or declining.
 
 # Basic Structure
 
