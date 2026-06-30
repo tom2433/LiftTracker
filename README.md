@@ -143,6 +143,7 @@ The ```units``` table has two columns:
 
 ## Things I'd like to see
 
+- add an option in settings to turn the entire app into a task tracker (why not)
 - In the workout logger:
     - Completed sets should show up as collapsable/expandable cards when completed.
     - All weight/rep/note data for the given session should always be able to be viewed at any point throughout the lift.
