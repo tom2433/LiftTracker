@@ -45,7 +45,7 @@ A prototype of the Lift Tracker project. This is an evolving document. Everythin
             - a minimal line graph showing average progress over time (user can change timeframe in preferences)
             - color representing status of improving, maintaining, or declining
 7. (In Progress) When a muscle group card is clicked, it animates a dropdown container with cards representing all lifts for that muscle group (F6)
-    - Move the edit/delete buttons for the muscle group card to a 3-dot menu at the top right of the card itself, and replace the edit/delete button section with one big add lift button.
+    - Move the edit/delete buttons for the muscle group card to a 3-dot menu at the top right of the card itself, and replace the edit/delete button section with one big add lift button. Make this add lift button thinner too.
     - figure out a way to make it so that the cursor can be moved around the text field and the text in the text field moves to the left to make room for the rest of the text.
     - Clicking on a lift card will transition itself into a lift Dialog (LiftScreen) with all lift statistics.
     - Lift Statistics will include:
