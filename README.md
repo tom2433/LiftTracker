@@ -46,6 +46,7 @@ A prototype of the Lift Tracker project. This is an evolving document. Everythin
             - color representing status of improving, maintaining, or declining
 7. (In Progress) When a muscle group card is clicked, it animates a dropdown container with cards representing all lifts for that muscle group (F6)
     - The card shall expand itself, but a surface must be put on top of it so that it appears as if it is not. A border shall animate so that the card can connect itself to the edit and delete buttons at the bottom. An alternative option is to have the card elevate and maybe show the lift cards and edit/delete buttons at the bottom a different way.
+    - figure out a way to make it so that the cursor can be moved around the text field and the text in the text field moves to the left to make room for the rest of the text.
     - Clicking on a lift card will transition itself into a lift Dialog (LiftScreen) with all lift statistics.
     - Lift Statistics will include:
         - lifetime number of sets performed
