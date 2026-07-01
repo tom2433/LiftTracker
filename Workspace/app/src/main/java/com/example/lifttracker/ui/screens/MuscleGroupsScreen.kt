@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
@@ -174,226 +175,243 @@ fun MuscleGroupsScreen(
                             animationSpec = tween(300)
                         )
                     ) {
-                        // each muscle group has card design
-                        Card(
-                            shape = RoundedCornerShape(16.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .defaultMinSize(minHeight = 168.dp)
-                                .padding(bottom = 16.dp),
-                            onClick = { viewModel.muscleGroupCardClicked(muscleGroupId) }
-                        ) {
-                            // column to hold card contents, 16.dp padding
-                            Column(
-                                verticalArrangement = Arrangement.Top,
-                                horizontalAlignment = Alignment.Start,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                            ) {
-                                // muscle group name (title)
-                                Text(
-                                    text = muscleGroupDetail.name,
-                                    style = MaterialTheme.typography.titleLarge,
-                                    modifier = if (muscleGroupDetail.note.isBlank()) {
-                                        Modifier.padding(
-                                            bottom = 20.dp,
-                                            top = 16.dp,
-                                            start = 16.dp,
-                                            end = 16.dp
-                                        )
+                        Column {
+                            // each muscle group has card design
+                            Card(
+                                shape = RoundedCornerShape(
+                                    topStart = 16.dp,
+                                    topEnd = 16.dp,
+                                    bottomStart = if (muscleGroupDetail.cardIsOpen) {
+                                        0.dp
                                     } else {
-                                        Modifier.padding(
-                                            top = 16.dp,
-                                            start = 16.dp,
-                                            end = 16.dp
+                                        16.dp
+                                    },
+                                    bottomEnd = if (muscleGroupDetail.cardIsOpen) {
+                                        0.dp
+                                    } else {
+                                        16.dp
+                                    }
+                                ),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .defaultMinSize(minHeight = 168.dp),
+                                onClick = { viewModel.muscleGroupCardClicked(muscleGroupId) }
+                            ) {
+                                // column to hold card contents, 16.dp padding
+                                Column(
+                                    verticalArrangement = Arrangement.Top,
+                                    horizontalAlignment = Alignment.Start,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                ) {
+                                    // muscle group name (title)
+                                    Text(
+                                        text = muscleGroupDetail.name,
+                                        style = MaterialTheme.typography.titleLarge,
+                                        modifier = if (muscleGroupDetail.note.isBlank()) {
+                                            Modifier.padding(
+                                                bottom = 20.dp,
+                                                top = 16.dp,
+                                                start = 16.dp,
+                                                end = 16.dp
+                                            )
+                                        } else {
+                                            Modifier.padding(
+                                                top = 16.dp,
+                                                start = 16.dp,
+                                                end = 16.dp
+                                            )
+                                        }
+                                    )
+
+                                    // muscle group note (if applicable)
+                                    if (muscleGroupDetail.note.isNotBlank()) {
+                                        Text(
+                                            text = muscleGroupDetail.note,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.outline,
+                                            modifier = Modifier.padding(
+                                                bottom = 20.dp,
+                                                start = 16.dp,
+                                                end = 16.dp
+                                            )
                                         )
                                     }
-                                )
 
-                                // muscle group note (if applicable)
-                                if (muscleGroupDetail.note.isNotBlank()) {
-                                    Text(
-                                        text = muscleGroupDetail.note,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.outline,
+                                    // muscle group stats
+                                    // # of lifts
+                                    MuscleGroupDetailRow(
+                                        label = R.string.num_of_lifts_label,
+                                        value = muscleGroupDetail.numLifts.toString(),
                                         modifier = Modifier.padding(
-                                            bottom = 20.dp,
                                             start = 16.dp,
                                             end = 16.dp
+                                        )
+                                    )
+
+                                    // # of days trained (total)
+                                    MuscleGroupDetailRow(
+                                        label = R.string.num_of_sessions_trained_label,
+                                        value = muscleGroupDetail.numSessions.toString(),
+                                        modifier = Modifier.padding(
+                                            start = 16.dp,
+                                            end = 16.dp
+                                        )
+                                    )
+
+                                    // avg # of sessions/week
+                                    MuscleGroupDetailRow(
+                                        label = R.string.avg_num_sessions_per_week_label,
+                                        value = "%.2f".format(muscleGroupDetail.avgNumSessionsPerWeek),
+                                        modifier = Modifier.padding(
+                                            start = 16.dp,
+                                            end = 16.dp
+                                        )
+                                    )
+
+                                    // avg # of sets/session
+                                    MuscleGroupDetailRow(
+                                        label = R.string.avg_num_sets_per_session_label,
+                                        value = "%.2f".format(muscleGroupDetail.avgNumSetsPerSession),
+                                        modifier = Modifier.padding(
+                                            start = 16.dp,
+                                            end = 16.dp
+                                        )
+                                    )
+
+                                    // avg # of sets/week
+                                    MuscleGroupDetailRow(
+                                        label = R.string.avg_num_sets_per_week_label,
+                                        value = "%.2f".format(muscleGroupDetail.avgNumSetsPerWeek),
+                                        modifier = Modifier.padding(
+                                            start = 16.dp,
+                                            end = 16.dp
+                                        )
+                                    )
+
+                                    // avg # of reps/set
+                                    MuscleGroupDetailRow(
+                                        label = R.string.avg_num_reps_per_set_label,
+                                        value = if (muscleGroupDetail.avgNumRepsPerSet != -1.0) {
+                                            "%.2f".format(muscleGroupDetail.avgNumRepsPerSet)
+                                        } else {
+                                            "N/A"
+                                        },
+                                        modifier = Modifier.padding(
+                                            start = 16.dp,
+                                            end = 16.dp
+                                        )
+                                    )
+
+                                    // last date trained (Today, Yesterday, 2 days ago, 3, ..., 6, 1 week ago,
+                                    // 2 weeks ago, ..., 1 month ago, Over 1 month ago, 2 months ago, 3, 4, ...,
+                                    // 1 year ago, Over 1 year ago, Never)
+                                    MuscleGroupDetailRow(
+                                        label = R.string.last_date_trained_label,
+                                        value = muscleGroupDetail.lastDateTrained,
+                                        modifier = Modifier.padding(
+                                            start = 16.dp,
+                                            end = 16.dp,
+                                            bottom = 16.dp
                                         )
                                     )
                                 }
+                            }
 
-                                // muscle group stats
-                                // # of lifts
-                                MuscleGroupDetailRow(
-                                    label = R.string.num_of_lifts_label,
-                                    value = muscleGroupDetail.numLifts.toString(),
-                                    modifier = Modifier.padding(
-                                        start = 16.dp,
-                                        end = 16.dp
+                            // animated dropdown for when the user clicks on this card
+                            AnimatedVisibility(
+                                visible = muscleGroupDetail.cardIsOpen
+                                    ?: false,
+                                enter = expandVertically(
+                                    animationSpec = spring(
+                                        dampingRatio = Spring.DampingRatioNoBouncy,
+                                        stiffness = Spring.StiffnessMediumLow
                                     )
-                                )
-
-                                // # of days trained (total)
-                                MuscleGroupDetailRow(
-                                    label = R.string.num_of_sessions_trained_label,
-                                    value = muscleGroupDetail.numSessions.toString(),
-                                    modifier = Modifier.padding(
-                                        start = 16.dp,
-                                        end = 16.dp
+                                ) + fadeIn(),
+                                exit = shrinkVertically(
+                                    animationSpec = spring(
+                                        dampingRatio = Spring.DampingRatioNoBouncy,
+                                        stiffness = Spring.StiffnessMediumLow
                                     )
-                                )
+                                ) + fadeOut()
+                            ) {
+                                Column {
+                                    // LiftSection for current muscle group
+                                    LiftSection(muscleGroupId)
 
-                                // avg # of sessions/week
-                                MuscleGroupDetailRow(
-                                    label = R.string.avg_num_sessions_per_week_label,
-                                    value = "%.2f".format(muscleGroupDetail.avgNumSessionsPerWeek),
-                                    modifier = Modifier.padding(
-                                        start = 16.dp,
-                                        end = 16.dp
-                                    )
-                                )
-
-                                // avg # of sets/session
-                                MuscleGroupDetailRow(
-                                    label = R.string.avg_num_sets_per_session_label,
-                                    value = "%.2f".format(muscleGroupDetail.avgNumSetsPerSession),
-                                    modifier = Modifier.padding(
-                                        start = 16.dp,
-                                        end = 16.dp
-                                    )
-                                )
-
-                                // avg # of sets/week
-                                MuscleGroupDetailRow(
-                                    label = R.string.avg_num_sets_per_week_label,
-                                    value = "%.2f".format(muscleGroupDetail.avgNumSetsPerWeek),
-                                    modifier = Modifier.padding(
-                                        start = 16.dp,
-                                        end = 16.dp
-                                    )
-                                )
-
-                                // avg # of reps/set
-                                MuscleGroupDetailRow(
-                                    label = R.string.avg_num_reps_per_set_label,
-                                    value = if (muscleGroupDetail.avgNumRepsPerSet != -1.0) {
-                                        "%.2f".format(muscleGroupDetail.avgNumRepsPerSet)
-                                    } else {
-                                        "N/A"
-                                    },
-                                    modifier = Modifier.padding(
-                                        start = 16.dp,
-                                        end = 16.dp
-                                    )
-                                )
-
-                                // last date trained (Today, Yesterday, 2 days ago, 3, ..., 6, 1 week ago,
-                                // 2 weeks ago, ..., 1 month ago, Over 1 month ago, 2 months ago, 3, 4, ...,
-                                // 1 year ago, Over 1 year ago, Never)
-                                MuscleGroupDetailRow(
-                                    label = R.string.last_date_trained_label,
-                                    value = muscleGroupDetail.lastDateTrained,
-                                    modifier = Modifier.padding(
-                                        start = 16.dp,
-                                        end = 16.dp,
-                                        bottom = 16.dp
-                                    )
-                                )
-
-                                // animated dropdown for when the user clicks on this card
-                                AnimatedVisibility(
-                                    visible = muscleGroupsUiState.muscleGroupList[muscleGroupId]?.cardIsOpen
-                                        ?: false,
-                                    enter = expandVertically(
-                                        animationSpec = spring(
-                                            dampingRatio = Spring.DampingRatioNoBouncy,
-                                            stiffness = Spring.StiffnessMediumLow
-                                        )
-                                    ) + fadeIn(),
-                                    exit = shrinkVertically(
-                                        animationSpec = spring(
-                                            dampingRatio = Spring.DampingRatioNoBouncy,
-                                            stiffness = Spring.StiffnessMediumLow
-                                        )
-                                    ) + fadeOut()
-                                ) {
-                                    Column {
-                                        // LiftSection for current muscle group
-                                        LiftSection(muscleGroupId)
-
-                                        // row to hold delete/edit buttons
-                                        Row(
+                                    // row to hold delete/edit buttons
+                                    Row(
+                                        modifier = Modifier
+                                            .height(IntrinsicSize.Min)
+                                            .fillMaxWidth()
+                                            .padding(bottom = 16.dp),
+                                        horizontalArrangement = Arrangement.Start,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        // card to function as delete button
+                                        Card(
                                             modifier = Modifier
-                                                .height(IntrinsicSize.Min)
-                                                .fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.Start,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            // card to function as delete button
-                                            Card(
-                                                modifier = Modifier
-                                                    .weight(1f)
-                                                    .defaultMinSize(minHeight = 36.dp),
-                                                shape = RoundedCornerShape(
-                                                    bottomStart = 16.dp
-                                                ),
-                                                colors = CardDefaults.cardColors(
-                                                    containerColor = MaterialTheme.colorScheme.errorContainer,
-                                                    contentColor = MaterialTheme.colorScheme.onErrorContainer
-                                                ),
-                                                onClick = {
-                                                    viewModel.showDeleteMuscleGroupDialog(
-                                                        muscleGroupId
-                                                    )
-                                                }
-                                            ) {
-                                                // box layout to hold trash can icon
-                                                Box(
-                                                    modifier = Modifier.fillMaxSize(),
-                                                    contentAlignment = Alignment.Center
-                                                ) {
-                                                    Icon(
-                                                        imageVector = Icons.Filled.Delete,
-                                                        contentDescription = stringResource(R.string.delete_muscle_group)
-                                                    )
-                                                }
+                                                .weight(1f)
+                                                .defaultMinSize(minHeight = 36.dp),
+                                            shape = RoundedCornerShape(
+                                                bottomStart = 16.dp
+                                            ),
+                                            colors = CardDefaults.cardColors(
+                                                containerColor = MaterialTheme.colorScheme.errorContainer,
+                                                contentColor = MaterialTheme.colorScheme.onErrorContainer
+                                            ),
+                                            onClick = {
+                                                viewModel.showDeleteMuscleGroupDialog(
+                                                    muscleGroupId
+                                                )
                                             }
-
-                                            // card to function as edit button
-                                            Card(
-                                                modifier = Modifier
-                                                    .weight(5f)
-                                                    .defaultMinSize(minHeight = 36.dp),
-                                                shape = RoundedCornerShape(
-                                                    bottomEnd = 16.dp
-                                                ),
-                                                colors = CardDefaults.cardColors(
-                                                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                                                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                                                ),
-                                                onClick = {
-                                                    viewModel.showEditMuscleGroupDialog(
-                                                        muscleGroupId
-                                                    )
-                                                }
+                                        ) {
+                                            // box layout to hold trash can icon
+                                            Box(
+                                                modifier = Modifier.fillMaxSize(),
+                                                contentAlignment = Alignment.Center
                                             ) {
-                                                // box layout to hold pencil icon
-                                                Box(
-                                                    modifier = Modifier.fillMaxSize(),
-                                                    contentAlignment = Alignment.Center
-                                                ) {
-                                                    Icon(
-                                                        imageVector = Icons.Filled.Edit,
-                                                        contentDescription = stringResource(R.string.edit_muscle_group)
-                                                    )
-                                                }
+                                                Icon(
+                                                    imageVector = Icons.Filled.Delete,
+                                                    contentDescription = stringResource(R.string.delete_muscle_group)
+                                                )
+                                            }
+                                        }
+
+                                        // card to function as edit button
+                                        Card(
+                                            modifier = Modifier
+                                                .weight(5f)
+                                                .defaultMinSize(minHeight = 36.dp),
+                                            shape = RoundedCornerShape(
+                                                bottomEnd = 16.dp
+                                            ),
+                                            colors = CardDefaults.cardColors(
+                                                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                                contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                                            ),
+                                            onClick = {
+                                                viewModel.showEditMuscleGroupDialog(
+                                                    muscleGroupId
+                                                )
+                                            }
+                                        ) {
+                                            // box layout to hold pencil icon
+                                            Box(
+                                                modifier = Modifier.fillMaxSize(),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Filled.Edit,
+                                                    contentDescription = stringResource(R.string.edit_muscle_group)
+                                                )
                                             }
                                         }
                                     }
                                 }
                             }
+
+                            Spacer(modifier = Modifier.height(16.dp))
                         }
                     }
                 }
