@@ -3,16 +3,23 @@ package com.example.lifttracker.ui.utils
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Scale
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -21,6 +28,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -32,6 +40,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -42,10 +51,10 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun ShowElementEntryDialog(
-    @StringRes dialogTitle: Int,
-    @StringRes submitBtnText: Int,
-    @StringRes elementNameInputLabel: Int,
-    @StringRes elementNoteInputLabel: Int,
+    dialogTitle: String,
+    submitBtnText: String,
+    elementNameInputLabel: String,
+    elementNoteInputLabel: String,
     buttonEnabled: Boolean,
     newElementName: String,
     newElementNote: String,
@@ -88,7 +97,7 @@ fun ShowElementEntryDialog(
             ) {
                 // title
                 Text(
-                    text = stringResource(dialogTitle),
+                    text = dialogTitle,
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
@@ -101,12 +110,12 @@ fun ShowElementEntryDialog(
                     value = newElementName,
                     onValueChange = onElementNameValueChanged,
                     label = {
-                        Text(stringResource(elementNameInputLabel))
+                        Text(elementNameInputLabel)
                     },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.Label,
-                            contentDescription = stringResource(elementNameInputLabel)
+                            contentDescription = elementNameInputLabel
                         )
                     },
                     singleLine = true,
@@ -129,12 +138,12 @@ fun ShowElementEntryDialog(
                     value = newElementNote,
                     onValueChange = onElementNoteValueChanged,
                     label = {
-                        Text(stringResource(elementNoteInputLabel))
+                        Text(elementNoteInputLabel)
                     },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Filled.Description,
-                            contentDescription = stringResource(elementNoteInputLabel)
+                            contentDescription = elementNoteInputLabel
                         )
                     },
                     singleLine = true,
@@ -165,7 +174,7 @@ fun ShowElementEntryDialog(
                         .fillMaxWidth()
                         .padding(bottom = 16.dp)
                 ) {
-                    Text(stringResource(submitBtnText))
+                    Text(submitBtnText)
                 }
 
                 // button to dismiss dialog
@@ -365,6 +374,282 @@ fun ShowElementDeleteDialog(
                     Text(
                         text = stringResource(R.string.cancel_profile_deletion_btn_text)
                     )
+                }
+            }
+        }
+    }
+}
+
+
+@Composable
+fun ShowLiftEntryDialog(
+    dialogTitle: String,
+    submitBtnText: String,
+    buttonEnabled: Boolean,
+    newLiftName: String,
+    newLiftNote: String,
+    newLiftUnitName: String,
+    onLiftNameValueChanged: (String) -> Unit,
+    onLiftNoteValueChanged: (String) -> Unit,
+    repsSelected: Boolean,
+    onRepsSelected: () -> Unit,
+    timeSelected: Boolean,
+    onTimeSelected: () -> Unit,
+    unitList: List<com.example.lifttracker.data.Unit>,
+    onUnitValueChanged: (String) -> Unit,
+    onSubmit: () -> Unit,
+    onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    // focus requester to pop up the keyboard when the user selects to edit or add an element
+    val elementNameFocusRequester = remember { FocusRequester() }
+    val elementNoteFocusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+    LaunchedEffect(Unit) {
+        delay(100)
+        elementNameFocusRequester.requestFocus()
+        keyboardController?.show()
+    }
+
+    Dialog(
+        onDismissRequest = onDismissRequest,
+        properties = DialogProperties(
+            dismissOnBackPress = true,
+            dismissOnClickOutside = true
+        )
+    ) {
+        Card(
+            modifier = modifier
+                .wrapContentSize()
+                .padding(4.dp),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .wrapContentHeight()
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.Start
+            ) {
+                // title
+                Text(
+                    text = dialogTitle,
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                // divider
+                HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
+
+                // name input
+                TextField(
+                    value = newLiftName,
+                    onValueChange = onLiftNameValueChanged,
+                    label = {
+                        Text(stringResource(R.string.lift_name))
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Label,
+                            contentDescription = stringResource(R.string.lift_name)
+                        )
+                    },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions.Default.copy(
+                        imeAction = ImeAction.Next
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onNext = {
+                            elementNoteFocusRequester.requestFocus()
+                        }
+                    ),
+                    modifier = Modifier
+                        .focusRequester(elementNameFocusRequester)
+                        .padding(bottom = 16.dp)
+                        .fillMaxWidth()
+                )
+
+                // note input
+                TextField(
+                    value = newLiftNote,
+                    onValueChange = onLiftNoteValueChanged,
+                    label = {
+                        Text(stringResource(R.string.lift_note_optional))
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.Description,
+                            contentDescription = stringResource(R.string.lift_note_optional)
+                        )
+                    },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions.Default.copy(
+                        imeAction = ImeAction.Done
+                    ),
+                    modifier = Modifier
+                        .focusRequester(elementNoteFocusRequester)
+                        .padding(bottom = 32.dp)
+                        .fillMaxWidth()
+                )
+
+                // label for selecting metric type
+                Text(
+                    text = stringResource(R.string.select_metric_type),
+                    style = MaterialTheme.typography.bodyLarge
+                )
+
+                // sub-label for selecting metric type
+                Text(
+                    text = stringResource(R.string.select_metric_type_sublabel),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.outline,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                // radiobutton for reps option
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .selectable(
+                            selected = repsSelected,
+                            onClick = onRepsSelected,
+                            role = Role.RadioButton
+                        ),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    RadioButton(
+                        selected = repsSelected,
+                        onClick = null
+                    )
+                    Text(
+                        text = stringResource(R.string.reps),
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(start = 16.dp)
+                    )
+                }
+
+                // radiobutton for time option
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .selectable(
+                            selected = timeSelected,
+                            onClick = onTimeSelected,
+                            role = Role.RadioButton
+                        ),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    RadioButton(
+                        selected = timeSelected,
+                        onClick = null
+                    )
+                    Text(
+                        text = stringResource(R.string.time),
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(start = 16.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // label for inputting unit
+                Text(
+                    text = stringResource(R.string.choose_unit),
+                    style = MaterialTheme.typography.bodyLarge
+                )
+
+                // sub-label for inputting unit
+                Text(
+                    text = stringResource(R.string.choose_unit_sublabel),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.outline,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                // quick-add buttons for previous units
+                if (unitList.isNotEmpty()) {
+                    // quick add label
+                    Text(
+                        text = stringResource(R.string.quick_add),
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+
+                    // quick add buttons
+                    Column(
+                        verticalArrangement = Arrangement.Top,
+                        horizontalAlignment = Alignment.Start
+                    ) {
+                        for (unit in unitList) {
+                            OutlinedButton(
+                                onClick = {
+                                    onUnitValueChanged(unit.name)
+                                },
+                                modifier = Modifier.padding(bottom = 4.dp)
+                            ) {
+                                Text(
+                                    text = unit.name
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Unit text input
+                TextField(
+                    value = newLiftUnitName,
+                    onValueChange = onUnitValueChanged,
+                    label = {
+                        Text(stringResource(R.string.unit))
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.Scale,
+                            contentDescription = stringResource(R.string.unit)
+                        )
+                    },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions.Default.copy(
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            if (buttonEnabled) {
+                                onSubmit()
+                            }
+                        }
+                    ),
+                    modifier = Modifier
+                        .padding(bottom = 32.dp)
+                        .fillMaxWidth()
+                )
+
+                // divider
+                HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
+
+                // button to submit element
+                Button(
+                    onClick = onSubmit,
+                    enabled = buttonEnabled,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
+                ) {
+                    Text(submitBtnText)
+                }
+
+                // button to dismiss dialog
+                OutlinedButton(
+                    onClick = onDismissRequest,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(stringResource(R.string.cancel))
                 }
             }
         }

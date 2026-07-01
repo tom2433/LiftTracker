@@ -196,7 +196,7 @@ fun MuscleGroupsScreen(
                                     style = MaterialTheme.typography.titleLarge,
                                     modifier = if (muscleGroupDetail.note.isBlank()) {
                                         Modifier.padding(
-                                            bottom = 32.dp,
+                                            bottom = 20.dp,
                                             top = 16.dp,
                                             start = 16.dp,
                                             end = 16.dp
@@ -217,7 +217,7 @@ fun MuscleGroupsScreen(
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.outline,
                                         modifier = Modifier.padding(
-                                            bottom = 32.dp,
+                                            bottom = 20.dp,
                                             start = 16.dp,
                                             end = 16.dp
                                         )
@@ -308,13 +308,13 @@ fun MuscleGroupsScreen(
                                         ?: false,
                                     enter = expandVertically(
                                         animationSpec = spring(
-                                            dampingRatio = Spring.DampingRatioLowBouncy,
+                                            dampingRatio = Spring.DampingRatioNoBouncy,
                                             stiffness = Spring.StiffnessMediumLow
                                         )
                                     ) + fadeIn(),
                                     exit = shrinkVertically(
                                         animationSpec = spring(
-                                            dampingRatio = Spring.DampingRatioLowBouncy,
+                                            dampingRatio = Spring.DampingRatioNoBouncy,
                                             stiffness = Spring.StiffnessMediumLow
                                         )
                                     ) + fadeOut()
@@ -402,10 +402,10 @@ fun MuscleGroupsScreen(
             // muscle group edit dialog
             if (muscleGroupsUiState.muscleGroupEditDialogVisible) {
                 ShowElementEntryDialog(
-                    dialogTitle = R.string.edit_muscle_group,
-                    submitBtnText = R.string.update_muscle_group,
-                    elementNameInputLabel = R.string.muscle_group_name,
-                    elementNoteInputLabel = R.string.muscle_group_note,
+                    dialogTitle = stringResource(R.string.edit_muscle_group),
+                    submitBtnText = stringResource(R.string.update_muscle_group),
+                    elementNameInputLabel = stringResource(R.string.muscle_group_name),
+                    elementNoteInputLabel = stringResource(R.string.muscle_group_note),
                     buttonEnabled = viewModel.validateMuscleGroup(),
                     newElementName = muscleGroupsUiState.muscleGroupToEdit?.name ?: "",
                     newElementNote = muscleGroupsUiState.muscleGroupToEdit?.note ?: "",

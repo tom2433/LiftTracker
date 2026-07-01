@@ -53,6 +53,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DrawerDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -67,6 +68,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -75,6 +77,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.stringResource
@@ -181,12 +184,16 @@ fun LiftTrackerDrawer(
         }
     }
 
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+
     // box to hold full scaffold
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
+            modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
             topBar = {
-                TopAppBar(
+                CenterAlignedTopAppBar(
                     title = { Text(stringResource(titleRes)) },
+                    scrollBehavior = scrollBehavior,
                     navigationIcon = {
                         IconButton(
                             onClick = {
@@ -429,13 +436,13 @@ fun LiftTrackerDrawer(
                     visible = drawerUiState.switchProfileSelected,
                     enter = expandVertically(
                         animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioLowBouncy,
+                            dampingRatio = Spring.DampingRatioNoBouncy,
                             stiffness = Spring.StiffnessMediumLow
                         )
                     ) + fadeIn(),
                     exit = shrinkVertically(
                         animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioLowBouncy,
+                            dampingRatio = Spring.DampingRatioNoBouncy,
                             stiffness = Spring.StiffnessMediumLow
                         )
                     ) + fadeOut()
@@ -650,17 +657,17 @@ fun LiftTrackerDrawer(
         if (drawerUiState.profileEntryDialogVisible) {
             ShowElementEntryDialog(
                 dialogTitle = if (drawerUiState.userIsAddingProfile) {
-                    R.string.create_profile_btn_text
+                    stringResource(R.string.create_profile_btn_text)
                 } else {
-                    R.string.edit_profile
+                    stringResource(R.string.edit_profile)
                 },
                 submitBtnText = if (drawerUiState.userIsAddingProfile) {
-                    R.string.create_profile_btn_text
+                    stringResource(R.string.create_profile_btn_text)
                 } else {
-                    R.string.update_profile_btn_text
+                    stringResource(R.string.update_profile_btn_text)
                 },
-                elementNameInputLabel = R.string.profile_name_input_label,
-                elementNoteInputLabel = R.string.profile_note_input_label,
+                elementNameInputLabel = stringResource(R.string.profile_name_input_label),
+                elementNoteInputLabel = stringResource(R.string.profile_note_input_label),
                 buttonEnabled = viewModel.isProfileValid(),
                 newElementName = drawerUiState.newProfileName,
                 newElementNote = drawerUiState.newProfileNote,
@@ -697,10 +704,10 @@ fun LiftTrackerDrawer(
         // add muscle group dialog
         if (drawerUiState.muscleGroupEntryDialogVisible) {
             ShowElementEntryDialog(
-                dialogTitle = R.string.add_muscle_group,
-                submitBtnText = R.string.create_muscle_group,
-                elementNameInputLabel = R.string.muscle_group_name,
-                elementNoteInputLabel = R.string.muscle_group_note,
+                dialogTitle = stringResource(R.string.add_muscle_group),
+                submitBtnText = stringResource(R.string.create_muscle_group),
+                elementNameInputLabel = stringResource(R.string.muscle_group_name),
+                elementNoteInputLabel = stringResource(R.string.muscle_group_note),
                 buttonEnabled = viewModel.isMuscleGroupValid(),
                 newElementName = drawerUiState.newMuscleGroupName,
                 newElementNote = drawerUiState.newMuscleGroupNote,

@@ -24,4 +24,11 @@ interface ProfileDao {
 
     @Query("SELECT * FROM profiles ORDER BY id ASC")
     fun getAllProfiles(): Flow<List<Profile>>
+
+    @Query("""
+        SELECT * FROM profiles
+        WHERE active = 1
+        LIMIT 1
+    """)
+    fun getActiveProfile(): Flow<Profile?>
 }

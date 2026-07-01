@@ -7,6 +7,7 @@ interface ProfileRepository {
     suspend fun updateProfile(profile: Profile)
     suspend fun deleteProfile(profile: Profile)
     fun getProfileStream(id: Int): Flow<Profile?>
+    fun getActiveProfileStream(): Flow<Profile?>
 
     fun getAllProfilesStream(): Flow<List<Profile>>
 }

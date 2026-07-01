@@ -31,7 +31,9 @@ object AppViewModelProvider {
         // initializer for LiftsViewModel
         initializer {
             LiftsViewModel(
-                liftRepository = liftTrackerApplication().container.liftRepository
+                liftRepository = liftTrackerApplication().container.liftRepository,
+                muscleGroupRepository = liftTrackerApplication().container.muscleGroupRepository,
+                unitRepository = liftTrackerApplication().container.unitRepository
             )
         }
 

@@ -21,4 +21,14 @@ interface UnitDao {
 
     @Query("SELECT * FROM units WHERE id = :id")
     fun getUnit(id: Int): Flow<Unit?>
+
+    @Query("SELECT * FROM units")
+    fun getAllUnits(): Flow<List<Unit>>
+
+    @Query("""
+        SELECT * FROM units
+        WHERE name = :unitName
+        LIMIT 1
+    """)
+    fun getUnitFromName(unitName: String): Flow<Unit?>
 }
