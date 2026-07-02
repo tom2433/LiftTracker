@@ -52,4 +52,8 @@
     <string name="choose_unit_sublabel">Choose a unit for your lift, like \"pounds\" or \"kilograms\".</string>
     <string name="quick_add">Quick Add:</string>
     <string name="unit">Unit</string>
+    <string name="muscle_group_menu">Muscle Group Menu</string>
+    <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
+    <string name="lift_menu">Lift Menu</string>
 </resources>

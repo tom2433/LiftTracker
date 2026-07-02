@@ -186,5 +186,5 @@ data class LiftsUiState(
     val newLiftNote: String = "",
     val newLiftMetricType: Int = 0,         // 1 = reps, 2 = time
     val newLiftUnitName: String = "",
-    val userIsAddingLift: Boolean = false
+    val userIsAddingLift: Boolean = false,
 )

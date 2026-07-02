@@ -53,13 +53,19 @@ class MuscleGroupsViewModel(
                 // Capture today once per database emission so every card uses the same rolling-week boundary. - Codex
                 val today = getCurrentIsoDate()
 
-                // Key each calculated detail by its muscle-groups table ID while preserving the query order. - Codex
-                val muscleGroupDetails = detailData.associate { data ->
-                    data.id to createMuscleGroupDetail(data, today)
-                }
-
                 // Publish the newly calculated immutable list so Compose can react to the database change. - Codex
                 _muscleGroupsUiState.update { currentState ->
+                    // Key each calculated detail by its muscle-groups table ID while preserving the query order. - Codex
+                    val muscleGroupDetails = detailData.associate { data ->
+                        // preserve card is open status across UiState updates
+                        val oldDetail = currentState.muscleGroupList[data.id]
+
+                        data.id to createMuscleGroupDetail(data, today).copy(
+                            cardIsOpen = oldDetail?.cardIsOpen ?: false,
+                            menuIsOpen = oldDetail?.menuIsOpen ?: false
+                        )
+                    }
+
                     currentState.copy(
                         muscleGroupList = muscleGroupDetails
                     )
@@ -286,6 +292,38 @@ class MuscleGroupsViewModel(
         }
     }
 
+    fun openThreeDotMenu(id: Int) {
+        _muscleGroupsUiState.update { currentState ->
+            if (id !in currentState.muscleGroupList) {
+                return@update currentState
+            }
+
+            currentState.copy(
+                muscleGroupList = currentState.muscleGroupList.mapValues { (muscleGroupId, muscleGroupDetail) ->
+                    muscleGroupDetail.copy(
+                        menuIsOpen = muscleGroupId == id
+                    )
+                }
+            )
+        }
+    }
+
+    fun closeThreeDotMenu(id: Int) {
+        _muscleGroupsUiState.update { currentState ->
+            if (id !in currentState.muscleGroupList) {
+                return@update currentState
+            }
+
+            currentState.copy(
+                muscleGroupList = currentState.muscleGroupList.mapValues { (muscleGroupId, muscleGroupDetail) ->
+                    muscleGroupDetail.copy(
+                        menuIsOpen = false
+                    )
+                }
+            )
+        }
+    }
+
     fun showEditMuscleGroupDialog(id: Int) {
         viewModelScope.launch {
             val muscleGroupToEdit = muscleGroupRepository.getMuscleGroupStream(id).firstOrNull()
@@ -417,5 +455,6 @@ data class MuscleGroupDetail(
     val avgNumSetsPerWeek: Double,
     val avgNumRepsPerSet: Double,
     val lastDateTrained: String,
-    val cardIsOpen: Boolean = false
+    val cardIsOpen: Boolean = false,
+    val menuIsOpen: Boolean = false
 )

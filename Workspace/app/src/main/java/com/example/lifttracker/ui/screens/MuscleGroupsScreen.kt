@@ -5,6 +5,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandHorizontally
@@ -38,10 +39,15 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CardElevation
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -147,6 +153,20 @@ fun MuscleGroupsScreen(
                             targetState = true
                         }
                     }
+                    val bottomCornerRadius by animateDpAsState(
+                        targetValue = if (muscleGroupDetail.cardIsOpen) 0.dp else 16.dp,
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioNoBouncy,
+                            stiffness = Spring.StiffnessMediumLow
+                        )
+                    )
+                    val elevationDp by animateDpAsState(
+                        targetValue = if (muscleGroupDetail.cardIsOpen) 4.dp else 0.dp,
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioNoBouncy,
+                            stiffness = Spring.StiffnessMediumLow
+                        )
+                    )
 
                     LaunchedEffect(muscleGroupsUiState.muscleGroupIdToDelete) {
                         visibilityState.targetState = muscleGroupId != muscleGroupsUiState.muscleGroupIdToDelete
@@ -181,21 +201,21 @@ fun MuscleGroupsScreen(
                                 shape = RoundedCornerShape(
                                     topStart = 16.dp,
                                     topEnd = 16.dp,
-                                    bottomStart = if (muscleGroupDetail.cardIsOpen) {
-                                        0.dp
-                                    } else {
-                                        16.dp
-                                    },
-                                    bottomEnd = if (muscleGroupDetail.cardIsOpen) {
-                                        0.dp
-                                    } else {
-                                        16.dp
-                                    }
+                                    bottomStart = bottomCornerRadius,
+                                    bottomEnd = bottomCornerRadius
                                 ),
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .defaultMinSize(minHeight = 168.dp),
-                                onClick = { viewModel.muscleGroupCardClicked(muscleGroupId) }
+                                onClick = { viewModel.muscleGroupCardClicked(muscleGroupId) },
+                                elevation = CardDefaults.cardElevation(
+                                    defaultElevation = elevationDp,
+                                    pressedElevation = elevationDp,
+                                    focusedElevation = elevationDp,
+                                    hoveredElevation = elevationDp,
+                                    draggedElevation = elevationDp,
+                                    disabledElevation = elevationDp
+                                )
                             ) {
                                 // column to hold card contents, 16.dp padding
                                 Column(
@@ -204,38 +224,79 @@ fun MuscleGroupsScreen(
                                     modifier = Modifier
                                         .fillMaxSize()
                                 ) {
-                                    // muscle group name (title)
-                                    Text(
-                                        text = muscleGroupDetail.name,
-                                        style = MaterialTheme.typography.titleLarge,
-                                        modifier = if (muscleGroupDetail.note.isBlank()) {
-                                            Modifier.padding(
-                                                bottom = 20.dp,
-                                                top = 16.dp,
+                                    // Row to hold muscle group name and three dot menu
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(
+                                                top = 8.dp,
                                                 start = 16.dp,
-                                                end = 16.dp
+                                                end = 8.dp,
+                                                bottom = 20.dp
                                             )
-                                        } else {
-                                            Modifier.padding(
-                                                top = 16.dp,
-                                                start = 16.dp,
-                                                end = 16.dp
+                                    ) {
+                                        Column() {
+                                            // muscle group name (title)
+                                            Text(
+                                                text = muscleGroupDetail.name,
+                                                style = MaterialTheme.typography.titleLarge,
+                                                modifier = if (muscleGroupDetail.note.isNotBlank()) {
+                                                    Modifier.padding(top = 4.dp)
+                                                } else {
+                                                    Modifier
+                                                }
                                             )
+                                            // muscle group note (if applicable)
+                                            if (muscleGroupDetail.note.isNotBlank()) {
+                                                Text(
+                                                    text = muscleGroupDetail.note,
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.outline
+                                                )
+                                            }
                                         }
-                                    )
 
-                                    // muscle group note (if applicable)
-                                    if (muscleGroupDetail.note.isNotBlank()) {
-                                        Text(
-                                            text = muscleGroupDetail.note,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.outline,
-                                            modifier = Modifier.padding(
-                                                bottom = 20.dp,
-                                                start = 16.dp,
-                                                end = 16.dp
-                                            )
-                                        )
+                                        // box to hold 3 dot menu
+                                        Box {
+                                            // three dot icon
+                                            IconButton(
+                                                onClick = {
+                                                    viewModel.openThreeDotMenu(muscleGroupId)
+                                                }
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.MoreVert,
+                                                    contentDescription = stringResource(R.string.muscle_group_menu)
+                                                )
+                                            }
+
+                                            // drop down menu
+                                            DropdownMenu(
+                                                expanded = muscleGroupDetail.menuIsOpen,
+                                                onDismissRequest = {
+                                                    viewModel.closeThreeDotMenu(muscleGroupId)
+                                                }
+                                            ) {
+                                                // menu item for edit
+                                                DropdownMenuItem(
+                                                    text = { Text(stringResource(R.string.edit)) },
+                                                    onClick = {
+                                                        viewModel.showEditMuscleGroupDialog(muscleGroupId)
+                                                        viewModel.closeThreeDotMenu(muscleGroupId)
+                                                    }
+                                                )
+                                                // menu item for delete
+                                                DropdownMenuItem(
+                                                    text = { Text(stringResource(R.string.delete)) },
+                                                    onClick = {
+                                                        viewModel.showDeleteMuscleGroupDialog(muscleGroupId)
+                                                        viewModel.closeThreeDotMenu(muscleGroupId)
+                                                    }
+                                                )
+                                            }
+                                        }
                                     }
 
                                     // muscle group stats
@@ -320,8 +381,7 @@ fun MuscleGroupsScreen(
 
                             // animated dropdown for when the user clicks on this card
                             AnimatedVisibility(
-                                visible = muscleGroupDetail.cardIsOpen
-                                    ?: false,
+                                visible = muscleGroupDetail.cardIsOpen,
                                 enter = expandVertically(
                                     animationSpec = spring(
                                         dampingRatio = Spring.DampingRatioNoBouncy,
@@ -338,76 +398,6 @@ fun MuscleGroupsScreen(
                                 Column {
                                     // LiftSection for current muscle group
                                     LiftSection(muscleGroupId)
-
-                                    // row to hold delete/edit buttons
-                                    Row(
-                                        modifier = Modifier
-                                            .height(IntrinsicSize.Min)
-                                            .fillMaxWidth()
-                                            .padding(bottom = 16.dp),
-                                        horizontalArrangement = Arrangement.Start,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        // card to function as delete button
-                                        Card(
-                                            modifier = Modifier
-                                                .weight(1f)
-                                                .defaultMinSize(minHeight = 36.dp),
-                                            shape = RoundedCornerShape(
-                                                bottomStart = 16.dp
-                                            ),
-                                            colors = CardDefaults.cardColors(
-                                                containerColor = MaterialTheme.colorScheme.errorContainer,
-                                                contentColor = MaterialTheme.colorScheme.onErrorContainer
-                                            ),
-                                            onClick = {
-                                                viewModel.showDeleteMuscleGroupDialog(
-                                                    muscleGroupId
-                                                )
-                                            }
-                                        ) {
-                                            // box layout to hold trash can icon
-                                            Box(
-                                                modifier = Modifier.fillMaxSize(),
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Filled.Delete,
-                                                    contentDescription = stringResource(R.string.delete_muscle_group)
-                                                )
-                                            }
-                                        }
-
-                                        // card to function as edit button
-                                        Card(
-                                            modifier = Modifier
-                                                .weight(5f)
-                                                .defaultMinSize(minHeight = 36.dp),
-                                            shape = RoundedCornerShape(
-                                                bottomEnd = 16.dp
-                                            ),
-                                            colors = CardDefaults.cardColors(
-                                                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                                                contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                                            ),
-                                            onClick = {
-                                                viewModel.showEditMuscleGroupDialog(
-                                                    muscleGroupId
-                                                )
-                                            }
-                                        ) {
-                                            // box layout to hold pencil icon
-                                            Box(
-                                                modifier = Modifier.fillMaxSize(),
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Filled.Edit,
-                                                    contentDescription = stringResource(R.string.edit_muscle_group)
-                                                )
-                                            }
-                                        }
-                                    }
                                 }
                             }
 
