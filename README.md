@@ -12,6 +12,8 @@ A prototype of the Lift Tracker project. This is an evolving document. Everythin
 
 - read the codex suggestions on how to use a key for lifts view model so it is able to be copied and recomposed.
 
+- look at viewmodelstore and viewmodelstoreowner
+
 # Development
 
 ## Features:
