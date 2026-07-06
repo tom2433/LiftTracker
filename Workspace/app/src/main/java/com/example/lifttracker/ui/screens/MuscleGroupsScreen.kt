@@ -1,25 +1,28 @@
 package com.example.lifttracker.ui.screens
 
-import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -36,18 +39,8 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CardElevation
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -56,13 +49,16 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.lifttracker.R
@@ -70,12 +66,13 @@ import com.example.lifttracker.data.Profile
 import com.example.lifttracker.ui.AppViewModelProvider
 import com.example.lifttracker.ui.navigation.NavigationDestination
 import com.example.lifttracker.ui.theme.LiftTrackerTheme
-import com.example.lifttracker.ui.utils.WelcomeDialog
-import com.example.lifttracker.ui.viewModels.MuscleGroupsViewModel
-import com.example.lifttracker.data.MuscleGroup
 import com.example.lifttracker.ui.utils.ShowElementDeleteDialog
 import com.example.lifttracker.ui.utils.ShowElementEntryDialog
+import com.example.lifttracker.ui.utils.StatRow
 import com.example.lifttracker.ui.utils.ThreeDotMenu
+import com.example.lifttracker.ui.utils.WelcomeDialog
+import com.example.lifttracker.ui.viewModels.MuscleGroupsUiState
+import com.example.lifttracker.ui.viewModels.MuscleGroupsViewModel
 
 object MuscleGroupsDestination : NavigationDestination {
     override val route = "muscleGroups"
@@ -83,7 +80,7 @@ object MuscleGroupsDestination : NavigationDestination {
 }
 
 /**
- * Entry route for Home Screen
+ * Entry route for Muscle Groups Screen (Home Screen)
  */
 @Composable
 fun MuscleGroupsScreen(
@@ -93,6 +90,60 @@ fun MuscleGroupsScreen(
     val muscleGroupsUiState by viewModel.muscleGroupsUiState.collectAsState()
     val layoutDirection = LocalLayoutDirection.current
 
+    var hasPlayedInitialAnimation by rememberSaveable { mutableStateOf(false) }
+    val muscleGroupsScrollState = rememberScrollState()
+
+    // shared transition layout to hold the muscle group screen content and the
+    // Lift Screen. The LiftSection elements are connected to this lift screen,
+    // and the transition animation functionality is hoisted to this screen.
+    SharedTransitionLayout {
+        AnimatedContent(
+            targetState = muscleGroupsUiState.liftScreenId
+        ) { liftId ->
+            if (liftId == -1) {
+                MuscleGroupsScreenContent(
+                    viewModel = viewModel,
+                    muscleGroupsUiState = muscleGroupsUiState,
+                    layoutDirection = layoutDirection,
+                    goToLiftScreen = {
+                        viewModel.openLiftScreen(it)
+                    },
+                    sharedTransitionScope = this@SharedTransitionLayout,
+                    animatedVisibilityScope = this@AnimatedContent,
+                    animateInitialEntry = !hasPlayedInitialAnimation,
+                    scrollState = muscleGroupsScrollState,
+                    modifier = modifier
+                )
+
+                LaunchedEffect(Unit) {
+                    hasPlayedInitialAnimation = true
+                }
+            } else {
+                LiftScreen(
+                    liftId = liftId,
+                    onBackPressed = {
+                        viewModel.dismissLiftScreen()
+                    },
+                    animatedVisibilityScope = this@AnimatedContent,
+                    sharedTransitionScope = this@SharedTransitionLayout
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun MuscleGroupsScreenContent(
+    viewModel: MuscleGroupsViewModel,
+    muscleGroupsUiState: MuscleGroupsUiState,
+    layoutDirection: LayoutDirection,
+    goToLiftScreen: (Int) -> Unit,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    animateInitialEntry: Boolean,
+    scrollState: ScrollState,
+    modifier: Modifier = Modifier,
+) {
     // check if the user has created a profile or not
     // if they haven't, then the welcome dialog will be visible
     if (muscleGroupsUiState.welcomeDialogVisible) {
@@ -135,7 +186,7 @@ fun MuscleGroupsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 16.dp)
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
         ) {
             // display active profile
             val activeProfile: Profile? = viewModel.getActiveProfile()
@@ -149,8 +200,10 @@ fun MuscleGroupsScreen(
             // muscle group cards
             for ((muscleGroupId, muscleGroupDetail) in muscleGroupsUiState.muscleGroupList) {
                 key(muscleGroupId) {
-                    val visibilityState = remember {
-                        MutableTransitionState(false).apply {
+                    val visibilityState = remember(muscleGroupId) {
+                        MutableTransitionState(
+                            initialState = !animateInitialEntry
+                        ).apply {
                             targetState = true
                         }
                     }
@@ -178,12 +231,7 @@ fun MuscleGroupsScreen(
                         enter = slideInVertically(
                             initialOffsetY = { it },
                             animationSpec = tween(300)
-                        )
-//                        + expandHorizontally (
-//                            expandFrom = Alignment.Start,
-//                            animationSpec = tween(300)
-//                        )
-                        + fadeIn(
+                        ) + fadeIn(
                             animationSpec = tween(300)
                         ),
                         exit = slideOutHorizontally(
@@ -238,7 +286,7 @@ fun MuscleGroupsScreen(
                                                 bottom = 20.dp
                                             )
                                     ) {
-                                        Column() {
+                                        Column {
                                             // muscle group name (title)
                                             Text(
                                                 text = muscleGroupDetail.name,
@@ -282,7 +330,7 @@ fun MuscleGroupsScreen(
 
                                     // muscle group stats
                                     // # of lifts
-                                    MuscleGroupDetailRow(
+                                    StatRow(
                                         label = R.string.num_of_lifts_label,
                                         value = muscleGroupDetail.numLifts.toString(),
                                         modifier = Modifier.padding(
@@ -292,7 +340,7 @@ fun MuscleGroupsScreen(
                                     )
 
                                     // # of days trained (total)
-                                    MuscleGroupDetailRow(
+                                    StatRow(
                                         label = R.string.num_of_sessions_trained_label,
                                         value = muscleGroupDetail.numSessions.toString(),
                                         modifier = Modifier.padding(
@@ -302,7 +350,7 @@ fun MuscleGroupsScreen(
                                     )
 
                                     // avg # of sessions/week
-                                    MuscleGroupDetailRow(
+                                    StatRow(
                                         label = R.string.avg_num_sessions_per_week_label,
                                         value = "%.2f".format(muscleGroupDetail.avgNumSessionsPerWeek),
                                         modifier = Modifier.padding(
@@ -312,7 +360,7 @@ fun MuscleGroupsScreen(
                                     )
 
                                     // avg # of sets/session
-                                    MuscleGroupDetailRow(
+                                    StatRow(
                                         label = R.string.avg_num_sets_per_session_label,
                                         value = "%.2f".format(muscleGroupDetail.avgNumSetsPerSession),
                                         modifier = Modifier.padding(
@@ -322,7 +370,7 @@ fun MuscleGroupsScreen(
                                     )
 
                                     // avg # of sets/week
-                                    MuscleGroupDetailRow(
+                                    StatRow(
                                         label = R.string.avg_num_sets_per_week_label,
                                         value = "%.2f".format(muscleGroupDetail.avgNumSetsPerWeek),
                                         modifier = Modifier.padding(
@@ -332,7 +380,7 @@ fun MuscleGroupsScreen(
                                     )
 
                                     // avg # of reps/set
-                                    MuscleGroupDetailRow(
+                                    StatRow(
                                         label = R.string.avg_num_reps_per_set_label,
                                         value = if (muscleGroupDetail.avgNumRepsPerSet != -1.0) {
                                             "%.2f".format(muscleGroupDetail.avgNumRepsPerSet)
@@ -348,7 +396,7 @@ fun MuscleGroupsScreen(
                                     // last date trained (Today, Yesterday, 2 days ago, 3, ..., 6, 1 week ago,
                                     // 2 weeks ago, ..., 1 month ago, Over 1 month ago, 2 months ago, 3, 4, ...,
                                     // 1 year ago, Over 1 year ago, Never)
-                                    MuscleGroupDetailRow(
+                                    StatRow(
                                         label = R.string.last_date_trained_label,
                                         value = muscleGroupDetail.lastDateTrained,
                                         modifier = Modifier.padding(
@@ -378,7 +426,12 @@ fun MuscleGroupsScreen(
                             ) {
                                 Column {
                                     // LiftSection for current muscle group
-                                    LiftSection(muscleGroupId)
+                                    LiftSection(
+                                        muscleGroupId = muscleGroupId,
+                                        goToLiftScreen = goToLiftScreen,
+                                        sharedTransitionScope = sharedTransitionScope,
+                                        animatedVisibilityScope = animatedVisibilityScope
+                                    )
                                 }
                             }
 
@@ -428,38 +481,6 @@ fun MuscleGroupsScreen(
                 )
             }
         }
-    }
-}
-
-@Composable
-fun MuscleGroupDetailRow(
-    @StringRes label: Int,
-    value: String,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        horizontalArrangement = Arrangement.Start,
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier
-    ) {
-        // label for detail metric
-        Text(
-            text = stringResource(label),
-            style = MaterialTheme.typography.bodyMedium
-        )
-
-        // divider to link label to metric
-        HorizontalDivider(
-            modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = 4.dp)
-        )
-
-        // metric
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium
-        )
     }
 }
 

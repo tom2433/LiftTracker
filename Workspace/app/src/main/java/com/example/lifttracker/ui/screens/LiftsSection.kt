@@ -1,5 +1,7 @@
 package com.example.lifttracker.ui.screens
 
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,6 +40,9 @@ import com.example.lifttracker.ui.viewModels.LiftsViewModel
 @Composable
 fun LiftSection(
     muscleGroupId: Int,
+    goToLiftScreen: (Int) -> Unit,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     modifier: Modifier = Modifier,
     viewModel: LiftsViewModel = viewModel(
         key = "lifts_$muscleGroupId",
@@ -55,59 +60,68 @@ fun LiftSection(
     ) {
         // add all lift cards here
         for ((liftId, liftDetail) in liftsUiState.liftMap) {
-            Card(
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier
-                    .defaultMinSize(minHeight = 16.dp),
-                onClick = { /* TODO: Lift Card click */ }
-            ) {
-                // Row to hold card contents (name/note on left, three dot menu on right)
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Start,
+            with (sharedTransitionScope) {
+                // each lift has card format
+                Card(
+                    shape = RoundedCornerShape(12.dp),
                     modifier = Modifier
-                        .padding(
-                            start = 8.dp,
-                            end = 0.dp,
-                            top = 4.dp,
-                            bottom = 4.dp
-                        )
+                        .defaultMinSize(minHeight = 16.dp)
+                        .sharedElement(
+                            sharedContentState = rememberSharedContentState(
+                                key = liftId.toString()
+                            ),
+                            animatedVisibilityScope = animatedVisibilityScope
+                        ),
+                    onClick = { goToLiftScreen(liftId) }
                 ) {
-                    // Column to hold name and note
-                    Column {
-                        // lift name
-                        Text(
-                            text = liftDetail.liftObj.name,
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        // lift note (if applicable)
-                        if (liftDetail.liftObj.note.isNotBlank()) {
-                            Text(
-                                text = liftDetail.liftObj.note,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.outline
+                    // Row to hold card contents (name/note on left, three dot menu on right)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Start,
+                        modifier = Modifier
+                            .padding(
+                                start = 8.dp,
+                                end = 0.dp,
+                                top = 4.dp,
+                                bottom = 4.dp
                             )
+                    ) {
+                        // Column to hold name and note
+                        Column {
+                            // lift name
+                            Text(
+                                text = liftDetail.liftObj.name,
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            // lift note (if applicable)
+                            if (liftDetail.liftObj.note.isNotBlank()) {
+                                Text(
+                                    text = liftDetail.liftObj.note,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.outline
+                                )
+                            }
                         }
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        ThreeDotMenu(
+                            contentDescRes = R.string.lift_menu,
+                            expanded = liftDetail.threeDotMenuOpen,
+                            onClickDots = {
+                                viewModel.threeDotMenuClicked(liftId)
+                            },
+                            onClickEdit = {
+                                viewModel.showEditLiftDialog(liftId)
+                            },
+                            onClickDelete = {
+                                viewModel.showDeleteLiftDialog(liftId)
+                            },
+                            onDismissRequest = {
+                                viewModel.threeDotMenuClicked(liftId)
+                            }
+                        )
                     }
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    ThreeDotMenu(
-                        contentDescRes = R.string.lift_menu,
-                        expanded = liftDetail.threeDotMenuOpen,
-                        onClickDots = {
-                            viewModel.threeDotMenuClicked(liftId)
-                        },
-                        onClickEdit = {
-                            viewModel.showEditLiftDialog(liftId)
-                        },
-                        onClickDelete = {
-                            viewModel.showDeleteLiftDialog(liftId)
-                        },
-                        onDismissRequest = {
-                            viewModel.threeDotMenuClicked(liftId)
-                        }
-                    )
                 }
             }
         }

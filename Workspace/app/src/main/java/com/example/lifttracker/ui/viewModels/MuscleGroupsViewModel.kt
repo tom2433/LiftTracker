@@ -427,6 +427,22 @@ class MuscleGroupsViewModel(
             }
         }
     }
+
+    fun openLiftScreen(id: Int) {
+        _muscleGroupsUiState.update { currentState ->
+            currentState.copy(
+                liftScreenId = id
+            )
+        }
+    }
+
+    fun dismissLiftScreen() {
+        _muscleGroupsUiState.update { currentState ->
+            currentState.copy(
+                liftScreenId = -1
+            )
+        }
+    }
 }
 
 /**
@@ -442,7 +458,8 @@ data class MuscleGroupsUiState(
     val muscleGroupDeleteDialogVisible: Boolean = false,
     val muscleGroupToEdit: MuscleGroup? = null,
     val muscleGroupToDelete: MuscleGroup? = null,
-    val muscleGroupIdToDelete: Int = -1
+    val muscleGroupIdToDelete: Int = -1,
+    val liftScreenId: Int = -1
 )
 
 data class MuscleGroupDetail(
