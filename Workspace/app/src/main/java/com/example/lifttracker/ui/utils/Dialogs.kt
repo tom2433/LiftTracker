@@ -3,6 +3,7 @@ package com.example.lifttracker.ui.utils
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,6 +20,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Scale
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -26,6 +28,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
@@ -33,7 +36,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -437,7 +443,10 @@ fun ShowLiftEntryDialog(
                 Text(
                     text = dialogTitle,
                     style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(bottom = 16.dp)
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .padding(bottom = 16.dp)
+                        .fillMaxWidth()
                 )
 
                 // divider
@@ -494,19 +503,31 @@ fun ShowLiftEntryDialog(
                         .fillMaxWidth()
                 )
 
-                // label for selecting metric type
-                Text(
-                    text = stringResource(R.string.select_metric_type),
-                    style = MaterialTheme.typography.bodyLarge
-                )
+                // select metric type label and info button
+                Row (
+                    horizontalArrangement = Arrangement.Start,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // label for selecting metric type
+                    Text(
+                        text = stringResource(R.string.metric_type),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    // separate label and info button
+                    Spacer(modifier = Modifier.weight(1f))
+                    // info button
+                    InfoButton(
+                        infoString = R.string.select_metric_type_sublabel
+                    )
+                }
 
-                // sub-label for selecting metric type
-                Text(
-                    text = stringResource(R.string.select_metric_type_sublabel),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.outline,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
+//                // sub-label for selecting metric type
+//                Text(
+//                    text = stringResource(R.string.select_metric_type_sublabel),
+//                    style = MaterialTheme.typography.bodyMedium,
+//                    color = MaterialTheme.colorScheme.outline,
+//                    modifier = Modifier.padding(bottom = 16.dp)
+//                )
 
                 // radiobutton for reps option
                 Row(
@@ -556,40 +577,37 @@ fun ShowLiftEntryDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // label for inputting unit
-                Text(
-                    text = stringResource(R.string.choose_unit),
-                    style = MaterialTheme.typography.bodyLarge
-                )
-
-                // sub-label for inputting unit
-                Text(
-                    text = stringResource(R.string.choose_unit_sublabel),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.outline,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
+                // select unit label and info button
+                Row (
+                    horizontalArrangement = Arrangement.Start,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // label for selecting unit
+                    Text(
+                        text = stringResource(R.string.unit),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    // separate label and info button
+                    Spacer(modifier = Modifier.weight(1f))
+                    // info button
+                    InfoButton(
+                        infoString = R.string.choose_unit_sublabel
+                    )
+                }
 
                 // quick-add buttons for previous units
                 if (unitList.isNotEmpty()) {
-                    // quick add label
-                    Text(
-                        text = stringResource(R.string.quick_add),
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(bottom = 12.dp)
-                    )
-
-                    // quick add buttons
-                    Column(
-                        verticalArrangement = Arrangement.Top,
-                        horizontalAlignment = Alignment.Start
+                    // quick add buttons in flow row to wrap multiple lines if needed
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         for (unit in unitList) {
                             OutlinedButton(
                                 onClick = {
                                     onUnitValueChanged(unit.name)
-                                },
-                                modifier = Modifier.padding(bottom = 4.dp)
+                                }
                             ) {
                                 Text(
                                     text = unit.name
@@ -653,5 +671,82 @@ fun ShowLiftEntryDialog(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun BasicDialog(
+    dialogText: String,
+    onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Dialog(
+        onDismissRequest = onDismissRequest,
+        properties = DialogProperties(
+            dismissOnBackPress = true,
+            dismissOnClickOutside = true
+        )
+    ) {
+        Card(
+            modifier = modifier
+                .wrapContentSize()
+                .padding(4.dp),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .wrapContentHeight()
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.Start
+            ) {
+                // dialog text
+                Text(
+                    text = dialogText,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                // confirm button
+                Button(
+                    onClick = onDismissRequest,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Ok"
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun InfoButton(
+    @StringRes infoString: Int,
+    modifier: Modifier = Modifier
+) {
+    var showDialog by remember { mutableStateOf(false) }
+
+    IconButton(
+        onClick = {
+            showDialog = true
+        }
+    ) {
+        Icon(
+            imageVector = Icons.Filled.Info,
+            contentDescription = stringResource(R.string.info)
+        )
+    }
+
+    if (showDialog) {
+        BasicDialog(
+            dialogText = stringResource(infoString),
+            onDismissRequest = {
+                showDialog = false
+            }
+        )
     }
 }

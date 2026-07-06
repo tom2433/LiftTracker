@@ -33,14 +33,23 @@ class LiftsViewModel(
             // infinite collection
             liftRepository.getAllLiftsFromMuscleGroupIdStream(muscleGroupId).collect { lifts ->
                 _liftsUiState.update { currentState ->
+                    val updatedLiftMap = lifts.associate { lift ->
+                        val previousDetail = currentState.liftMap[lift.id]
+
+                        lift.id to LiftDetail(
+                            liftObj = lift,
+                            threeDotMenuOpen = previousDetail?.threeDotMenuOpen ?: false
+                        )
+                    }
+
                     currentState.copy(
-                        liftList = lifts
+                        liftMap = updatedLiftMap
                     )
                 }
             }
         }
 
-        // retrieve the muscle group object that this lift belongs to
+        // retrieve the muscle group object that these lifts belongs to
         viewModelScope.launch {
             // retrieve muscle group object if it exists
             val muscleGroup: MuscleGroup? = muscleGroupRepository.getMuscleGroupStream(muscleGroupId).firstOrNull()
@@ -53,7 +62,7 @@ class LiftsViewModel(
             }
         }
 
-        // retrieve all units for all profiles (units are not unique to a profile)
+        // retrieve all units
         viewModelScope.launch {
             // infinite collection for units
             unitRepository.getAllUnitsStream().collect { units ->
@@ -92,19 +101,10 @@ class LiftsViewModel(
         _liftsUiState.update { currentState ->
             currentState.copy(
                 userIsAddingLift = true,
-                newLiftMetricType = 1
-            )
-        }
-    }
-
-    fun dismissAddLiftDialog() {
-        _liftsUiState.update { currentState ->
-            currentState.copy(
-                userIsAddingLift = false,
-                newLiftName = "",
-                newLiftNote = "",
+                newLiftMetricType = 1,
                 newLiftUnitName = "",
-                newLiftMetricType = -1
+                newLiftNote = "",
+                newLiftName = ""
             )
         }
     }
@@ -130,6 +130,65 @@ class LiftsViewModel(
             currentState.copy(
                 newLiftMetricType = 2
             )
+        }
+    }
+
+    fun threeDotMenuClicked(id: Int) {
+        _liftsUiState.update { currentState ->
+            if (id !in currentState.liftMap) {
+                return@update currentState
+            }
+
+            currentState.copy(
+                liftMap = currentState.liftMap.mapValues { (liftId, liftDetail) ->
+                    liftDetail.copy(
+                        threeDotMenuOpen = if (liftId == id) {
+                            !liftDetail.threeDotMenuOpen
+                        } else {
+                            false
+                        }
+                    )
+                }
+            )
+        }
+    }
+
+    fun dismissLiftEntryDialog() {
+        _liftsUiState.update { currentState ->
+            currentState.copy(
+                userIsAddingLift = false,
+                userIsEditingLift = false,
+                newLiftName = "",
+                newLiftNote = "",
+                newLiftUnitName = "",
+                newLiftMetricType = -1
+            )
+        }
+    }
+
+    fun showEditLiftDialog(id: Int) {
+        viewModelScope.launch {
+            // retrieve lift to update
+            val liftToUpdate: Lift = _liftsUiState.value.liftMap[id]?.liftObj ?: return@launch
+
+            // retrieve the unit object associated with this lift
+            val unitObj: Unit =
+                unitRepository.getUnitStream(liftToUpdate.unit_id).firstOrNull() ?: return@launch
+
+            // update UI state to show lift entry dialog for this specific lift
+            _liftsUiState.update { currentState ->
+                currentState.copy(
+                    userIsEditingLift = true,
+                    liftToEdit = liftToUpdate,
+                    newLiftName = liftToUpdate.name,
+                    newLiftNote = liftToUpdate.note,
+                    newLiftMetricType = liftToUpdate.metric_type,
+                    newLiftUnitName = unitObj.name
+                )
+            }
+
+            // dismiss the 3 dot menu
+            threeDotMenuClicked(id)
         }
     }
 
@@ -165,20 +224,66 @@ class LiftsViewModel(
             liftRepository.insertLift(
                 Lift(
                     muscle_group_id = muscleGroupId,
-                    unit_id = liftUnit!!.id,
+                    unit_id = liftUnit?.id ?: return@launch,
                     name = _liftsUiState.value.newLiftName,
                     metric_type = _liftsUiState.value.newLiftMetricType,
                     note = _liftsUiState.value.newLiftNote
                 )
             )
 
-            dismissAddLiftDialog()
+            dismissLiftEntryDialog()
+        }
+    }
+
+    fun updateLift() {
+        // check that lift entry is valid
+        if (!validateLift()) {
+            return
+        }
+
+        viewModelScope.launch {
+            // determine if the inputted unit exists
+            var liftUnit: Unit? = null
+            for (currentLiftUnit in _liftsUiState.value.unitList) {
+                if (currentLiftUnit.name == _liftsUiState.value.newLiftUnitName) {
+                    liftUnit = currentLiftUnit
+                }
+            }
+
+            // if it doesn't exist, create it.
+            if (liftUnit == null) {
+                unitRepository.insertUnit(
+                    unit = Unit(
+                        name = _liftsUiState.value.newLiftUnitName
+                    )
+                )
+
+                // wait for unit to be added
+                delay(100)
+
+                liftUnit = unitRepository.getUnitFromNameStream(_liftsUiState.value.newLiftUnitName).firstOrNull()
+            }
+
+            // now update the lift in the lift table
+            liftRepository.updateLift(
+                lift = Lift(
+                    id = _liftsUiState.value.liftToEdit?.id ?: return@launch,
+                    muscle_group_id = muscleGroupId,
+                    unit_id = liftUnit?.id ?: return@launch,
+                    name = _liftsUiState.value.newLiftName,
+                    metric_type = _liftsUiState.value.newLiftMetricType,
+                    note = _liftsUiState.value.newLiftNote
+                )
+            )
+
+            // dismiss the dialog
+            dismissLiftEntryDialog()
         }
     }
 }
 
 data class LiftsUiState(
-    val liftList: List<Lift> = listOf(),
+    val liftMap: Map<Int, LiftDetail> = emptyMap(),
     val unitList: List<Unit> = listOf(),
     val muscleGroup: MuscleGroup? = null,
     val newLiftName: String = "",
@@ -186,4 +291,11 @@ data class LiftsUiState(
     val newLiftMetricType: Int = 0,         // 1 = reps, 2 = time
     val newLiftUnitName: String = "",
     val userIsAddingLift: Boolean = false,
+    val userIsEditingLift: Boolean = false,
+    val liftToEdit: Lift? = null
+)
+
+data class LiftDetail(
+    val liftObj: Lift,
+    val threeDotMenuOpen: Boolean = false,
 )

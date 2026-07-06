@@ -3,22 +3,21 @@ package com.example.lifttracker.ui.screens
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,6 +31,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.lifttracker.R
 import com.example.lifttracker.ui.AppViewModelProvider
 import com.example.lifttracker.ui.utils.ShowLiftEntryDialog
+import com.example.lifttracker.ui.utils.ThreeDotMenu
 import com.example.lifttracker.ui.viewModels.LiftsViewModel
 
 @Composable
@@ -45,87 +45,72 @@ fun LiftSection(
 ) {
     val liftsUiState by viewModel.liftsUiState.collectAsState()
 
-    Column(
-        verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.Start,
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier = modifier
-            .fillMaxSize()
-            .padding(
-                top = 16.dp,
-                bottom = 16.dp,
-                start = 32.dp,
-                end = 32.dp
-            )
+            .fillMaxWidth()
+            .padding(16.dp)
     ) {
         // add all lift cards here
-        for (lift in liftsUiState.liftList) {
+        for ((liftId, liftDetail) in liftsUiState.liftMap) {
             Card(
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(12.dp),
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .defaultMinSize(minHeight = 40.dp),
+                    .defaultMinSize(minHeight = 16.dp),
                 onClick = { /* TODO: Lift Card click */ }
             ) {
                 // Row to hold card contents (name/note on left, three dot menu on right)
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    horizontalArrangement = Arrangement.Start,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp)
+                        .padding(
+                            start = 8.dp,
+                            end = 0.dp,
+                            top = 4.dp,
+                            bottom = 4.dp
+                        )
                 ) {
                     // Column to hold name and note
                     Column {
                         // lift name
                         Text(
-                            text = lift.name,
+                            text = liftDetail.liftObj.name,
                             style = MaterialTheme.typography.titleMedium
                         )
                         // lift note (if applicable)
-                        if (lift.note.isNotBlank()) {
+                        if (liftDetail.liftObj.note.isNotBlank()) {
                             Text(
-                                text = lift.note,
+                                text = liftDetail.liftObj.note,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.outline
                             )
                         }
                     }
 
-                    // box to hold 3 dot menu
-                    Box {
-                        // three dot icon
-                        IconButton(
-                            onClick = { /* TODO: lift menu click */ }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.MoreVert,
-                                contentDescription = stringResource(R.string.lift_menu)
-                            )
-                        }
+                    Spacer(modifier = Modifier.width(8.dp))
 
-                        // drop down menu
-                        DropdownMenu(
-                            expanded = false, // TODO
-                            onDismissRequest = { /* TODO */ }
-                        ) {
-                            // menu item for edit
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.edit)) },
-                                onClick = { /* TODO */ }
-                            )
-                            // menu item for delete
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.delete)) },
-                                onClick = { /* TODO */ }
-                            )
+                    ThreeDotMenu(
+                        contentDescRes = R.string.lift_menu,
+                        expanded = liftDetail.threeDotMenuOpen,
+                        onClickDots = {
+                            viewModel.threeDotMenuClicked(liftId)
+                        },
+                        onClickEdit = {
+                            viewModel.showEditLiftDialog(liftId)
+                        },
+                        onClickDelete = { /* TODO */ },
+                        onDismissRequest = {
+                            viewModel.threeDotMenuClicked(liftId)
                         }
-                    }
+                    )
                 }
             }
         }
     }
 
-    // add button outside of above column
+    // add button outside of above Flow Row
     Card(
         modifier = Modifier
             .height(40.dp)
@@ -149,6 +134,38 @@ fun LiftSection(
                 contentDescription = stringResource(R.string.add_lift)
             )
         }
+    }
+
+    if (liftsUiState.userIsEditingLift) {
+        // show edit lift dialog
+        ShowLiftEntryDialog(
+            dialogTitle = "Edit '${liftsUiState.liftToEdit?.name ?: "null"}' in ${liftsUiState.muscleGroup?.name ?: "null"}",
+            submitBtnText = stringResource(R.string.update_lift),
+            buttonEnabled = viewModel.validateLift(),
+            newLiftName = liftsUiState.newLiftName,
+            newLiftNote = liftsUiState.newLiftNote,
+            newLiftUnitName = liftsUiState.newLiftUnitName,
+            onLiftNameValueChanged = {
+                viewModel.updateLiftName(it)
+            },
+            onLiftNoteValueChanged = {
+                viewModel.updateLiftNote(it)
+            },
+            repsSelected = liftsUiState.newLiftMetricType == 1,
+            onRepsSelected = {
+                viewModel.selectReps()
+            },
+            timeSelected = liftsUiState.newLiftMetricType == 2,
+            onTimeSelected = {
+                viewModel.selectTime()
+            },
+            unitList = liftsUiState.unitList,
+            onUnitValueChanged = {
+                viewModel.updateUnit(it)
+            },
+            onSubmit = { viewModel.updateLift() },
+            onDismissRequest = { viewModel.dismissLiftEntryDialog() }
+        )
     }
 
     if (liftsUiState.userIsAddingLift) {
@@ -182,7 +199,7 @@ fun LiftSection(
                 viewModel.addLift()
             },
             onDismissRequest = {
-                viewModel.dismissAddLiftDialog()
+                viewModel.dismissLiftEntryDialog()
             },
         )
     }

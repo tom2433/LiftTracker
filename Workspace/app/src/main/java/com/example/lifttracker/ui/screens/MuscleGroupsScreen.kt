@@ -75,6 +75,7 @@ import com.example.lifttracker.ui.viewModels.MuscleGroupsViewModel
 import com.example.lifttracker.data.MuscleGroup
 import com.example.lifttracker.ui.utils.ShowElementDeleteDialog
 import com.example.lifttracker.ui.utils.ShowElementEntryDialog
+import com.example.lifttracker.ui.utils.ThreeDotMenu
 
 object MuscleGroupsDestination : NavigationDestination {
     override val route = "muscleGroups"
@@ -258,45 +259,25 @@ fun MuscleGroupsScreen(
                                             }
                                         }
 
-                                        // box to hold 3 dot menu
-                                        Box {
-                                            // three dot icon
-                                            IconButton(
-                                                onClick = {
-                                                    viewModel.openThreeDotMenu(muscleGroupId)
-                                                }
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Default.MoreVert,
-                                                    contentDescription = stringResource(R.string.muscle_group_menu)
-                                                )
+                                        // three dot menu for edit/delete muscle group
+                                        ThreeDotMenu(
+                                            contentDescRes = R.string.muscle_group_menu,
+                                            expanded = muscleGroupDetail.menuIsOpen,
+                                            onClickDots = {
+                                                viewModel.openThreeDotMenu(muscleGroupId)
+                                            },
+                                            onClickEdit = {
+                                                viewModel.showEditMuscleGroupDialog(muscleGroupId)
+                                                viewModel.closeThreeDotMenu(muscleGroupId)
+                                            },
+                                            onClickDelete = {
+                                                viewModel.showDeleteMuscleGroupDialog(muscleGroupId)
+                                                viewModel.closeThreeDotMenu(muscleGroupId)
+                                            },
+                                            onDismissRequest = {
+                                                viewModel.closeThreeDotMenu(muscleGroupId)
                                             }
-
-                                            // drop down menu
-                                            DropdownMenu(
-                                                expanded = muscleGroupDetail.menuIsOpen,
-                                                onDismissRequest = {
-                                                    viewModel.closeThreeDotMenu(muscleGroupId)
-                                                }
-                                            ) {
-                                                // menu item for edit
-                                                DropdownMenuItem(
-                                                    text = { Text(stringResource(R.string.edit)) },
-                                                    onClick = {
-                                                        viewModel.showEditMuscleGroupDialog(muscleGroupId)
-                                                        viewModel.closeThreeDotMenu(muscleGroupId)
-                                                    }
-                                                )
-                                                // menu item for delete
-                                                DropdownMenuItem(
-                                                    text = { Text(stringResource(R.string.delete)) },
-                                                    onClick = {
-                                                        viewModel.showDeleteMuscleGroupDialog(muscleGroupId)
-                                                        viewModel.closeThreeDotMenu(muscleGroupId)
-                                                    }
-                                                )
-                                            }
-                                        }
+                                        )
                                     }
 
                                     // muscle group stats

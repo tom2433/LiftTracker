@@ -49,11 +49,14 @@
     <string name="reps">Reps</string>
     <string name="time">Time</string>
     <string name="choose_unit">Choose unit:</string>
-    <string name="choose_unit_sublabel">Choose a unit for your lift, like \"pounds\" or \"kilograms\".</string>
+    <string name="choose_unit_sublabel">Create a unit for your lift, like \"pounds\" or \"kilograms\".</string>
     <string name="quick_add">Quick Add:</string>
     <string name="unit">Unit</string>
     <string name="muscle_group_menu">Muscle Group Menu</string>
     <string name="edit">Edit</string>
     <string name="delete">Delete</string>
     <string name="lift_menu">Lift Menu</string>
+    <string name="metric_type">Metric Type</string>
+    <string name="info">Info</string>
+    <string name="update_lift">Update Lift</string>
 </resources>
