@@ -73,6 +73,7 @@ A prototype of the Lift Tracker project. This is an evolving document. Everythin
         - eventually:
             - a minimal line graph showing average progress over time (user can change timeframe in preferences)
             - color representing status of improving, maintaining, or declining.
+            - a list of sessions of which the user has trained this lift. When the user clicks on the session, the app will navigate to the session's corresponding session screen.
         - all subject to change ^ see F6_lift-screen branch for updates.
 8. Implement Minimal Line Graphs for Muscle Group Cards and Lift Cards. Determine if this makes the Analytics page obsolete.
     - user must be able to change timeframe in preferences
