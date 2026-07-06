@@ -1,12 +1,8 @@
 package com.example.lifttracker.ui.screens
 
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,7 +20,6 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -43,12 +38,12 @@ import com.example.lifttracker.ui.viewModels.LiftsViewModel
 fun LiftSection(
     muscleGroupId: Int,
     modifier: Modifier = Modifier,
-    viewModel: LiftsViewModel = viewModel(factory = AppViewModelProvider.Factory)
+    viewModel: LiftsViewModel = viewModel(
+        key = "lifts_$muscleGroupId",
+        factory = AppViewModelProvider.liftsFactory(muscleGroupId)
+    )
 ) {
     val liftsUiState by viewModel.liftsUiState.collectAsState()
-
-    // need to retrieve a list of lifts that belong to this specific muscle group
-    viewModel.initializeLiftList(muscleGroupId)
 
     Column(
         verticalArrangement = Arrangement.Top,
@@ -62,72 +57,72 @@ fun LiftSection(
                 end = 32.dp
             )
     ) {
-//        // add all lift cards here
-//        for (lift in liftsUiState.liftList) {
-//            Card(
-//                shape = RoundedCornerShape(16.dp),
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .defaultMinSize(minHeight = 40.dp),
-//                onClick = { /* TODO: Lift Card click */ }
-//            ) {
-//                // Row to hold card contents (name/note on left, three dot menu on right)
-//                Row(
-//                    verticalAlignment = Alignment.CenterVertically,
-//                    horizontalArrangement = Arrangement.SpaceBetween,
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .padding(8.dp)
-//                ) {
-//                    // Column to hold name and note
-//                    Column() {
-//                        // lift name
-//                        Text(
-//                            text = lift.name,
-//                            style = MaterialTheme.typography.titleMedium
-//                        )
-//                        // lift note (if applicable)
-//                        if (lift.note.isNotBlank()) {
-//                            Text(
-//                                text = lift.note,
-//                                style = MaterialTheme.typography.bodySmall,
-//                                color = MaterialTheme.colorScheme.outline
-//                            )
-//                        }
-//                    }
-//
-//                    // box to hold 3 dot menu
-//                    Box {
-//                        // three dot icon
-//                        IconButton(
-//                            onClick = { /* TODO: lift menu click */ }
-//                        ) {
-//                            Icon(
-//                                imageVector = Icons.Default.MoreVert,
-//                                contentDescription = stringResource(R.string.lift_menu)
-//                            )
-//                        }
-//
-//                        // drop down menu
-//                        DropdownMenu(
-//                            expanded = false, // TODO
-//                            onDismissRequest = { /* TODO */ }
-//                        ) {
-//                            // menu item for edit
-//                            DropdownMenuItem(
-//                                text = { Text(stringResource(R.string.edit)) },
-//                                onClick = { /* TODO */ }
-//                            )
-//                            // menu item for delete
-//                            DropdownMenuItem(
-//                                text = { Text(stringResource(R.string.delete)) },
-//                                onClick = { /* TODO */ }
-//                            )
-//                        }
-//                    }
-//                }
-//            }
-//        }
+        // add all lift cards here
+        for (lift in liftsUiState.liftList) {
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .defaultMinSize(minHeight = 40.dp),
+                onClick = { /* TODO: Lift Card click */ }
+            ) {
+                // Row to hold card contents (name/note on left, three dot menu on right)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp)
+                ) {
+                    // Column to hold name and note
+                    Column {
+                        // lift name
+                        Text(
+                            text = lift.name,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        // lift note (if applicable)
+                        if (lift.note.isNotBlank()) {
+                            Text(
+                                text = lift.note,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.outline
+                            )
+                        }
+                    }
+
+                    // box to hold 3 dot menu
+                    Box {
+                        // three dot icon
+                        IconButton(
+                            onClick = { /* TODO: lift menu click */ }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.MoreVert,
+                                contentDescription = stringResource(R.string.lift_menu)
+                            )
+                        }
+
+                        // drop down menu
+                        DropdownMenu(
+                            expanded = false, // TODO
+                            onDismissRequest = { /* TODO */ }
+                        ) {
+                            // menu item for edit
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.edit)) },
+                                onClick = { /* TODO */ }
+                            )
+                            // menu item for delete
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.delete)) },
+                                onClick = { /* TODO */ }
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 
     // add button outside of above column

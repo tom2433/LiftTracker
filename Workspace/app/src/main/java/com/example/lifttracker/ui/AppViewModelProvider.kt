@@ -19,21 +19,23 @@ import com.example.lifttracker.ui.viewModels.ToolsViewModel
  * Provides Factory to create instance of ViewModel for the entire LiftTracker App
  */
 object AppViewModelProvider {
+    fun liftsFactory(muscleGroupId: Int) = viewModelFactory {
+        initializer {
+            LiftsViewModel(
+                muscleGroupId = muscleGroupId,
+                liftRepository = liftTrackerApplication().container.liftRepository,
+                muscleGroupRepository = liftTrackerApplication().container.muscleGroupRepository,
+                unitRepository = liftTrackerApplication().container.unitRepository
+            )
+        }
+    }
+
     val Factory = viewModelFactory {
         // initializer for MuscleGroupsViewModel
         initializer {
             MuscleGroupsViewModel(
                 profileRepository = liftTrackerApplication().container.profileRepository,
                 muscleGroupRepository = liftTrackerApplication().container.muscleGroupRepository
-            )
-        }
-
-        // initializer for LiftsViewModel
-        initializer {
-            LiftsViewModel(
-                liftRepository = liftTrackerApplication().container.liftRepository,
-                muscleGroupRepository = liftTrackerApplication().container.muscleGroupRepository,
-                unitRepository = liftTrackerApplication().container.unitRepository
             )
         }
 

@@ -6,8 +6,6 @@ import com.example.lifttracker.data.Lift
 import com.example.lifttracker.data.LiftRepository
 import com.example.lifttracker.data.MuscleGroup
 import com.example.lifttracker.data.MuscleGroupRepository
-import com.example.lifttracker.data.Profile
-import com.example.lifttracker.data.ProfileRepository
 import com.example.lifttracker.data.Unit
 import com.example.lifttracker.data.UnitRepository
 import kotlinx.coroutines.delay
@@ -19,6 +17,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class LiftsViewModel(
+    private val muscleGroupId: Int,
     private val liftRepository: LiftRepository,
     private val muscleGroupRepository: MuscleGroupRepository,
     private val unitRepository: UnitRepository
@@ -28,7 +27,7 @@ class LiftsViewModel(
 
     // this function is used in place of the init {} block.
     // terrible coding practice, I know
-    fun initializeLiftList(muscleGroupId: Int) {
+    init {
         // retrieve all lifts belonging to the given muscle group
         viewModelScope.launch {
             // infinite collection
@@ -54,7 +53,7 @@ class LiftsViewModel(
             }
         }
 
-        // retrieve all units for this specific profile
+        // retrieve all units for all profiles (units are not unique to a profile)
         viewModelScope.launch {
             // infinite collection for units
             unitRepository.getAllUnitsStream().collect { units ->
@@ -165,7 +164,7 @@ class LiftsViewModel(
             // now insert the new lift from the user's inputs
             liftRepository.insertLift(
                 Lift(
-                    muscle_group_id = _liftsUiState.value.muscleGroup!!.id,
+                    muscle_group_id = muscleGroupId,
                     unit_id = liftUnit!!.id,
                     name = _liftsUiState.value.newLiftName,
                     metric_type = _liftsUiState.value.newLiftMetricType,
