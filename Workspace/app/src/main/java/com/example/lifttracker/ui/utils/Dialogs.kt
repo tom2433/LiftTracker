@@ -520,15 +520,6 @@ fun ShowLiftEntryDialog(
                         infoString = R.string.select_metric_type_sublabel
                     )
                 }
-
-//                // sub-label for selecting metric type
-//                Text(
-//                    text = stringResource(R.string.select_metric_type_sublabel),
-//                    style = MaterialTheme.typography.bodyMedium,
-//                    color = MaterialTheme.colorScheme.outline,
-//                    modifier = Modifier.padding(bottom = 16.dp)
-//                )
-
                 // radiobutton for reps option
                 Row(
                     modifier = Modifier
@@ -733,11 +724,13 @@ fun InfoButton(
     IconButton(
         onClick = {
             showDialog = true
-        }
+        },
+        modifier = modifier
     ) {
         Icon(
             imageVector = Icons.Filled.Info,
-            contentDescription = stringResource(R.string.info)
+            contentDescription = stringResource(R.string.info),
+            tint = MaterialTheme.colorScheme.outline
         )
     }
 

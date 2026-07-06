@@ -280,6 +280,40 @@ class LiftsViewModel(
             dismissLiftEntryDialog()
         }
     }
+
+    fun showDeleteLiftDialog(id: Int) {
+        _liftsUiState.update { currentState ->
+            if (id !in currentState.liftMap) {
+                return@update currentState
+            }
+
+            currentState.copy(
+                userIsDeletingLift = true,
+                liftToDelete = currentState.liftMap[id]!!.liftObj
+            )
+        }
+    }
+
+    fun dismissDeleteLiftDialog() {
+        _liftsUiState.update { currentState ->
+            currentState.copy(
+                userIsDeletingLift = false,
+                liftToDelete = null
+            )
+        }
+    }
+
+    fun deleteLift() {
+        viewModelScope.launch {
+            // delete lift from table
+            liftRepository.deleteLift(
+                lift = _liftsUiState.value.liftToDelete ?: return@launch
+            )
+
+            // dismiss the delete lift dialog
+            dismissDeleteLiftDialog()
+        }
+    }
 }
 
 data class LiftsUiState(
@@ -292,7 +326,9 @@ data class LiftsUiState(
     val newLiftUnitName: String = "",
     val userIsAddingLift: Boolean = false,
     val userIsEditingLift: Boolean = false,
-    val liftToEdit: Lift? = null
+    val userIsDeletingLift: Boolean = false,
+    val liftToEdit: Lift? = null,
+    val liftToDelete: Lift? = null
 )
 
 data class LiftDetail(

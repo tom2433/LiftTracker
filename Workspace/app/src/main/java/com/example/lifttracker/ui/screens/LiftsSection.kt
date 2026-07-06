@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.lifttracker.R
 import com.example.lifttracker.ui.AppViewModelProvider
+import com.example.lifttracker.ui.utils.ShowElementDeleteDialog
 import com.example.lifttracker.ui.utils.ShowLiftEntryDialog
 import com.example.lifttracker.ui.utils.ThreeDotMenu
 import com.example.lifttracker.ui.viewModels.LiftsViewModel
@@ -100,7 +101,9 @@ fun LiftSection(
                         onClickEdit = {
                             viewModel.showEditLiftDialog(liftId)
                         },
-                        onClickDelete = { /* TODO */ },
+                        onClickDelete = {
+                            viewModel.showDeleteLiftDialog(liftId)
+                        },
                         onDismissRequest = {
                             viewModel.threeDotMenuClicked(liftId)
                         }
@@ -201,6 +204,16 @@ fun LiftSection(
             onDismissRequest = {
                 viewModel.dismissLiftEntryDialog()
             },
+        )
+    }
+
+    if (liftsUiState.userIsDeletingLift) {
+        ShowElementDeleteDialog(
+            dialogTitle = "Delete '${liftsUiState.liftToDelete?.name ?: "null"}' from '${liftsUiState.muscleGroup?.name ?: "null"}'?",
+            warningDescription = R.string.delete_lift_warning,
+            deleteBtnText = R.string.delete_lift_btn_text,
+            onDismissRequest = { viewModel.dismissDeleteLiftDialog() },
+            onDelete = { viewModel.deleteLift() },
         )
     }
 }
