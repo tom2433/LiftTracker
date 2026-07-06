@@ -4,6 +4,12 @@ A prototype of the Lift Tracker project. This is an evolving document. Everythin
 
 ---
 
+# Immediate Notes
+
+- the descriptions in the lift entry dialog should be hidden behind an info button
+    - the descriptions take too long to read, also previous units should be shown in a grid format 
+    - entry screens should be read quickly since the user will be adding and editing the lifts often.
+
 # Development
 
 ## Features:
