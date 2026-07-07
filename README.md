@@ -73,10 +73,9 @@ A prototype of the Lift Tracker project. This is an evolving document. Everythin
             - color representing status of improving, maintaining, or declining
 7. (In Progress) When a muscle group card is clicked, it animates a dropdown container with cards representing all lifts for that muscle group (F6)
     - lifts should be shown in a grid format so that the user can easily reach the bottom add button.
-    - add a menu fab above the current add one that triggers the menu so the user can use the app with one thumb
     - Move the edit/delete buttons for the muscle group card to a 3-dot menu at the top right of the card itself, and replace the edit/delete button section with one big add lift button. Make this add lift button thinner too.
-    - figure out a way to make it so that the cursor can be moved around the text field and the text in the text field moves to the left to make room for the rest of the text.
-    - Clicking on a lift card will transition itself into a lift Dialog (LiftScreen) with all lift statistics.
+    - Clicking on a lift card will transition itself into a lift Dialog (LiftScreen) with all lift statistics. The three dot menu from the lift card will transform into a three dot menu on the lift screen which will allow the user to edit the lift and move it to a different muscle group.
+    - Lift Screen will also display the metric type and the unit of the lift.
     - Lift Statistics will include:
         - lifetime number of sets performed
         - lifetime number of sessions trained
@@ -92,7 +91,7 @@ A prototype of the Lift Tracker project. This is an evolving document. Everythin
             - color representing status of improving, maintaining, or declining.
             - a list of sessions of which the user has trained this lift. When the user clicks on the session, the app will navigate to the session's corresponding session screen.
         - all subject to change ^ see F6_lift-screen branch for updates.
-8. Implement Minimal Line Graphs for Muscle Group Cards and Lift Cards. Determine if this makes the Analytics page obsolete.
+8. Implement Minimal Line Graphs for Muscle Group Cards and Lift Cards. Determine if this makes the Analytics page obsolete (edit: it does not).
     - user must be able to change timeframe in preferences
     - show color representing status of improving, maintaining, or declining.
 
