@@ -1,0 +1,40 @@
+package github.tom2433.lifttracker.ui.screens
+
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
+import github.tom2433.lifttracker.R
+import github.tom2433.lifttracker.ui.AppViewModelProvider
+import github.tom2433.lifttracker.ui.navigation.NavigationDestination
+import github.tom2433.lifttracker.ui.viewModels.RecordSessionViewModel
+
+object RecordSessionDestination : NavigationDestination {
+    override val route = "recordSession"
+    override val titleRes = R.string.record_session_title
+}
+
+/**
+ * Entry route for Record session screen
+ */
+@Composable
+fun RecordSessionScreen(
+    modifier: Modifier = Modifier,
+    viewModel: RecordSessionViewModel = viewModel(factory = AppViewModelProvider.Factory)
+) {
+    val recordSessionUiState by viewModel.recordSessionUiState.collectAsState()
+
+    Box(
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = "Record Session needs to be implemented here."
+        )
+    }
+}
