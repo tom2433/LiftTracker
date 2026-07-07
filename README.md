@@ -14,6 +14,13 @@ A prototype of the Lift Tracker project. This is an evolving document. Everythin
 
 - look at viewmodelstore and viewmodelstoreowner
 
+## 07-07
+
+- increase size of lift note
+- eventually add a preferences table to store user preferences like setting a default unit.
+- gradually add these changes to the settings screen
+
+
 # Development
 
 ## Features:
