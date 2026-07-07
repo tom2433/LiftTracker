@@ -5,6 +5,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import github.tom2433.lifttracker.LiftTrackerApplication
+import github.tom2433.lifttracker.data.Lift
 import github.tom2433.lifttracker.ui.viewModels.LiftScreenViewModel
 import github.tom2433.lifttracker.ui.viewModels.AnalyticsViewModel
 import github.tom2433.lifttracker.ui.viewModels.CalendarViewModel
@@ -31,12 +32,13 @@ object AppViewModelProvider {
         }
     }
 
-    fun liftScreenFactory(liftId: Int) = viewModelFactory {
+    fun liftScreenFactory(lift: Lift) = viewModelFactory {
         initializer {
             LiftScreenViewModel(
-                liftId = liftId,
+                lift = lift,
                 liftRepository = liftTrackerApplication().container.liftRepository,
-                muscleGroupRepository = liftTrackerApplication().container.muscleGroupRepository
+                muscleGroupRepository = liftTrackerApplication().container.muscleGroupRepository,
+                unitRepository = liftTrackerApplication().container.unitRepository
             )
         }
     }

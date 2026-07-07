@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import github.tom2433.lifttracker.R
+import github.tom2433.lifttracker.data.Lift
 import github.tom2433.lifttracker.ui.AppViewModelProvider
 import github.tom2433.lifttracker.ui.utils.ShowElementDeleteDialog
 import github.tom2433.lifttracker.ui.utils.ShowLiftEntryDialog
@@ -41,7 +42,7 @@ import github.tom2433.lifttracker.ui.viewModels.LiftsViewModel
 @Composable
 fun LiftSection(
     muscleGroupId: Int,
-    goToLiftScreen: (Int) -> Unit,
+    goToLiftScreen: (Lift) -> Unit,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
     modifier: Modifier = Modifier,
@@ -73,7 +74,7 @@ fun LiftSection(
                             ),
                             animatedVisibilityScope = animatedVisibilityScope
                         ),
-                    onClick = { goToLiftScreen(liftId) }
+                    onClick = { goToLiftScreen(liftDetail.liftObj) }
                 ) {
                     // Row to hold card contents (name/note on left, three dot menu on right)
                     Row(

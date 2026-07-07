@@ -2,6 +2,7 @@ package github.tom2433.lifttracker.ui.viewModels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import github.tom2433.lifttracker.data.Lift
 import github.tom2433.lifttracker.data.MuscleGroupDetailData
 import github.tom2433.lifttracker.data.MuscleGroupRepository
 import github.tom2433.lifttracker.data.Profile
@@ -424,10 +425,10 @@ class MuscleGroupsViewModel(
         }
     }
 
-    fun openLiftScreen(id: Int) {
+    fun openLiftScreen(lift: Lift) {
         _muscleGroupsUiState.update { currentState ->
             currentState.copy(
-                liftScreenId = id
+                liftScreenLiftObj = lift
             )
         }
     }
@@ -435,7 +436,7 @@ class MuscleGroupsViewModel(
     fun dismissLiftScreen() {
         _muscleGroupsUiState.update { currentState ->
             currentState.copy(
-                liftScreenId = -1
+                liftScreenLiftObj = null
             )
         }
     }
@@ -455,7 +456,7 @@ data class MuscleGroupsUiState(
     val muscleGroupToEdit: MuscleGroup? = null,
     val muscleGroupToDelete: MuscleGroup? = null,
     val muscleGroupIdToDelete: Int = -1,
-    val liftScreenId: Int = -1
+    val liftScreenLiftObj: Lift? = null
 )
 
 data class MuscleGroupDetail(

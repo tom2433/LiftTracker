@@ -16,4 +16,6 @@ class OfflineMuscleGroupRepository(private val muscleGroupDao: MuscleGroupDao) :
     // This delegates the active-profile detail query to Room so every referenced table remains observable. - Codex
     override fun getAllMuscleGroupDetailDataForActiveProfileStream(): Flow<List<MuscleGroupDetailData>> =
         muscleGroupDao.getAllMuscleGroupDetailDataForActiveProfile()
+
+    override fun getMuscleGroupFromLiftIdStream(lift_id: Int): Flow<MuscleGroup?> = muscleGroupDao.getMuscleGroupFromLiftId(lift_id)
 }

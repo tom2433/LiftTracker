@@ -71,4 +71,14 @@ interface MuscleGroupDao {
         ORDER BY mg.id ASC
     """)
     fun getAllMuscleGroupDetailDataForActiveProfile(): Flow<List<MuscleGroupDetailData>>
+
+    @Query("""
+        SELECT mg.*
+        FROM muscle_groups AS mg
+        INNER JOIN lifts AS l
+            ON l.muscle_group_id = mg.id
+        WHERE l.id = :lift_id
+        LIMIT 1
+    """)
+    fun getMuscleGroupFromLiftId(lift_id: Int): Flow<MuscleGroup?>
 }

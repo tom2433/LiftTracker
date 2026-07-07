@@ -64,4 +64,5 @@
     <string name="lift_detail_menu">Lift Detail Menu</string>
     <string name="move_to_another_muscle_group">Move to another muscle group</string>
     <string name="close_lift_screen">Close Lift Screen</string>
+    <string name="muscle_group">Muscle Group</string>
 </resources>

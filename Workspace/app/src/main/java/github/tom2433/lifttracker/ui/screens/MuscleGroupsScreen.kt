@@ -60,6 +60,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import github.tom2433.lifttracker.R
+import github.tom2433.lifttracker.data.Lift
 import github.tom2433.lifttracker.data.Profile
 import github.tom2433.lifttracker.ui.AppViewModelProvider
 import github.tom2433.lifttracker.ui.navigation.NavigationDestination
@@ -96,9 +97,9 @@ fun MuscleGroupsScreen(
     // and the transition animation functionality is hoisted to this screen.
     SharedTransitionLayout {
         AnimatedContent(
-            targetState = muscleGroupsUiState.liftScreenId
-        ) { liftId ->
-            if (liftId == -1) {
+            targetState = muscleGroupsUiState.liftScreenLiftObj
+        ) { liftObj ->
+            if (liftObj == null) {
                 MuscleGroupsScreenContent(
                     viewModel = viewModel,
                     muscleGroupsUiState = muscleGroupsUiState,
@@ -118,7 +119,7 @@ fun MuscleGroupsScreen(
                 }
             } else {
                 LiftScreen(
-                    liftId = liftId,
+                    lift = liftObj,
                     onBackPressed = {
                         viewModel.dismissLiftScreen()
                     },
@@ -135,7 +136,7 @@ fun MuscleGroupsScreenContent(
     viewModel: MuscleGroupsViewModel,
     muscleGroupsUiState: MuscleGroupsUiState,
     layoutDirection: LayoutDirection,
-    goToLiftScreen: (Int) -> Unit,
+    goToLiftScreen: (Lift) -> Unit,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
     animateInitialEntry: Boolean,

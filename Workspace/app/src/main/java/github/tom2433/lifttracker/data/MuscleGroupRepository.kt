@@ -11,4 +11,6 @@ interface MuscleGroupRepository {
 
     // This stream exposes the reactive database aggregates used to calculate muscle-group details. - Codex
     fun getAllMuscleGroupDetailDataForActiveProfileStream(): Flow<List<MuscleGroupDetailData>>
+
+    fun getMuscleGroupFromLiftIdStream(lift_id: Int): Flow<MuscleGroup?>
 }
