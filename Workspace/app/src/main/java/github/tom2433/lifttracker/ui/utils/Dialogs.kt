@@ -54,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import github.tom2433.lifttracker.R
+import github.tom2433.lifttracker.data.MuscleGroup
 import kotlinx.coroutines.delay
 
 @Composable
@@ -645,6 +646,107 @@ fun ShowLiftEntryDialog(
                         .padding(bottom = 32.dp)
                         .fillMaxWidth()
                 )
+
+                // divider
+                HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
+
+                // button to submit element
+                Button(
+                    onClick = onSubmit,
+                    enabled = buttonEnabled,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
+                ) {
+                    Text(submitBtnText)
+                }
+
+                // button to dismiss dialog
+                OutlinedButton(
+                    onClick = onDismissRequest,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ShowMuscleGroupSelectionDialog(
+    dialogTitle: String,
+    onDismissRequest: () -> Unit,
+    muscleGroupList: List<MuscleGroup>,
+    onMuscleGroupSelected: (MuscleGroup) -> Unit,
+    selectedMuscleGroup: MuscleGroup?,
+    onSubmit: () -> Unit,
+    buttonEnabled: Boolean,
+    submitBtnText: String,
+    modifier: Modifier = Modifier
+) {
+    Dialog(
+        onDismissRequest = onDismissRequest,
+        properties = DialogProperties(
+            dismissOnBackPress = true,
+            dismissOnClickOutside = true
+        )
+    ) {
+        Card(
+            modifier = modifier
+                .wrapContentSize()
+                .padding(4.dp),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            // column to hold card contents
+            Column(
+                modifier = Modifier
+                    .wrapContentHeight()
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.Start
+            ) {
+                // title
+                Text(
+                    text = dialogTitle,
+                    style = MaterialTheme.typography.titleLarge,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .padding(bottom = 16.dp)
+                        .fillMaxWidth()
+                )
+
+                // divider
+                HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
+
+                // list of muscle group radiobuttons
+                for (muscleGroup in muscleGroupList) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .selectable(
+                                selected = (selectedMuscleGroup?.id ?: -1) == muscleGroup.id,
+                                onClick = { onMuscleGroupSelected(muscleGroup) },
+                                role = Role.RadioButton
+                            ),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = (selectedMuscleGroup?.id ?: -1) == muscleGroup.id,
+                            onClick = null
+                        )
+                        Text(
+                            text = muscleGroup.name,
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.padding(start = 16.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
 
                 // divider
                 HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))

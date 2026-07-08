@@ -96,7 +96,11 @@ class LiftScreenViewModel(
             // retrieve the one muscle group that this lift belongs to
             // infinite collection, this muscle group object will always reflect updates
             // in the event that the user moves this lift to a different muscle group
-            muscleGroupRepository.getMuscleGroupFromLiftIdStream(lift.id)
+            liftRepository.getLiftStream(lift.id)
+                .filterNotNull()
+                .flatMapLatest { updatedLift ->
+                    muscleGroupRepository.getMuscleGroupStream(updatedLift.muscle_group_id)
+                }
                 .collect { thisMuscleGroup ->
                     _liftScreenUiState.update { currentState ->
                         currentState.copy(
@@ -232,6 +236,55 @@ class LiftScreenViewModel(
             )
         }
     }
+
+    fun openSwitchMuscleGroupDialog() {
+        _liftScreenUiState.update { currentState ->
+            currentState.copy(
+                userIsSwitchingMuscleGroup = true,
+                selectedMuscleGroup = currentState.muscleGroup
+            )
+        }
+    }
+
+    fun closeSwitchMuscleGroupDialog() {
+        _liftScreenUiState.update { currentState ->
+            currentState.copy(
+                userIsSwitchingMuscleGroup = false,
+                selectedMuscleGroup = null
+            )
+        }
+    }
+
+    fun selectMuscleGroup(muscleGroupToSelect: MuscleGroup) {
+        _liftScreenUiState.update { currentState ->
+            currentState.copy(
+                selectedMuscleGroup = muscleGroupToSelect
+            )
+        }
+    }
+
+    fun validateSwitchMuscleGroupDialog(): Boolean {
+        return (_liftScreenUiState.value.selectedMuscleGroup != null
+                && _liftScreenUiState.value.selectedMuscleGroup != _liftScreenUiState.value.muscleGroup)
+    }
+
+    fun submitSwitchMuscleGroupDialog() {
+        if (!validateSwitchMuscleGroupDialog()) {
+            return
+        }
+
+        viewModelScope.launch {
+            // update the lift in the database with the new muscle group FK
+            liftRepository.updateLift(
+                lift = _liftScreenUiState.value.lift.copy(
+                    muscle_group_id = _liftScreenUiState.value.selectedMuscleGroup!!.id
+                )
+            )
+
+            // close the dialog
+            closeSwitchMuscleGroupDialog()
+        }
+    }
 }
 
 data class LiftScreenUiState(
@@ -248,7 +301,9 @@ data class LiftScreenUiState(
     val newLiftNote: String = "",
     val newLiftMetricType: Int = -1,
     val newLiftUnitName: String = "",
-    val unitList: List<Unit> = listOf()
+    val unitList: List<Unit> = listOf(),
+    val userIsSwitchingMuscleGroup: Boolean = false,
+    val selectedMuscleGroup: MuscleGroup? = null
 )
 
 data class LiftScreenDetail(

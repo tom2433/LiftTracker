@@ -53,6 +53,7 @@ import github.tom2433.lifttracker.data.Lift
 import github.tom2433.lifttracker.ui.AppViewModelProvider
 import github.tom2433.lifttracker.ui.utils.ShowLiftEntryDialog
 import github.tom2433.lifttracker.ui.utils.ThreeDotMenu
+import github.tom2433.lifttracker.ui.utils.ShowMuscleGroupSelectionDialog
 import github.tom2433.lifttracker.ui.viewModels.LiftScreenViewModel
 
 @Composable
@@ -197,7 +198,8 @@ fun LiftScreen(
                                 viewModel.closeThreeDotMenu()
                             },
                             onClickElement2 = {
-                                viewModel.closeThreeDotMenu() // TODO
+                                viewModel.openSwitchMuscleGroupDialog()
+                                viewModel.closeThreeDotMenu()
                             },
                             onDismissRequest = {
                                 viewModel.closeThreeDotMenu()
@@ -329,6 +331,23 @@ fun LiftScreen(
             onUnitValueChanged = { viewModel.updateUnit(it) },
             onSubmit = { viewModel.updateLift() },
             onDismissRequest = { viewModel.closeLiftEditDialog() }
+        )
+    }
+
+    if (liftScreenUiState.userIsSwitchingMuscleGroup) {
+        ShowMuscleGroupSelectionDialog(
+            dialogTitle = "Move ${liftScreenUiState.lift.name} To Another Muscle Group",
+            onDismissRequest = { viewModel.closeSwitchMuscleGroupDialog() },
+            muscleGroupList = liftScreenUiState.muscleGroups,
+            onMuscleGroupSelected = {
+                viewModel.selectMuscleGroup(
+                    muscleGroupToSelect = it
+                )
+            },
+            selectedMuscleGroup = liftScreenUiState.selectedMuscleGroup,
+            onSubmit = { viewModel.submitSwitchMuscleGroupDialog() },
+            buttonEnabled = viewModel.validateSwitchMuscleGroupDialog(),
+            submitBtnText = "Move ${liftScreenUiState.lift.name} to ${liftScreenUiState.selectedMuscleGroup?.name ?: "null"}",
         )
     }
 }
