@@ -30,6 +30,13 @@ A prototype of the Lift Tracker project. This is an evolving document. Everythin
 
 - also get data from Textlifttracker and convert it.
 
+## 07-08
+
+- modify the info dialogs for the add/edit lift to be more descriptive
+- ask codex how to make everything less laggy
+- try to make lift screen take up the entire screen
+- bring back entry animation for muscle group cards
+
 
 # Development
 
