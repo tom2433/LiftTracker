@@ -114,8 +114,10 @@ fun MuscleGroupsScreen(
                     modifier = modifier
                 )
 
-                LaunchedEffect(Unit) {
-                    hasPlayedInitialAnimation = true
+                LaunchedEffect(muscleGroupsUiState.muscleGroupList.isNotEmpty()) {
+                    if (!hasPlayedInitialAnimation && muscleGroupsUiState.muscleGroupList.isNotEmpty()) {
+                        hasPlayedInitialAnimation = true
+                    }
                 }
             } else {
                 LiftScreen(

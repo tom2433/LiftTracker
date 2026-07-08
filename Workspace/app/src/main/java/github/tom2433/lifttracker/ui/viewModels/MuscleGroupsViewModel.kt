@@ -3,17 +3,13 @@ package github.tom2433.lifttracker.ui.viewModels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import github.tom2433.lifttracker.data.Lift
+import github.tom2433.lifttracker.data.MuscleGroup
 import github.tom2433.lifttracker.data.MuscleGroupDetailData
 import github.tom2433.lifttracker.data.MuscleGroupRepository
 import github.tom2433.lifttracker.data.Profile
 import github.tom2433.lifttracker.data.ProfileRepository
-import github.tom2433.lifttracker.data.MuscleGroup
+import github.tom2433.lifttracker.data.utils.DateCalculator
 import kotlinx.coroutines.delay
-import java.text.ParsePosition
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import java.util.TimeZone
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -48,7 +44,7 @@ class MuscleGroupsViewModel(
             // Collect the aggregate rows as a Flow so Room recalculates them whenever any referenced table changes. - Codex
             muscleGroupRepository.getAllMuscleGroupDetailDataForActiveProfileStream().collect { detailData ->
                 // Capture today once per database emission so every card uses the same rolling-week boundary. - Codex
-                val today = getCurrentIsoDate()
+                val today = DateCalculator.getCurrentIsoDate()
 
                 // Publish the newly calculated immutable list so Compose can react to the database change. - Codex
                 _muscleGroupsUiState.update { currentState ->
@@ -130,7 +126,7 @@ class MuscleGroupsViewModel(
         today: String
     ): MuscleGroupDetail {
         // The rolling averages include the current seven-day bucket and every bucket back through the first session. - Codex
-        val numWeeks = calculateNumWeeks(data.firstDateTrained, today)
+        val numWeeks = DateCalculator.calculateNumWeeks(data.firstDateTrained, today)
 
         // A muscle group without sessions has no per-session divisor, so its average is defined as zero. - Codex
         val avgNumSetsPerSession = if (data.numSessions == 0) {
@@ -157,116 +153,8 @@ class MuscleGroupsViewModel(
             avgNumSetsPerSession = avgNumSetsPerSession,
             avgNumSetsPerWeek = data.numSets.toDouble() / numWeeks,
             avgNumRepsPerSet = avgNumRepsPerSet,
-            lastDateTrained = formatLastDateTrained(data.lastDateTrained, today)
+            lastDateTrained = DateCalculator.formatLastDateTrained(data.lastDateTrained, today)
         )
-    }
-
-    // This counts rolling seven-day buckets whose final day is today rather than using calendar weeks. - Codex
-    private fun calculateNumWeeks(firstDateTrained: String?, today: String): Double {
-        // An untrained muscle group still includes the current week, which keeps both weekly averages at zero. - Codex
-        if (firstDateTrained == null) {
-            return 1.0
-        }
-
-        // Invalid legacy dates fall back to the current week instead of crashing collection of the Room Flow. - Codex
-        val daysSinceFirstSession = calculateDaysBetween(firstDateTrained, today) ?: return 1.0
-
-        // Dividing by seven assigns today through today minus six to the current week, then adds that current week. - Codex
-        return (daysSinceFirstSession.coerceAtLeast(0L) / DAYS_PER_WEEK + 1L).toDouble()
-    }
-
-    // This translates the latest ISO date into the requested relative training-date category. - Codex
-    private fun formatLastDateTrained(lastDateTrained: String?, today: String): String {
-        // A null date means no set belonging to this muscle group has ever been recorded. - Codex
-        if (lastDateTrained == null) {
-            return "N/A"
-        }
-
-        // A malformed legacy date cannot be categorized reliably, so it is treated as unavailable. - Codex
-        val calculatedDaysAgo = calculateDaysBetween(lastDateTrained, today) ?: return "N/A"
-
-        // Future dates are clamped to today because the requested categories only describe elapsed time. - Codex
-        val daysAgo = calculatedDaysAgo.coerceAtLeast(0L)
-
-        // Categorize recent dates by day, then exact/partial weeks, then exact/partial four-week months. - Codex
-        return when {
-            daysAgo == 0L -> "Today"
-            daysAgo == 1L -> "Yesterday"
-            daysAgo < DAYS_PER_WEEK -> "$daysAgo days ago"
-            daysAgo < DAYS_PER_MONTH -> formatElapsedUnit(daysAgo, DAYS_PER_WEEK, "week")
-            daysAgo < DAYS_PER_YEAR -> formatElapsedUnit(daysAgo, DAYS_PER_MONTH, "month")
-            daysAgo == DAYS_PER_YEAR -> "1 year ago"
-            else -> "Over 1 year ago"
-        }
-    }
-
-    // This formats exact boundaries as "2 weeks ago" and in-between values as "Over 2 weeks ago". - Codex
-    private fun formatElapsedUnit(daysAgo: Long, daysPerUnit: Long, unitName: String): String {
-        // Integer division gives the number of fully completed units in the elapsed period. - Codex
-        val completedUnits = daysAgo / daysPerUnit
-
-        // Add a plural suffix for every count other than one. - Codex
-        val displayUnit = if (completedUnits == 1L) unitName else "${unitName}s"
-
-        // A remainder means the date is beyond the exact unit boundary but has not reached the next one. - Codex
-        return if (daysAgo % daysPerUnit == 0L) {
-            "$completedUnits $displayUnit ago"
-        } else {
-            "Over $completedUnits $displayUnit ago"
-        }
-    }
-
-    // This returns the number of whole date boundaries between two strict ISO-8601 calendar dates. - Codex
-    private fun calculateDaysBetween(olderDate: String, newerDate: String): Long? {
-        // Parse date-only values in UTC so daylight-saving transitions cannot create fractional days. - Codex
-        val olderEpochDay = parseIsoDateToEpochDay(olderDate) ?: return null
-        val newerEpochDay = parseIsoDateToEpochDay(newerDate) ?: return null
-
-        // Subtracting epoch-day values produces an exact calendar-day difference. - Codex
-        return newerEpochDay - olderEpochDay
-    }
-
-    // This parses one yyyy-MM-dd value into an epoch-day number without requiring API 26 java.time classes. - Codex
-    private fun parseIsoDateToEpochDay(date: String): Long? {
-        // A fresh formatter is used because SimpleDateFormat is mutable and not thread-safe. - Codex
-        val formatter = createIsoDateFormatter()
-
-        // The parse position check rejects values that contain extra characters after a valid date prefix. - Codex
-        val parsePosition = ParsePosition(0)
-        val parsedDate = formatter.parse(date, parsePosition)
-
-        // Strict parsing and full input consumption guarantee the database value is a valid ISO date. - Codex
-        if (parsedDate == null || parsePosition.index != date.length) {
-            return null
-        }
-
-        // UTC midnight milliseconds divide evenly into whole epoch days. - Codex
-        return parsedDate.time / MILLIS_PER_DAY
-    }
-
-    // This produces today's local calendar date in the same ISO-8601 format used by lift_days.date. - Codex
-    private fun getCurrentIsoDate(): String {
-        // Formatting in the device time zone ensures "Today" follows the user's local calendar day. - Codex
-        val localFormatter = SimpleDateFormat(ISO_DATE_PATTERN, Locale.US)
-        return localFormatter.format(Date())
-    }
-
-    // This creates the strict UTC formatter shared by the date-difference calculations. - Codex
-    private fun createIsoDateFormatter(): SimpleDateFormat {
-        // UTC makes date-only arithmetic independent of the device's daylight-saving rules. - Codex
-        return SimpleDateFormat(ISO_DATE_PATTERN, Locale.US).apply {
-            isLenient = false
-            timeZone = TimeZone.getTimeZone("UTC")
-        }
-    }
-
-    private companion object {
-        // These constants define the rolling date buckets requested for the detail calculations. - Codex
-        const val ISO_DATE_PATTERN = "yyyy-MM-dd"
-        const val MILLIS_PER_DAY = 86_400_000L
-        const val DAYS_PER_WEEK = 7L
-        const val DAYS_PER_MONTH = 28L
-        const val DAYS_PER_YEAR = 12L * DAYS_PER_MONTH
     }
 
     fun muscleGroupCardClicked(id: Int) {

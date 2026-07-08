@@ -287,6 +287,43 @@ class LiftScreenViewModel(
     }
 }
 
+/**
+last date trained
+
+Past Month:
+total number of sets performed
+average number of sets per session (only including sessions in which the lift was trained)
+% of overall set volume
+% of set volume for this muscle group
+average weight per set (with unit)
+average number of reps per set (or avg time per set)
+
+Past Year:
+number of sets performed
+average number of sets per session (only including sessions in which the lift was trained)
+% of overall set volume
+% of set volume for this muscle group
+average weight with unit
+average number of reps per set (or avg time per set)
+
+Lifetime:
+number of sets performed
+average number of sets per session (only including sessions in which the lift was trained)
+% of overall set volume
+% of set volume for this muscle group
+average weight with unit
+average number of reps per set (or avg time per set)
+
+StatMap example:
+ - "Total # of sets performed" -> "10 sets"
+ - "Avg. # of sets per session" -> "2 sets/session"
+ - "% of overall set volume" -> "10 %"
+ - "% of set volume for Legs" -> "25 %"
+ - "Avg. weight" -> "135 pounds"
+ - "Avg. # of reps" -> "8 reps" ~or~ "Avg. time" -> "1:30"
+
+
+ */
 data class LiftScreenUiState(
     val lift: Lift,
     val liftScreenDetail: LiftScreenDetail = LiftScreenDetail(

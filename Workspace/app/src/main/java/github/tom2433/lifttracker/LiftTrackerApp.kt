@@ -23,6 +23,8 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -73,7 +75,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.BeyondBoundsLayout
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
@@ -83,6 +87,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.room.util.copy
 import github.tom2433.lifttracker.ui.AppViewModelProvider
 import github.tom2433.lifttracker.ui.navigation.LiftTrackerNavHost
 import github.tom2433.lifttracker.ui.screens.AnalyticsDestination
@@ -107,6 +112,7 @@ import kotlin.math.roundToInt
 fun LiftTrackerApp(navController: NavHostController = rememberNavController()) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+    val layoutDirection = LocalLayoutDirection.current
 
     val titleRes = when (currentRoute) {
         github.tom2433.lifttracker.ui.screens.MuscleGroupsDestination.route -> github.tom2433.lifttracker.ui.screens.MuscleGroupsDestination.titleRes
@@ -131,7 +137,14 @@ fun LiftTrackerApp(navController: NavHostController = rememberNavController()) {
     ) { innerPadding ->
         LiftTrackerNavHost(
             navController = navController,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(
+                paddingValues = PaddingValues(
+                    top = innerPadding.calculateTopPadding(),
+                    start = innerPadding.calculateStartPadding(layoutDirection),
+                    bottom = 0.dp,
+                    end = innerPadding.calculateEndPadding(layoutDirection)
+                )
+            )
         )
     }
 }
