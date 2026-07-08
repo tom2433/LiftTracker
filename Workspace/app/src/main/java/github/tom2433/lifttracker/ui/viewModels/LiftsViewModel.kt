@@ -258,9 +258,6 @@ class LiftsViewModel(
                     )
                 )
 
-                // wait for unit to be added
-                delay(100)
-
                 liftUnit = unitRepository.getUnitFromNameStream(_liftsUiState.value.newLiftUnitName).firstOrNull()
             }
 

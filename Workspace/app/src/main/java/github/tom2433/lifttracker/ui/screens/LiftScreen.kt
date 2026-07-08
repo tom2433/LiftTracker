@@ -51,6 +51,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import github.tom2433.lifttracker.R
 import github.tom2433.lifttracker.data.Lift
 import github.tom2433.lifttracker.ui.AppViewModelProvider
+import github.tom2433.lifttracker.ui.utils.ShowLiftEntryDialog
 import github.tom2433.lifttracker.ui.utils.ThreeDotMenu
 import github.tom2433.lifttracker.ui.viewModels.LiftScreenViewModel
 
@@ -192,7 +193,8 @@ fun LiftScreen(
                                 viewModel.openThreeDotMenu()
                             },
                             onClickElement1 = {
-                                viewModel.closeThreeDotMenu() // TODO
+                                viewModel.openLiftEditDialog()
+                                viewModel.closeThreeDotMenu()
                             },
                             onClickElement2 = {
                                 viewModel.closeThreeDotMenu() // TODO
@@ -301,33 +303,32 @@ fun LiftScreen(
                                     )
                                 }
                             }
-
-//                            // rows for muscle group, metric type, and unit type
-//                            // Row for muscle group
-//                            IconStatRow(
-//                                painter = painterResource(R.drawable.ic_arm_flex),
-//                                contentDescription = stringResource(R.string.muscle_group),
-//                                value = liftScreenUiState.muscleGroup?.name ?: "null",
-//                                modifier = Modifier.padding(bottom = 8.dp)
-//                            )
-//
-//                            // row for metric type
-//                            IconStatRow(
-//                                painter = painterResource(R.drawable.ic_ruler),
-//                                contentDescription = stringResource(R.string.metric_type),
-//                                value = liftScreenUiState.liftScreenDetail.metricType
-//                            )
-//
-//                            // row for units
-//                            IconStatRow(
-//                                imageVector = Icons.Filled.Scale,
-//                                contentDescription = stringResource(R.string.unit),
-//                                value = liftScreenUiState.liftScreenDetail.unitName
-//                            )
                         }
                     }
                 }
             }
         }
+    }
+
+    if (liftScreenUiState.userIsEditingLift) {
+        // show edit lift dialog
+        ShowLiftEntryDialog(
+            dialogTitle = "Edit '${liftScreenUiState.lift.name}' in ${liftScreenUiState.muscleGroup?.name ?: "null"}",
+            submitBtnText = stringResource(R.string.update_lift),
+            buttonEnabled = viewModel.validateLift(),
+            newLiftName = liftScreenUiState.newLiftName,
+            newLiftNote = liftScreenUiState.newLiftNote,
+            newLiftUnitName = liftScreenUiState.newLiftUnitName,
+            onLiftNameValueChanged = { viewModel.updateLiftName(it) },
+            onLiftNoteValueChanged = { viewModel.updateLiftNote(it) },
+            repsSelected = liftScreenUiState.newLiftMetricType == 1,
+            onRepsSelected = { viewModel.selectReps() },
+            timeSelected = liftScreenUiState.newLiftMetricType == 2,
+            onTimeSelected = { viewModel.selectTime() },
+            unitList = liftScreenUiState.unitList,
+            onUnitValueChanged = { viewModel.updateUnit(it) },
+            onSubmit = { viewModel.updateLift() },
+            onDismissRequest = { viewModel.closeLiftEditDialog() }
+        )
     }
 }
