@@ -1,18 +1,21 @@
 # LiftTracker
 
-A prototype of the Lift Tracker project. This is an evolving document. Everything in here is subject to change.
+A Data Vis project developed using Jetpack Compose.
 
 ---
 
 # Immediate Notes
 
-- the descriptions in the lift entry dialog should be hidden behind an info button
-    - the descriptions take too long to read, also previous units should be shown in a grid format 
-    - entry screens should be read quickly since the user will be adding and editing the lifts often.
+## 07-09
 
-- read the codex suggestions on how to use a key for lifts view model so it is able to be copied and recomposed.
+- edit the profile note color on the switch profile nav drawer dropdown element to improve readability issues due to contrast.
 
-- look at viewmodelstore and viewmodelstoreowner
+## 07-08
+
+- modify the info dialogs for the add/edit lift to be more descriptive
+- ask codex how to make everything less laggy
+- try to make lift screen take up the entire screen
+- bring back entry animation for muscle group cards
 
 ## 07-07
 
@@ -30,23 +33,26 @@ A prototype of the Lift Tracker project. This is an evolving document. Everythin
 
 - also get data from Textlifttracker and convert it.
 
-## 07-08
+## 07-06
 
-- modify the info dialogs for the add/edit lift to be more descriptive
-- ask codex how to make everything less laggy
-- try to make lift screen take up the entire screen
-- bring back entry animation for muscle group cards
+- the descriptions in the lift entry dialog should be hidden behind an info button
+    - the descriptions take too long to read, also previous units should be shown in a grid format
+    - entry screens should be read quickly since the user will be adding and editing the lifts often.
+
+- read the codex suggestions on how to use a key for lifts view model so it is able to be copied and recomposed.
+
+- look at viewmodelstore and viewmodelstoreowner
 
 
 # Development
 
 ## Features:
 
-1. (Completed) Backend database design (F1)
+- [x] F1: Backend database design
     - Add a set metric for time, in addition to weight and reps
     - Ensure that the viewModels have access to the database
     - Check if a user profile exists. If none do, then prompt the user to create one.
-2. (Completed) Menu drawer with basic elements (F2):
+- [x] F2: Menu drawer with basic elements:
     - Begin Session
     - Muscle Groups
     - Sessions
@@ -56,14 +62,14 @@ A prototype of the Lift Tracker project. This is an evolving document. Everythin
     - Analytics
     - Tools
     - Settings
-3. (Completed) Map menu drawer items with screens where applicable (F2-1)
-5. (Maybe) Animate hamburger menu so that it travels and rotates into an arrow (F2-3)
-4. Colorscheme (F3):
+- [x] F2-1: Map menu drawer items with screens where applicable
+- [ ] F2-3: (Maybe) Animate hamburger menu so that it travels and rotates into an arrow
+- [ ] F3: Colorscheme:
     - Default to preset colorscheme
     - Toggle dynamic color
     - Toggle Dark theme
-5. (Completed) Implement Switch Profile functionality (F4)
-6. (Completed) Allow user to add, edit, and delete muscle groups in the muscle groups screen. (F5)
+- [x] F4: Implement Switch Profile functionality
+- [x] F5: Allow user to add, edit, and delete muscle groups in the muscle groups screen.
     - each muscle group will be displayed as a card.
     - each card will display the muscle group name and note, as well as the following:
         - number of lifts created
@@ -78,48 +84,43 @@ A prototype of the Lift Tracker project. This is an evolving document. Everythin
         - eventually:
             - a minimal line graph showing average progress over time (user can change timeframe in preferences)
             - color representing status of improving, maintaining, or declining
-7. (In Progress) When a muscle group card is clicked, it animates a dropdown container with cards representing all lifts for that muscle group (F6)
-    - lifts should be shown in a grid format so that the user can easily reach the bottom add button.
+- [x] F6: When a muscle group card is clicked, it animates a dropdown container with cards representing all lifts for that muscle group
+    - lifts should be shown in a flow row so that the user can easily reach the bottom add button.
     - Move the edit/delete buttons for the muscle group card to a 3-dot menu at the top right of the card itself, and replace the edit/delete button section with one big add lift button. Make this add lift button thinner too.
-    - Clicking on a lift card will transition itself into a lift Dialog (LiftScreen) with all lift statistics. The three dot menu from the lift card will transform into a three dot menu on the lift screen which will allow the user to edit the lift and move it to a different muscle group.
-    - Lift Screen will also display the metric type and the unit of the lift.
-    - Lift Statistics will include:
-        - lifetime number of sets performed
-        - lifetime number of sessions trained
-        - lifetime average weight
-        - average weight from past month
-        - average weight from past year
-        - average number of reps per set
-        - last date trained (today, yesterday, two days ago, three, six, 1 week, over 1 week, one month, over 1 month, two months...)
-        - button to edit
-        - button to delete
-        - eventually:
-            - a minimal line graph showing average progress over time (user can change timeframe in preferences)
-            - color representing status of improving, maintaining, or declining.
-            - a list of sessions of which the user has trained this lift. When the user clicks on the session, the app will navigate to the session's corresponding session screen.
-        - all subject to change ^ see F6_lift-screen branch for updates.
-8. Implement Minimal Line Graphs for Muscle Group Cards and Lift Cards. Determine if this makes the Analytics page obsolete (edit: it does not).
+    - Clicking on a lift card will transition itself into a LiftScreen with all lift statistics. The three dot menu from the lift card will transform into a three dot menu on the lift screen which will allow the user to edit the lift and move it to a different muscle group.
+    - Lift Screen will include:
+        - Lift name and note
+        - Lift's muscle group, metric type (reps/time), unit name (user-defined)
+        - last date trained (today, yesterday, 2 days ago, etc.)
+        - Filter chips for preset time frames of Past Month, Past Year, and Lifetime including the following data:
+            - total # of sets performed
+            - avg. # of sets per session
+            - % of overall set volume
+            - % of set volume for the muscle group
+            - Avg. weight
+            - Avg. # of reps per set \~or\~ Avg. time per set
+- [ ] F7: Implement Minimal Line Graphs for Muscle Group Cards and Lift Cards.
     - user must be able to change timeframe in preferences
     - show color representing status of improving, maintaining, or declining.
-9. F6-1: Implement a [date range picker](https://developer.android.com/develop/ui/compose/components/datepickers#range) so the user can specify a custom range to view the lift statistics
+- [ ] F6-1: Implement a [date range picker](https://developer.android.com/develop/ui/compose/components/datepickers#range) so the user can specify a custom range to view the lift statistics
+- [ ] F6-2: Implement the most recent lift sets at the bottom of LiftScreen
+- [ ] F6-3: Replace the "% of overall set volume" and "% of set volume for {muscleGroup}" with pie charts
+- [ ] F8: Implement the Record Session screen
 
-# Basic Structure
+### Misc. things to do:
 
-3 main sections:
+- [ ] edit the profile note color on the switch profile nav drawer dropdown element to improve readability issues due to contrast.
+- [ ] change the name of the ```units``` table to ```lift_units``` to avoid confusion with Kotlin's ```Unit``` type.
 
-- View/edit/add all data in the database
-- Data analysis tab (view day summaries, add more sub-tabs for further analysis)
-- Workout logger
-
-## Data Structure
+# Data Structure
 
 All data is stored in lifting_data.db. Below is the structure of this data.
 
-### Tables
+## Tables
 
-#### ```lift_days```
+### ```lift_days```
 
-The purpose of the ```lift_days``` table is to keep track of all the days that the user has logged.
+The purpose of the ```lift_days``` table is to keep track of all the days that the user has logged. A single lift_day is considered to be one single session for this current version, although the user may be able to record multiple "lift_days" on one single calendar day.
 
 The ```lift_days``` table has 5 columns:
 
@@ -130,7 +131,7 @@ The ```lift_days``` table has 5 columns:
 - ```date``` (TEXT): The date of the day that the session was recorded in ISO-8601 format: YYYY-MM-DD
 - ```note``` (TEXT): a user-written note for the day, may be blank
 
-#### ```lift_sets```
+### ```lift_sets```
 
 The purpose of the ```lift_sets``` table is to keep track of all sets that the user has completed. It also links each set with the specific lift that was trained, and the day that the user completed the set on.
 
@@ -144,7 +145,7 @@ The ```lift_sets``` table has 6 columns:
 - ```set_label``` (TEXT): just a string containing the name of the set (e.g., ```"Set 1"```, ```"Set 2"```, ```"Set 3"```, etc. as default). The user may be able to change this label in future versions.
 - ```set_note``` (TEXT): a user-written note for the set, may be blank
 
-#### ```lifts```
+### ```lifts```
 
 The purpose of the ```lifts``` table is to store the names of all the different user-created lifts and link them to their corresponding muscle groups.
 
@@ -157,7 +158,7 @@ The ```lifts``` table has 4 columns:
 - ```metric_type``` (INTEGER): Int indicating if the lift will be measured in reps (1) or time (2). If the metric type is time, then the unit_id will be overridden.
 - ```note``` (TEXT): a user-written note for the lift, may be blank
 
-#### ```muscle_groups```
+### ```muscle_groups```
 
 The purpose of the ```muscle_groups``` table is to store the user-generated names for all the muscle groups and link them to their corresponding profile.
 
@@ -168,7 +169,7 @@ The ```muscle_groups``` table has 4 columns:
 - ```name``` (TEXT): the user-specified name for the muscle group.
 - ```note``` (TEXT): a user-written note for the muscle group, may be blank.
 
-#### ```set_metrics```
+### ```set_metrics```
 
 The purpose of the ```set_metrics``` table is to store all of the user's set metrics (weight and rep data) and link them to their corresponding set (which is linked to the corresponding lift and the corresponding day via foreign keys).
 
@@ -180,7 +181,7 @@ The ```set_metrics``` table has 6 columns:
 - ```value``` (REAL): this indicates the number of reps performed, the weight value, or the time value for the specific set. Time values will be stored as doubles representing minutes, e.g. 1 minute and 30 seconds = 1.5 minutes
 - ```note``` (TEXT): a user-written note for the metric, may be blank.
 
-#### ```profiles```
+### ```profiles```
 
 The purpose of the ```profiles``` table is to store the names of all the profiles that the user has created. The profile is linked to its data via the ```muscle_groups``` table.
 
@@ -191,7 +192,7 @@ The ```profiles``` table has 3 columns:
 - ```active``` (INTEGER): indicates whether the current profile is active (1) or not active (0)
 - ```note``` (TEXT): a user-written note for the profile, may be blank.
 
-#### ```units```
+### ```units```
 
 The purpose of the ```units``` table is to store the names of all the user-written units, which are added to different lifts. The units table is designed to be independent of profiles, so multiple profiles can use the same unit.
 
@@ -235,37 +236,6 @@ The ```units``` table has two columns:
     - Export lift data to excel
 
 ---
-
-# Product Requirements
-
-## UI Elements
-
-### Navigation Drawer via hamburger menu on TopAppBar
-
-The Left hand side will have a menu that animates from the left to allow the user to switch between screens.
-
-**Menu drawer elements**
-
-1. Begin session (change to resume session when one is in progress, with a flag icon to finish session)
-2. Muscle groups
-    - list with muscle group names/notes, each has a pencil icon to edit name/note.
-    - '+' option at the bottom to add a muscle group
-    - when a muscle group is clicked, lifts for that muscle group are displayed
-        - dropdown list with lift names/notes, each has a pencil icon to edit
-        - when a lift is clicked, days in which that lift was trained are displayed
-            - dropdown list with day names/notes, each has a pencil icon to edit
-            - when a day is clicked, the menu disappears to show the Day screen.
-3. Sessions (Days, most recent one is first)
-    - list with most recent workout day names/notes/day #, each has a pencil icon to edit name/note.
-    - when a workout day is clicked, the card expands to the entire screen
-4. Calendar (still deciding how to implement)
-5. Switch profile
-    - dropdown list with profile names & notes, each has a pencil icon to edit name/notes.
-    - '+' option at the bottom to add a profile
-    - when a profile is clicked, the entire UI switches to that profile.
-6. (Put at bottom) Settings
-    - Toggle dynamic color
-    - Toggle dark mode
 
 # Prompts sent to Codex for development
 
@@ -350,3 +320,60 @@ Edited 3 files+4-0
 data/MuscleGroupDao.ktdata/MuscleGroupDao.kt+1-0
 data/MuscleGroupDetailData.ktdata/MuscleGroupDetailData.kt+1-0
 ui/viewModels/MuscleGroupsViewModel.ktui/viewModels/MuscleGroupsViewModel.kt+2-0
+
+## F6_4.2:
+
+### Calculate stats for each lift
+
+**The purpose of the prompt below was to calculate the lift statistics and store them in maps (label points to the value) to display to the user.**
+
+For this operation, you are to populate the following values of the LiftScreenUiState inside the init {} block of the LiftScreenViewModel:
+
+- lastDateTrained
+- pastMonthStatMap
+- pastYearStatMap
+- lifetimeStatMap
+
+You must populate these values inside of the init {} block of the LiftScreenViewModel, although you may create helper functions inside LiftScreenViewModel if needed for organization, and you may need to write functions in LiftRepository and queries in LiftDao. You must also consider the functions located in github.tom2433.lifttracker.data.utils to help you.
+
+Below, I will specify the exact format you must use in populating this data.
+
+lastDateTrained will hold a string informing the user of the last day that this lift was trained. To figure this out, you will need to be familiar with the structure of the database and look at the lift_sets with the appropriate lift_id, and find the one with the lift_day that has the most recent date. You must use this date to determine if lastDateTrained should be Today, Yesterday, 2 days ago, 3 days ago, etc. You must use the function formatLastDateTrained() from DateCalculator to determine the value of this string.
+
+pastMonthStatMap, pastYearStatMap, and lifetimeStatMap will all contain the same format of data, but they will be for different periods of time. pastMonthStatMap will contain data applying to the last 4 weeks, with today being the last day (7th day) of the 4th week. pastYearStatMap will contain data applying to the last 365 days, with today being the last day (365th day) of the year. Each of these statMaps will have the following keys exactly:
+
+- "Total # of sets performed"
+- "Avg. # of sets per session"
+- "% of overall set volume"
+- "% of set volume for {muscleGroup}" ({muscleGroup} should be replaced with the muscle group that this lift belongs to)
+- "Avg. weight"
+- "Avg. # of reps per set" \~or\~ "Avg. time per set" if the lift has a metric_type of 2
+
+The "Total # of sets performed" key will have a value in the format of "{total number of sets} sets" with {total number of sets} replaced with the total number of lift_sets that the user recorded for this lift during the appropriate time period. If the user has not recorded any sets for this lift within the appropriate time period, the value will just be "0 sets".
+
+The "Avg. # of sets per session" key will have a value in the format of "{number of sets} sets/session" with {number of sets} replaced with the average number of sets that the user has recorded per session completed during the appropriate time period rounded to exactly two decimal places. This average will only take into account the sessions in which the user has actually trained this lift. If the user has not recorded any sets for this lift within the appropriate time period, the value will just be "0.00 sets/session".
+
+The "% of overall set volume" key will have a value in the format of "{percentage} %" with {percentage} replaced with the result of the following equation rounded to exactly two decimal places: ((number of lift_sets completed for this lift during the appropriate time period) / (number of lift_sets completed for all lifts only belonging to muscle groups owned by the currently active profile during the appropriate time period)) * 100. If the user has not recorded any sets for this lift during the appropriate time period, the value will just be "0.00 %".
+
+The "% of set volume for {muscleGroup}" key where {muscleGroup} is replaced with the name of the muscle group that this lift belongs to will have a value in the format of "{percentage} %" with {percentage} replaced with the result of the following equation rounded to exactly two decimal places: ((number of lift_sets completed for this lift during the appropriate time period) / (number of lift_sets completed for all lifts belonging to the same muscle group as the lift being represented by LiftScreen)) * 100. If the user has not recorded any sets for this lift during the appropriate time period, the value will just be "0.00 %".
+
+The "Avg. weight" key will have a value in the format of "{weight value} {units}" where {weight value} is replaced with the average set_metric value of all set_metrics with metric_position equal to 1 belonging to lift_sets that were both completed during the appropriate time period and also belong to the lift represented by LiftScreen, rounded to exactly two decimal places. {units} will be replaced with the name of the unit pointed to by the unit_id of the lift being represented by LiftScreen. If the user has not recorded any sets for this lift during the appropriate time period, the value will just be "0.00 {units}", again where {units} is replaced with the name of the unit pointed to by the unit_id of the lift being represented by LiftScreen.
+
+The last key that will be added to each stat map will be one of two keys: "Avg. # of reps per set" if the lift being represented by LiftScreen has a metric_type of 1, or "Avg. time per set" otherwise. Similarly, the value will also be one of two values: If the key is "Avg. # of reps per set", the value will be "{number of reps} reps" where {number of reps} is replaced with the average value of every set_metric with metric_position equal to 2 belonging to lift_sets that were both completed during the appropriate time period and also belong to the lift represented by LiftScreen, rounded to exactly two decimal places. If the user has not recorded any sets for this lift during the appropriate time period, the value will just be "0.00 reps" for this scenario. If the key is "Avg. time per set", the value will be "{time}" where {time} is replaced with the average value of every set_metric with metric_position equal to 2 belonging to lift_sets that were both completed during the appropriate time period and also belong to the lift being represented by LiftScreen. {time} should be of the format "HH:MM:SS". Keep in mind that the set_metric values being stored in the database where the set_metric's metric_position is 2 and the set_metric's set_id points to a lift_set which has a lift_id that points to a lift with a metric_type of 2 are Doubles, and the format in which they are saved in the database is as follows: A set_metric value of 1.0 in this scenario represents one minute or "00:01:00", 1.5 represents one minute and 30 seconds or "00:01:30", 1.01 would be "00:01:01" (round where applicable), 1.15 would be "00:01:09", and so on and so forth. You will need to make the appropriate conversions in order to achieve this when converting the value to a string.
+
+For all of the code that you write, you must write comments in the code so that it is clear what each line is doing (the more detail, the better), and be sure to follow your comments with " - Codex" to indicate that the comment (and the code it applies to) was written by you. Try to use existing functions, but write your own where applicable. Try to preserve the existing coding style, but try to make everything efficient and logical so that it would make sense to a developer reading it. Make your code modular so that if a later feature were to be added to create another stat map with a custom timeframe, it would be easy to implement. When you are finished writing the necessary code to achieve this, make sure that it works as intended. Ask questions if you need further clarification.
+
+**Output:**
+
+Implemented the LiftScreen statistics population in init.
+Key changes:
+- Added reactive Room aggregation in [LiftDao.kt (line 31)](C:/Github/LiftTracker/Workspace/app/src/main/java/github/tom2433/lifttracker/data/LiftDao.kt:31).
+- Added reusable projection model [LiftStatisticsData.kt (line 4)](C:/Github/LiftTracker/Workspace/app/src/main/java/github/tom2433/lifttracker/data/LiftStatisticsData.kt:4).
+- Wired repository access.
+- Populated all four UI-state values in [LiftScreenViewModel.kt (line 37)](C:/Github/LiftTracker/Workspace/app/src/main/java/github/tom2433/lifttracker/ui/viewModels/LiftScreenViewModel.kt:37).
+- Added exact decimal, percentage, session-average, and HH:MM:SS formatting.
+- Used inclusive 28-day and 365-day windows.
+- Added detailed - Codex comments.
+- Verification: gradlew.bat testDebugUnitTest passed, including Room query compilation. Existing unrelated LiftSet.kt and SetMetric.kt changes were untouched.
+
+Edited LiftScreenViewModel.kt+153-10
