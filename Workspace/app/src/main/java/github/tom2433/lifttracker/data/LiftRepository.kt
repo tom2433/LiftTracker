@@ -8,4 +8,10 @@ interface LiftRepository {
     suspend fun deleteLift(lift: Lift)
     fun getLiftStream(id: Int): Flow<Lift?>
     fun getAllLiftsFromMuscleGroupIdStream(muscle_group_id: Int): Flow<List<Lift>>
+    // This exposes the DAO's reusable bounded-or-lifetime aggregate as a reactive stream. - Codex
+    fun getLiftStatisticsStream(
+        liftId: Int,
+        startDate: String?,
+        endDate: String?
+    ): Flow<LiftStatisticsData?>
 }

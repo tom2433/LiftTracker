@@ -3,12 +3,21 @@ package github.tom2433.lifttracker.ui.utils
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Done
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -19,6 +28,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.dp
+import github.tom2433.lifttracker.R
 
 @Composable
 fun IconStatRow(
@@ -67,7 +77,7 @@ fun IconStatRow(
 
 @Composable
 fun StatRow(
-    @StringRes label: Int,
+    label: String,
     value: String,
     modifier: Modifier = Modifier
 ) {
@@ -78,7 +88,7 @@ fun StatRow(
     ) {
         // label for detail metric
         Text(
-            text = stringResource(label),
+            text = label,
             style = MaterialTheme.typography.bodyMedium
         )
 
@@ -96,3 +106,62 @@ fun StatRow(
         )
     }
 }
+
+@Composable
+fun CustomFilterChip(
+    label: String,
+    onClick: () -> Unit,
+    selected: Boolean,
+    modifier: Modifier = Modifier
+) {
+    FilterChip(
+        onClick = onClick,
+        label = {
+            Text(
+                text = label
+            )
+        },
+        selected = selected,
+        leadingIcon = if (selected) {
+            {
+                Icon(
+                    imageVector = Icons.Filled.Done,
+                    contentDescription = "Done Icon",
+                    modifier = Modifier.size(FilterChipDefaults.IconSize)
+                )
+            }
+        } else {
+            null
+        },
+        modifier = modifier
+    )
+}
+
+@Composable
+fun SectionTitle(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    Surface(
+        modifier = modifier
+            .fillMaxWidth(),
+        shape = RoundedCornerShape(
+            topStart = 8.dp,
+            topEnd = 8.dp
+        ),
+        color = MaterialTheme.colorScheme.surface
+    ) {
+        Column {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                content()
+            }
+            HorizontalDivider(modifier = Modifier.fillMaxWidth())
+        }
+    }
+}
+

@@ -65,4 +65,7 @@
     <string name="move_to_another_muscle_group">Move to another muscle group</string>
     <string name="close_lift_screen">Close Lift Screen</string>
     <string name="muscle_group">Muscle Group</string>
+    <string name="stats">Stats</string>
+    <string name="lift_stats">Lift Stats</string>
+    <string name="lift_history">Lift History</string>
 </resources>

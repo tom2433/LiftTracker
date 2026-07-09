@@ -4,19 +4,26 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import github.tom2433.lifttracker.data.Lift
 import github.tom2433.lifttracker.data.LiftRepository
+import github.tom2433.lifttracker.data.LiftStatisticsData
 import github.tom2433.lifttracker.data.MuscleGroup
 import github.tom2433.lifttracker.data.MuscleGroupRepository
 import github.tom2433.lifttracker.data.Unit
 import github.tom2433.lifttracker.data.UnitRepository
+import github.tom2433.lifttracker.data.utils.DateCalculator
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.Date
+import java.util.Locale
+import kotlin.collections.mapValues
+import kotlin.math.roundToLong
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class LiftScreenViewModel(
@@ -29,6 +36,53 @@ class LiftScreenViewModel(
     val liftScreenUiState: StateFlow<LiftScreenUiState> = _liftScreenUiState.asStateFlow()
 
     init {
+        viewModelScope.launch {
+            // Capture one local date so all three maps use exactly the same inclusive end boundary. - Codex
+            val today = DateCalculator.getCurrentIsoDate()
+
+            // Subtracting 27 days makes today the twenty-eighth and final day of the four-week window. - Codex
+            val pastMonthStartDate = calculateStartDate(today, 27L)
+
+            // Subtracting 364 days makes today the three-hundred-sixty-fifth and final day of the annual window. - Codex
+            val pastYearStartDate = calculateStartDate(today, 364L)
+
+            // Observe all three aggregates together so changes to sets, metrics, lifts, profiles, units, or groups refresh the UI. - Codex
+            combine(
+                liftRepository.getLiftStatisticsStream(lift.id, pastMonthStartDate, today),
+                liftRepository.getLiftStatisticsStream(lift.id, pastYearStartDate, today),
+                liftRepository.getLiftStatisticsStream(lift.id, null, null)
+            ) { pastMonthStatistics, pastYearStatistics, lifetimeStatistics ->
+                // A deleted or otherwise missing lift produces no projection, so retain the current state until navigation closes. - Codex
+                if (pastMonthStatistics == null || pastYearStatistics == null || lifetimeStatistics == null) {
+                    return@combine null
+                }
+
+                // Package the synchronized projections for one atomic StateFlow update below. - Codex
+                Triple(pastMonthStatistics, pastYearStatistics, lifetimeStatistics)
+            }.collect { statisticsByTimeframe ->
+                // Ignore a missing projection rather than publishing partially populated maps. - Codex
+                if (statisticsByTimeframe == null) {
+                    return@collect
+                }
+
+                // Destructure the three well-named timeframe values to keep the state assignment easy to audit. - Codex
+                val (pastMonthStatistics, pastYearStatistics, lifetimeStatistics) = statisticsByTimeframe
+
+                // Publish the relative last date and all formatted maps together so the screen never displays mixed emissions. - Codex
+                _liftScreenUiState.update { currentState ->
+                    currentState.copy(
+                        lastDateTrained = DateCalculator.formatLastDateTrained(
+                            lifetimeStatistics.lastDateTrained,
+                            today
+                        ),
+                        pastMonthStatMap = createStatMap(pastMonthStatistics),
+                        pastYearStatMap = createStatMap(pastYearStatistics),
+                        lifetimeStatMap = createStatMap(lifetimeStatistics)
+                    )
+                }
+            }
+        }
+
         viewModelScope.launch {
             // retrieve the lift object that this id belongs to
             // infinite collection so that this lift object will always reflect updates
@@ -109,6 +163,96 @@ class LiftScreenViewModel(
                     }
                 }
         }
+    }
+
+    // This calculates an inclusive rolling-window start date using DateCalculator's strict UTC epoch-day parsing. - Codex
+    private fun calculateStartDate(today: String, daysBeforeToday: Long): String {
+        // Today's value is generated internally and is therefore valid; this fallback keeps initialization safe if that contract changes. - Codex
+        val todayEpochDay = DateCalculator.parseIsoDateToEpochDay(today) ?: return today
+
+        // Convert the shifted UTC epoch day back to the ISO format stored by lift_days.date. - Codex
+        return DateCalculator.createIsoDateFormatter().format(
+            Date((todayEpochDay - daysBeforeToday) * DateCalculator.MILLIS_PER_DAY)
+        )
+    }
+
+    // This converts one timeframe projection into the exact ordered labels and values required by LiftScreenUiState. - Codex
+    private fun createStatMap(statistics: LiftStatisticsData): Map<String, String> {
+        // Only sessions containing this lift contribute to its average sets-per-session denominator. - Codex
+        val averageSetsPerSession = if (statistics.liftSessionCount == 0) {
+            0.0
+        } else {
+            statistics.liftSetCount.toDouble() / statistics.liftSessionCount.toDouble()
+        }
+
+        // A zero denominator can only yield a displayable zero percentage rather than NaN or infinity. - Codex
+        val overallSetPercentage = calculatePercentage(
+            numerator = statistics.liftSetCount,
+            denominator = statistics.overallSetCount
+        )
+
+        // The same guarded calculation is reused for the selected muscle group's set-volume percentage. - Codex
+        val muscleGroupSetPercentage = calculatePercentage(
+            numerator = statistics.liftSetCount,
+            denominator = statistics.muscleGroupSetCount
+        )
+
+        // Missing metric rows are represented as zero while recorded averages retain their Double precision until formatting. - Codex
+        val averageWeight = statistics.averageWeight ?: 0.0
+        val averageSecondMetric = statistics.averageSecondMetric ?: 0.0
+
+        // Linked insertion order keeps the six requested statistics stable for any UI that iterates over this map. - Codex
+        return linkedMapOf(
+            "Total # of sets performed" to "${statistics.liftSetCount} sets",
+            "Avg. # of sets per session" to "${formatDecimal(averageSetsPerSession)} sets/session",
+            "% of overall set volume" to "${formatDecimal(overallSetPercentage)} %",
+            "% of set volume for ${statistics.muscleGroupName}" to "${formatDecimal(muscleGroupSetPercentage)} %",
+            "Avg. weight" to "${formatDecimal(averageWeight)} ${statistics.unitName}",
+            createSecondMetricEntry(statistics.metricType, averageSecondMetric)
+        )
+    }
+
+    // This prevents division by zero and guarantees that all percentage calculations use floating-point division. - Codex
+    private fun calculatePercentage(numerator: Int, denominator: Int): Double {
+        // The requested empty-lift behavior is exactly zero regardless of the broader timeframe's volume. - Codex
+        if (numerator == 0 || denominator == 0) {
+            return 0.0
+        }
+
+        // Multiply after division to express the lift's share on the conventional zero-to-one-hundred scale. - Codex
+        return numerator.toDouble() / denominator.toDouble() * 100.0
+    }
+
+    // This selects the final map label and formatting rule from the lift's current metric type. - Codex
+    private fun createSecondMetricEntry(metricType: Int, averageSecondMetric: Double): Pair<String, String> {
+        // Metric type one is a numeric reps average rounded for display to exactly two decimal places. - Codex
+        return if (metricType == 1) {
+            "Avg. # of reps per set" to "${formatDecimal(averageSecondMetric)} reps"
+        } else {
+            // Time metrics are decimal minutes in Room and must be translated into a whole-second clock string. - Codex
+            "Avg. time per set" to formatTimeMetric(averageSecondMetric)
+        }
+    }
+
+    // This applies a locale-stable decimal point and exactly two digits after it to every numeric statistic. - Codex
+    private fun formatDecimal(value: Double): String = String.format(Locale.US, "%.2f", value)
+
+    // This converts decimal minutes to an unbounded HH:MM:SS duration, rounding fractional seconds where necessary. - Codex
+    private fun formatTimeMetric(decimalMinutes: Double): String {
+        // Clamp unexpected negative legacy data to zero before converting minutes into the nearest whole second. - Codex
+        val totalSeconds = (decimalMinutes.coerceAtLeast(0.0) * 60.0).roundToLong()
+
+        // Hours intentionally remain unbounded because elapsed workout durations are not times of day. - Codex
+        val hours = totalSeconds / 3_600L
+
+        // Removing complete hours leaves the minute component in the required zero-to-fifty-nine range. - Codex
+        val minutes = totalSeconds % 3_600L / 60L
+
+        // Modulo sixty yields the final zero-to-fifty-nine seconds component. - Codex
+        val seconds = totalSeconds % 60L
+
+        // Locale.US guarantees ASCII digits and colon-separated, two-character clock components. - Codex
+        return String.format(Locale.US, "%02d:%02d:%02d", hours, minutes, seconds)
     }
 
     fun openThreeDotMenu() {
@@ -285,45 +429,18 @@ class LiftScreenViewModel(
             closeSwitchMuscleGroupDialog()
         }
     }
+
+    fun filterChipClicked(keyClicked: String) {
+        _liftScreenUiState.update { currentState ->
+            currentState.copy(
+                statDisplayFilterMap = currentState.statDisplayFilterMap.mapValues { (chipLabel, selected) ->
+                    keyClicked == chipLabel
+                }
+            )
+        }
+    }
 }
 
-/**
-last date trained
-
-Past Month:
-total number of sets performed
-average number of sets per session (only including sessions in which the lift was trained)
-% of overall set volume
-% of set volume for this muscle group
-average weight per set (with unit)
-average number of reps per set (or avg time per set)
-
-Past Year:
-number of sets performed
-average number of sets per session (only including sessions in which the lift was trained)
-% of overall set volume
-% of set volume for this muscle group
-average weight with unit
-average number of reps per set (or avg time per set)
-
-Lifetime:
-number of sets performed
-average number of sets per session (only including sessions in which the lift was trained)
-% of overall set volume
-% of set volume for this muscle group
-average weight with unit
-average number of reps per set (or avg time per set)
-
-StatMap example:
- - "Total # of sets performed" -> "10 sets"
- - "Avg. # of sets per session" -> "2 sets/session"
- - "% of overall set volume" -> "10 %"
- - "% of set volume for Legs" -> "25 %"
- - "Avg. weight" -> "135 pounds"
- - "Avg. # of reps" -> "8 reps" ~or~ "Avg. time" -> "1:30"
-
-
- */
 data class LiftScreenUiState(
     val lift: Lift,
     val liftScreenDetail: LiftScreenDetail = LiftScreenDetail(
@@ -340,7 +457,16 @@ data class LiftScreenUiState(
     val newLiftUnitName: String = "",
     val unitList: List<Unit> = listOf(),
     val userIsSwitchingMuscleGroup: Boolean = false,
-    val selectedMuscleGroup: MuscleGroup? = null
+    val selectedMuscleGroup: MuscleGroup? = null,
+    val lastDateTrained: String = "",
+    val pastMonthStatMap: Map<String, String> = mapOf(),
+    val pastYearStatMap: Map<String, String> = mapOf(),
+    val lifetimeStatMap: Map<String, String> = mapOf(),
+    val statDisplayFilterMap: Map<String, Boolean> = mapOf(
+        "Past Month" to true,
+        "Past Year" to false,
+        "Lifetime" to false
+    )
 )
 
 data class LiftScreenDetail(

@@ -524,9 +524,11 @@ fun ShowLiftEntryDialog(
                     // separate label and info button
                     Spacer(modifier = Modifier.weight(1f))
                     // info button
-                    InfoButton(
-                        infoString = R.string.select_metric_type_sublabel
-                    )
+                    InfoButton {
+                        Text(
+                            text = stringResource(R.string.select_metric_type_sublabel)
+                        )
+                    }
                 }
                 // radiobutton for reps option
                 Row(
@@ -589,9 +591,11 @@ fun ShowLiftEntryDialog(
                     // separate label and info button
                     Spacer(modifier = Modifier.weight(1f))
                     // info button
-                    InfoButton(
-                        infoString = R.string.choose_unit_sublabel
-                    )
+                    InfoButton {
+                        Text(
+                            text = stringResource(R.string.choose_unit_sublabel)
+                        )
+                    }
                 }
 
                 // quick-add buttons for previous units
@@ -776,8 +780,8 @@ fun ShowMuscleGroupSelectionDialog(
 
 @Composable
 fun BasicDialog(
-    dialogText: String,
     onDismissRequest: () -> Unit,
+    dialogContent: @Composable () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Dialog(
@@ -802,12 +806,8 @@ fun BasicDialog(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.Start
             ) {
-                // dialog text
-                Text(
-                    text = dialogText,
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
+                // dialog content
+                dialogContent()
 
                 // confirm button
                 Button(
@@ -825,8 +825,8 @@ fun BasicDialog(
 
 @Composable
 fun InfoButton(
-    @StringRes infoString: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
 ) {
     var showDialog by remember { mutableStateOf(false) }
 
@@ -845,10 +845,10 @@ fun InfoButton(
 
     if (showDialog) {
         BasicDialog(
-            dialogText = stringResource(infoString),
             onDismissRequest = {
                 showDialog = false
-            }
+            },
+            dialogContent = content
         )
     }
 }

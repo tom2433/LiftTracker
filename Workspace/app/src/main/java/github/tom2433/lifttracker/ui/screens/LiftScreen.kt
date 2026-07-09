@@ -10,6 +10,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,12 +31,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Scale
 import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -45,15 +49,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import github.tom2433.lifttracker.R
 import github.tom2433.lifttracker.data.Lift
 import github.tom2433.lifttracker.ui.AppViewModelProvider
+import github.tom2433.lifttracker.ui.utils.CustomFilterChip
+import github.tom2433.lifttracker.ui.utils.InfoButton
+import github.tom2433.lifttracker.ui.utils.SectionTitle
 import github.tom2433.lifttracker.ui.utils.ShowLiftEntryDialog
 import github.tom2433.lifttracker.ui.utils.ThreeDotMenu
 import github.tom2433.lifttracker.ui.utils.ShowMuscleGroupSelectionDialog
+import github.tom2433.lifttracker.ui.utils.StatRow
 import github.tom2433.lifttracker.ui.viewModels.LiftScreenViewModel
 
 @Composable
@@ -305,6 +314,196 @@ fun LiftScreen(
                                     )
                                 }
                             }
+
+                            // last date trained
+                            StatRow(
+                                label = stringResource(R.string.last_date_trained_label),
+                                value = liftScreenUiState.lastDateTrained,
+                                modifier = Modifier.padding(
+                                    top = 20.dp,
+                                    bottom = 20.dp
+                                )
+                            )
+
+                            // Stats section title
+                            SectionTitle {
+                                Icon(
+                                    imageVector = Icons.Filled.BarChart,
+                                    contentDescription = stringResource(R.string.lift_stats)
+                                )
+                            }
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.Start,
+                                verticalAlignment = Alignment.Top
+                            ) {
+                                // filter chips
+                                FlowRow(
+                                    horizontalArrangement = Arrangement.Start,
+                                    verticalArrangement = Arrangement.Top,
+                                    modifier = Modifier
+                                ) {
+                                    for ((chipLabel, selected) in liftScreenUiState.statDisplayFilterMap) {
+                                        CustomFilterChip(
+                                            label = chipLabel,
+                                            onClick = { viewModel.filterChipClicked(chipLabel) },
+                                            selected = selected,
+                                            modifier = Modifier
+                                                .padding(
+                                                    end = 8.dp
+                                                )
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.weight(1f))
+
+                                // info button explaining stat rows below
+                                InfoButton {
+                                    // total # of sets performed
+                                    Text(
+                                        text = "Total # of sets performed",
+                                        style = MaterialTheme.typography.titleLarge,
+                                    )
+                                    Text(
+                                        text = "The total number of sets you've performed for this lift within the selected time period.",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                    )
+
+                                    HorizontalDivider(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(
+                                                vertical = 4.dp
+                                            )
+                                    )
+
+                                    // Avg. # of sets per session
+                                    Text(
+                                        text = "Avg. # of sets per session",
+                                        style = MaterialTheme.typography.titleLarge,
+                                    )
+                                    Text(
+                                        text = "The average number of sets completed for this lift per session within the selected time period. Only considers sessions in which this lift was trained.",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                    )
+
+                                    HorizontalDivider(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(
+                                                vertical = 4.dp
+                                            )
+                                    )
+
+                                    // % of overall set volume
+                                    Text(
+                                        text = "% of overall set volume",
+                                        style = MaterialTheme.typography.titleLarge
+                                    )
+                                    Text(
+                                        text = "The proportion of total sets completed for this lift to the number of sets completed for all lifts for all muscle groups within the selected time period as a percent.",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                    )
+
+                                    HorizontalDivider(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(
+                                                vertical = 4.dp
+                                            )
+                                    )
+
+                                    // % of set volume for {muscle group}
+                                    Text(
+                                        text = "% of set volume for ${liftScreenUiState.muscleGroup?.name ?: "null"}",
+                                        style = MaterialTheme.typography.titleLarge,
+                                    )
+                                    Text(
+                                        text = "The proportion of total sets completed for this lift to the number of sets completed for all lifts for only this muscle group within the selected time period as a percent.",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                    )
+
+                                    HorizontalDivider(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(
+                                                vertical = 4.dp
+                                            )
+                                    )
+
+                                    // Avg. weight
+                                    Text(
+                                        text = "Avg. weight",
+                                        style = MaterialTheme.typography.titleLarge
+                                    )
+                                    Text(
+                                        text = "The average weight recorded for this lift during the selected time period.",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                    )
+
+                                    HorizontalDivider(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(
+                                                vertical = 4.dp
+                                            )
+                                    )
+
+                                    if (liftScreenUiState.lift.metric_type == 1) {
+                                        // Avg. # of reps per set
+                                        Text(
+                                            text = "Avg. # of reps per set",
+                                            style = MaterialTheme.typography.titleLarge
+                                        )
+                                        Text(
+                                            text = "The average number of reps completed per set of this lift during the selected time period.",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                        )
+                                    } else {
+                                        // Avg. time per set
+                                        Text(
+                                            text = "Avg. time per set",
+                                            style = MaterialTheme.typography.titleLarge
+                                        )
+                                        Text(
+                                            text = "The average amount of time recorded per set of this lift during the selected time period.",
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                }
+                            }
+
+                            // stat rows applying to above filter
+                            for ((chipLabel, selected) in liftScreenUiState.statDisplayFilterMap) {
+                                if (selected) {
+                                    for ((label, value) in (when (chipLabel) {
+                                        "Past Month" -> liftScreenUiState.pastMonthStatMap
+                                        "Past Year" -> liftScreenUiState.pastYearStatMap
+                                        "LifeTime" -> liftScreenUiState.lifetimeStatMap
+                                        else -> liftScreenUiState.pastMonthStatMap
+                                    })) {
+                                        StatRow(
+                                            label = label,
+                                            value = value
+                                        )
+                                    }
+                                }
+                            }
+
+                            SectionTitle(
+                                modifier = Modifier.padding(top = 40.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.History,
+                                    contentDescription = stringResource(R.string.lift_history)
+                                )
+                            }
+
+                            Text(text = "Implement most recent lift sets here")
                         }
                     }
                 }

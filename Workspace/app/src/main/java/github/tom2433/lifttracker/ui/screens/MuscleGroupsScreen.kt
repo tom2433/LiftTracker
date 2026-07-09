@@ -335,7 +335,7 @@ fun MuscleGroupsScreenContent(
                                     // muscle group stats
                                     // # of lifts
                                     StatRow(
-                                        label = R.string.num_of_lifts_label,
+                                        label = stringResource(R.string.num_of_lifts_label),
                                         value = muscleGroupDetail.numLifts.toString(),
                                         modifier = Modifier.padding(
                                             start = 16.dp,
@@ -345,7 +345,7 @@ fun MuscleGroupsScreenContent(
 
                                     // # of days trained (total)
                                     StatRow(
-                                        label = R.string.num_of_sessions_trained_label,
+                                        label = stringResource(R.string.num_of_sessions_trained_label),
                                         value = muscleGroupDetail.numSessions.toString(),
                                         modifier = Modifier.padding(
                                             start = 16.dp,
@@ -355,7 +355,7 @@ fun MuscleGroupsScreenContent(
 
                                     // avg # of sessions/week
                                     StatRow(
-                                        label = R.string.avg_num_sessions_per_week_label,
+                                        label = stringResource(R.string.avg_num_sessions_per_week_label),
                                         value = "%.2f".format(muscleGroupDetail.avgNumSessionsPerWeek),
                                         modifier = Modifier.padding(
                                             start = 16.dp,
@@ -365,7 +365,7 @@ fun MuscleGroupsScreenContent(
 
                                     // avg # of sets/session
                                     StatRow(
-                                        label = R.string.avg_num_sets_per_session_label,
+                                        label = stringResource(R.string.avg_num_sets_per_session_label),
                                         value = "%.2f".format(muscleGroupDetail.avgNumSetsPerSession),
                                         modifier = Modifier.padding(
                                             start = 16.dp,
@@ -375,7 +375,7 @@ fun MuscleGroupsScreenContent(
 
                                     // avg # of sets/week
                                     StatRow(
-                                        label = R.string.avg_num_sets_per_week_label,
+                                        label = stringResource(R.string.avg_num_sets_per_week_label),
                                         value = "%.2f".format(muscleGroupDetail.avgNumSetsPerWeek),
                                         modifier = Modifier.padding(
                                             start = 16.dp,
@@ -385,7 +385,7 @@ fun MuscleGroupsScreenContent(
 
                                     // avg # of reps/set
                                     StatRow(
-                                        label = R.string.avg_num_reps_per_set_label,
+                                        label = stringResource(R.string.avg_num_reps_per_set_label),
                                         value = if (muscleGroupDetail.avgNumRepsPerSet != -1.0) {
                                             "%.2f".format(muscleGroupDetail.avgNumRepsPerSet)
                                         } else {
@@ -401,7 +401,7 @@ fun MuscleGroupsScreenContent(
                                     // 2 weeks ago, ..., 1 month ago, Over 1 month ago, 2 months ago, 3, 4, ...,
                                     // 1 year ago, Over 1 year ago, Never)
                                     StatRow(
-                                        label = R.string.last_date_trained_label,
+                                        label = stringResource(R.string.last_date_trained_label),
                                         value = muscleGroupDetail.lastDateTrained,
                                         modifier = Modifier.padding(
                                             start = 16.dp,

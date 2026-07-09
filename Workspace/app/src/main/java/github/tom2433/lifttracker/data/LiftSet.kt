@@ -49,7 +49,7 @@ data class LiftSet(
     val lift_day_id: Int,               // FK to lift_days.id
     val lift_id: Int,                   // FK to lifts.id
     val lift_set_number: Int,           // set # in relation to completed sets for this lift id and lift_day id
-    val day_set_number: Int,            // set # in relation to completes sets for this lift_day_id
+    val day_set_number: Int,            // set # in relation to completed sets for this lift_day_id
     val set_label: String,              // name of set (default to "Set 1", "Set 2", etc.)
     val set_note: String                // optional user-written note for set
 )
