@@ -507,7 +507,15 @@ fun LiftTrackerDrawer(
                                             Text(
                                                 text = profile.note,
                                                 style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                color = if (profile.active) {
+                                                    MaterialTheme.colorScheme.onTertiaryContainer.copy(
+                                                        alpha = 0.75f
+                                                    )
+                                                } else {
+                                                    MaterialTheme.colorScheme.onSurface.copy(
+                                                        alpha = 0.75f
+                                                    )
+                                                }
                                             )
                                         }
                                     }

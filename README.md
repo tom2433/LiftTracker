@@ -109,7 +109,7 @@ A Data Vis project developed using Jetpack Compose.
 
 ### Misc. things to do:
 
-- [ ] edit the profile note color on the switch profile nav drawer dropdown element to improve readability issues due to contrast.
+- [x] edit the profile note color on the switch profile nav drawer dropdown element to improve readability issues due to contrast.
 - [x] change the name of the ```units``` table to ```lift_units``` to avoid confusion with Kotlin's ```Unit``` type.
 
 # Data Structure

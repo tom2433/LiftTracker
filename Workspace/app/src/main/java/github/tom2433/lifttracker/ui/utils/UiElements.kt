@@ -12,14 +12,17 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Done
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
@@ -149,7 +152,7 @@ fun SectionTitle(
             topStart = 8.dp,
             topEnd = 8.dp
         ),
-        color = MaterialTheme.colorScheme.surface
+        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
     ) {
         Column {
             Box(
@@ -158,7 +161,11 @@ fun SectionTitle(
                     .padding(8.dp),
                 contentAlignment = Alignment.Center
             ) {
-                content()
+                CompositionLocalProvider(
+                    LocalContentColor provides MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+                ) {
+                    content()
+                }
             }
             HorizontalDivider(modifier = Modifier.fillMaxWidth())
         }
