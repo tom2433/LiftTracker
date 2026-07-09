@@ -27,7 +27,7 @@ object AppViewModelProvider {
                 muscleGroupId = muscleGroupId,
                 liftRepository = liftTrackerApplication().container.liftRepository,
                 muscleGroupRepository = liftTrackerApplication().container.muscleGroupRepository,
-                unitRepository = liftTrackerApplication().container.unitRepository
+                liftUnitRepository = liftTrackerApplication().container.liftUnitRepository
             )
         }
     }
@@ -38,7 +38,7 @@ object AppViewModelProvider {
                 lift = lift,
                 liftRepository = liftTrackerApplication().container.liftRepository,
                 muscleGroupRepository = liftTrackerApplication().container.muscleGroupRepository,
-                unitRepository = liftTrackerApplication().container.unitRepository
+                liftUnitRepository = liftTrackerApplication().container.liftUnitRepository
             )
         }
     }

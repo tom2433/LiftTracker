@@ -6,8 +6,8 @@ import github.tom2433.lifttracker.data.Lift
 import github.tom2433.lifttracker.data.LiftRepository
 import github.tom2433.lifttracker.data.MuscleGroup
 import github.tom2433.lifttracker.data.MuscleGroupRepository
-import github.tom2433.lifttracker.data.Unit
-import github.tom2433.lifttracker.data.UnitRepository
+import github.tom2433.lifttracker.data.LiftUnit
+import github.tom2433.lifttracker.data.LiftUnitRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +20,7 @@ class LiftsViewModel(
     private val muscleGroupId: Int,
     private val liftRepository: LiftRepository,
     private val muscleGroupRepository: MuscleGroupRepository,
-    private val unitRepository: UnitRepository
+    private val liftUnitRepository: LiftUnitRepository
 ) : ViewModel() {
     private val _liftsUiState = MutableStateFlow(LiftsUiState())
     val liftsUiState: StateFlow<LiftsUiState> = _liftsUiState.asStateFlow()
@@ -62,13 +62,13 @@ class LiftsViewModel(
             }
         }
 
-        // retrieve all units
+        // retrieve all lift units
         viewModelScope.launch {
-            // infinite collection for units
-            unitRepository.getAllUnitsStream().collect { units ->
+            // infinite collection for lift units
+            liftUnitRepository.getAllLiftUnitsStream().collect { liftUnits ->
                 _liftsUiState.update { currentState ->
                     currentState.copy(
-                        unitList = units
+                        liftUnitList = liftUnits
                     )
                 }
             }
@@ -117,10 +117,10 @@ class LiftsViewModel(
         }
     }
 
-    fun updateUnit(newUnitName: String) {
+    fun updateLiftUnit(newLiftUnitName: String) {
         _liftsUiState.update { currentState ->
             currentState.copy(
-                newLiftUnitName = newUnitName
+                newLiftUnitName = newLiftUnitName
             )
         }
     }
@@ -171,9 +171,9 @@ class LiftsViewModel(
             // retrieve lift to update
             val liftToUpdate: Lift = _liftsUiState.value.liftMap[id]?.liftObj ?: return@launch
 
-            // retrieve the unit object associated with this lift
-            val unitObj: Unit =
-                unitRepository.getUnitStream(liftToUpdate.unit_id).firstOrNull() ?: return@launch
+            // retrieve the lift unit object associated with this lift
+            val liftUnitObj: LiftUnit =
+                liftUnitRepository.getLiftUnitStream(liftToUpdate.unit_id).firstOrNull() ?: return@launch
 
             // update UI state to show lift entry dialog for this specific lift
             _liftsUiState.update { currentState ->
@@ -183,7 +183,7 @@ class LiftsViewModel(
                     newLiftName = liftToUpdate.name,
                     newLiftNote = liftToUpdate.note,
                     newLiftMetricType = liftToUpdate.metric_type,
-                    newLiftUnitName = unitObj.name
+                    newLiftUnitName = liftUnitObj.name
                 )
             }
 
@@ -198,9 +198,9 @@ class LiftsViewModel(
         }
 
         viewModelScope.launch {
-            // determine if the inputted unit exists
-            var liftUnit: Unit? = null
-            for (currentLiftUnit in _liftsUiState.value.unitList) {
+            // determine if the inputted lift unit exists
+            var liftUnit: LiftUnit? = null
+            for (currentLiftUnit in _liftsUiState.value.liftUnitList) {
                 if (currentLiftUnit.name == _liftsUiState.value.newLiftUnitName) {
                     liftUnit = currentLiftUnit
                 }
@@ -208,16 +208,16 @@ class LiftsViewModel(
 
             // if it doesn't exist, create it.
             if (liftUnit == null) {
-                unitRepository.insertUnit(
-                    unit = Unit(
+                liftUnitRepository.insertLiftUnit(
+                    liftUnit = LiftUnit(
                         name = _liftsUiState.value.newLiftUnitName
                     )
                 )
 
-                // wait for unit to be added
+                // wait for lift unit to be added
                 delay(100)
 
-                liftUnit = unitRepository.getUnitFromNameStream(_liftsUiState.value.newLiftUnitName).firstOrNull()
+                liftUnit = liftUnitRepository.getLiftUnitFromNameStream(_liftsUiState.value.newLiftUnitName).firstOrNull()
             }
 
             // now insert the new lift from the user's inputs
@@ -242,9 +242,9 @@ class LiftsViewModel(
         }
 
         viewModelScope.launch {
-            // determine if the inputted unit exists
-            var liftUnit: Unit? = null
-            for (currentLiftUnit in _liftsUiState.value.unitList) {
+            // determine if the inputted lift unit exists
+            var liftUnit: LiftUnit? = null
+            for (currentLiftUnit in _liftsUiState.value.liftUnitList) {
                 if (currentLiftUnit.name == _liftsUiState.value.newLiftUnitName) {
                     liftUnit = currentLiftUnit
                 }
@@ -252,13 +252,13 @@ class LiftsViewModel(
 
             // if it doesn't exist, create it.
             if (liftUnit == null) {
-                unitRepository.insertUnit(
-                    unit = Unit(
+                liftUnitRepository.insertLiftUnit(
+                    liftUnit = LiftUnit(
                         name = _liftsUiState.value.newLiftUnitName
                     )
                 )
 
-                liftUnit = unitRepository.getUnitFromNameStream(_liftsUiState.value.newLiftUnitName).firstOrNull()
+                liftUnit = liftUnitRepository.getLiftUnitFromNameStream(_liftsUiState.value.newLiftUnitName).firstOrNull()
             }
 
             // now update the lift in the lift table
@@ -315,7 +315,7 @@ class LiftsViewModel(
 
 data class LiftsUiState(
     val liftMap: Map<Int, LiftDetail> = emptyMap(),
-    val unitList: List<Unit> = listOf(),
+    val liftUnitList: List<LiftUnit> = listOf(),
     val muscleGroup: MuscleGroup? = null,
     val newLiftName: String = "",
     val newLiftNote: String = "",

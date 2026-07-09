@@ -199,9 +199,9 @@ fun LiftSection(
             onTimeSelected = {
                 viewModel.selectTime()
             },
-            unitList = liftsUiState.unitList,
-            onUnitValueChanged = {
-                viewModel.updateUnit(it)
+            liftUnitList = liftsUiState.liftUnitList,
+            onLiftUnitValueChanged = {
+                viewModel.updateLiftUnit(it)
             },
             onSubmit = { viewModel.updateLift() },
             onDismissRequest = { viewModel.dismissLiftEntryDialog() }
@@ -231,9 +231,9 @@ fun LiftSection(
             onTimeSelected = {
                 viewModel.selectTime()
             },
-            unitList = liftsUiState.unitList,
-            onUnitValueChanged = {
-                viewModel.updateUnit(it)
+            liftUnitList = liftsUiState.liftUnitList,
+            onLiftUnitValueChanged = {
+                viewModel.updateLiftUnit(it)
             },
             onSubmit = {
                 viewModel.addLift()

@@ -103,7 +103,7 @@ interface LiftDao {
                     AND (:endDate IS NULL OR second_ld.date <= :endDate)
             ) AS averageSecondMetric,
             target_mg.name AS muscleGroupName,
-            target_unit.name AS unitName,
+            target_lift_unit.name AS unitName,
             target_lift.metric_type AS metricType,
             (
                 SELECT MAX(last_ld.date)
@@ -115,8 +115,8 @@ interface LiftDao {
         FROM lifts AS target_lift
         INNER JOIN muscle_groups AS target_mg
             ON target_mg.id = target_lift.muscle_group_id
-        INNER JOIN units AS target_unit
-            ON target_unit.id = target_lift.unit_id
+        INNER JOIN lift_units AS target_lift_unit
+            ON target_lift_unit.id = target_lift.unit_id
         WHERE target_lift.id = :liftId
         LIMIT 1
     """)

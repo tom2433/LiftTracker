@@ -110,7 +110,7 @@ A Data Vis project developed using Jetpack Compose.
 ### Misc. things to do:
 
 - [ ] edit the profile note color on the switch profile nav drawer dropdown element to improve readability issues due to contrast.
-- [ ] change the name of the ```units``` table to ```lift_units``` to avoid confusion with Kotlin's ```Unit``` type.
+- [x] change the name of the ```units``` table to ```lift_units``` to avoid confusion with Kotlin's ```Unit``` type.
 
 # Data Structure
 
@@ -192,18 +192,18 @@ The ```profiles``` table has 3 columns:
 - ```active``` (INTEGER): indicates whether the current profile is active (1) or not active (0)
 - ```note``` (TEXT): a user-written note for the profile, may be blank.
 
-### ```units```
+### ```lift_units```
 
-The purpose of the ```units``` table is to store the names of all the user-written units, which are added to different lifts. The units table is designed to be independent of profiles, so multiple profiles can use the same unit.
+The purpose of the ```lift_units``` table is to store the names of all the user-written units, which are added to different lifts. The units table is designed to be independent of profiles, so multiple profiles can use the same unit.
 
-The ```units``` table has two columns:
+The ```lift_units``` table has two columns:
 
 - ```id``` (INTEGER): primary key. This is the main identifier that the ```lifts``` table uses to associate lifts with their appropriate units.
 - ```name``` (TEXT): the user-written name of the unit
 
 > [!NOTE]
 >
-> May need some protection to ensure that a unit that is being used by a lift cannot be deleted.
+> May need some protection to ensure that a lift unit that is being used by a lift cannot be deleted.
 
 ---
 
@@ -325,6 +325,8 @@ ui/viewModels/MuscleGroupsViewModel.ktui/viewModels/MuscleGroupsViewModel.kt+2-0
 
 ### Calculate stats for each lift
 
+Version: 5.5 High Reasoning
+
 **The purpose of the prompt below was to calculate the lift statistics and store them in maps (label points to the value) to display to the user.**
 
 For this operation, you are to populate the following values of the LiftScreenUiState inside the init {} block of the LiftScreenViewModel:
@@ -377,3 +379,46 @@ Key changes:
 - Verification: gradlew.bat testDebugUnitTest passed, including Room query compilation. Existing unrelated LiftSet.kt and SetMetric.kt changes were untouched.
 
 Edited LiftScreenViewModel.kt+153-10
+
+## Table name change
+
+Version: 5.5 High Reasoning
+
+**The purpose of this prompt was to change the name of the units table to lift_units to avoid confusion with Kotlin's ```Unit``` type.**
+
+I've changed the name of the units table to lift_units, and the name of its data class from Unit to LiftUnit. Look through the entire project and use your best judgement to determine where to change unit to liftUnit or Unit to LiftUnit. Also consider the queries that call upon this table, and search through comments. Keep in mind that kotlin has a type called Unit, so wherever an Kotlin Unit is used, ignore it, but wherever you can find the old com.example.lifttracker.Unit, change it to LiftUnit. Refactor everything to accommodate this table and data class name change. Ask if you need clarification on anything.
+
+**Output:**
+
+Done. I refactored the old Unit data-layer naming to LiftUnit naming and updated Room to use lift_units.
+Changed:
+
+- UnitDao -> LiftUnitDao
+- UnitRepository -> LiftUnitRepository
+- OfflineUnitRepository -> OfflineLiftUnitRepository
+- DI/view-model references from unitRepository to liftUnitRepository
+- Room queries from units to lift_units
+- LiftDao statistics join to lift_units
+- comments/docs in [README.md](C:/Github/LiftTracker/README.md) and data files
+- added a Room 1 -> 2 migration in [LiftTrackerDatabase.kt](C:/Github/LiftTracker/Workspace/app/src/main/java/github/tom2433/lifttracker/data/LiftTrackerDatabase.kt) to rename existing units tables to lift_units
+- I intentionally left Kotlin’s built-in Unit usages alone, including callback return types and LaunchedEffect(Unit).
+
+Verification: .\gradlew.bat test passes. Only existing warning is Room’s profile_id foreign-key-index warning, unrelated to this refactor.
+
+Edited 15 files+268-256
+
+- README.md+15-15
+- data/AppContainer.ktdata/AppContainer.kt+8-8
+- data/Lift.ktdata/Lift.kt+4-4
+- data/LiftDao.ktdata/LiftDao.kt+3-3
+- data/LiftTrackerDatabase.ktdata/LiftTrackerDatabase.kt+37-26
+- data/LiftUnit.ktdata/LiftUnit.kt+11-11
+- data/LiftUnitDao.ktdata/LiftUnitDao.kt+17-17
+- data/LiftUnitRepository.ktdata/LiftUnitRepository.kt+8-8
+- data/OfflineLiftUnitRepository.ktdata/OfflineLiftUnitRepository.kt+14-13
+- ui/AppViewModelProvider.ktui/AppViewModelProvider.kt+3-3
+- ui/screens/LiftScreen.ktui/screens/LiftScreen.kt+6-6
+- ui/screens/LiftsSection.ktui/screens/LiftsSection.kt+17-17
+- ui/utils/Dialogs.ktui/utils/Dialogs.kt+25-25
+- ui/viewModels/LiftScreenViewModel.ktui/viewModels/LiftScreenViewModel.kt+44-44
+- ui/viewModels/LiftsViewModel.ktui/viewModels/LiftsViewModel.kt+56-56

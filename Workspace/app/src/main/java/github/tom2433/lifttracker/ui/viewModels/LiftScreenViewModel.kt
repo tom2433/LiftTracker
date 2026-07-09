@@ -7,8 +7,8 @@ import github.tom2433.lifttracker.data.LiftRepository
 import github.tom2433.lifttracker.data.LiftStatisticsData
 import github.tom2433.lifttracker.data.MuscleGroup
 import github.tom2433.lifttracker.data.MuscleGroupRepository
-import github.tom2433.lifttracker.data.Unit
-import github.tom2433.lifttracker.data.UnitRepository
+import github.tom2433.lifttracker.data.LiftUnit
+import github.tom2433.lifttracker.data.LiftUnitRepository
 import github.tom2433.lifttracker.data.utils.DateCalculator
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,7 +30,7 @@ class LiftScreenViewModel(
     private val lift: Lift,
     private val liftRepository: LiftRepository,
     private val muscleGroupRepository: MuscleGroupRepository,
-    private val unitRepository: UnitRepository
+    private val liftUnitRepository: LiftUnitRepository
 ) : ViewModel() {
     private val _liftScreenUiState = MutableStateFlow(LiftScreenUiState(lift = lift))
     val liftScreenUiState: StateFlow<LiftScreenUiState> = _liftScreenUiState.asStateFlow()
@@ -46,7 +46,7 @@ class LiftScreenViewModel(
             // Subtracting 364 days makes today the three-hundred-sixty-fifth and final day of the annual window. - Codex
             val pastYearStartDate = calculateStartDate(today, 364L)
 
-            // Observe all three aggregates together so changes to sets, metrics, lifts, profiles, units, or groups refresh the UI. - Codex
+            // Observe all three aggregates together so changes to sets, metrics, lifts, profiles, lift units, or groups refresh the UI. - Codex
             combine(
                 liftRepository.getLiftStatisticsStream(lift.id, pastMonthStartDate, today),
                 liftRepository.getLiftStatisticsStream(lift.id, pastYearStartDate, today),
@@ -105,12 +105,12 @@ class LiftScreenViewModel(
         }
 
         viewModelScope.launch {
-            // get unit name for lift.
-            // retrieving the unit name will depend on the current lift using flatMapLatest {}
+            // get lift unit name for lift.
+            // retrieving the lift unit name will depend on the current lift using flatMapLatest {}
             liftRepository.getLiftStream(lift.id)
                 .filterNotNull()
                 .flatMapLatest { updatedLift ->
-                    unitRepository.getUnitStream(updatedLift.unit_id)
+                    liftUnitRepository.getLiftUnitStream(updatedLift.unit_id)
                 }
                 .collect { thisUnit ->
                     _liftScreenUiState.update { currentState ->
@@ -124,11 +124,11 @@ class LiftScreenViewModel(
         }
 
         viewModelScope.launch {
-            // retrieve all units
-            unitRepository.getAllUnitsStream().collect { theseUnits ->
+            // retrieve all lift units
+            liftUnitRepository.getAllLiftUnitsStream().collect { theseLiftUnits ->
                 _liftScreenUiState.update { currentState ->
                     currentState.copy(
-                        unitList = theseUnits
+                        liftUnitList = theseLiftUnits
                     )
                 }
             }
@@ -307,9 +307,9 @@ class LiftScreenViewModel(
         }
 
         viewModelScope.launch {
-            // determine if the inputted unit exists
-            var liftUnit: Unit? = null
-            for (currentLiftUnit in _liftScreenUiState.value.unitList) {
+            // determine if the inputted lift unit exists
+            var liftUnit: LiftUnit? = null
+            for (currentLiftUnit in _liftScreenUiState.value.liftUnitList) {
                 if (currentLiftUnit.name == _liftScreenUiState.value.newLiftUnitName) {
                     liftUnit = currentLiftUnit
                 }
@@ -317,13 +317,13 @@ class LiftScreenViewModel(
 
             // if it doesn't exist, create it
             if (liftUnit == null) {
-                unitRepository.insertUnit(
-                    unit = Unit(
+                liftUnitRepository.insertLiftUnit(
+                    liftUnit = LiftUnit(
                         name = _liftScreenUiState.value.newLiftUnitName
                     )
                 )
 
-                liftUnit = unitRepository.getUnitFromNameStream(_liftScreenUiState.value.newLiftUnitName).firstOrNull()
+                liftUnit = liftUnitRepository.getLiftUnitFromNameStream(_liftScreenUiState.value.newLiftUnitName).firstOrNull()
             }
 
             // now update the lift in the lift table
@@ -373,10 +373,10 @@ class LiftScreenViewModel(
         }
     }
 
-    fun updateUnit(newUnitName: String) {
+    fun updateLiftUnit(newLiftUnitName: String) {
         _liftScreenUiState.update { currentState ->
             currentState.copy(
-                newLiftUnitName = newUnitName
+                newLiftUnitName = newLiftUnitName
             )
         }
     }
@@ -455,7 +455,7 @@ data class LiftScreenUiState(
     val newLiftNote: String = "",
     val newLiftMetricType: Int = -1,
     val newLiftUnitName: String = "",
-    val unitList: List<Unit> = listOf(),
+    val liftUnitList: List<LiftUnit> = listOf(),
     val userIsSwitchingMuscleGroup: Boolean = false,
     val selectedMuscleGroup: MuscleGroup? = null,
     val lastDateTrained: String = "",

@@ -407,8 +407,8 @@ fun ShowLiftEntryDialog(
     onRepsSelected: () -> Unit,
     timeSelected: Boolean,
     onTimeSelected: () -> Unit,
-    unitList: List<github.tom2433.lifttracker.data.Unit>,
-    onUnitValueChanged: (String) -> Unit,
+    liftUnitList: List<github.tom2433.lifttracker.data.LiftUnit>,
+    onLiftUnitValueChanged: (String) -> Unit,
     onSubmit: () -> Unit,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
@@ -578,12 +578,12 @@ fun ShowLiftEntryDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // select unit label and info button
+                // select lift unit label and info button
                 Row (
                     horizontalArrangement = Arrangement.Start,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // label for selecting unit
+                    // label for selecting lift unit
                     Text(
                         text = stringResource(R.string.unit),
                         style = MaterialTheme.typography.bodyLarge
@@ -598,22 +598,22 @@ fun ShowLiftEntryDialog(
                     }
                 }
 
-                // quick-add buttons for previous units
-                if (unitList.isNotEmpty()) {
+                // quick-add buttons for previous lift units
+                if (liftUnitList.isNotEmpty()) {
                     // quick add buttons in flow row to wrap multiple lines if needed
                     FlowRow(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        for (unit in unitList) {
+                        for (liftUnit in liftUnitList) {
                             OutlinedButton(
                                 onClick = {
-                                    onUnitValueChanged(unit.name)
+                                    onLiftUnitValueChanged(liftUnit.name)
                                 }
                             ) {
                                 Text(
-                                    text = unit.name
+                                    text = liftUnit.name
                                 )
                             }
                         }
@@ -622,10 +622,10 @@ fun ShowLiftEntryDialog(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Unit text input
+                // Lift unit text input
                 TextField(
                     value = newLiftUnitName,
-                    onValueChange = onUnitValueChanged,
+                    onValueChange = onLiftUnitValueChanged,
                     label = {
                         Text(stringResource(R.string.unit))
                     },

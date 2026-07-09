@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 
 /**
 # Tables:
@@ -43,7 +45,7 @@ The ```lifts``` table has 4 columns:
 
 - ```id``` (INTEGER): primary key. This is the main identifier that the ```lift_sets``` table uses to associate lift names with set data.
 - ```muscle_group_id``` (INTEGER): foreign key referring to the ```muscle_groups``` table. This is what links each lift to its corresponding muscle group.
-- ```unit_id``` (INTEGER): foreign key referring to the ```units``` table. This is what links each lift to its corresponding user-written unit.
+- ```unit_id``` (INTEGER): foreign key referring to the ```lift_units``` table. This is what links each lift to its corresponding user-written lift unit.
 - ```name``` (TEXT): the user-specified name for the lift.
 - ```metric_type``` (INTEGER): Int indicating if the lift will be measured in reps (1) or time (2). If the metric type is time, then the unit_id will be overridden.
 - ```note``` (TEXT): a user-written note for the lift, may be blank
@@ -82,17 +84,17 @@ The ```profiles``` table has 3 columns:
 - ```active``` (INTEGER): indicates whether the current profile is active (1) or not active (0)
 - ```note``` (TEXT): a user-written note for the profile, may be blank.
 
-## ```units```
+## ```lift_units```
 
-The purpose of the ```units``` table is to store the names of all the user-written units, which are added to different lifts. The units table is designed to be independent of profiles, so multiple profiles can use the same unit.
+The purpose of the ```lift_units``` table is to store the names of all the user-written lift units, which are added to different lifts. The lift_units table is designed to be independent of profiles, so multiple profiles can use the same lift unit.
 
-The ```units``` table has two columns:
+The ```lift_units``` table has two columns:
 
-- ```id``` (INTEGER): primary key. This is the main identifier that the ```lifts``` table uses to associate lifts with their appropriate units.
-- ```name``` (TEXT): the user-written name of the unit
+- ```id``` (INTEGER): primary key. This is the main identifier that the ```lifts``` table uses to associate lifts with their appropriate lift units.
+- ```name``` (TEXT): the user-written name of the lift unit
 
 > [!NOTE]
-> May need some protection to ensure that a unit that is being used cannot be deleted.
+> May need some protection to ensure that a lift unit that is being used cannot be deleted.
 */
 
 @Database(
@@ -103,9 +105,9 @@ The ```units``` table has two columns:
         MuscleGroup::class,
         Profile::class,
         SetMetric::class,
-        Unit::class
+        LiftUnit::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class LiftTrackerDatabase : RoomDatabase() {
@@ -115,7 +117,7 @@ abstract class LiftTrackerDatabase : RoomDatabase() {
     abstract fun muscleGroupDao(): MuscleGroupDao
     abstract fun profileDao(): ProfileDao
     abstract fun setMetricDao(): SetMetricDao
-    abstract fun unitDao(): UnitDao
+    abstract fun liftUnitDao(): LiftUnitDao
 
 
     companion object {
@@ -127,7 +129,65 @@ abstract class LiftTrackerDatabase : RoomDatabase() {
                     context,
                     LiftTrackerDatabase::class.java,
                     "lift_tracker_database"
-                ).build().also { Instance = it }
+                )
+                    .addMigrations(MIGRATION_1_2)
+                    .build()
+                    .also { Instance = it }
+            }
+        }
+
+        private val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                val oldUnitsTableExists = tableExists(db, "units")
+                val liftUnitsTableExists = tableExists(db, "lift_units")
+
+                if (oldUnitsTableExists && !liftUnitsTableExists) {
+                    db.execSQL("ALTER TABLE units RENAME TO lift_units")
+                }
+
+                if (tableExists(db, "lifts")) {
+                    rebuildLiftsTable(db)
+                }
+            }
+
+            private fun tableExists(db: SupportSQLiteDatabase, tableName: String): Boolean {
+                val cursor = db.query(
+                    "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
+                    arrayOf(tableName)
+                )
+
+                return cursor.use {
+                    it.moveToFirst()
+                }
+            }
+
+            private fun rebuildLiftsTable(db: SupportSQLiteDatabase) {
+                db.execSQL("DROP TABLE IF EXISTS lifts_migration")
+                db.execSQL(
+                    """
+                    CREATE TABLE lifts_migration (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        muscle_group_id INTEGER NOT NULL,
+                        unit_id INTEGER NOT NULL,
+                        name TEXT NOT NULL,
+                        metric_type INTEGER NOT NULL,
+                        note TEXT NOT NULL,
+                        FOREIGN KEY(muscle_group_id) REFERENCES muscle_groups(id) ON UPDATE NO ACTION ON DELETE CASCADE,
+                        FOREIGN KEY(unit_id) REFERENCES lift_units(id) ON UPDATE NO ACTION ON DELETE NO ACTION
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    INSERT INTO lifts_migration (id, muscle_group_id, unit_id, name, metric_type, note)
+                    SELECT id, muscle_group_id, unit_id, name, metric_type, note
+                    FROM lifts
+                    """.trimIndent()
+                )
+                db.execSQL("DROP TABLE lifts")
+                db.execSQL("ALTER TABLE lifts_migration RENAME TO lifts")
+                db.execSQL("CREATE INDEX index_lifts_muscle_group_id ON lifts(muscle_group_id)")
+                db.execSQL("CREATE INDEX index_lifts_unit_id ON lifts(unit_id)")
             }
         }
     }
