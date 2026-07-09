@@ -6,6 +6,10 @@ A Data Vis project developed using Jetpack Compose.
 
 # Immediate Notes
 
+## 07-10
+
+- shorten the content visibility animation on the lift screen
+
 ## 07-09
 
 - edit the profile note color on the switch profile nav drawer dropdown element to improve readability issues due to contrast.
