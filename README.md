@@ -106,6 +106,7 @@ A Data Vis project developed using Jetpack Compose.
 - [ ] F6-2: Implement the most recent lift sets at the bottom of LiftScreen
 - [ ] F6-3: Replace the "% of overall set volume" and "% of set volume for {muscleGroup}" with pie charts
 - [ ] F8: Implement the Record Session screen
+    - If a session is not currently active, then the record session screen will have a single button in the middle with the text "Start Session".
 
 ### Misc. things to do:
 
