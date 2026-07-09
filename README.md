@@ -101,6 +101,7 @@ A prototype of the Lift Tracker project. This is an evolving document. Everythin
 8. Implement Minimal Line Graphs for Muscle Group Cards and Lift Cards. Determine if this makes the Analytics page obsolete (edit: it does not).
     - user must be able to change timeframe in preferences
     - show color representing status of improving, maintaining, or declining.
+9. F6-1: Implement a [date range picker](https://developer.android.com/develop/ui/compose/components/datepickers#range) so the user can specify a custom range to view the lift statistics
 
 # Basic Structure
 
