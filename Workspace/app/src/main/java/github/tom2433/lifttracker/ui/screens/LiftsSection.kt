@@ -89,7 +89,13 @@ fun LiftSection(
                             )
                     ) {
                         // Column to hold name and note
-                        Column {
+                        Column(
+                            modifier = if (liftDetail.liftObj.name.length > 35 || liftDetail.liftObj.note.length > 35) {
+                                Modifier.weight(1f)
+                            } else {
+                                Modifier
+                            }
+                        ) {
                             // lift name
                             Text(
                                 text = liftDetail.liftObj.name,
@@ -118,7 +124,9 @@ fun LiftSection(
                             }
                         }
 
-                        Spacer(modifier = Modifier.width(8.dp))
+                        if (liftDetail.liftObj.name.length < 35 && liftDetail.liftObj.note.length < 35) {
+                            Spacer(modifier = Modifier.width(4.dp))
+                        }
 
                         ThreeDotMenu(
                             contentDescRes = R.string.lift_menu,

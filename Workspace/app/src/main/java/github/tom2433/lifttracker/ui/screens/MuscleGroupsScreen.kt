@@ -287,7 +287,9 @@ fun MuscleGroupsScreenContent(
                                                 bottom = 20.dp
                                             )
                                     ) {
-                                        Column {
+                                        Column(
+                                            modifier = Modifier.weight(1f)
+                                        ) {
                                             // muscle group name (title)
                                             Text(
                                                 text = muscleGroupDetail.name,

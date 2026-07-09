@@ -152,13 +152,15 @@ fun LiftScreen(
 
                     // Top region to hold lift name, note, and three dot menu
                     Row(
-                        horizontalArrangement = Arrangement.Start,
+                        horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .fillMaxWidth()
                     ) {
                         // Column to hold name and note if applicable
-                        Column {
+                        Column(
+                            modifier = Modifier.weight(1f)
+                        ) {
                             // lift name
                             Text(
                                 text = liftScreenUiState.lift.name,
@@ -186,9 +188,6 @@ fun LiftScreen(
                                 )
                             }
                         }
-
-                        // spacer to separate name and note from three dot menu
-                        Spacer(modifier = Modifier.weight(1f))
 
                         // three dot menu for edit and move to different muscle group
                         ThreeDotMenu(
