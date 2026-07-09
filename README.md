@@ -9,6 +9,7 @@ A Data Vis project developed using Jetpack Compose.
 ## 07-10
 
 - shorten the content visibility animation on the lift screen
+- move the scrollable columns on the dialogs so the user can see the title and the buttons the entire time
 
 ## 07-09
 
