@@ -8,6 +8,8 @@ A Data Vis project developed using Jetpack Compose.
 
 ## 07-10
 
+- maybe include some muscle group data on the lift screen as well that the user can expand/collapse. maybe this could also be implemented into the muscle group card.
+
 - viewmodels are what store ui state. To have data persist over multiple screens, those screens need to share the same view model, or they write data to the database. which one is more efficient?
 
 - room database should store result values into a data class object which is then parsed thru on the front end. most if not all of the calculation done on the backend, minimal on the frontend.
