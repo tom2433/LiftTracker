@@ -10,6 +10,10 @@ A Data Vis project developed using Jetpack Compose.
 
 - shorten the content visibility animation on the lift screen
 - move the scrollable columns on the dialogs so the user can see the title and the buttons the entire time
+- a user may not want to see a crap ton of data thrown at their face when they open the app
+    - change the muscle group screen and the lift screen. their data will eventually be represented by line graphs and pie charts.
+    - raw data is displeasing to look at.
+    - user wants to have a good idea of how their lifts are progressing but does not want to go thru the trouble of looking at numbers.
 
 ## 07-09
 
