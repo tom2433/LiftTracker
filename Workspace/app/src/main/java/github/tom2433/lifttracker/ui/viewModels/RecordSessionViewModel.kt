@@ -4,11 +4,11 @@ package github.tom2433.lifttracker.ui.viewModels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
-import github.tom2433.lifttracker.data.LiftDay
-import github.tom2433.lifttracker.data.LiftDayRepository
-import github.tom2433.lifttracker.data.OfflineLiftDayRepository
-import github.tom2433.lifttracker.data.Profile
-import github.tom2433.lifttracker.data.ProfileRepository
+import github.tom2433.lifttracker.data.liftday.LiftDay
+import github.tom2433.lifttracker.data.liftday.LiftDayRepository
+import github.tom2433.lifttracker.data.liftday.OfflineLiftDayRepository
+import github.tom2433.lifttracker.data.profile.Profile
+import github.tom2433.lifttracker.data.profile.ProfileRepository
 import github.tom2433.lifttracker.data.utils.DateCalculator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

@@ -1,9 +1,10 @@
-package github.tom2433.lifttracker.data
+package github.tom2433.lifttracker.data.musclegroup
 
 import github.tom2433.lifttracker.data.structures.MuscleGroupDetailData
 import kotlinx.coroutines.flow.Flow
 
-class OfflineMuscleGroupRepository(private val muscleGroupDao: MuscleGroupDao) : MuscleGroupRepository {
+class OfflineMuscleGroupRepository(private val muscleGroupDao: MuscleGroupDao) :
+    MuscleGroupRepository {
     override suspend fun insertMuscleGroup(muscleGroup: MuscleGroup) = muscleGroupDao.insert(muscleGroup)
 
     override suspend fun updateMuscleGroup(muscleGroup: MuscleGroup) = muscleGroupDao.update(muscleGroup)

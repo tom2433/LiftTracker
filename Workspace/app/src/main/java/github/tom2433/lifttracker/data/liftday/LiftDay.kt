@@ -1,10 +1,11 @@
-package github.tom2433.lifttracker.data
+package github.tom2433.lifttracker.data.liftday
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import github.tom2433.lifttracker.data.profile.Profile
 
 /**
 ## ```lift_days```
@@ -29,7 +30,7 @@ The ```lift_days``` table has 7 columns:
             entity = Profile::class,
             parentColumns = ["id"],
             childColumns = ["profile_id"],
-            onDelete = ForeignKey.CASCADE
+            onDelete = ForeignKey.Companion.CASCADE
         )
     ],
     indices = [

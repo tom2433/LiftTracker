@@ -2,12 +2,12 @@ package github.tom2433.lifttracker.ui.viewModels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import github.tom2433.lifttracker.data.Lift
-import github.tom2433.lifttracker.data.MuscleGroup
+import github.tom2433.lifttracker.data.lift.Lift
+import github.tom2433.lifttracker.data.musclegroup.MuscleGroup
 import github.tom2433.lifttracker.data.structures.MuscleGroupDetailData
-import github.tom2433.lifttracker.data.MuscleGroupRepository
-import github.tom2433.lifttracker.data.Profile
-import github.tom2433.lifttracker.data.ProfileRepository
+import github.tom2433.lifttracker.data.musclegroup.MuscleGroupRepository
+import github.tom2433.lifttracker.data.profile.Profile
+import github.tom2433.lifttracker.data.profile.ProfileRepository
 import github.tom2433.lifttracker.data.utils.DateCalculator
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow

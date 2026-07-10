@@ -1,9 +1,11 @@
-package github.tom2433.lifttracker.data
+package github.tom2433.lifttracker.data.lift
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import github.tom2433.lifttracker.data.liftunit.LiftUnit
+import github.tom2433.lifttracker.data.musclegroup.MuscleGroup
 
 /**
 ## ```lifts```
@@ -27,14 +29,14 @@ The ```lifts``` table has 4 columns:
             entity = MuscleGroup::class,
             parentColumns = ["id"],
             childColumns = ["muscle_group_id"],
-            onDelete = ForeignKey.CASCADE
+            onDelete = ForeignKey.Companion.CASCADE
         ),
         ForeignKey(
             entity = LiftUnit::class,
             parentColumns = ["id"],
             childColumns = ["unit_id"],
             // this lift will not be deleted if this lift unit is deleted
-            onDelete = ForeignKey.NO_ACTION
+            onDelete = ForeignKey.Companion.NO_ACTION
         )
     ],
     indices = [

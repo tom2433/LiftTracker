@@ -1,4 +1,4 @@
-package github.tom2433.lifttracker.data
+package github.tom2433.lifttracker.data.lift
 
 import github.tom2433.lifttracker.data.structures.LiftStatisticsData
 import kotlinx.coroutines.flow.Flow

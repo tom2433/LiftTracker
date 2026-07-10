@@ -1,9 +1,10 @@
-package github.tom2433.lifttracker.data
+package github.tom2433.lifttracker.data.setmetric
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import github.tom2433.lifttracker.data.liftset.LiftSet
 
 /**
 ## ```set_metrics```
@@ -26,7 +27,7 @@ The ```set_metrics``` table has 6 columns:
             entity = LiftSet::class,
             parentColumns = ["id"],
             childColumns = ["set_id"],
-            onDelete = ForeignKey.CASCADE
+            onDelete = ForeignKey.Companion.CASCADE
         )
     ],
     indices = [

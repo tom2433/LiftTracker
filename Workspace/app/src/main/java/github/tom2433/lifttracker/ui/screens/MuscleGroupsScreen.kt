@@ -60,8 +60,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import github.tom2433.lifttracker.R
-import github.tom2433.lifttracker.data.Lift
-import github.tom2433.lifttracker.data.Profile
+import github.tom2433.lifttracker.data.lift.Lift
+import github.tom2433.lifttracker.data.profile.Profile
 import github.tom2433.lifttracker.ui.AppViewModelProvider
 import github.tom2433.lifttracker.ui.navigation.NavigationDestination
 import github.tom2433.lifttracker.ui.theme.LiftTrackerTheme

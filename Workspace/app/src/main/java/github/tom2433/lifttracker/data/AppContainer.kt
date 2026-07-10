@@ -1,6 +1,20 @@
 package github.tom2433.lifttracker.data
 
 import android.content.Context
+import github.tom2433.lifttracker.data.lift.LiftRepository
+import github.tom2433.lifttracker.data.lift.OfflineLiftRepository
+import github.tom2433.lifttracker.data.liftday.LiftDayRepository
+import github.tom2433.lifttracker.data.liftday.OfflineLiftDayRepository
+import github.tom2433.lifttracker.data.liftset.LiftSetRepository
+import github.tom2433.lifttracker.data.liftset.OfflineLiftSetRepository
+import github.tom2433.lifttracker.data.liftunit.LiftUnitRepository
+import github.tom2433.lifttracker.data.liftunit.OfflineLiftUnitRepository
+import github.tom2433.lifttracker.data.musclegroup.MuscleGroupRepository
+import github.tom2433.lifttracker.data.musclegroup.OfflineMuscleGroupRepository
+import github.tom2433.lifttracker.data.profile.OfflineProfileRepository
+import github.tom2433.lifttracker.data.profile.ProfileRepository
+import github.tom2433.lifttracker.data.setmetric.OfflineSetMetricRepository
+import github.tom2433.lifttracker.data.setmetric.SetMetricRepository
 
 /**
  * App Container for dependency injection
@@ -16,7 +30,7 @@ interface AppContainer {
 }
 
 /**
- * [AppContainer] implementation that provides instance of [OfflineLiftDayRepository]
+ * [AppContainer] implementation that provides instance of [github.tom2433.lifttracker.data.liftday.OfflineLiftDayRepository]
  */
 class AppDataContainer(private val context: Context) : AppContainer {
     override val liftRepository: LiftRepository by lazy {

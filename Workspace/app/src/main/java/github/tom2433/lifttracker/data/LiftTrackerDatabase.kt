@@ -6,6 +6,20 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import github.tom2433.lifttracker.data.lift.LiftDao
+import github.tom2433.lifttracker.data.liftday.LiftDayDao
+import github.tom2433.lifttracker.data.lift.Lift
+import github.tom2433.lifttracker.data.liftday.LiftDay
+import github.tom2433.lifttracker.data.liftset.LiftSet
+import github.tom2433.lifttracker.data.liftset.LiftSetDao
+import github.tom2433.lifttracker.data.liftunit.LiftUnit
+import github.tom2433.lifttracker.data.liftunit.LiftUnitDao
+import github.tom2433.lifttracker.data.musclegroup.MuscleGroup
+import github.tom2433.lifttracker.data.musclegroup.MuscleGroupDao
+import github.tom2433.lifttracker.data.profile.Profile
+import github.tom2433.lifttracker.data.profile.ProfileDao
+import github.tom2433.lifttracker.data.setmetric.SetMetric
+import github.tom2433.lifttracker.data.setmetric.SetMetricDao
 
 /**
 # Tables:

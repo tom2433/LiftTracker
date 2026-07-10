@@ -1,4 +1,4 @@
-package github.tom2433.lifttracker.data
+package github.tom2433.lifttracker.data.lift
 
 import androidx.room.Dao
 import androidx.room.Delete
@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface LiftDao {
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    @Insert(onConflict = OnConflictStrategy.Companion.IGNORE)
     suspend fun insert(lift: Lift)
 
     @Update

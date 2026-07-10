@@ -1,4 +1,4 @@
-package github.tom2433.lifttracker.data
+package github.tom2433.lifttracker.data.profile
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

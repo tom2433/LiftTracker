@@ -1,4 +1,4 @@
-package github.tom2433.lifttracker.data
+package github.tom2433.lifttracker.data.musclegroup
 
 import github.tom2433.lifttracker.data.structures.MuscleGroupDetailData
 import kotlinx.coroutines.flow.Flow

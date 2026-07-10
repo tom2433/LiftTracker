@@ -4,10 +4,12 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import github.tom2433.lifttracker.R
-import github.tom2433.lifttracker.data.MuscleGroup
-import github.tom2433.lifttracker.data.MuscleGroupRepository
-import github.tom2433.lifttracker.data.Profile
-import github.tom2433.lifttracker.data.ProfileRepository
+import github.tom2433.lifttracker.data.liftday.LiftDayRepository
+import github.tom2433.lifttracker.data.musclegroup.MuscleGroup
+import github.tom2433.lifttracker.data.musclegroup.MuscleGroupRepository
+import github.tom2433.lifttracker.data.profile.Profile
+import github.tom2433.lifttracker.data.profile.ProfileRepository
+import github.tom2433.lifttracker.data.liftday.LiftDay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,7 +21,8 @@ import kotlinx.coroutines.launch
  */
 class DrawerViewModel(
     private val profileRepository: ProfileRepository,
-    private val muscleGroupRepository: MuscleGroupRepository
+    private val muscleGroupRepository: MuscleGroupRepository,
+    private val liftDayRepository: LiftDayRepository
 ) : ViewModel() {
     private val _drawerUiState = MutableStateFlow(DrawerUiState())
     val drawerUiState: StateFlow<DrawerUiState> = _drawerUiState.asStateFlow()
@@ -30,6 +33,17 @@ class DrawerViewModel(
                 _drawerUiState.update { currentState ->
                     currentState.copy(
                         profileList = profiles
+                    )
+                }
+            }
+        }
+
+        viewModelScope.launch {
+            // infinite collection to store the active lift day object
+            liftDayRepository.getActiveLiftDayForActiveProfileStream().collect { thisLiftDay ->
+                _drawerUiState.update { currentState ->
+                    currentState.copy(
+                        activeLiftDay = thisLiftDay
                     )
                 }
             }
@@ -369,5 +383,6 @@ data class DrawerUiState(
     val showFab: Boolean = false,
     val muscleGroupEntryDialogVisible: Boolean = false,
     val newMuscleGroupName: String = "",
-    val newMuscleGroupNote: String = ""
+    val newMuscleGroupNote: String = "",
+    val activeLiftDay: LiftDay? = null
 )

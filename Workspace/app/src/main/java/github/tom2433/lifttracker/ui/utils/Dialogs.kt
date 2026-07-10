@@ -54,7 +54,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import github.tom2433.lifttracker.R
-import github.tom2433.lifttracker.data.MuscleGroup
+import github.tom2433.lifttracker.data.musclegroup.MuscleGroup
+import github.tom2433.lifttracker.data.liftunit.LiftUnit
 import kotlinx.coroutines.delay
 
 @Composable
@@ -425,7 +426,7 @@ fun ShowLiftEntryDialog(
     onRepsSelected: () -> Unit,
     timeSelected: Boolean,
     onTimeSelected: () -> Unit,
-    liftUnitList: List<github.tom2433.lifttracker.data.LiftUnit>,
+    liftUnitList: List<LiftUnit>,
     onLiftUnitValueChanged: (String) -> Unit,
     onSubmit: () -> Unit,
     onDismissRequest: () -> Unit,
