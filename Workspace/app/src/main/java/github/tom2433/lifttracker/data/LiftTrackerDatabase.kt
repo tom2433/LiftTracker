@@ -14,9 +14,10 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 The purpose of the ```lift_days``` table is to keep track of all the days that the user has logged.
 
-The ```lift_days``` table has 5 columns:
+The ```lift_days``` table has 7 columns:
 
 - ```id``` (INTEGER): primary key. This is the main identifier that the ```lift_sets``` table uses to associate set data with a specific day.
+- ```in_progress``` (INTEGER): indicates 1 if the day is still in progress, or 0 if the user has already completed this day.
 - ```profile_id``` (INTEGER): foreign key. This is what links the lift day to the appropriate profile.
 - ```day_number``` (INTEGER): the number of the day; e.g. ```1```, ```2```, ```3```, etc.
 - ```day_label``` (TEXT): the name of the day; e.g. ```"Day 1"```, ```"Day 2"```, ```"Day 3"```, etc. as default. The user may be able to change this name in future versions.
@@ -107,7 +108,7 @@ The ```lift_units``` table has two columns:
         SetMetric::class,
         LiftUnit::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class LiftTrackerDatabase : RoomDatabase() {
@@ -130,7 +131,7 @@ abstract class LiftTrackerDatabase : RoomDatabase() {
                     LiftTrackerDatabase::class.java,
                     "lift_tracker_database"
                 )
-                    .addMigrations(MIGRATION_1_2)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                     .build()
                     .also { Instance = it }
             }
@@ -188,6 +189,15 @@ abstract class LiftTrackerDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE lifts_migration RENAME TO lifts")
                 db.execSQL("CREATE INDEX index_lifts_muscle_group_id ON lifts(muscle_group_id)")
                 db.execSQL("CREATE INDEX index_lifts_unit_id ON lifts(unit_id)")
+            }
+        }
+
+        private val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE lift_days ADD COLUMN in_progress INTEGER NOT NULL DEFAULT 0"
+                )
+                db.execSQL("CREATE INDEX index_lift_days_profile_id ON lift_days(profile_id)")
             }
         }
     }
