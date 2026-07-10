@@ -8,6 +8,8 @@ A Data Vis project developed using Jetpack Compose.
 
 ## 07-10
 
+- maybe keep the dislog titles fixed in place and have the scrollable column only contain the body of the Dialog. maybe create a function for a dialog and content.
+
 - maybe include some muscle group data on the lift screen as well that the user can expand/collapse. maybe this could also be implemented into the muscle group card.
 
 - viewmodels are what store ui state. To have data persist over multiple screens, those screens need to share the same view model, or they write data to the database. which one is more efficient?
