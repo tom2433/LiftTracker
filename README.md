@@ -18,7 +18,7 @@ A Data Vis project developed using Jetpack Compose.
 
 - shorten the content visibility animation on the lift screen (or simplify it)
 - also change the muscle group cards so the raw data doesn't load in until after the user clicks it.
-- move the scrollable columns on the dialogs so the user can see the title and the buttons the entire time (completed)
+- move the scrollable columns on the dialogs so the user can see the buttons the entire time (completed)
 - a user may not want to see a crap ton of data thrown at their face when they open the app
     - change the muscle group screen and the lift screen. their data will eventually be represented by line graphs and pie charts.
     - raw data is displeasing to look at.
@@ -137,6 +137,8 @@ A Data Vis project developed using Jetpack Compose.
 - [x] change the name of the ```units``` table to ```lift_units``` to avoid confusion with Kotlin's ```Unit``` type.
 - [x] move the scrollable columns on the dialogs so the user can see the buttons the entire time
 - [ ] add a setting for managing units
+- [ ] keep the dialog titles fixed in place just like the confirm/cancel buttons
+- [ ] raw data on the muscle group cards should not load until after the user has clicked it.
 
 # Data Structure
 
