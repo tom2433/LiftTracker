@@ -8,8 +8,8 @@ A Data Vis project developed using Jetpack Compose.
 
 ## 07-10
 
-- shorten the content visibility animation on the lift screen
-- move the scrollable columns on the dialogs so the user can see the title and the buttons the entire time
+- shorten the content visibility animation on the lift screen (or simplify it)
+- move the scrollable columns on the dialogs so the user can see the title and the buttons the entire time (completed)
 - a user may not want to see a crap ton of data thrown at their face when they open the app
     - change the muscle group screen and the lift screen. their data will eventually be represented by line graphs and pie charts.
     - raw data is displeasing to look at.
