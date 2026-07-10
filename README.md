@@ -125,11 +125,14 @@ A Data Vis project developed using Jetpack Compose.
 - [ ] F6-1: Implement a [date range picker](https://developer.android.com/develop/ui/compose/components/datepickers#range) so the user can specify a custom range to view the lift statistics
 - [ ] F6-2: Implement the most recent lift sets at the bottom of LiftScreen
 - [ ] F6-3: Replace the "% of overall set volume" and "% of set volume for {muscleGroup}" with pie charts
-- [ ] F8: Implement the Record Session screen
-    - A new column called ```in_progress``` will need to be added to ```lift_days``` in order to indicate if the day is currently in progress or not.
-        - will need to design a main in progress screen so that the user can pick up where they left off.
-    - If a session is not currently active, then the record session screen will have a single button in the middle with the text "Start Session".
-        - start with just creating the screen for when a session is active, and one for when no session is active.
+- [ ] F8: (in progress) Implement the Record Session screen
+    - Clicking the Begin session nav drawer element will bring the user to the Record Session screen, which contains one large central button containing the Play Arrow icon.
+    - Clicking this play arrow icon will create a new lift_day in the database, with the in_progress column set to true
+        - if a session (lift_day) is in progress, the Begin Session nav drawer element will change its text to "Resume Session" and will change color to tertiary container.
+    - Clicking the play arrow will also transition the button into the Session In Progress Screen, which contains a header row at the top with a fixed position.
+        - this header row contains a pencil icon on the left with the lift day's name and note directly beside it to the right.
+        - All the way on the right is the Finish button, which will delete the lift_day if the user has not recorded any lifts for it.
+    - Clicking the header row section with the pencil icon and lift_day name and note will popup an element entry dialog allowing the user to edit the name and note of the current session.
 
 ### Misc. things to do:
 
