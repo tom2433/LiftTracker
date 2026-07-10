@@ -8,6 +8,8 @@ A Data Vis project developed using Jetpack Compose.
 
 ## 07-10
 
+- room database should store result values into a data class object which is then parsed thru on the front end. most if not all of the calculation done on the backend, minimal on the frontend.
+
 - shorten the content visibility animation on the lift screen (or simplify it)
 - also change the muscle group cards so the raw data doesn't load in until after the user clicks it.
 - move the scrollable columns on the dialogs so the user can see the title and the buttons the entire time (completed)
