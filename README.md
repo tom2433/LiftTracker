@@ -131,7 +131,7 @@ A Data Vis project developed using Jetpack Compose.
         - if a session (lift_day) is in progress, the Begin Session nav drawer element will change its text to "Resume Session" and will change color to tertiary container.
     - Clicking the play arrow will also transition the button into the Session In Progress Screen, which contains a header row at the top with a fixed position.
         - this header row contains a pencil icon on the left with the lift day's name and note directly beside it to the right.
-        - All the way on the right is the Finish button, which will delete the lift_day if the user has not recorded any lifts for it.
+        - All the way on the right is the Finish button, which will delete the lift_day if the user has not recorded any lifts for it, or it will change the in_progress column of the current lift_day to false (current functionality).
     - Clicking the header row section with the pencil icon and lift_day name and note will popup an element entry dialog allowing the user to edit the name and note of the current session.
 
 ### Misc. things to do:
