@@ -99,80 +99,88 @@ fun ShowElementEntryDialog(
                 modifier = Modifier
                     .wrapContentHeight()
                     .fillMaxWidth()
-                    .padding(16.dp)
-                    .verticalScroll(rememberScrollState()),
+                    .padding(16.dp),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // title
-                Text(
-                    text = dialogTitle,
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-
-                // divider
-                HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
-
-                // name input
-                TextField(
-                    value = newElementName,
-                    onValueChange = onElementNameValueChanged,
-                    label = {
-                        Text(elementNameInputLabel)
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Label,
-                            contentDescription = elementNameInputLabel
-                        )
-                    },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions.Default.copy(
-                        capitalization = KeyboardCapitalization.Words,
-                        imeAction = ImeAction.Next
-                    ),
-                    keyboardActions = KeyboardActions(
-                        onNext = {
-                            elementNoteFocusRequester.requestFocus()
-                        }
-                    ),
+                Column(
                     modifier = Modifier
-                        .focusRequester(elementNameFocusRequester)
-                        .padding(bottom = 16.dp)
                         .fillMaxWidth()
-                )
+                        .weight(1f, fill = false)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // title
+                    Text(
+                        text = dialogTitle,
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
 
-                // note input
-                TextField(
-                    value = newElementNote,
-                    onValueChange = onElementNoteValueChanged,
-                    label = {
-                        Text(elementNoteInputLabel)
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Filled.Description,
-                            contentDescription = elementNoteInputLabel
-                        )
-                    },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions.Default.copy(
-                        capitalization = KeyboardCapitalization.Sentences,
-                        imeAction = ImeAction.Done
-                    ),
-                    keyboardActions = KeyboardActions(
-                        onDone = {
-                            if (buttonEnabled) {
-                                onSubmit()
+                    // divider
+                    HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
+
+                    // name input
+                    TextField(
+                        value = newElementName,
+                        onValueChange = onElementNameValueChanged,
+                        label = {
+                            Text(elementNameInputLabel)
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Label,
+                                contentDescription = elementNameInputLabel
+                            )
+                        },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions.Default.copy(
+                            capitalization = KeyboardCapitalization.Words,
+                            imeAction = ImeAction.Next
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onNext = {
+                                elementNoteFocusRequester.requestFocus()
                             }
-                        }
-                    ),
-                    modifier = Modifier
-                        .focusRequester(elementNoteFocusRequester)
-                        .padding(bottom = 16.dp)
-                        .fillMaxWidth()
-                )
+                        ),
+                        modifier = Modifier
+                            .focusRequester(elementNameFocusRequester)
+                            .padding(bottom = 16.dp)
+                            .fillMaxWidth()
+                    )
+
+                    // note input
+                    TextField(
+                        value = newElementNote,
+                        onValueChange = onElementNoteValueChanged,
+                        label = {
+                            Text(elementNoteInputLabel)
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Filled.Description,
+                                contentDescription = elementNoteInputLabel
+                            )
+                        },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions.Default.copy(
+                            capitalization = KeyboardCapitalization.Sentences,
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                if (buttonEnabled) {
+                                    onSubmit()
+                                }
+                            }
+                        ),
+                        modifier = Modifier
+                            .focusRequester(elementNoteFocusRequester)
+                            .padding(bottom = 16.dp)
+                            .fillMaxWidth()
+                    )
+                }
 
                 // divider
                 HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
@@ -338,27 +346,35 @@ fun ShowElementDeleteDialog(
                 modifier = Modifier
                     .wrapContentHeight()
                     .fillMaxWidth()
-                    .padding(16.dp)
-                    .verticalScroll(rememberScrollState()),
+                    .padding(16.dp),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // title
-                Text(
-                    text = dialogTitle,
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f, fill = false)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // title
+                    Text(
+                        text = dialogTitle,
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
 
-                // divider
-                HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
+                    // divider
+                    HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
 
-                // warning description
-                Text(
-                    text = stringResource(warningDescription),
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
+                    // warning description
+                    Text(
+                        text = stringResource(warningDescription),
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                }
 
                 // divider
                 HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
@@ -442,216 +458,224 @@ fun ShowLiftEntryDialog(
                 modifier = Modifier
                     .wrapContentHeight()
                     .fillMaxWidth()
-                    .padding(16.dp)
-                    .verticalScroll(rememberScrollState()),
+                    .padding(16.dp),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.Start
             ) {
-                // title
-                Text(
-                    text = dialogTitle,
-                    style = MaterialTheme.typography.titleLarge,
-                    textAlign = TextAlign.Center,
+                Column(
                     modifier = Modifier
-                        .padding(bottom = 16.dp)
                         .fillMaxWidth()
-                )
-
-                // divider
-                HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
-
-                // name input
-                TextField(
-                    value = newLiftName,
-                    onValueChange = onLiftNameValueChanged,
-                    label = {
-                        Text(stringResource(R.string.lift_name))
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Label,
-                            contentDescription = stringResource(R.string.lift_name)
-                        )
-                    },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions.Default.copy(
-                        capitalization = KeyboardCapitalization.Words,
-                        imeAction = ImeAction.Next
-                    ),
-                    keyboardActions = KeyboardActions(
-                        onNext = {
-                            elementNoteFocusRequester.requestFocus()
-                        }
-                    ),
-                    modifier = Modifier
-                        .focusRequester(elementNameFocusRequester)
-                        .padding(bottom = 16.dp)
-                        .fillMaxWidth()
-                )
-
-                // note input
-                TextField(
-                    value = newLiftNote,
-                    onValueChange = onLiftNoteValueChanged,
-                    label = {
-                        Text(stringResource(R.string.lift_note_optional))
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Filled.Description,
-                            contentDescription = stringResource(R.string.lift_note_optional)
-                        )
-                    },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions.Default.copy(
-                        capitalization = KeyboardCapitalization.Sentences,
-                        imeAction = ImeAction.Done
-                    ),
-                    modifier = Modifier
-                        .focusRequester(elementNoteFocusRequester)
-                        .padding(bottom = 32.dp)
-                        .fillMaxWidth()
-                )
-
-                // select metric type label and info button
-                Row (
-                    horizontalArrangement = Arrangement.Start,
-                    verticalAlignment = Alignment.CenterVertically
+                        .weight(1f, fill = false)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.Start
                 ) {
-                    // label for selecting metric type
+                    // title
                     Text(
-                        text = stringResource(R.string.metric_type),
-                        style = MaterialTheme.typography.bodyLarge
+                        text = dialogTitle,
+                        style = MaterialTheme.typography.titleLarge,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .padding(bottom = 16.dp)
+                            .fillMaxWidth()
                     )
-                    // separate label and info button
-                    Spacer(modifier = Modifier.weight(1f))
-                    // info button
-                    InfoButton {
-                        Text(
-                            text = stringResource(R.string.select_metric_type_sublabel)
-                        )
-                    }
-                }
-                // radiobutton for reps option
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp)
-                        .selectable(
-                            selected = repsSelected,
-                            onClick = onRepsSelected,
-                            role = Role.RadioButton
+
+                    // divider
+                    HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
+
+                    // name input
+                    TextField(
+                        value = newLiftName,
+                        onValueChange = onLiftNameValueChanged,
+                        label = {
+                            Text(stringResource(R.string.lift_name))
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Label,
+                                contentDescription = stringResource(R.string.lift_name)
+                            )
+                        },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions.Default.copy(
+                            capitalization = KeyboardCapitalization.Words,
+                            imeAction = ImeAction.Next
                         ),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    RadioButton(
-                        selected = repsSelected,
-                        onClick = null
-                    )
-                    Text(
-                        text = stringResource(R.string.reps),
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(start = 16.dp)
-                    )
-                }
-
-                // radiobutton for time option
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp)
-                        .selectable(
-                            selected = timeSelected,
-                            onClick = onTimeSelected,
-                            role = Role.RadioButton
+                        keyboardActions = KeyboardActions(
+                            onNext = {
+                                elementNoteFocusRequester.requestFocus()
+                            }
                         ),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    RadioButton(
-                        selected = timeSelected,
-                        onClick = null
+                        modifier = Modifier
+                            .focusRequester(elementNameFocusRequester)
+                            .padding(bottom = 16.dp)
+                            .fillMaxWidth()
                     )
-                    Text(
-                        text = stringResource(R.string.time),
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(start = 16.dp)
+
+                    // note input
+                    TextField(
+                        value = newLiftNote,
+                        onValueChange = onLiftNoteValueChanged,
+                        label = {
+                            Text(stringResource(R.string.lift_note_optional))
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Filled.Description,
+                                contentDescription = stringResource(R.string.lift_note_optional)
+                            )
+                        },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions.Default.copy(
+                            capitalization = KeyboardCapitalization.Sentences,
+                            imeAction = ImeAction.Done
+                        ),
+                        modifier = Modifier
+                            .focusRequester(elementNoteFocusRequester)
+                            .padding(bottom = 32.dp)
+                            .fillMaxWidth()
                     )
-                }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // select lift unit label and info button
-                Row (
-                    horizontalArrangement = Arrangement.Start,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // label for selecting lift unit
-                    Text(
-                        text = stringResource(R.string.unit),
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                    // separate label and info button
-                    Spacer(modifier = Modifier.weight(1f))
-                    // info button
-                    InfoButton {
-                        Text(
-                            text = stringResource(R.string.choose_unit_sublabel)
-                        )
-                    }
-                }
-
-                // quick-add buttons for previous lift units
-                if (liftUnitList.isNotEmpty()) {
-                    // quick add buttons in flow row to wrap multiple lines if needed
-                    FlowRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    // select metric type label and info button
+                    Row(
+                        horizontalArrangement = Arrangement.Start,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        for (liftUnit in liftUnitList) {
-                            OutlinedButton(
-                                onClick = {
-                                    onLiftUnitValueChanged(liftUnit.name)
+                        // label for selecting metric type
+                        Text(
+                            text = stringResource(R.string.metric_type),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        // separate label and info button
+                        Spacer(modifier = Modifier.weight(1f))
+                        // info button
+                        InfoButton {
+                            Text(
+                                text = stringResource(R.string.select_metric_type_sublabel)
+                            )
+                        }
+                    }
+                    // radiobutton for reps option
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .selectable(
+                                selected = repsSelected,
+                                onClick = onRepsSelected,
+                                role = Role.RadioButton
+                            ),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = repsSelected,
+                            onClick = null
+                        )
+                        Text(
+                            text = stringResource(R.string.reps),
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.padding(start = 16.dp)
+                        )
+                    }
+
+                    // radiobutton for time option
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .selectable(
+                                selected = timeSelected,
+                                onClick = onTimeSelected,
+                                role = Role.RadioButton
+                            ),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = timeSelected,
+                            onClick = null
+                        )
+                        Text(
+                            text = stringResource(R.string.time),
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.padding(start = 16.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // select lift unit label and info button
+                    Row(
+                        horizontalArrangement = Arrangement.Start,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // label for selecting lift unit
+                        Text(
+                            text = stringResource(R.string.unit),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        // separate label and info button
+                        Spacer(modifier = Modifier.weight(1f))
+                        // info button
+                        InfoButton {
+                            Text(
+                                text = stringResource(R.string.choose_unit_sublabel)
+                            )
+                        }
+                    }
+
+                    // quick-add buttons for previous lift units
+                    if (liftUnitList.isNotEmpty()) {
+                        // quick add buttons in flow row to wrap multiple lines if needed
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            for (liftUnit in liftUnitList) {
+                                OutlinedButton(
+                                    onClick = {
+                                        onLiftUnitValueChanged(liftUnit.name)
+                                    }
+                                ) {
+                                    Text(
+                                        text = liftUnit.name
+                                    )
                                 }
-                            ) {
-                                Text(
-                                    text = liftUnit.name
-                                )
                             }
                         }
                     }
-                }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                // Lift unit text input
-                TextField(
-                    value = newLiftUnitName,
-                    onValueChange = onLiftUnitValueChanged,
-                    label = {
-                        Text(stringResource(R.string.unit))
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Filled.Scale,
-                            contentDescription = stringResource(R.string.unit)
-                        )
-                    },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions.Default.copy(
-                        imeAction = ImeAction.Done
-                    ),
-                    keyboardActions = KeyboardActions(
-                        onDone = {
-                            if (buttonEnabled) {
-                                onSubmit()
+                    // Lift unit text input
+                    TextField(
+                        value = newLiftUnitName,
+                        onValueChange = onLiftUnitValueChanged,
+                        label = {
+                            Text(stringResource(R.string.unit))
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Filled.Scale,
+                                contentDescription = stringResource(R.string.unit)
+                            )
+                        },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions.Default.copy(
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                if (buttonEnabled) {
+                                    onSubmit()
+                                }
                             }
-                        }
-                    ),
-                    modifier = Modifier
-                        .padding(bottom = 32.dp)
-                        .fillMaxWidth()
-                )
+                        ),
+                        modifier = Modifier
+                            .padding(bottom = 32.dp)
+                            .fillMaxWidth()
+                    )
+                }
 
                 // divider
                 HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
@@ -709,49 +733,58 @@ fun ShowMuscleGroupSelectionDialog(
                 modifier = Modifier
                     .wrapContentHeight()
                     .fillMaxWidth()
-                    .padding(16.dp)
-                    .verticalScroll(rememberScrollState()),
+                    .padding(16.dp),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.Start
             ) {
-                // title
-                Text(
-                    text = dialogTitle,
-                    style = MaterialTheme.typography.titleLarge,
-                    textAlign = TextAlign.Center,
+                Column(
                     modifier = Modifier
-                        .padding(bottom = 16.dp)
                         .fillMaxWidth()
-                )
-
-                // divider
-                HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
-
-                // list of muscle group radiobuttons
-                for (muscleGroup in muscleGroupList) {
-                    Row(
+                        .weight(1f, fill = false)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    // title
+                    Text(
+                        text = dialogTitle,
+                        style = MaterialTheme.typography.titleLarge,
+                        textAlign = TextAlign.Center,
                         modifier = Modifier
+                            .padding(bottom = 16.dp)
                             .fillMaxWidth()
-                            .height(56.dp)
-                            .selectable(
+                    )
+
+                    // divider
+                    HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
+
+                    // list of muscle group radiobuttons
+                    for (muscleGroup in muscleGroupList) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp)
+                                .selectable(
+                                    selected = (selectedMuscleGroup?.id ?: -1) == muscleGroup.id,
+                                    onClick = { onMuscleGroupSelected(muscleGroup) },
+                                    role = Role.RadioButton
+                                ),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
                                 selected = (selectedMuscleGroup?.id ?: -1) == muscleGroup.id,
-                                onClick = { onMuscleGroupSelected(muscleGroup) },
-                                role = Role.RadioButton
-                            ),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        RadioButton(
-                            selected = (selectedMuscleGroup?.id ?: -1) == muscleGroup.id,
-                            onClick = null
-                        )
-                        Text(
-                            text = muscleGroup.name,
-                            style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier.padding(start = 16.dp)
-                        )
+                                onClick = null
+                            )
+                            Text(
+                                text = muscleGroup.name,
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.padding(start = 16.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
                 }
 
                 // divider

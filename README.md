@@ -111,12 +111,17 @@ A Data Vis project developed using Jetpack Compose.
 - [ ] F6-2: Implement the most recent lift sets at the bottom of LiftScreen
 - [ ] F6-3: Replace the "% of overall set volume" and "% of set volume for {muscleGroup}" with pie charts
 - [ ] F8: Implement the Record Session screen
+    - A new column called ```in_progress``` will need to be added to ```lift_days``` in order to indicate if the day is currently in progress or not.
+        - will need to design a main in progress screen so that the user can pick up where they left off.
     - If a session is not currently active, then the record session screen will have a single button in the middle with the text "Start Session".
+        - start with just creating the screen for when a session is active, and one for when no session is active.
 
 ### Misc. things to do:
 
 - [x] edit the profile note color on the switch profile nav drawer dropdown element to improve readability issues due to contrast.
 - [x] change the name of the ```units``` table to ```lift_units``` to avoid confusion with Kotlin's ```Unit``` type.
+- [x] move the scrollable columns on the dialogs so the user can see the buttons the entire time
+- [ ] add a setting for managing units
 
 # Data Structure
 
