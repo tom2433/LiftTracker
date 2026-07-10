@@ -1,4 +1,4 @@
-package github.tom2433.lifttracker.data
+package github.tom2433.lifttracker.data.structures
 
 // This immutable projection holds every database value needed to render one lift-statistics timeframe. - Codex
 data class LiftStatisticsData(

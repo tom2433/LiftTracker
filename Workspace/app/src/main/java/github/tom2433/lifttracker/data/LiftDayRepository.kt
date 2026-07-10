@@ -36,4 +36,14 @@ interface LiftDayRepository {
      * Retrieve currently in progress lift day for the currently active profile
      */
     fun getActiveLiftDayForActiveProfileStream(): Flow<LiftDay?>
+
+    /**
+     * get the next day number for the profile id
+     */
+    suspend fun getNextDayNumber(profile_id: Int): Int
+
+    /**
+     * Retrieve number of lifts for a given lift day id
+     */
+    fun getNumOfLiftsForDay(id: Int): Flow<Int>
 }

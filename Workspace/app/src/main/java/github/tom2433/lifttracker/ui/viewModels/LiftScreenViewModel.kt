@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import github.tom2433.lifttracker.data.Lift
 import github.tom2433.lifttracker.data.LiftRepository
-import github.tom2433.lifttracker.data.LiftStatisticsData
+import github.tom2433.lifttracker.data.structures.LiftStatisticsData
 import github.tom2433.lifttracker.data.MuscleGroup
 import github.tom2433.lifttracker.data.MuscleGroupRepository
 import github.tom2433.lifttracker.data.LiftUnit

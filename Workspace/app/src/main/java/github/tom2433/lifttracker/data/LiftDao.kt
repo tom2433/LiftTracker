@@ -6,6 +6,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import github.tom2433.lifttracker.data.structures.LiftStatisticsData
 import kotlinx.coroutines.flow.Flow
 
 @Dao

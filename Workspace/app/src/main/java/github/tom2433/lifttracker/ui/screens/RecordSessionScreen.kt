@@ -4,16 +4,24 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -64,11 +72,7 @@ fun RecordSessionScreen(
                                 animatedVisibilityScope = this@AnimatedContent
                             )
                             .size(100.dp),
-                        colors = CardDefaults.cardColors().copy(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                        ),
-                        onClick = {}
+                        onClick = { viewModel.beginSession() }
                     ) {
                         Box(
                             modifier = Modifier.fillMaxSize(),
@@ -120,7 +124,47 @@ fun SessionInProgressScreen(
                     animatedVisibilityScope = animatedVisibilityScope
                 )
         ) {
-            // add top row with play button icon and a finish lift button
+            Column(
+                horizontalAlignment = Alignment.Start,
+                verticalArrangement = Arrangement.Top,
+                modifier = Modifier
+                    .fillMaxSize()
+            ) {
+                // row at top to show play icon at left and finish lift at the right
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth()
+                ) {
+                    // play icon
+                    Icon(
+                        imageVector = Icons.Filled.PlayArrow,
+                        contentDescription = "Session in progress",
+                        modifier = Modifier
+                            .sharedElement(
+                                sharedContentState = rememberSharedContentState(
+                                    key = "icon"
+                                ),
+                                animatedVisibilityScope = animatedVisibilityScope
+                            )
+                            .padding(end = 8.dp)
+                    )
+
+                    // finish session button
+                    OutlinedButton(
+                        onClick = { viewModel.finishSession() }
+                    ) {
+                        Text("Finish")
+                    }
+                }
+
+                // divider to separate scrollable content
+                HorizontalDivider(modifier = Modifier.fillMaxWidth())
+
+                // implement scrollable content here
+            }
         }
     }
 }

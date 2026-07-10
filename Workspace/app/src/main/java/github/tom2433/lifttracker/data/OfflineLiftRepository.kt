@@ -1,5 +1,6 @@
 package github.tom2433.lifttracker.data
 
+import github.tom2433.lifttracker.data.structures.LiftStatisticsData
 import kotlinx.coroutines.flow.Flow
 
 class OfflineLiftRepository(private val liftDao: LiftDao) : LiftRepository {

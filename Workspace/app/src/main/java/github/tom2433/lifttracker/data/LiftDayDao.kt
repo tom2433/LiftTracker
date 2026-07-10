@@ -47,6 +47,15 @@ interface LiftDayDao {
     """)
     fun getActiveLiftDayForActiveProfile(): Flow<LiftDay?>
 
+    @Query("""
+        SELECT COUNT(*)
+        FROM lift_sets AS ls
+        INNER JOIN lift_days AS ld
+            ON ls.lift_day_id = ld.id
+        WHERE ld.id = :liftDayId
+    """)
+    fun getNumOfLiftsForDay(liftDayId: Int): Flow<Int>
+
     @Transaction
     suspend fun deleteAndRenumber(liftDay: LiftDay) {
         delete(liftDay)

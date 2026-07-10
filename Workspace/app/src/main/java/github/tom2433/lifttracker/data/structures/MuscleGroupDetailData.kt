@@ -1,4 +1,4 @@
-package github.tom2433.lifttracker.data
+package github.tom2433.lifttracker.data.structures
 
 // This Room projection contains the stored values and aggregate values needed to build a muscle-group detail card. - Codex
 data class MuscleGroupDetailData(
