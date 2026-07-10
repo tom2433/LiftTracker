@@ -16,6 +16,8 @@ A Data Vis project developed using Jetpack Compose.
     - raw data is displeasing to look at.
     - user wants to have a good idea of how their lifts are progressing but does not want to go thru the trouble of looking at numbers.
 
+- raw data on the muscle group cards should not load in until after the user has clicked it. ^
+
 ## 07-09
 
 - edit the profile note color on the switch profile nav drawer dropdown element to improve readability issues due to contrast.
