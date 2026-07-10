@@ -3,8 +3,10 @@ package github.tom2433.lifttracker.ui.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import github.tom2433.lifttracker.ui.screens.AnalyticsDestination
 import github.tom2433.lifttracker.ui.screens.AnalyticsScreen
 import github.tom2433.lifttracker.ui.screens.CalendarDestination

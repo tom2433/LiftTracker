@@ -7,9 +7,11 @@ class OfflineLiftDayRepository(private val liftDayDao: LiftDayDao) : LiftDayRepo
 
     override fun getLiftDayStream(id: Int): Flow<LiftDay?> = liftDayDao.getLiftDay(id)
 
-    override suspend fun insertLiftDay(liftDay: LiftDay) = liftDayDao.insert(liftDay)
+    override suspend fun insertLiftDay(liftDay: LiftDay) = liftDayDao.insertWithNextDayNumber(liftDay)
 
-    override suspend fun deleteLiftDay(liftDay: LiftDay) = liftDayDao.delete(liftDay)
+    override suspend fun deleteLiftDay(liftDay: LiftDay) = liftDayDao.deleteAndRenumber(liftDay)
 
     override suspend fun updateLiftDay(liftDay: LiftDay) = liftDayDao.update(liftDay)
+
+    override fun getActiveLiftDayForActiveProfileStream(): Flow<LiftDay?> = liftDayDao.getActiveLiftDayForActiveProfile()
 }

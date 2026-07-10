@@ -739,26 +739,3 @@ fun LiftTrackerDrawer(
         }
     }
 }
-
-@Preview(showBackground = true)
-@Composable
-fun LiftTrackerDrawerPreview() {
-    LiftTrackerTheme(dynamicColor = false, darkTheme = true) {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
-        ) {
-            LiftTrackerDrawer(
-                titleRes = R.string.app_name,
-                navigateToRecordSession = {},
-                navigateToMuscleGroups = {},
-                navigateToSessions = {},
-                navigateToCalendar = {},
-                navigateToAnalytics = {},
-                navigateToTools = {},
-                navigateToSettings = {},
-                content = {},
-            )
-        }
-    }
-}

@@ -33,7 +33,7 @@ The ```lift_days``` table has 7 columns:
         )
     ],
     indices = [
-        Index(value = ["profile_id"])
+        Index(value = ["profile_id", "day_number"], unique = true)
     ]
 )
 data class LiftDay(

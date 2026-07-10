@@ -69,7 +69,8 @@ object AppViewModelProvider {
         // initializer for RecordSessionViewModel
         initializer {
             RecordSessionViewModel(
-                profileRepository = liftTrackerApplication().container.profileRepository
+                profileRepository = liftTrackerApplication().container.profileRepository,
+                liftDayRepository = liftTrackerApplication().container.liftDaysRepository
             )
         }
 

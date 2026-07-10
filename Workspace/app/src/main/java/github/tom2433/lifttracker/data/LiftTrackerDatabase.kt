@@ -108,7 +108,7 @@ The ```lift_units``` table has two columns:
         SetMetric::class,
         LiftUnit::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class LiftTrackerDatabase : RoomDatabase() {
@@ -131,7 +131,7 @@ abstract class LiftTrackerDatabase : RoomDatabase() {
                     LiftTrackerDatabase::class.java,
                     "lift_tracker_database"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                     .build()
                     .also { Instance = it }
             }
@@ -198,6 +198,47 @@ abstract class LiftTrackerDatabase : RoomDatabase() {
                     "ALTER TABLE lift_days ADD COLUMN in_progress INTEGER NOT NULL DEFAULT 0"
                 )
                 db.execSQL("CREATE INDEX index_lift_days_profile_id ON lift_days(profile_id)")
+            }
+        }
+
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                renumberLiftDaysByProfile(db)
+                db.execSQL("DROP INDEX IF EXISTS index_lift_days_profile_id")
+                db.execSQL(
+                    "CREATE UNIQUE INDEX index_lift_days_profile_id_day_number ON lift_days(profile_id, day_number)"
+                )
+            }
+
+            private fun renumberLiftDaysByProfile(db: SupportSQLiteDatabase) {
+                val cursor = db.query(
+                    """
+                    SELECT id, profile_id
+                    FROM lift_days
+                    ORDER BY profile_id ASC, day_number ASC, id ASC
+                    """.trimIndent()
+                )
+
+                cursor.use {
+                    var currentProfileId: Int? = null
+                    var nextDayNumber = 1
+
+                    while (it.moveToNext()) {
+                        val liftDayId = it.getInt(0)
+                        val profileId = it.getInt(1)
+
+                        if (profileId != currentProfileId) {
+                            currentProfileId = profileId
+                            nextDayNumber = 1
+                        }
+
+                        db.execSQL(
+                            "UPDATE lift_days SET day_number = ? WHERE id = ?",
+                            arrayOf(nextDayNumber, liftDayId)
+                        )
+                        nextDayNumber += 1
+                    }
+                }
             }
         }
     }

@@ -31,4 +31,9 @@ interface LiftDayRepository {
      * Update day in the data source
      */
     suspend fun updateLiftDay(liftDay: LiftDay)
+
+    /**
+     * Retrieve currently in progress lift day for the currently active profile
+     */
+    fun getActiveLiftDayForActiveProfileStream(): Flow<LiftDay?>
 }
