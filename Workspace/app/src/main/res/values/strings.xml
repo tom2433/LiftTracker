@@ -69,4 +69,8 @@
     <string name="lift_stats">Lift Stats</string>
     <string name="lift_history">Lift History</string>
     <string name="resume_session">Resume Session</string>
+    <string name="edit_session_dialog_title"><![CDATA[Edit Session Name & Note]]></string>
+    <string name="update_session">Update Session</string>
+    <string name="session_name">Session Name</string>
+    <string name="session_note_optional">Session Note (optional)</string>
 </resources>

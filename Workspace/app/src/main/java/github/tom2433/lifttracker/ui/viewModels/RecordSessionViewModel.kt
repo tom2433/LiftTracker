@@ -110,6 +110,69 @@ class RecordSessionViewModel(
             endSession()
         }
     }
+
+    fun showDayEditDialog() {
+        val currentActiveDay: LiftDay = _recordSessionUiState.value.activeLiftDay ?: return
+
+        _recordSessionUiState.update { currentState ->
+            currentState.copy(
+                dayEditDialogVisible = true,
+                newDayName = currentActiveDay.day_label,
+                newDayNote = currentActiveDay.note
+            )
+        }
+    }
+
+    fun dismissDayEditDialog() {
+        _recordSessionUiState.update { currentState ->
+            currentState.copy(
+                dayEditDialogVisible = false,
+                newDayName = "",
+                newDayNote = ""
+            )
+        }
+    }
+
+    fun validateDayInput(): Boolean {
+        return (_recordSessionUiState.value.newDayName.isNotBlank())
+    }
+
+    fun updateNewDayName(newDayName: String) {
+        _recordSessionUiState.update { currentState ->
+            currentState.copy(
+                newDayName = newDayName
+            )
+        }
+    }
+
+    fun updateNewDayNote(newDayNote: String) {
+        _recordSessionUiState.update { currentState ->
+            currentState.copy(
+                newDayNote = newDayNote
+            )
+        }
+    }
+
+    fun updateDayNameAndNote() {
+        if (!validateDayInput()) {
+            return
+        }
+
+        viewModelScope.launch {
+            val currentActiveDay: LiftDay = _recordSessionUiState.value.activeLiftDay ?: return@launch
+
+            // update day name and note in database
+            liftDayRepository.updateLiftDay(
+                liftDay = currentActiveDay.copy(
+                    day_label = _recordSessionUiState.value.newDayName,
+                    note = _recordSessionUiState.value.newDayNote
+                )
+            )
+
+            // dismiss day edit dialog
+            dismissDayEditDialog()
+        }
+    }
 }
 
 /**
@@ -118,5 +181,8 @@ class RecordSessionViewModel(
 data class RecordSessionUiState(
     val activeProfile: Profile? = null,
     val activeLiftDay: LiftDay? = null,
-    val totalNumOfLifts: Int = 0
+    val totalNumOfLifts: Int = 0,
+    val dayEditDialogVisible: Boolean = false,
+    val newDayName: String = "",
+    val newDayNote: String = ""
 )

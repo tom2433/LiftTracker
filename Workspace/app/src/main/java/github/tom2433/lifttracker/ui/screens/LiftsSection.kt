@@ -53,6 +53,7 @@ fun LiftSection(
 ) {
     val liftsUiState by viewModel.liftsUiState.collectAsState()
 
+    // flow row to hold all lift cards for muscle group
     FlowRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
