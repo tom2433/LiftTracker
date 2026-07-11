@@ -10,6 +10,8 @@ A Data Vis project developed using Jetpack Compose.
 
 days with the same day_label should display the day number in the note. when creating a lift, the user can click the day label and note to edit it, and when the name input pops up, some quick add buttons should also pop up. these should be able to be grouped in the analytics screen.
 
+start also implementing the preferences table 
+
 ## 07-10
 
 - maybe keep the dislog titles fixed in place and have the scrollable column only contain the body of the Dialog. maybe create a function for a dialog and content.
