@@ -6,6 +6,10 @@ A Data Vis project developed using Jetpack Compose.
 
 # Immediate Notes
 
+## 07-13
+
+Consider putting the analytics button toggle-able on the lift screen, so the user sees previous sessions OR the analytics 
+
 ## 07-11
 
 days with the same day_label should display the day number in the note. when creating a lift, the user can click the day label and note to edit it, and when the name input pops up, some quick add buttons should also pop up. these should be able to be grouped in the analytics screen.
