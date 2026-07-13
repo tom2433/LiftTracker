@@ -3,13 +3,14 @@ package github.tom2433.lifttracker.ui.viewModels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
+import github.tom2433.lifttracker.data.lift.LiftRepository
 import github.tom2433.lifttracker.data.liftday.LiftDay
 import github.tom2433.lifttracker.data.liftday.LiftDayRepository
-import github.tom2433.lifttracker.data.liftday.OfflineLiftDayRepository
 import github.tom2433.lifttracker.data.profile.Profile
 import github.tom2433.lifttracker.data.profile.ProfileRepository
+import github.tom2433.lifttracker.data.structures.LiftSearchDetail
 import github.tom2433.lifttracker.data.utils.DateCalculator
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,9 +22,11 @@ import kotlinx.coroutines.launch
  */
 class RecordSessionViewModel(
     private val profileRepository: ProfileRepository,
-    private val liftDayRepository: LiftDayRepository
+    private val liftDayRepository: LiftDayRepository,
+    private val liftRepository: LiftRepository
 ) : ViewModel() {
     private val _recordSessionUiState = MutableStateFlow(RecordSessionUiState())
+    private var liftSuggestionsJob: Job? = null
     val recordSessionUiState: StateFlow<RecordSessionUiState> = _recordSessionUiState.asStateFlow()
 
     init {
@@ -173,6 +176,66 @@ class RecordSessionViewModel(
             dismissDayEditDialog()
         }
     }
+
+    fun addLiftClicked() {
+        _recordSessionUiState.update { currentState ->
+            currentState.copy(
+                userIsAddingLift = true,
+                inputLiftName = ""
+            )
+        }
+    }
+
+    fun cancelAddLift() {
+        liftSuggestionsJob?.cancel()
+
+        _recordSessionUiState.update { currentState ->
+            currentState.copy(
+                userIsAddingLift = false,
+                inputLiftName = "",
+                liftSuggestionsList = emptyList()
+            )
+        }
+    }
+
+    fun onInputLiftValueChanged(newValue: String) {
+        _recordSessionUiState.update { currentState ->
+            currentState.copy(
+                inputLiftName = newValue
+            )
+        }
+
+        liftSuggestionsJob?.cancel()
+
+        // if inputted value is blank, don't search anything, and return
+        if (newValue.isBlank()) {
+            _recordSessionUiState.update { currentState ->
+                currentState.copy(
+                    liftSuggestionsList = emptyList()
+                )
+            }
+            return
+        }
+
+        // search for user's inputted value and fill LiftDetailList
+        liftSuggestionsJob = viewModelScope.launch {
+            liftRepository
+                .getLiftSearchDetailsContainingStream(newValue.trim())
+                .collect { liftDetails ->
+                    val lastIndex = liftDetails.lastIndex
+
+                    _recordSessionUiState.update { currentState ->
+                        currentState.copy(
+                            liftSuggestionsList = liftDetails.mapIndexed { index, liftDetail ->
+                                liftDetail.copy(
+                                    selected = index == lastIndex
+                                )
+                            }
+                        )
+                    }
+                }
+        }
+    }
 }
 
 /**
@@ -184,5 +247,8 @@ data class RecordSessionUiState(
     val totalNumOfLifts: Int = 0,
     val dayEditDialogVisible: Boolean = false,
     val newDayName: String = "",
-    val newDayNote: String = ""
+    val newDayNote: String = "",
+    val userIsAddingLift: Boolean = false,
+    val inputLiftName: String = "",
+    val liftSuggestionsList: List<LiftSearchDetail> = listOf()
 )

@@ -1,5 +1,6 @@
 package github.tom2433.lifttracker.data.lift
 
+import github.tom2433.lifttracker.data.structures.LiftSearchDetail
 import github.tom2433.lifttracker.data.structures.LiftStatisticsData
 import kotlinx.coroutines.flow.Flow
 
@@ -20,4 +21,6 @@ class OfflineLiftRepository(private val liftDao: LiftDao) : LiftRepository {
         startDate: String?,
         endDate: String?
     ): Flow<LiftStatisticsData?> = liftDao.getLiftStatistics(liftId, startDate, endDate)
+
+    override fun getLiftSearchDetailsContainingStream(searchText: String): Flow<List<LiftSearchDetail>> = liftDao.getLiftSearchDetailsContaining(searchText)
 }

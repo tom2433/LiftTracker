@@ -1,5 +1,6 @@
 package github.tom2433.lifttracker.data.lift
 
+import github.tom2433.lifttracker.data.structures.LiftSearchDetail
 import github.tom2433.lifttracker.data.structures.LiftStatisticsData
 import kotlinx.coroutines.flow.Flow
 
@@ -15,4 +16,6 @@ interface LiftRepository {
         startDate: String?,
         endDate: String?
     ): Flow<LiftStatisticsData?>
+
+    fun getLiftSearchDetailsContainingStream(searchText: String): Flow<List<LiftSearchDetail>>
 }

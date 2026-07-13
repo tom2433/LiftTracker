@@ -73,4 +73,7 @@
     <string name="update_session">Update Session</string>
     <string name="session_name">Session Name</string>
     <string name="session_note_optional">Session Note (optional)</string>
+    <string name="existing_lift_name">Existing Lift Name</string>
+    <string name="start">Start</string>
+    <string name="simple_cancel">Cancel</string>
 </resources>

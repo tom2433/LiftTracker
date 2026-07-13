@@ -70,7 +70,8 @@ object AppViewModelProvider {
         initializer {
             RecordSessionViewModel(
                 profileRepository = liftTrackerApplication().container.profileRepository,
-                liftDayRepository = liftTrackerApplication().container.liftDaysRepository
+                liftDayRepository = liftTrackerApplication().container.liftDaysRepository,
+                liftRepository = liftTrackerApplication().container.liftRepository
             )
         }
 

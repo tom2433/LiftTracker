@@ -6,6 +6,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import github.tom2433.lifttracker.data.structures.LiftSearchDetail
 import github.tom2433.lifttracker.data.structures.LiftStatisticsData
 import kotlinx.coroutines.flow.Flow
 
@@ -126,4 +127,28 @@ interface LiftDao {
         startDate: String?,
         endDate: String?
     ): Flow<LiftStatisticsData?>
+
+    @Query("""
+        SELECT
+            l.*,
+            mg.name AS muscleGroupName,
+            CASE
+                WHEN l.metric_type = 1 THEN 'reps'
+                ELSE 'time'
+            END AS metricType,
+            lu.name AS unitName,
+            0 AS selected
+        FROM lifts AS l
+        INNER JOIN muscle_groups AS mg
+            ON mg.id = l.muscle_group_id
+        INNER JOIN profiles AS p
+            ON p.id = mg.profile_id
+        INNER JOIN lift_units AS lu
+            ON lu.id = l.unit_id
+        WHERE p.active = 1
+            AND :searchText != ''
+            AND instr(lower(l.name), lower(:searchText)) > 0
+        ORDER BY l.name ASC
+    """)
+    fun getLiftSearchDetailsContaining(searchText: String): Flow<List<LiftSearchDetail>>
 }

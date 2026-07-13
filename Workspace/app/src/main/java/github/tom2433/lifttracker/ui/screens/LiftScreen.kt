@@ -55,6 +55,7 @@ import github.tom2433.lifttracker.data.lift.Lift
 import github.tom2433.lifttracker.ui.AppViewModelProvider
 import github.tom2433.lifttracker.ui.utils.CustomFilterChip
 import github.tom2433.lifttracker.ui.utils.InfoButton
+import github.tom2433.lifttracker.ui.utils.LiftDetailFlowRow
 import github.tom2433.lifttracker.ui.utils.SectionTitle
 import github.tom2433.lifttracker.ui.utils.ShowLiftEntryDialog
 import github.tom2433.lifttracker.ui.utils.ThreeDotMenu
@@ -244,72 +245,12 @@ fun LiftScreen(
                                     )
                             )
 
-                            FlowRow(
-                                horizontalArrangement = Arrangement.Center,
-                                verticalArrangement = Arrangement.Top,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                // muscle group
-                                Row(
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier
-                                        .wrapContentWidth()
-                                        .padding(bottom = 8.dp)
-                                ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.ic_arm_flex),
-                                        contentDescription = stringResource(R.string.muscle_group)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = liftScreenUiState.muscleGroup?.name ?: "null",
-                                        style = MaterialTheme.typography.bodyMedium
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.width(28.dp))
-
-                                // metric type
-                                Row(
-                                    horizontalArrangement = Arrangement.Start,
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier
-                                        .wrapContentWidth()
-                                        .padding(bottom = 8.dp)
-                                ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.ic_ruler),
-                                        contentDescription = stringResource(R.string.metric_type),
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = liftScreenUiState.liftScreenDetail.metricType,
-                                        style = MaterialTheme.typography.bodyMedium
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.width(28.dp))
-
-                                // lift unit
-                                Row(
-                                    horizontalArrangement = Arrangement.Start,
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier
-                                        .wrapContentWidth()
-                                        .padding(bottom = 8.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Filled.Scale,
-                                        contentDescription = stringResource(R.string.unit)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = liftScreenUiState.liftScreenDetail.unitName,
-                                        style = MaterialTheme.typography.bodyMedium
-                                    )
-                                }
-                            }
+                            // flow row to hold muscle group, metric type, and lift unit
+                            LiftDetailFlowRow(
+                                muscleGroupName = liftScreenUiState.muscleGroup?.name ?: "null",
+                                metricType = liftScreenUiState.liftScreenDetail.metricType,
+                                unitName = liftScreenUiState.liftScreenDetail.unitName,
+                            )
 
                             // last date trained
                             StatRow(
