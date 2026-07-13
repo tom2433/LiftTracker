@@ -10,7 +10,7 @@ A Data Vis project developed using Jetpack Compose.
 
 days with the same day_label should display the day number in the note. when creating a lift, the user can click the day label and note to edit it, and when the name input pops up, some quick add buttons should also pop up. these should be able to be grouped in the analytics screen.
 
-start also implementing the preferences table 
+start also implementing the preferences table
 
 ## 07-10
 
@@ -139,6 +139,17 @@ start also implementing the preferences table
         - this header row contains a pencil icon on the left with the lift day's name and note directly beside it to the right.
         - All the way on the right is the Finish button, which will delete the lift_day if the user has not recorded any lifts for it, or it will change the in_progress column of the current lift_day to false (current functionality).
     - Clicking the header row section with the pencil icon and lift_day name and note will popup an element entry dialog allowing the user to edit the name and note of the current session.
+        - **Need to implement:** days with the same day_label should display the day number in the note. when creating a lift, the user can click the day label and note to edit it, and when the name input pops up, some quick add buttons should also pop up. these should be able to be grouped in the analytics screen.
+    - **Need to implement**
+        - in the session in progress screen, A Horizontal divider with an add button in the middle will be present. When clicking the add button, a card (representing a lift) will popup with a name input.
+        - As the user begins typing in the name input, suggestions will popup next to the input that the user can select.
+        - These suggestions will be determined by finding lifts that begin with or contain the string that the user has typed thus far.
+        - The suggestions should contain lift names, their notes, and their respective muscle group.
+        - Suggestions will include lifts from all muscle groups, but the user should be able to restrict this through some form of filter menu.
+        - The most likely match will be closest to the user's input field and highlighted, and when the user clicks enter, this match will be entered into the text field which will change into a simple label with a pencil icon next to it to edit.
+        - The label will include the lift name and its note. The muscle group should also be displayed on this card.
+        - After clicking enter to select the lift, The UI should automatically update to create the first set of the lift.
+        - The set should also be a card, and the lift card should take on a similar format to the muscle group cards on the muscle group screen. It should also be collapsable like the muscle group cards. The set cards will be in place of where the lift cards would normally be, but it should flow a little better and will obviously contain more information.
 
 ### Misc. things to do:
 
