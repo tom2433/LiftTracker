@@ -38,7 +38,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -294,6 +293,9 @@ fun SessionInProgressScreen(
                                 inputLiftName = recordSessionUiState.inputLiftName,
                                 onInputLiftValueChanged = { viewModel.onInputLiftValueChanged(it) },
                                 onClickCancel = { viewModel.cancelAddLift() },
+                                dismissDropdownSuggestionList = { viewModel.dismissDropdownSuggestionList() },
+                                liftSuggestionClicked = { viewModel.liftSuggestionClicked(it) },
+                                onGo = { viewModel.onGoLiftEntry() },
                                 screenContentColor = screenContentColor,
                             )
                         }
@@ -333,6 +335,9 @@ fun ExistingLiftEntryCard(
     inputLiftName: String,
     onInputLiftValueChanged: (String) -> Unit,
     onClickCancel: () -> Unit,
+    dismissDropdownSuggestionList: () -> Unit,
+    liftSuggestionClicked: (Int) -> Unit,
+    onGo: () -> Unit,
     screenContentColor: Color,
     modifier: Modifier = Modifier
 ) {
@@ -372,7 +377,7 @@ fun ExistingLiftEntryCard(
                         imeAction = ImeAction.Go
                     ),
                     keyboardActions = KeyboardActions(
-                        onGo = { /* TODO */ }
+                        onGo = { onGo() }
                     ),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = screenContentColor,
@@ -397,7 +402,7 @@ fun ExistingLiftEntryCard(
 
                 ExposedDropdownMenu(
                     expanded = liftSuggestionsList.isNotEmpty(),
-                    onDismissRequest = { /* TODO: clear suggestions or hide menu */ }
+                    onDismissRequest = dismissDropdownSuggestionList
                 ) {
                     liftSuggestionsList.forEach { liftSearchDetail ->
                         DropdownMenuItem(
@@ -405,11 +410,7 @@ fun ExistingLiftEntryCard(
                                 Column(
                                     horizontalAlignment = Alignment.Start,
                                     verticalArrangement = Arrangement.Top,
-                                    modifier = Modifier
-                                        .clickable(
-                                            onClick = { /* TODO */ }
-                                        )
-                                        .padding(8.dp)
+                                    modifier = Modifier.padding(8.dp)
                                 ) {
                                     // column to hold lift name and note and lift detail flow row
                                     Column {
@@ -447,7 +448,7 @@ fun ExistingLiftEntryCard(
                                     }
                                 }
                             },
-                            onClick = { /* TODO: suggestion clicked */ },
+                            onClick = { liftSuggestionClicked(liftSearchDetail.liftObj.id) },
                             modifier = Modifier.background(
                                 if (liftSearchDetail.selected) {
                                     MaterialTheme.colorScheme.secondaryContainer
@@ -458,16 +459,6 @@ fun ExistingLiftEntryCard(
                         )
                     }
                 }
-            }
-
-            // button to start lift
-            ElevatedButton(
-                onClick = { /* TODO */ },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 4.dp)
-            ) {
-                Text(stringResource(R.string.add_lift))
             }
 
             // button to cancel

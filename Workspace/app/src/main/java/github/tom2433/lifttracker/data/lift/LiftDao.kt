@@ -151,4 +151,6 @@ interface LiftDao {
         ORDER BY l.name ASC
     """)
     fun getLiftSearchDetailsContaining(searchText: String): Flow<List<LiftSearchDetail>>
+
+    fun getLiftSearchDetailsForDayId(liftDayId: Int): Flow<List<LiftSearchDetail>>
 }

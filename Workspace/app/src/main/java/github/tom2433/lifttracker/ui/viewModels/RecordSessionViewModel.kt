@@ -6,8 +6,10 @@ import androidx.lifecycle.viewModelScope
 import github.tom2433.lifttracker.data.lift.LiftRepository
 import github.tom2433.lifttracker.data.liftday.LiftDay
 import github.tom2433.lifttracker.data.liftday.LiftDayRepository
+import github.tom2433.lifttracker.data.liftset.LiftSet
 import github.tom2433.lifttracker.data.profile.Profile
 import github.tom2433.lifttracker.data.profile.ProfileRepository
+import github.tom2433.lifttracker.data.setmetric.SetMetric
 import github.tom2433.lifttracker.data.structures.LiftSearchDetail
 import github.tom2433.lifttracker.data.utils.DateCalculator
 import kotlinx.coroutines.Job
@@ -236,6 +238,64 @@ class RecordSessionViewModel(
                 }
         }
     }
+
+    fun dismissDropdownSuggestionList() {
+        liftSuggestionsJob?.cancel()
+
+        _recordSessionUiState.update { currentState ->
+            currentState.copy(
+                liftSuggestionsList = emptyList()
+            )
+        }
+    }
+
+    fun liftSuggestionClicked(id: Int) {
+        var liftSearchDetail: LiftSearchDetail? = null
+
+        for (detail in _recordSessionUiState.value.liftSuggestionsList) {
+            if (detail.liftObj.id == id) {
+                liftSearchDetail = detail
+                break
+            }
+        }
+
+        if (liftSearchDetail == null) {
+            return
+        }
+
+        _recordSessionUiState.update { currentState ->
+            currentState.copy(
+                liftSuggestionsList = listOf(
+                    liftSearchDetail.copy(
+                        selected = true
+                    )
+                )
+            )
+        }
+
+        onGoLiftEntry()
+    }
+
+    fun onGoLiftEntry() {
+        // TODO
+        // this should swipe away the ExistingLiftEntryCard and replace it with a
+        // lift in progress card (expandable to show lift sets)
+
+        // the way to do this is to just immediately create a new lift set in the
+        // database. that is all that will happen in this function with the
+        // exception of cancelling the lift entry card.
+
+        // I need to ensure that when a lift set is inserted into the database,
+        // the lift set number is calculated as the set number for the lift,
+        // the day set number is calculated as the set number for the day,
+        // and the set label is created with the lift set number. (done)
+
+        // I also need to ensure that when a lift set is deleted,
+        // the lift set numbers of all other sets in this lift are adjusted appropriately,
+        // the day set numbers of all other sets in this day are adjusted appropriately,
+        // and the set labels of all other sets in this lift are adjusted appropriately
+        // IF they are of the pattern "Set n" (done)
+    }
 }
 
 /**
@@ -250,5 +310,6 @@ data class RecordSessionUiState(
     val newDayNote: String = "",
     val userIsAddingLift: Boolean = false,
     val inputLiftName: String = "",
-    val liftSuggestionsList: List<LiftSearchDetail> = listOf()
+    val liftSuggestionsList: List<LiftSearchDetail> = emptyList(),
+    val liftSetMap: Map<LiftSearchDetail, Map<LiftSet, Pair<SetMetric, SetMetric>>> = emptyMap() // TODO: populate this through a flow
 )
