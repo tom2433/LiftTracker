@@ -72,7 +72,8 @@ object AppViewModelProvider {
                 profileRepository = liftTrackerApplication().container.profileRepository,
                 liftDayRepository = liftTrackerApplication().container.liftDaysRepository,
                 liftRepository = liftTrackerApplication().container.liftRepository,
-                liftSetRepository = liftTrackerApplication().container.liftSetRepository
+                liftSetRepository = liftTrackerApplication().container.liftSetRepository,
+                setMetricRepository = liftTrackerApplication().container.setMetricRepository
             )
         }
 

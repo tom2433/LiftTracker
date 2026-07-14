@@ -11,9 +11,11 @@ import github.tom2433.lifttracker.data.liftset.LiftSetRepository
 import github.tom2433.lifttracker.data.profile.Profile
 import github.tom2433.lifttracker.data.profile.ProfileRepository
 import github.tom2433.lifttracker.data.setmetric.SetMetric
+import github.tom2433.lifttracker.data.setmetric.SetMetricRepository
 import github.tom2433.lifttracker.data.structures.LiftSearchDetail
 import github.tom2433.lifttracker.data.structures.RecordLiftDetail
 import github.tom2433.lifttracker.data.structures.RecordSessionLiftSetRow
+import github.tom2433.lifttracker.data.structures.SetMetricDisplayDetail
 import github.tom2433.lifttracker.data.utils.DateCalculator
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -36,7 +38,8 @@ class RecordSessionViewModel(
     private val profileRepository: ProfileRepository,
     private val liftDayRepository: LiftDayRepository,
     private val liftRepository: LiftRepository,
-    private val liftSetRepository: LiftSetRepository
+    private val liftSetRepository: LiftSetRepository,
+    private val setMetricRepository: SetMetricRepository
 ) : ViewModel() {
     private val _recordSessionUiState = MutableStateFlow(RecordSessionUiState())
     private var liftSuggestionsJob: Job? = null
@@ -128,6 +131,27 @@ class RecordSessionViewModel(
                     revealPendingLiftIfReady()
                 }
         }
+
+        // constant collection: fill the setMetricDisplayDetailMap
+        viewModelScope.launch {
+            liftDayRepository.getActiveLiftDayForActiveProfileStream()
+                .flatMapLatest { activeLiftDay ->
+                    if (activeLiftDay == null) {
+                        flowOf(emptyList())
+                    } else {
+                        setMetricRepository.getSetMetricIdsFromDayIdStream(activeLiftDay.id)
+                    }
+                }
+                .collect { setMetricIds ->
+                    _recordSessionUiState.update { currentState ->
+                        currentState.copy(
+                            setMetricDisplayDetailMap = setMetricIds.toSetMetricDisplayDetailMap(
+                                previousSetMetricDisplayDetailMap = currentState.setMetricDisplayDetailMap
+                            )
+                        )
+                    }
+                }
+        }
     }
 
     private fun revealPendingLiftIfReady() {
@@ -187,6 +211,22 @@ class RecordSessionViewModel(
                         liftDetail
                     }
                 }
+            )
+        }
+    }
+
+    private fun List<Int>.toSetMetricDisplayDetailMap(
+        previousSetMetricDisplayDetailMap: Map<Int, SetMetricDisplayDetail>
+    ): Map<Int, SetMetricDisplayDetail> {
+        return associate { thisSetMetricId ->
+            thisSetMetricId to SetMetricDisplayDetail(
+                value = previousSetMetricDisplayDetailMap[thisSetMetricId]?.value ?: "",
+                hours = previousSetMetricDisplayDetailMap[thisSetMetricId]?.hours ?: "",
+                minutes = previousSetMetricDisplayDetailMap[thisSetMetricId]?.minutes ?: "",
+                seconds = previousSetMetricDisplayDetailMap[thisSetMetricId]?.seconds ?: "",
+                note = previousSetMetricDisplayDetailMap[thisSetMetricId]?.note ?: "",
+                inputIsValid = previousSetMetricDisplayDetailMap[thisSetMetricId]?.inputIsValid ?: false,
+                inputIsLogged = previousSetMetricDisplayDetailMap[thisSetMetricId]?.inputIsLogged ?: false
             )
         }
     }
@@ -622,6 +662,7 @@ data class RecordSessionUiState(
     val liftSuggestionsList: List<LiftSearchDetail> = emptyList(),
     val liftSetMap: Map<Int, Map<LiftSet, Pair<SetMetric, SetMetric>>> = emptyMap(),
     val liftDetailMap: Map<Int, LiftSearchDetail> = emptyMap(),
+    val setMetricDisplayDetailMap: Map<Int, SetMetricDisplayDetail> = emptyMap(),
     val deleteLiftInProgressDialogVisible: Boolean = false,
     val liftIdToDelete: Int = -1,
 )

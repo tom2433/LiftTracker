@@ -7,4 +7,5 @@ interface SetMetricRepository {
     suspend fun updateSetMetric(setMetric: SetMetric)
     suspend fun deleteSetMetric(setMetric: SetMetric)
     fun getSetMetricStream(id: Int): Flow<SetMetric?>
+    fun getSetMetricIdsFromDayIdStream(dayId: Int): Flow<List<Int>>
 }

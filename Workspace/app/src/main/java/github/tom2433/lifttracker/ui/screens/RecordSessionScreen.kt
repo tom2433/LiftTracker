@@ -8,6 +8,7 @@ import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -31,6 +32,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -80,7 +83,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import github.tom2433.lifttracker.R
+import github.tom2433.lifttracker.data.liftset.LiftSet
+import github.tom2433.lifttracker.data.setmetric.SetMetric
 import github.tom2433.lifttracker.data.structures.LiftSearchDetail
+import github.tom2433.lifttracker.data.structures.SetMetricDisplayDetail
 import github.tom2433.lifttracker.ui.AppViewModelProvider
 import github.tom2433.lifttracker.ui.navigation.NavigationDestination
 import github.tom2433.lifttracker.ui.utils.LiftDetailFlowRow
@@ -325,6 +331,8 @@ fun SessionInProgressScreen(
                                         toggleSelectedCard = { viewModel.toggleSelectedInProgressLiftCard(liftId) },
                                         onLiftDelete = { viewModel.showDeleteLiftInProgressDialog(liftId) },
                                         liftDetail = liftDetail,
+                                        setMap = setMap,
+                                        setMetricDisplayDetailMap = recordSessionUiState.setMetricDisplayDetailMap
                                     )
                                 }
                             }
@@ -351,7 +359,7 @@ fun SessionInProgressScreen(
                                 liftSuggestionClicked = { viewModel.liftSuggestionClicked(it) },
                                 dropdownButtonClicked = { viewModel.liftEntryDropdownButtonClicked() },
                                 onGo = { viewModel.onGoLiftEntry() },
-                                screenContentColor = screenContentColor,
+                                screenContentColor = screenContentColor
                             )
                         }
 
@@ -388,16 +396,41 @@ fun LiftInProgressCard(
     toggleSelectedCard: () -> Unit,
     onLiftDelete: () -> Unit,
     liftDetail: LiftSearchDetail,
+    setMap: Map<LiftSet, Pair<SetMetric, SetMetric>>,
+    setMetricDisplayDetailMap: Map<Int, SetMetricDisplayDetail>,
     modifier: Modifier = Modifier
 ) {
-    Column {
+    val bottomCornerRadius by animateDpAsState(
+        targetValue = if (liftDetail.selected) 0.dp else 16.dp,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessMediumLow
+        )
+    )
+    val screenContentColor = MaterialTheme.colorScheme.onSecondaryContainer
+
+    Column(
+        modifier = modifier
+            .animateContentSize(
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioNoBouncy,
+                    stiffness = Spring.StiffnessMediumLow
+                )
+            )
+    ) {
         // card to represent lift in progress
         Card(
+            shape = RoundedCornerShape(
+                topStart = 16.dp,
+                topEnd = 16.dp,
+                bottomStart = bottomCornerRadius,
+                bottomEnd = bottomCornerRadius
+            ),
             colors = CardDefaults.cardColors().copy(
                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
                 contentColor = MaterialTheme.colorScheme.onSecondaryContainer
             ),
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxWidth(),
             onClick = { toggleSelectedCard() }
         ) {
@@ -485,6 +518,272 @@ fun LiftInProgressCard(
                         unitName = liftDetail.unitName,
                         modifier = Modifier.padding(top = 24.dp)
                     )
+                }
+            }
+        }
+
+        // animated visibility for lift sets and add lift set button
+        AnimatedVisibility(
+            visible = liftDetail.selected,
+            enter = slideInVertically(
+                initialOffsetY = { -it },
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioNoBouncy,
+                    stiffness = Spring.StiffnessMediumLow
+                )
+            ) + fadeIn(
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioNoBouncy,
+                    stiffness = Spring.StiffnessMediumLow
+                )
+            ),
+            exit = slideOutVertically(
+                targetOffsetY = { -it },
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioNoBouncy,
+                    stiffness = Spring.StiffnessMediumLow
+                )
+            ) + fadeOut(
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioNoBouncy,
+                    stiffness = Spring.StiffnessMediumLow
+                )
+            )
+        ) {
+            // column to hold lift set cards and add lift set button
+            Column(
+                modifier = Modifier.padding(horizontal = 16.dp)
+            ) {
+                // lift sets go here outside of the card
+                for ((liftSet, setMetricPair) in setMap) {
+                    // key to differentiate lift set cards
+                    key(liftSet.id) {
+                        // card to represent LiftSet. Each LiftSet has two SetMetrics
+                        Card(
+                            colors = CardDefaults.cardColors().copy(
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
+                        ) {
+                            // LiftSet has:
+                            // - lift set number
+                            // - day set number
+                            // - set label
+                            // - set note
+
+                            // SetMetric has:
+                            // - value
+                            // - note
+
+                            // row to hold lift set details on the left,
+                            // set metric details on the right
+                            Row(
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .padding(8.dp)
+                                    .fillMaxWidth()
+                            ) {
+                                // column to hold set label, set note (if applicable), lift set #,
+                                // and day set #
+                                Column(
+                                    verticalArrangement = Arrangement.Center,
+                                    horizontalAlignment = Alignment.Start,
+                                ) {
+                                    // set label
+                                    Text(
+                                        text = liftSet.set_label,
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
+                                    // set note (if applicable)
+                                    if (liftSet.set_note.isNotBlank()) {
+                                        Text(
+                                            text = liftSet.set_note,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            fontSize = 13.sp,
+                                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.75f)
+                                        )
+                                    }
+                                    // lift set #
+                                    Text(
+                                        text = "Lift's set #${liftSet.lift_set_number}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontSize = 13.sp,
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.75f)
+                                    )
+                                    // day set #
+                                    Text(
+                                        text = "Day's set #${liftSet.day_set_number}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontSize = 13.sp,
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.75f)
+                                    )
+                                }
+
+                                // column to hold user inputs for weight and reps/time
+                                Column(
+                                    verticalArrangement = Arrangement.Center,
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    // text field for weight
+                                    OutlinedTextField(
+                                        value = setMetricDisplayDetailMap[setMetricPair.first.id]?.value ?: "",
+                                        onValueChange = {},
+                                        label = {
+                                            Text(
+                                                text = liftDetail.unitName
+                                            )
+                                        },
+                                        singleLine = true,
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            focusedTextColor = screenContentColor,
+                                            unfocusedTextColor = screenContentColor,
+                                            focusedLabelColor = screenContentColor,
+                                            unfocusedLabelColor = screenContentColor.copy(alpha = 0.75f),
+                                            focusedBorderColor = screenContentColor,
+                                            unfocusedBorderColor = screenContentColor.copy(alpha = 0.6f),
+                                            cursorColor = screenContentColor,
+                                            focusedContainerColor = Color.Transparent,
+                                            unfocusedContainerColor = Color.Transparent
+                                        ),
+                                        modifier = Modifier
+                                            .widthIn(
+                                                min = 96.dp,
+                                                max = 140.dp
+                                            )
+                                    )
+
+                                    HorizontalDivider(
+                                        modifier = Modifier
+                                            .width(96.dp)
+                                            .padding(top = 8.dp),
+                                        color = screenContentColor
+                                    )
+
+                                    // determine if the next text fields should be time or reps
+                                    if (liftDetail.metricType == "reps") {
+                                        // text field for reps
+                                        OutlinedTextField(
+                                            value = setMetricDisplayDetailMap[setMetricPair.second.id]?.value ?: "",
+                                            onValueChange = {},
+                                            label = {
+                                                Text(
+                                                    text = stringResource(R.string.reps)
+                                                )
+                                            },
+                                            singleLine = true,
+                                            colors = OutlinedTextFieldDefaults.colors(
+                                                focusedTextColor = screenContentColor,
+                                                unfocusedTextColor = screenContentColor,
+                                                focusedLabelColor = screenContentColor,
+                                                unfocusedLabelColor = screenContentColor.copy(alpha = 0.75f),
+                                                focusedBorderColor = screenContentColor,
+                                                unfocusedBorderColor = screenContentColor.copy(alpha = 0.6f),
+                                                cursorColor = screenContentColor,
+                                                focusedContainerColor = Color.Transparent,
+                                                unfocusedContainerColor = Color.Transparent
+                                            ),
+                                            modifier = Modifier.widthIn(
+                                                min = 96.dp,
+                                                max = 140.dp
+                                            )
+                                        )
+                                    } else {
+                                        // text field for hours
+                                        OutlinedTextField(
+                                            value = setMetricDisplayDetailMap[setMetricPair.second.id]?.hours ?: "",
+                                            onValueChange = {},
+                                            label = {
+                                                Text(
+                                                    text = stringResource(R.string.hours)
+                                                )
+                                            },
+                                            singleLine = true,
+                                            colors = OutlinedTextFieldDefaults.colors(
+                                                focusedTextColor = screenContentColor,
+                                                unfocusedTextColor = screenContentColor,
+                                                focusedLabelColor = screenContentColor,
+                                                unfocusedLabelColor = screenContentColor.copy(alpha = 0.75f),
+                                                focusedBorderColor = screenContentColor,
+                                                unfocusedBorderColor = screenContentColor.copy(alpha = 0.6f),
+                                                cursorColor = screenContentColor,
+                                                focusedContainerColor = Color.Transparent,
+                                                unfocusedContainerColor = Color.Transparent
+                                            ),
+                                            modifier = Modifier
+                                                .widthIn(
+                                                    min = 96.dp,
+                                                    max = 140.dp
+                                                )
+                                                .padding(
+                                                    bottom = 4.dp
+                                                )
+                                        )
+                                        // text field for minutes
+                                        OutlinedTextField(
+                                            value = setMetricDisplayDetailMap[setMetricPair.second.id]?.minutes ?: "",
+                                            onValueChange = {},
+                                            label = {
+                                                Text(
+                                                    text = stringResource(R.string.minutes)
+                                                )
+                                            },
+                                            singleLine = true,
+                                            colors = OutlinedTextFieldDefaults.colors(
+                                                focusedTextColor = screenContentColor,
+                                                unfocusedTextColor = screenContentColor,
+                                                focusedLabelColor = screenContentColor,
+                                                unfocusedLabelColor = screenContentColor.copy(alpha = 0.75f),
+                                                focusedBorderColor = screenContentColor,
+                                                unfocusedBorderColor = screenContentColor.copy(alpha = 0.6f),
+                                                cursorColor = screenContentColor,
+                                                focusedContainerColor = Color.Transparent,
+                                                unfocusedContainerColor = Color.Transparent
+                                            ),
+                                            modifier = Modifier
+                                                .widthIn(
+                                                    min = 96.dp,
+                                                    max = 140.dp
+                                                )
+                                                .padding(
+                                                    bottom = 4.dp
+                                                )
+                                        )
+                                        // text field for seconds
+                                        OutlinedTextField(
+                                            value = setMetricDisplayDetailMap[setMetricPair.second.id]?.seconds ?: "",
+                                            onValueChange = {},
+                                            label = {
+                                                Text(
+                                                    text = stringResource(R.string.seconds)
+                                                )
+                                            },
+                                            singleLine = true,
+                                            colors = OutlinedTextFieldDefaults.colors(
+                                                focusedTextColor = screenContentColor,
+                                                unfocusedTextColor = screenContentColor,
+                                                focusedLabelColor = screenContentColor,
+                                                unfocusedLabelColor = screenContentColor.copy(alpha = 0.75f),
+                                                focusedBorderColor = screenContentColor,
+                                                unfocusedBorderColor = screenContentColor.copy(alpha = 0.6f),
+                                                cursorColor = screenContentColor,
+                                                focusedContainerColor = Color.Transparent,
+                                                unfocusedContainerColor = Color.Transparent
+                                            ),
+                                            modifier = Modifier
+                                                .widthIn(
+                                                    min = 96.dp,
+                                                    max = 140.dp
+                                                )
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
