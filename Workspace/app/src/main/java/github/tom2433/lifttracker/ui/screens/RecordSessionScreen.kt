@@ -6,6 +6,9 @@ import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -63,6 +66,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -80,6 +84,7 @@ import github.tom2433.lifttracker.data.structures.LiftSearchDetail
 import github.tom2433.lifttracker.ui.AppViewModelProvider
 import github.tom2433.lifttracker.ui.navigation.NavigationDestination
 import github.tom2433.lifttracker.ui.utils.LiftDetailFlowRow
+import github.tom2433.lifttracker.ui.utils.ShowElementDeleteDialog
 import github.tom2433.lifttracker.ui.utils.ShowElementEntryDialog
 import github.tom2433.lifttracker.ui.viewModels.RecordSessionUiState
 import github.tom2433.lifttracker.ui.viewModels.RecordSessionViewModel
@@ -151,6 +156,19 @@ fun RecordSessionScreen(
                 }
             }
         }
+    }
+
+    if (recordSessionUiState.deleteLiftInProgressDialogVisible &&
+        recordSessionUiState.liftIdToDelete != -1) {
+        val title: String = recordSessionUiState.liftDetailMap[recordSessionUiState.liftIdToDelete]?.liftObj?.name ?: "null"
+
+        ShowElementDeleteDialog(
+            dialogTitle = "Delete all sets completed today for ${title}?",
+            warningDescription = stringResource(R.string.delete_lift_in_progress_warning_desc),
+            deleteBtnText = "Delete all of today's sets for $title",
+            onDismissRequest = { viewModel.dismissDeleteLiftInProgressDialog() },
+            onDelete = { viewModel.deleteLiftInProgress() }
+        )
     }
 }
 
@@ -284,77 +302,32 @@ fun SessionInProgressScreen(
                             .padding(16.dp)
                     ) {
                         // lifts in progress will go here
-                        for ((liftId, setMap) in recordSessionUiState.liftSetMap) {
-                            // check that this liftId is also in the liftDetailMap (it should be)
-                            val liftDetail: LiftSearchDetail = recordSessionUiState.liftDetailMap[liftId] ?: continue
+                        loop@ for ((liftId, setMap) in recordSessionUiState.liftSetMap) {
+                            key(liftId) {
+                                // check that this liftId is also in the liftDetailMap (it should be)
+                                val liftDetail: LiftSearchDetail =
+                                    recordSessionUiState.liftDetailMap[liftId] ?: continue@loop
 
-                            // animate the visibility of the entire lift in progress card
-                            AnimatedVisibility(
-                                visible = liftDetail.visible,
-                                enter = slideInHorizontally(
-                                    initialOffsetX = { it },
-                                    animationSpec = tween(150)
-                                ) + fadeIn(tween(150)),
-                                exit = slideOutHorizontally(
-                                    targetOffsetX = { -it },
-                                    animationSpec = tween(150)
-                                ) + fadeOut(tween(150))
-                            ) {
-                                // card to represent lift in progress
-                                Card(
-                                    colors = CardDefaults.cardColors().copy(
-                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                                    ),
-                                    modifier = modifier
-                                        .fillMaxWidth(),
-                                    onClick = { /* TODO: Lift in progress card clicked */ }
+                                // animate the visibility of the entire lift in progress card
+                                AnimatedVisibility(
+                                    visible = liftDetail.visible,
+                                    enter = slideInHorizontally(
+                                        initialOffsetX = { it },
+                                        animationSpec = tween(150)
+                                    ) + fadeIn(tween(150)),
+                                    exit = slideOutHorizontally(
+                                        targetOffsetX = { -it },
+                                        animationSpec = tween(150)
+                                    ) + fadeOut(tween(150))
                                 ) {
-                                    // column to hold card contents. content should be minimal
-                                    Column(
-                                        modifier = Modifier.padding(16.dp)
-                                    ) {
-                                        // row to hold lift name and note on left, delete button on right
-                                        Row(
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            modifier = Modifier.fillMaxWidth()
-                                        ) {
-                                            // column to hold lift name and note if applicable
-                                            Column(
-                                                modifier = Modifier.weight(1f)
-                                            ) {
-                                                // lift name
-                                                Text(
-                                                    text = liftDetail.liftObj.name,
-                                                    style = MaterialTheme.typography.titleLarge
-                                                )
-                                                // lift note (if applicable)
-                                                if (liftDetail.liftObj.note.isNotBlank()) {
-                                                    Text(
-                                                        text = liftDetail.liftObj.note,
-                                                        style = MaterialTheme.typography.bodyMedium,
-                                                        fontSize = 15.sp,
-                                                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.75f)
-                                                    )
-                                                }
-                                            }
-
-                                            // icon button to delete
-                                            IconButton(
-                                                onClick = { /* TODO: delete lift in progress card */ }
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Filled.Delete,
-                                                    contentDescription = stringResource(R.string.delete_lift_in_progress),
-                                                )
-                                            }
-                                        }
-                                    }
+                                    // card to represent lift in progress
+                                    LiftInProgressCard(
+                                        toggleSelectedCard = { viewModel.toggleSelectedInProgressLiftCard(liftId) },
+                                        onLiftDelete = { viewModel.showDeleteLiftInProgressDialog(liftId) },
+                                        liftDetail = liftDetail,
+                                    )
                                 }
                             }
-
-                            Spacer(modifier = Modifier.height(8.dp))
                         }
 
                         // last lift card will be a prompt if the user is adding a lift
@@ -407,6 +380,116 @@ fun SessionInProgressScreen(
             onSubmit = { viewModel.updateDayNameAndNote() },
             onDismissRequest = { viewModel.dismissDayEditDialog() }
         )
+    }
+}
+
+@Composable
+fun LiftInProgressCard(
+    toggleSelectedCard: () -> Unit,
+    onLiftDelete: () -> Unit,
+    liftDetail: LiftSearchDetail,
+    modifier: Modifier = Modifier
+) {
+    Column {
+        // card to represent lift in progress
+        Card(
+            colors = CardDefaults.cardColors().copy(
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+            ),
+            modifier = modifier
+                .fillMaxWidth(),
+            onClick = { toggleSelectedCard() }
+        ) {
+            // column to hold card contents. content should be minimal
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .animateContentSize(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioNoBouncy,
+                            stiffness = Spring.StiffnessMediumLow
+                        )
+                    )
+            ) {
+                // row to hold lift name and note on left, delete button on right
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    // column to hold lift name and note if applicable
+                    Column(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        // lift name
+                        Text(
+                            text = liftDetail.liftObj.name,
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                        // lift note (if applicable)
+                        if (liftDetail.liftObj.note.isNotBlank()) {
+                            Text(
+                                text = liftDetail.liftObj.note,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontSize = 15.sp,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(
+                                    alpha = 0.75f
+                                )
+                            )
+                        }
+                    }
+
+                    // icon button to delete
+                    IconButton(
+                        onClick = onLiftDelete
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Delete,
+                            contentDescription = stringResource(R.string.delete_lift_in_progress),
+                        )
+                    }
+                }
+
+                // animate the visibility of the lift detail flow row
+                AnimatedVisibility(
+                    visible = liftDetail.selected,
+                    enter = slideInVertically(
+                        initialOffsetY = { -it },
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioNoBouncy,
+                            stiffness = Spring.StiffnessMediumLow
+                        )
+                    ) + fadeIn(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioNoBouncy,
+                            stiffness = Spring.StiffnessMediumLow
+                        )
+                    ),
+                    exit = slideOutVertically(
+                        targetOffsetY = { -it },
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioNoBouncy,
+                            stiffness = Spring.StiffnessMediumLow
+                        )
+                    ) + fadeOut(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioNoBouncy,
+                            stiffness = Spring.StiffnessMediumLow
+                        )
+                    )
+                ) {
+                    LiftDetailFlowRow(
+                        muscleGroupName = liftDetail.muscleGroupName,
+                        metricType = liftDetail.metricType,
+                        unitName = liftDetail.unitName,
+                        modifier = Modifier.padding(top = 24.dp)
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
     }
 }
 

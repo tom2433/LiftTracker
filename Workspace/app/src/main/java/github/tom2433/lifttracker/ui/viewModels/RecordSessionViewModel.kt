@@ -175,6 +175,22 @@ class RecordSessionViewModel(
         }
     }
 
+    fun toggleSelectedInProgressLiftCard(thisLiftId: Int) {
+        _recordSessionUiState.update { currentState ->
+            currentState.copy(
+                liftDetailMap = currentState.liftDetailMap.mapValues { (liftId, liftDetail) ->
+                    if (liftId == thisLiftId) {
+                        liftDetail.copy(
+                            selected = !liftDetail.selected
+                        )
+                    } else {
+                        liftDetail
+                    }
+                }
+            )
+        }
+    }
+
     private fun List<LiftSearchDetail>.toLiftDetailMap(
         previousLiftDetailMap: Map<Int, LiftSearchDetail>
     ): Map<Int, LiftSearchDetail> {
@@ -506,18 +522,6 @@ class RecordSessionViewModel(
         }
     }
 
-    fun makeAllInProgressLiftCardsVisible() {
-        _recordSessionUiState.update { currentState ->
-            currentState.copy(
-                liftDetailMap = currentState.liftDetailMap.mapValues { (_, liftDetail) ->
-                    liftDetail.copy(
-                        visible = true
-                    )
-                }
-            )
-        }
-    }
-
     fun List<LiftSearchDetail>.getSelected(): LiftSearchDetail? {
         val selectedLifts = filter { liftSearchDetail ->
             liftSearchDetail.selected
@@ -527,6 +531,78 @@ class RecordSessionViewModel(
             selectedLifts[0]
         } else {
             null
+        }
+    }
+
+    fun showDeleteLiftInProgressDialog(liftId: Int) {
+        _recordSessionUiState.update { currentState ->
+            currentState.copy(
+                deleteLiftInProgressDialogVisible = true,
+                liftIdToDelete = liftId
+            )
+        }
+    }
+
+    fun dismissDeleteLiftInProgressDialog() {
+        _recordSessionUiState.update { currentState ->
+            currentState.copy(
+                deleteLiftInProgressDialogVisible = false,
+                liftIdToDelete = -1
+            )
+        }
+    }
+
+    fun deleteLiftInProgress() {
+        // dismiss dialog
+        _recordSessionUiState.update { currentState ->
+            currentState.copy(
+                deleteLiftInProgressDialogVisible = false
+            )
+        }
+
+        // determine id of lift to delete sets for
+        val idToDelete: Int = if (_recordSessionUiState.value.liftIdToDelete != -1) {
+            _recordSessionUiState.value.liftIdToDelete
+        } else {
+            return
+        }
+
+        // retrieve all lift sets to delete in descending order
+        val liftSetsToDelete: List<LiftSet> =
+            _recordSessionUiState.value.liftSetMap[idToDelete]?.keys?.sortedByDescending { liftSet ->
+                liftSet.day_set_number
+            } ?: return
+
+        viewModelScope.launch {
+            // make not visible the lift that is being deleted
+            _recordSessionUiState.update { currentState ->
+                currentState.copy(
+                    liftDetailMap = currentState.liftDetailMap.mapValues { (liftId, liftDetail) ->
+                        if (liftId == idToDelete) {
+                            liftDetail.copy(
+                                visible = false
+                            )
+                        } else {
+                            liftDetail
+                        }
+                    }
+                )
+            }
+
+            // wait for card to swipe away
+            delay(1500)
+
+            // delete lift sets
+            for (liftSet in liftSetsToDelete) {
+                liftSetRepository.deleteLiftSet(liftSet)
+            }
+
+            // reset id to delete
+            _recordSessionUiState.update { currentState ->
+                currentState.copy(
+                    liftIdToDelete = -1
+                )
+            }
         }
     }
 }
@@ -545,5 +621,7 @@ data class RecordSessionUiState(
     val inputLiftName: String = "",
     val liftSuggestionsList: List<LiftSearchDetail> = emptyList(),
     val liftSetMap: Map<Int, Map<LiftSet, Pair<SetMetric, SetMetric>>> = emptyMap(),
-    val liftDetailMap: Map<Int, LiftSearchDetail> = emptyMap()
+    val liftDetailMap: Map<Int, LiftSearchDetail> = emptyMap(),
+    val deleteLiftInProgressDialogVisible: Boolean = false,
+    val liftIdToDelete: Int = -1,
 )

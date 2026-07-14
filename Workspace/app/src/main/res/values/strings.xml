@@ -78,4 +78,5 @@
     <string name="simple_cancel">Cancel</string>
     <string name="show_all_lifts">Show All Lifts</string>
     <string name="delete_lift_in_progress">Delete lift in progress</string>
+    <string name="delete_lift_in_progress_warning_desc">All of the sets you\'ve completed for this lift today will be deleted. You cannot undo this action.</string>
 </resources>

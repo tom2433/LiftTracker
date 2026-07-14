@@ -325,8 +325,8 @@ fun WelcomeDialog(
 @Composable
 fun ShowElementDeleteDialog(
     dialogTitle: String,
-    @StringRes warningDescription: Int,
-    @StringRes deleteBtnText: Int,
+    warningDescription: String,
+    deleteBtnText: String,
     onDismissRequest: () -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
@@ -371,7 +371,7 @@ fun ShowElementDeleteDialog(
 
                     // warning description
                     Text(
-                        text = stringResource(warningDescription),
+                        text = warningDescription,
                         style = MaterialTheme.typography.bodyLarge,
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
@@ -392,7 +392,7 @@ fun ShowElementDeleteDialog(
                     )
                 ) {
                     Text(
-                        text = stringResource(deleteBtnText),
+                        text = deleteBtnText,
                         textAlign = TextAlign.Center
                     )
                 }

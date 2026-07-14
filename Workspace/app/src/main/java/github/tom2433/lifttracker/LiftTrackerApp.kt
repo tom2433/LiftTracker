@@ -717,8 +717,8 @@ fun LiftTrackerDrawer(
         if (drawerUiState.deleteProfileDialogVisible) {
             ShowElementDeleteDialog(
                 dialogTitle = "Delete \"${drawerUiState.profileToDelete?.name ?: "null (something bad happend. help)"} \"?",
-                warningDescription = R.string.delete_profile_warning,
-                deleteBtnText = R.string.delete_profile_btn_text,
+                warningDescription = stringResource(R.string.delete_profile_warning),
+                deleteBtnText = stringResource(R.string.delete_profile_btn_text),
                 onDismissRequest = {
                     viewModel.dismissDeleteProfileDialog()
                 },

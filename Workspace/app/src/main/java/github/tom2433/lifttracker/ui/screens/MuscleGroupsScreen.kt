@@ -476,8 +476,8 @@ fun MuscleGroupsScreenContent(
             if (muscleGroupsUiState.muscleGroupDeleteDialogVisible) {
                 ShowElementDeleteDialog(
                     dialogTitle = "Delete '${muscleGroupsUiState.muscleGroupToDelete?.name ?: "null"}'?",
-                    warningDescription = R.string.delete_muscle_group_warning,
-                    deleteBtnText = R.string.delete_muscle_group_btn_text,
+                    warningDescription = stringResource(R.string.delete_muscle_group_warning),
+                    deleteBtnText = stringResource(R.string.delete_muscle_group_btn_text),
                     onDismissRequest = {
                         viewModel.dismissDeleteMuscleGroupDialog()
                     },

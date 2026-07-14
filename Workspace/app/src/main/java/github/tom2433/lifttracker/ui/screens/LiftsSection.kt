@@ -256,8 +256,8 @@ fun LiftSection(
     if (liftsUiState.userIsDeletingLift) {
         ShowElementDeleteDialog(
             dialogTitle = "Delete '${liftsUiState.liftToDelete?.name ?: "null"}' from '${liftsUiState.muscleGroup?.name ?: "null"}'?",
-            warningDescription = R.string.delete_lift_warning,
-            deleteBtnText = R.string.delete_lift_btn_text,
+            warningDescription = stringResource(R.string.delete_lift_warning),
+            deleteBtnText = stringResource(R.string.delete_lift_btn_text),
             onDismissRequest = { viewModel.dismissDeleteLiftDialog() },
             onDelete = { viewModel.deleteLift() },
         )
