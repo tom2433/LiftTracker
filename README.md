@@ -6,6 +6,8 @@ A Data Vis project developed using Jetpack Compose.
 
 # Immediate Notes
 
+add a show all button to existing lift entry card to show all lifts
+
 ## 07-13
 
 Consider putting the analytics button toggle-able on the lift screen, so the user sees previous sessions OR the analytics 
