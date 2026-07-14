@@ -42,7 +42,7 @@ interface LiftSetDao {
             setMetric = SetMetric(
                 set_id = insertedLiftSetId,
                 metric_position = 1,
-                value = 0.0,
+                value = -1.0,
                 note = ""
             )
         )
@@ -51,7 +51,7 @@ interface LiftSetDao {
             setMetric = SetMetric(
                 set_id = insertedLiftSetId,
                 metric_position = 2,
-                value = 0.0,
+                value = -1.0,
                 note = ""
             )
         )

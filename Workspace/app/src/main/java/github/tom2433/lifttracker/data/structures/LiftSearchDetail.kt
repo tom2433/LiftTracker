@@ -8,5 +8,6 @@ data class LiftSearchDetail(
     val muscleGroupName: String,
     val metricType: String,
     val unitName: String,
-    val selected: Boolean
+    val selected: Boolean,
+    val visible: Boolean
 )

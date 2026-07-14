@@ -77,4 +77,5 @@
     <string name="start">Start</string>
     <string name="simple_cancel">Cancel</string>
     <string name="show_all_lifts">Show All Lifts</string>
+    <string name="delete_lift_in_progress">Delete lift in progress</string>
 </resources>

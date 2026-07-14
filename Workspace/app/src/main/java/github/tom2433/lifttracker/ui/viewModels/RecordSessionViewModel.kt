@@ -17,6 +17,7 @@ import github.tom2433.lifttracker.data.structures.RecordSessionLiftSetRow
 import github.tom2433.lifttracker.data.utils.DateCalculator
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -39,6 +40,7 @@ class RecordSessionViewModel(
 ) : ViewModel() {
     private val _recordSessionUiState = MutableStateFlow(RecordSessionUiState())
     private var liftSuggestionsJob: Job? = null
+    private var liftIdPendingReveal: Int? = null
     val recordSessionUiState: StateFlow<RecordSessionUiState> = _recordSessionUiState.asStateFlow()
 
     init {
@@ -99,6 +101,8 @@ class RecordSessionViewModel(
                             liftSetMap = rows.toLiftSetMap()
                         )
                     }
+
+                    revealPendingLiftIfReady()
                 }
         }
 
@@ -120,7 +124,54 @@ class RecordSessionViewModel(
                             )
                         )
                     }
+
+                    revealPendingLiftIfReady()
                 }
+        }
+    }
+
+    private fun revealPendingLiftIfReady() {
+        val pendingLiftId = liftIdPendingReveal ?: return
+
+        val pendingLiftIsReady =
+            pendingLiftId in _recordSessionUiState.value.liftDetailMap.keys &&
+            pendingLiftId in _recordSessionUiState.value.liftSetMap.keys
+
+        if (!pendingLiftIsReady) {
+            return
+        }
+
+        viewModelScope.launch {
+            // wait a little for compose to render the hidden card
+            delay(50)
+
+            _recordSessionUiState.update { currentState ->
+                currentState.copy(
+                    liftDetailMap = currentState.liftDetailMap.mapValues { (liftId, liftDetail) ->
+                        if (liftId == pendingLiftId) {
+                            liftDetail.copy(visible = true)
+                        } else {
+                            liftDetail
+                        }
+                    }
+                )
+            }
+
+            // wait for enter animation to finish
+            delay(150)
+            _recordSessionUiState.update { currentState ->
+                currentState.copy(
+                    liftDetailMap = currentState.liftDetailMap.mapValues { (liftId, liftDetail) ->
+                        if (liftId == pendingLiftId) {
+                            liftDetail.copy(selected = true)
+                        } else {
+                            liftDetail
+                        }
+                    }
+                )
+            }
+
+            liftIdPendingReveal = null
         }
     }
 
@@ -130,9 +181,15 @@ class RecordSessionViewModel(
         return associate { detail ->
             val liftId = detail.liftObj.id
             val previousSelected = previousLiftDetailMap[liftId]?.selected
+            val previousVisible = previousLiftDetailMap[liftId]?.visible
 
             liftId to detail.copy(
-                selected = previousSelected ?: true
+                selected = previousSelected ?: false,
+                visible = when {
+                    previousVisible != null -> previousVisible
+                    liftId == liftIdPendingReveal -> false
+                    else -> true
+                }
             )
         }
     }
@@ -170,18 +227,54 @@ class RecordSessionViewModel(
     fun endSession() {
         val currentDay: LiftDay = _recordSessionUiState.value.activeLiftDay ?: return
 
-        // if this lift day does not have any set data, delete it
-        if (_recordSessionUiState.value.totalNumOfLiftSets == 0) {
-            // delete the lift day. activeLiftDay should update automatically
-            viewModelScope.launch {
-                liftDayRepository.deleteLiftDay(currentDay)
+        // delete the lift day. activeLiftDay should update automatically
+        viewModelScope.launch {
+            liftDayRepository.deleteLiftDay(currentDay)
+        }
+    }
+
+    fun saveSession() {
+        // retrieve all lift set objects where its set metrics are both the default -1.0
+        val defaultLiftSets: List<LiftSet> =
+            _recordSessionUiState.value.liftSetMap
+                .values
+                .flatMap { setMap -> setMap.entries }
+                .filter { (_, setMetrics) ->
+                    val (weightMetric, secondMetric) = setMetrics
+
+                    weightMetric.value == -1.0 && secondMetric.value == -1.0
+                }
+                .map { (liftSet, _) -> liftSet }
+
+        // retrieve all valid lift set objects where their set metrics are both not the default -1.0
+        val validLiftSets: List<LiftSet> =
+            _recordSessionUiState.value.liftSetMap
+                .values
+                .flatMap { setMap -> setMap.entries }
+                .filter { (_, setMetrics) ->
+                    val (weightMetric, secondMetric) = setMetrics
+
+                    weightMetric.value != -1.0 && secondMetric.value != -1.0
+                }
+                .map { (liftSet, _) -> liftSet }
+
+        viewModelScope.launch {
+            // if default set metrics are still remaining, delete their LiftSets
+            if (defaultLiftSets.isNotEmpty()) {
+                for (liftSet in defaultLiftSets.sortedByDescending { it.day_set_number }) {
+                    liftSetRepository.deleteLiftSet(liftSet)
+                }
             }
-        } else {
-            // otherwise, save the lift day by setting in progress = false.
-            // activeLiftDay should update automatically
-            viewModelScope.launch {
+
+            val activeLiftDay: LiftDay = _recordSessionUiState.value.activeLiftDay ?: return@launch
+
+            // if there are no remaining valid lift sets, delete this day
+            if (validLiftSets.isEmpty()) {
+                liftDayRepository.deleteLiftDay(activeLiftDay)
+            } else {
+                // otherwise, save this lift day by setting in progress = false
                 liftDayRepository.updateLiftDay(
-                    liftDay = currentDay.copy(
+                    liftDay = activeLiftDay.copy(
                         in_progress = false
                     )
                 )
@@ -192,6 +285,8 @@ class RecordSessionViewModel(
     fun finishSession() {
         if (_recordSessionUiState.value.totalNumOfLiftSets == 0) {
             endSession()
+        } else {
+            saveSession()
         }
     }
 
@@ -292,7 +387,7 @@ class RecordSessionViewModel(
                             liftDetail.liftObj.id !in currentState.liftDetailMap.keys
                         }
 
-                        val lastIndex = liftDetails.lastIndex
+                        val lastIndex = filteredLiftDetails.lastIndex
 
                         currentState.copy(
                             liftSuggestionsList = filteredLiftDetails.mapIndexed { index, liftDetail ->
@@ -335,7 +430,7 @@ class RecordSessionViewModel(
                             liftDetail.liftObj.id !in currentState.liftDetailMap.keys
                         }
 
-                        val lastIndex = liftDetails.lastIndex
+                        val lastIndex = filteredLiftDetails.lastIndex
 
                         currentState.copy(
                             liftSuggestionsList = filteredLiftDetails.mapIndexed { index, liftDetail ->
@@ -387,16 +482,52 @@ class RecordSessionViewModel(
     }
 
     fun onGoLiftEntry() {
-        // TODO
-        // this should swipe away the ExistingLiftEntryCard and replace it with a
-        // lift in progress card (expandable to show lift sets)
+        // retrieve the selected lift
+        val selectedLift: LiftSearchDetail =
+            _recordSessionUiState.value.liftSuggestionsList.getSelected()
+                ?: return
 
-        // the way to do this is to just immediately create a new lift set in the
-        // database. that is all that will happen in this function with the
-        // exception of cancelling the lift entry card.
+        val activeDay: LiftDay =
+            _recordSessionUiState.value.activeLiftDay ?: return
 
-        // the liftSetMap flow will handle all of the UI updates.
+        // swipe away existingLiftEntryCard since selected lift has been found
+        cancelAddLift()
 
+        liftIdPendingReveal = selectedLift.liftObj.id
+
+        // insert new lift set for active day and selected lift
+        // this will automatically create two lift set metrics
+        // UI will also update since liftSetMap will recognize the addition
+        viewModelScope.launch {
+            liftSetRepository.insertLiftSet(
+                liftDayId = activeDay.id,
+                liftId = selectedLift.liftObj.id
+            )
+        }
+    }
+
+    fun makeAllInProgressLiftCardsVisible() {
+        _recordSessionUiState.update { currentState ->
+            currentState.copy(
+                liftDetailMap = currentState.liftDetailMap.mapValues { (_, liftDetail) ->
+                    liftDetail.copy(
+                        visible = true
+                    )
+                }
+            )
+        }
+    }
+
+    fun List<LiftSearchDetail>.getSelected(): LiftSearchDetail? {
+        val selectedLifts = filter { liftSearchDetail ->
+            liftSearchDetail.selected
+        }
+
+        return if (selectedLifts.isNotEmpty()) {
+            selectedLifts[0]
+        } else {
+            null
+        }
     }
 }
 

@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -36,6 +37,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
@@ -49,6 +51,7 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -281,6 +284,78 @@ fun SessionInProgressScreen(
                             .padding(16.dp)
                     ) {
                         // lifts in progress will go here
+                        for ((liftId, setMap) in recordSessionUiState.liftSetMap) {
+                            // check that this liftId is also in the liftDetailMap (it should be)
+                            val liftDetail: LiftSearchDetail = recordSessionUiState.liftDetailMap[liftId] ?: continue
+
+                            // animate the visibility of the entire lift in progress card
+                            AnimatedVisibility(
+                                visible = liftDetail.visible,
+                                enter = slideInHorizontally(
+                                    initialOffsetX = { it },
+                                    animationSpec = tween(150)
+                                ) + fadeIn(tween(150)),
+                                exit = slideOutHorizontally(
+                                    targetOffsetX = { -it },
+                                    animationSpec = tween(150)
+                                ) + fadeOut(tween(150))
+                            ) {
+                                // card to represent lift in progress
+                                Card(
+                                    colors = CardDefaults.cardColors().copy(
+                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                    ),
+                                    modifier = modifier
+                                        .fillMaxWidth(),
+                                    onClick = { /* TODO: Lift in progress card clicked */ }
+                                ) {
+                                    // column to hold card contents. content should be minimal
+                                    Column(
+                                        modifier = Modifier.padding(16.dp)
+                                    ) {
+                                        // row to hold lift name and note on left, delete button on right
+                                        Row(
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            // column to hold lift name and note if applicable
+                                            Column(
+                                                modifier = Modifier.weight(1f)
+                                            ) {
+                                                // lift name
+                                                Text(
+                                                    text = liftDetail.liftObj.name,
+                                                    style = MaterialTheme.typography.titleLarge
+                                                )
+                                                // lift note (if applicable)
+                                                if (liftDetail.liftObj.note.isNotBlank()) {
+                                                    Text(
+                                                        text = liftDetail.liftObj.note,
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        fontSize = 15.sp,
+                                                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.75f)
+                                                    )
+                                                }
+                                            }
+
+                                            // icon button to delete
+                                            IconButton(
+                                                onClick = { /* TODO: delete lift in progress card */ }
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Filled.Delete,
+                                                    contentDescription = stringResource(R.string.delete_lift_in_progress),
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
 
                         // last lift card will be a prompt if the user is adding a lift
                         AnimatedVisibility(

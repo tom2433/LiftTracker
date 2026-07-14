@@ -137,7 +137,8 @@ interface LiftDao {
                 ELSE 'time'
             END AS metricType,
             lu.name AS unitName,
-            0 AS selected
+            0 AS selected,
+            1 AS visible
         FROM lifts AS l
         INNER JOIN muscle_groups AS mg
             ON mg.id = l.muscle_group_id
@@ -161,7 +162,8 @@ interface LiftDao {
                 ELSE 'time'
             END AS metricType,
             lu.name AS unitName,
-            1 AS selected
+            0 AS selected,
+            0 AS visible
         FROM lifts AS l
         INNER JOIN muscle_groups AS mg
             ON mg.id = l.muscle_group_id
