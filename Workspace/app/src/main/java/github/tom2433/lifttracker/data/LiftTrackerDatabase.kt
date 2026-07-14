@@ -122,7 +122,7 @@ The ```lift_units``` table has two columns:
         SetMetric::class,
         LiftUnit::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 abstract class LiftTrackerDatabase : RoomDatabase() {
@@ -145,7 +145,7 @@ abstract class LiftTrackerDatabase : RoomDatabase() {
                     LiftTrackerDatabase::class.java,
                     "lift_tracker_database"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                     .build()
                     .also { Instance = it }
             }
@@ -251,6 +251,128 @@ abstract class LiftTrackerDatabase : RoomDatabase() {
                             arrayOf(nextDayNumber, liftDayId)
                         )
                         nextDayNumber += 1
+                    }
+                }
+            }
+        }
+
+        private val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                deduplicateSetMetrics(db)
+                renumberLiftSetsByDay(db)
+                renumberLiftSetsByLiftAndDay(db)
+
+                db.execSQL("DROP INDEX IF EXISTS index_set_metrics_set_id")
+                db.execSQL("DROP INDEX IF EXISTS index_set_metrics_set_id_metric_position")
+                db.execSQL("DROP INDEX IF EXISTS index_lift_sets_lift_day_id")
+                db.execSQL("DROP INDEX IF EXISTS index_lift_sets_lift_day_id_day_set_number")
+                db.execSQL("DROP INDEX IF EXISTS index_lift_sets_lift_day_id_lift_id_lift_set_number")
+                db.execSQL("DROP INDEX IF EXISTS index_lift_sets_lift_id")
+
+                db.execSQL(
+                    "CREATE UNIQUE INDEX index_set_metrics_set_id_metric_position ON set_metrics(set_id, metric_position)"
+                )
+                db.execSQL(
+                    "CREATE UNIQUE INDEX index_lift_sets_lift_day_id_day_set_number ON lift_sets(lift_day_id, day_set_number)"
+                )
+                db.execSQL(
+                    "CREATE UNIQUE INDEX index_lift_sets_lift_day_id_lift_id_lift_set_number ON lift_sets(lift_day_id, lift_id, lift_set_number)"
+                )
+                db.execSQL("CREATE INDEX index_lift_sets_lift_id ON lift_sets(lift_id)")
+            }
+
+            private fun deduplicateSetMetrics(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    DELETE FROM set_metrics
+                    WHERE id NOT IN (
+                        SELECT MIN(id)
+                        FROM set_metrics
+                        GROUP BY set_id, metric_position
+                    )
+                    """.trimIndent()
+                )
+            }
+
+            private fun renumberLiftSetsByDay(db: SupportSQLiteDatabase) {
+                val cursor = db.query(
+                    """
+                    SELECT id, lift_day_id
+                    FROM lift_sets
+                    ORDER BY lift_day_id ASC, day_set_number ASC, id ASC
+                    """.trimIndent()
+                )
+
+                cursor.use {
+                    var currentLiftDayId: Int? = null
+                    var nextDaySetNumber = 1
+
+                    while (it.moveToNext()) {
+                        val liftSetId = it.getInt(0)
+                        val liftDayId = it.getInt(1)
+
+                        if (liftDayId != currentLiftDayId) {
+                            currentLiftDayId = liftDayId
+                            nextDaySetNumber = 1
+                        }
+
+                        db.execSQL(
+                            "UPDATE lift_sets SET day_set_number = ? WHERE id = ?",
+                            arrayOf(nextDaySetNumber, liftSetId)
+                        )
+                        nextDaySetNumber += 1
+                    }
+                }
+            }
+
+            private fun renumberLiftSetsByLiftAndDay(db: SupportSQLiteDatabase) {
+                val cursor = db.query(
+                    """
+                    SELECT id, lift_day_id, lift_id, lift_set_number, set_label
+                    FROM lift_sets
+                    ORDER BY lift_day_id ASC, lift_id ASC, lift_set_number ASC, id ASC
+                    """.trimIndent()
+                )
+
+                cursor.use {
+                    var currentLiftDayId: Int? = null
+                    var currentLiftId: Int? = null
+                    var nextLiftSetNumber = 1
+
+                    while (it.moveToNext()) {
+                        val liftSetId = it.getInt(0)
+                        val liftDayId = it.getInt(1)
+                        val liftId = it.getInt(2)
+                        val oldLiftSetNumber = it.getInt(3)
+                        val setLabel = it.getString(4)
+
+                        if (liftDayId != currentLiftDayId || liftId != currentLiftId) {
+                            currentLiftDayId = liftDayId
+                            currentLiftId = liftId
+                            nextLiftSetNumber = 1
+                        }
+
+                        if (setLabel == "Set $oldLiftSetNumber") {
+                            db.execSQL(
+                                """
+                                UPDATE lift_sets
+                                SET lift_set_number = ?, set_label = ?
+                                WHERE id = ?
+                                """.trimIndent(),
+                                arrayOf(
+                                    nextLiftSetNumber,
+                                    "Set $nextLiftSetNumber",
+                                    liftSetId
+                                )
+                            )
+                        } else {
+                            db.execSQL(
+                                "UPDATE lift_sets SET lift_set_number = ? WHERE id = ?",
+                                arrayOf(nextLiftSetNumber, liftSetId)
+                            )
+                        }
+
+                        nextLiftSetNumber += 1
                     }
                 }
             }

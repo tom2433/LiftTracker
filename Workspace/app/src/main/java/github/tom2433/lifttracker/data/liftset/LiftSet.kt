@@ -41,7 +41,8 @@ The ```lift_sets``` table has 6 columns:
         )
     ],
     indices = [
-        Index(value = ["lift_day_id"]),
+        Index(value = ["lift_day_id", "day_set_number"], unique = true),
+        Index(value = ["lift_day_id", "lift_id", "lift_set_number"], unique = true),
         Index(value = ["lift_id"])
     ]
 )

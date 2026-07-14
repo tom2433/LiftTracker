@@ -31,7 +31,7 @@ The ```set_metrics``` table has 6 columns:
         )
     ],
     indices = [
-        Index(value = ["set_id"])
+        Index(value = ["set_id", "metric_position"], unique = true)
     ]
 )
 data class SetMetric(

@@ -152,5 +152,24 @@ interface LiftDao {
     """)
     fun getLiftSearchDetailsContaining(searchText: String): Flow<List<LiftSearchDetail>>
 
+    @Query("""
+        SELECT DISTINCT
+            l.*,
+            mg.name AS muscleGroupName,
+            CASE
+                WHEN l.metric_type = 1 THEN 'reps'
+                ELSE 'time'
+            END AS metricType,
+            lu.name AS unitName,
+            1 AS selected
+        FROM lifts AS l
+        INNER JOIN muscle_groups AS mg
+            ON mg.id = l.muscle_group_id
+        INNER JOIN lift_units AS lu
+            ON lu.id = l.unit_id
+        INNER JOIN lift_sets AS ls
+            ON ls.lift_id = l.id
+        WHERE ls.lift_day_id = :liftDayId        
+    """)
     fun getLiftSearchDetailsForDayId(liftDayId: Int): Flow<List<LiftSearchDetail>>
 }

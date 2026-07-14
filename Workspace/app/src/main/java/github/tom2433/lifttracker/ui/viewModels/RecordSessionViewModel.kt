@@ -7,25 +7,35 @@ import github.tom2433.lifttracker.data.lift.LiftRepository
 import github.tom2433.lifttracker.data.liftday.LiftDay
 import github.tom2433.lifttracker.data.liftday.LiftDayRepository
 import github.tom2433.lifttracker.data.liftset.LiftSet
+import github.tom2433.lifttracker.data.liftset.LiftSetRepository
 import github.tom2433.lifttracker.data.profile.Profile
 import github.tom2433.lifttracker.data.profile.ProfileRepository
 import github.tom2433.lifttracker.data.setmetric.SetMetric
 import github.tom2433.lifttracker.data.structures.LiftSearchDetail
+import github.tom2433.lifttracker.data.structures.RecordLiftDetail
+import github.tom2433.lifttracker.data.structures.RecordSessionLiftSetRow
 import github.tom2433.lifttracker.data.utils.DateCalculator
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flatMap
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.collections.emptyList
 
 /**
  * ViewModel for RecordSessionScreen
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 class RecordSessionViewModel(
     private val profileRepository: ProfileRepository,
     private val liftDayRepository: LiftDayRepository,
-    private val liftRepository: LiftRepository
+    private val liftRepository: LiftRepository,
+    private val liftSetRepository: LiftSetRepository
 ) : ViewModel() {
     private val _recordSessionUiState = MutableStateFlow(RecordSessionUiState())
     private var liftSuggestionsJob: Job? = null
@@ -53,6 +63,88 @@ class RecordSessionViewModel(
                 }
             }
         }
+
+        // constant collection for a running total of the number of lift sets completed for the day
+        viewModelScope.launch {
+            liftDayRepository.getActiveLiftDayForActiveProfileStream()
+                .flatMapLatest { activeLiftDay ->
+                    if (activeLiftDay == null) {
+                        flowOf(0)
+                    } else {
+                        liftDayRepository.getNumOfLiftsForDay(activeLiftDay.id)
+                    }
+                }
+                .collect { totalNumOfLiftSets ->
+                    _recordSessionUiState.update { currentState ->
+                        currentState.copy(
+                            totalNumOfLiftSets = totalNumOfLiftSets
+                        )
+                    }
+                }
+        }
+
+        // constant collection: fill the liftSetMap. liftSetMap will always be updated for the UI state
+        viewModelScope.launch {
+            liftDayRepository.getActiveLiftDayForActiveProfileStream()
+                .flatMapLatest { activeLiftDay ->
+                    if (activeLiftDay == null) {
+                        flowOf(emptyList())
+                    } else {
+                        liftSetRepository.getRecordSessionLiftSetRowsForDayStream(activeLiftDay.id)
+                    }
+                }
+                .collect { rows ->
+                    _recordSessionUiState.update { currentState ->
+                        currentState.copy(
+                            liftSetMap = rows.toLiftSetMap()
+                        )
+                    }
+                }
+        }
+
+        // constant collection: fill the liftDetailMap. liftDetailMap will always be updated for the UI state
+        viewModelScope.launch {
+            liftDayRepository.getActiveLiftDayForActiveProfileStream()
+                .flatMapLatest { activeLiftDay ->
+                    if (activeLiftDay == null) {
+                        flowOf(emptyList())
+                    } else {
+                        liftRepository.getLiftSearchDetailsForDayIdStream(activeLiftDay.id)
+                    }
+                }
+                .collect { rows ->
+                    _recordSessionUiState.update { currentState ->
+                        currentState.copy(
+                            liftDetailMap = rows.toLiftDetailMap(
+                                previousLiftDetailMap = currentState.liftDetailMap
+                            )
+                        )
+                    }
+                }
+        }
+    }
+
+    private fun List<LiftSearchDetail>.toLiftDetailMap(
+        previousLiftDetailMap: Map<Int, LiftSearchDetail>
+    ): Map<Int, LiftSearchDetail> {
+        return associate { detail ->
+            val liftId = detail.liftObj.id
+            val previousSelected = previousLiftDetailMap[liftId]?.selected
+
+            liftId to detail.copy(
+                selected = previousSelected ?: true
+            )
+        }
+    }
+
+    private fun List<RecordSessionLiftSetRow>.toLiftSetMap(): Map<Int, Map<LiftSet, Pair<SetMetric, SetMetric>>> {
+        return groupBy { row ->
+            row.liftId
+        }.mapValues { (_, rowsForLift) ->
+            rowsForLift.associate { row ->
+                row.liftSet to Pair(row.weightMetric, row.secondMetric)
+            }
+        }
     }
 
     fun beginSession() {
@@ -73,26 +165,13 @@ class RecordSessionViewModel(
                 )
             )
         }
-
-        // start a collection with a running total of all lifts completed for the day
-        viewModelScope.launch {
-            liftDayRepository.getNumOfLiftsForDay(
-                id = _recordSessionUiState.value.activeLiftDay?.id ?: return@launch
-            ).collect { thisNumOfLifts ->
-                _recordSessionUiState.update { currentState ->
-                    currentState.copy(
-                        totalNumOfLifts = thisNumOfLifts
-                    )
-                }
-            }
-        }
     }
 
     fun endSession() {
         val currentDay: LiftDay = _recordSessionUiState.value.activeLiftDay ?: return
 
         // if this lift day does not have any set data, delete it
-        if (_recordSessionUiState.value.totalNumOfLifts == 0) {
+        if (_recordSessionUiState.value.totalNumOfLiftSets == 0) {
             // delete the lift day. activeLiftDay should update automatically
             viewModelScope.launch {
                 liftDayRepository.deleteLiftDay(currentDay)
@@ -111,7 +190,7 @@ class RecordSessionViewModel(
     }
 
     fun finishSession() {
-        if (_recordSessionUiState.value.totalNumOfLifts == 0) {
+        if (_recordSessionUiState.value.totalNumOfLiftSets == 0) {
             endSession()
         }
     }
@@ -285,16 +364,8 @@ class RecordSessionViewModel(
         // database. that is all that will happen in this function with the
         // exception of cancelling the lift entry card.
 
-        // I need to ensure that when a lift set is inserted into the database,
-        // the lift set number is calculated as the set number for the lift,
-        // the day set number is calculated as the set number for the day,
-        // and the set label is created with the lift set number. (done)
+        // the liftSetMap flow will handle all of the UI updates.
 
-        // I also need to ensure that when a lift set is deleted,
-        // the lift set numbers of all other sets in this lift are adjusted appropriately,
-        // the day set numbers of all other sets in this day are adjusted appropriately,
-        // and the set labels of all other sets in this lift are adjusted appropriately
-        // IF they are of the pattern "Set n" (done)
     }
 }
 
@@ -304,12 +375,13 @@ class RecordSessionViewModel(
 data class RecordSessionUiState(
     val activeProfile: Profile? = null,
     val activeLiftDay: LiftDay? = null,
-    val totalNumOfLifts: Int = 0,
+    val totalNumOfLiftSets: Int = 0,
     val dayEditDialogVisible: Boolean = false,
     val newDayName: String = "",
     val newDayNote: String = "",
     val userIsAddingLift: Boolean = false,
     val inputLiftName: String = "",
     val liftSuggestionsList: List<LiftSearchDetail> = emptyList(),
-    val liftSetMap: Map<LiftSearchDetail, Map<LiftSet, Pair<SetMetric, SetMetric>>> = emptyMap() // TODO: populate this through a flow
+    val liftSetMap: Map<Int, Map<LiftSet, Pair<SetMetric, SetMetric>>> = emptyMap(),
+    val liftDetailMap: Map<Int, LiftSearchDetail> = emptyMap()
 )

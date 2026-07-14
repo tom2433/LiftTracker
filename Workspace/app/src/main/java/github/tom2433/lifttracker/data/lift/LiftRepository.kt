@@ -18,4 +18,6 @@ interface LiftRepository {
     ): Flow<LiftStatisticsData?>
 
     fun getLiftSearchDetailsContainingStream(searchText: String): Flow<List<LiftSearchDetail>>
+
+    fun getLiftSearchDetailsForDayIdStream(liftDayId: Int): Flow<List<LiftSearchDetail>>
 }
