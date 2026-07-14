@@ -279,6 +279,33 @@ class RecordSessionViewModel(
         }
     }
 
+    fun liftEntryDropdownButtonClicked() {
+        liftSuggestionsJob?.cancel()
+
+        // search for no value, should give a list of all lifts
+        liftSuggestionsJob = viewModelScope.launch {
+            liftRepository
+                .getLiftSearchDetailsContainingStream("")
+                .collect { liftDetails ->
+                    _recordSessionUiState.update { currentState ->
+                        val filteredLiftDetails = liftDetails.filter { liftDetail ->
+                            liftDetail.liftObj.id !in currentState.liftDetailMap.keys
+                        }
+
+                        val lastIndex = liftDetails.lastIndex
+
+                        currentState.copy(
+                            liftSuggestionsList = filteredLiftDetails.mapIndexed { index, liftDetail ->
+                                liftDetail.copy(
+                                    selected = index == lastIndex
+                                )
+                            }
+                        )
+                    }
+                }
+        }
+    }
+
     fun onInputLiftValueChanged(newValue: String) {
         _recordSessionUiState.update { currentState ->
             currentState.copy(
@@ -303,11 +330,15 @@ class RecordSessionViewModel(
             liftRepository
                 .getLiftSearchDetailsContainingStream(newValue.trim())
                 .collect { liftDetails ->
-                    val lastIndex = liftDetails.lastIndex
-
                     _recordSessionUiState.update { currentState ->
+                        val filteredLiftDetails = liftDetails.filter { liftDetail ->
+                            liftDetail.liftObj.id !in currentState.liftDetailMap.keys
+                        }
+
+                        val lastIndex = liftDetails.lastIndex
+
                         currentState.copy(
-                            liftSuggestionsList = liftDetails.mapIndexed { index, liftDetail ->
+                            liftSuggestionsList = filteredLiftDetails.mapIndexed { index, liftDetail ->
                                 liftDetail.copy(
                                     selected = index == lastIndex
                                 )

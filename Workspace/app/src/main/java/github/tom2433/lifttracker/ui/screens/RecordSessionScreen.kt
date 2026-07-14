@@ -19,18 +19,23 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
@@ -43,6 +48,7 @@ import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -295,6 +301,7 @@ fun SessionInProgressScreen(
                                 onClickCancel = { viewModel.cancelAddLift() },
                                 dismissDropdownSuggestionList = { viewModel.dismissDropdownSuggestionList() },
                                 liftSuggestionClicked = { viewModel.liftSuggestionClicked(it) },
+                                dropdownButtonClicked = { viewModel.liftEntryDropdownButtonClicked() },
                                 onGo = { viewModel.onGoLiftEntry() },
                                 screenContentColor = screenContentColor,
                             )
@@ -337,6 +344,7 @@ fun ExistingLiftEntryCard(
     onClickCancel: () -> Unit,
     dismissDropdownSuggestionList: () -> Unit,
     liftSuggestionClicked: (Int) -> Unit,
+    dropdownButtonClicked: () -> Unit,
     onGo: () -> Unit,
     screenContentColor: Color,
     modifier: Modifier = Modifier
@@ -390,14 +398,28 @@ fun ExistingLiftEntryCard(
                         focusedContainerColor = Color.Transparent,
                         unfocusedContainerColor = Color.Transparent
                     ),
+                    trailingIcon = {
+                        IconButton(
+                            onClick = dropdownButtonClicked,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.ArrowDropDown,
+                                contentDescription = stringResource(R.string.show_all_lifts),
+                                tint = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                        }
+                    },
                     modifier = Modifier
+                        .fillMaxWidth()
                         .menuAnchor(
                             type = ExposedDropdownMenuAnchorType.PrimaryEditable,
                             enabled = true
                         )
-                        .fillMaxWidth()
                         .focusRequester(liftNameFocusRequester)
-                        .padding(bottom = 4.dp)
+                        .padding(
+                            bottom = 4.dp,
+                            end = 4.dp
+                        )
                 )
 
                 ExposedDropdownMenu(
@@ -432,7 +454,15 @@ fun ExistingLiftEntryCard(
                                                     text = liftSearchDetail.liftObj.note,
                                                     style = MaterialTheme.typography.bodySmall,
                                                     fontSize = 13.sp,
-                                                    color = MaterialTheme.colorScheme.outline
+                                                    color = if (liftSearchDetail.selected) {
+                                                        MaterialTheme.colorScheme.onSecondaryContainer.copy(
+                                                            alpha = 0.75f
+                                                        )
+                                                    } else {
+                                                        MaterialTheme.colorScheme.onBackground.copy(
+                                                            alpha = 0.75f
+                                                        )
+                                                    }
                                                 )
                                             }
                                             // flow row to display muscle group name, metric type, and unit name

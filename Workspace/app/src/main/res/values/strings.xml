@@ -76,4 +76,5 @@
     <string name="existing_lift_name">Existing Lift Name</string>
     <string name="start">Start</string>
     <string name="simple_cancel">Cancel</string>
+    <string name="show_all_lifts">Show All Lifts</string>
 </resources>

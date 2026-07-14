@@ -146,7 +146,7 @@ interface LiftDao {
         INNER JOIN lift_units AS lu
             ON lu.id = l.unit_id
         WHERE p.active = 1
-            AND :searchText != ''
+            -- AND :searchText != ''
             AND instr(lower(l.name), lower(:searchText)) > 0
         ORDER BY l.name ASC
     """)
