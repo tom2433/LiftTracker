@@ -358,7 +358,7 @@ class RecordSessionViewModel(
                 .filter { (_, setMetrics) ->
                     val (weightMetric, secondMetric) = setMetrics
 
-                    weightMetric.value == -1.0 && secondMetric.value == -1.0
+                    weightMetric.value == -1.0 || secondMetric.value == -1.0
                 }
                 .map { (liftSet, _) -> liftSet }
 
@@ -890,6 +890,64 @@ class RecordSessionViewModel(
             liftSetRepository.deleteLiftSet(
                 liftSet = liftSetToDelete
             )
+        }
+    }
+
+    // only called for set metrics belonging to a lift with a metric type of reps
+    // (could be either weight or reps)
+    fun setMetricValueChanged(newValue: String, setMetric: SetMetric) {
+        // update the value in the setMetricDisplayDetailMap
+        _recordSessionUiState.update { currentState ->
+            currentState.copy(
+                setMetricDisplayDetailMap = currentState.setMetricDisplayDetailMap.mapValues { (thisSetMetricId, setMetricDisplayDetail) ->
+                    if (thisSetMetricId == setMetric.id) {
+                        setMetricDisplayDetail.copy(
+                            value = newValue.trim(),
+                            inputIsLogged = false
+                        )
+                    } else {
+                        setMetricDisplayDetail
+                    }
+                }
+            )
+        }
+
+        // now check to see if the input is valid
+        val valueToLog: Double? = newValue.trim().toDoubleOrNull()
+
+        // if inputted value is valid, update the database
+        if (valueToLog != null) {
+            viewModelScope.launch {
+                setMetricRepository.updateSetMetric(
+                    setMetric = setMetric.copy(
+                        value = valueToLog
+                    )
+                )
+
+                // update the UI state to mark this metric as logged
+                _recordSessionUiState.update { currentState ->
+                    currentState.copy(
+                        setMetricDisplayDetailMap = currentState.setMetricDisplayDetailMap.mapValues { (thisSetMetricId, setMetricDisplayDetail) ->
+                            if (thisSetMetricId == setMetric.id) {
+                                setMetricDisplayDetail.copy(
+                                    inputIsLogged = true
+                                )
+                            } else {
+                                setMetricDisplayDetail
+                            }
+                        }
+                    )
+                }
+            }
+        } else {
+            // otherwise, reset the set metric's value back to -1.0
+            viewModelScope.launch {
+                setMetricRepository.updateSetMetric(
+                    setMetric = setMetric.copy(
+                        value = -1.0
+                    )
+                )
+            }
         }
     }
 }

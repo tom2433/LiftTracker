@@ -7,6 +7,7 @@ import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
@@ -73,12 +74,15 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -259,6 +263,8 @@ fun SessionInProgressScreen(
     animatedVisibilityScope: AnimatedVisibilityScope,
     modifier: Modifier = Modifier
 ) {
+    val focusManager = LocalFocusManager.current
+
     with(sharedTransitionScope) {
         // determine when screen is fully rendered so that enter/exit animations
         // are triggered appropriately
@@ -417,10 +423,14 @@ fun SessionInProgressScreen(
                                         },
                                         showDeleteLiftSetDialog = { viewModel.showDeleteLiftSetDialog(it) },
                                         addLiftSet = { viewModel.addLiftSetForLiftId(liftId) },
+                                        onSetMetricValueChanged = { newValue, setMetric ->
+                                            viewModel.setMetricValueChanged(newValue, setMetric)
+                                        },
                                         liftDetail = liftDetail,
                                         setMap = setMap,
                                         setMetricDisplayDetailMap = recordSessionUiState.setMetricDisplayDetailMap,
-                                        liftSetVisibleMap = recordSessionUiState.liftSetVisibleMap
+                                        liftSetVisibleMap = recordSessionUiState.liftSetVisibleMap,
+                                        focusManager = focusManager
                                     )
                                 }
                             }
@@ -487,10 +497,12 @@ fun LiftInProgressCard(
     showEditSetMetricNoteDialog: (SetMetric, LiftSet) -> Unit,
     showDeleteLiftSetDialog: (LiftSet) -> Unit,
     addLiftSet: () -> Unit,
+    onSetMetricValueChanged: (String, SetMetric) -> Unit,
     liftDetail: LiftSearchDetail,
     setMap: Map<LiftSet, Pair<SetMetric, SetMetric>>,
     setMetricDisplayDetailMap: Map<Int, SetMetricDisplayDetail>,
     liftSetVisibleMap: Map<Int, Boolean>,
+    focusManager: FocusManager,
     modifier: Modifier = Modifier
 ) {
     val bottomCornerRadius by animateDpAsState(
@@ -676,11 +688,13 @@ fun LiftInProgressCard(
                                     showEditLiftSetDialog = showEditLiftSetDialog,
                                     showEditSetMetricNoteDialog = showEditSetMetricNoteDialog,
                                     showDeleteLiftSetDialog = showDeleteLiftSetDialog,
+                                    onSetMetricValueChanged = onSetMetricValueChanged,
                                     setMetricPair = setMetricPair,
                                     setMetricDisplayDetailMap = setMetricDisplayDetailMap,
                                     liftDetail = liftDetail,
                                     screenContentColor = screenContentColor,
-                                    liftHasMoreThanOneSet = setMap.keys.size > 1
+                                    liftHasMoreThanOneSet = setMap.keys.size > 1,
+                                    focusManager = focusManager
                                 )
                             }
                         }
@@ -725,13 +739,36 @@ fun LiftSetInProgressCard(
     showEditLiftSetDialog: (LiftSet) -> Unit,
     showEditSetMetricNoteDialog: (SetMetric, LiftSet) -> Unit,
     showDeleteLiftSetDialog: (LiftSet) -> Unit,
+    onSetMetricValueChanged: (String, SetMetric) -> Unit,
     setMetricPair: Pair<SetMetric, SetMetric>,
     setMetricDisplayDetailMap: Map<Int, SetMetricDisplayDetail>,
     liftDetail: LiftSearchDetail,
     screenContentColor: Color,
     liftHasMoreThanOneSet: Boolean,
+    focusManager: FocusManager,
     modifier: Modifier = Modifier
 ) {
+    // focus requesters for each input except weight; user will enter the weight field if they want
+    val repFocusRequester = remember { FocusRequester() }
+    val hourFocusRequester = remember { FocusRequester() }
+    val minuteFocusRequester = remember { FocusRequester() }
+    val secondFocusRequester = remember { FocusRequester() }
+    // animate the color state of the set metric input fields
+    val firstMetricInputColor by animateColorAsState(
+        targetValue = if (setMetricDisplayDetailMap[setMetricPair.first.id]?.inputIsLogged ?: false) {
+            screenContentColor
+        } else {
+            MaterialTheme.colorScheme.errorContainer
+        }
+    )
+    val secondMetricInputColor by animateColorAsState(
+        targetValue = if (setMetricDisplayDetailMap[setMetricPair.second.id]?.inputIsLogged ?: false) {
+            screenContentColor
+        } else {
+            MaterialTheme.colorScheme.errorContainer
+        }
+    )
+
     // card to represent LiftSet. Each LiftSet has two SetMetrics
     Card(
         colors = CardDefaults.cardColors().copy(
@@ -870,7 +907,7 @@ fun LiftSetInProgressCard(
                     OutlinedTextField(
                         value = setMetricDisplayDetailMap[setMetricPair.first.id]?.value
                             ?: "",
-                        onValueChange = {},
+                        onValueChange = { onSetMetricValueChanged(it, setMetricPair.first) },
                         label = {
                             Text(
                                 text = liftDetail.unitName
@@ -878,19 +915,33 @@ fun LiftSetInProgressCard(
                         },
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = screenContentColor,
-                            unfocusedTextColor = screenContentColor,
-                            focusedLabelColor = screenContentColor,
-                            unfocusedLabelColor = screenContentColor.copy(
+                            focusedTextColor = firstMetricInputColor,
+                            unfocusedTextColor = firstMetricInputColor,
+                            focusedLabelColor = firstMetricInputColor,
+                            unfocusedLabelColor = firstMetricInputColor.copy(
                                 alpha = 0.75f
                             ),
-                            focusedBorderColor = screenContentColor,
-                            unfocusedBorderColor = screenContentColor.copy(
+                            focusedBorderColor = firstMetricInputColor,
+                            unfocusedBorderColor = firstMetricInputColor.copy(
                                 alpha = 0.6f
                             ),
-                            cursorColor = screenContentColor,
+                            cursorColor = firstMetricInputColor,
                             focusedContainerColor = Color.Transparent,
                             unfocusedContainerColor = Color.Transparent
+                        ),
+                        keyboardOptions = KeyboardOptions.Default.copy(
+                            keyboardType = KeyboardType.Number,
+                            imeAction = ImeAction.Next
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onNext = {
+                                if (liftDetail.metricType == "reps") {
+                                    repFocusRequester.requestFocus()
+                                } else {
+                                    hourFocusRequester.requestFocus()
+                                }
+                                // TODO
+                            }
                         ),
                         modifier = Modifier
                             .widthIn(
@@ -946,7 +997,7 @@ fun LiftSetInProgressCard(
                         OutlinedTextField(
                             value = setMetricDisplayDetailMap[setMetricPair.second.id]?.value
                                 ?: "",
-                            onValueChange = {},
+                            onValueChange = { onSetMetricValueChanged(it, setMetricPair.second) },
                             label = {
                                 Text(
                                     text = stringResource(R.string.reps)
@@ -954,24 +1005,36 @@ fun LiftSetInProgressCard(
                             },
                             singleLine = true,
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = screenContentColor,
-                                unfocusedTextColor = screenContentColor,
-                                focusedLabelColor = screenContentColor,
-                                unfocusedLabelColor = screenContentColor.copy(
+                                focusedTextColor = secondMetricInputColor,
+                                unfocusedTextColor = secondMetricInputColor,
+                                focusedLabelColor = secondMetricInputColor,
+                                unfocusedLabelColor = secondMetricInputColor.copy(
                                     alpha = 0.75f
                                 ),
-                                focusedBorderColor = screenContentColor,
-                                unfocusedBorderColor = screenContentColor.copy(
+                                focusedBorderColor = secondMetricInputColor,
+                                unfocusedBorderColor = secondMetricInputColor.copy(
                                     alpha = 0.6f
                                 ),
-                                cursorColor = screenContentColor,
+                                cursorColor = secondMetricInputColor,
                                 focusedContainerColor = Color.Transparent,
                                 unfocusedContainerColor = Color.Transparent
                             ),
-                            modifier = Modifier.widthIn(
+                            keyboardOptions = KeyboardOptions.Default.copy(
+                                keyboardType = KeyboardType.Number,
+                                imeAction = ImeAction.Done
+                            ),
+                            keyboardActions = KeyboardActions(
+                                onDone = {
+                                    focusManager.clearFocus()
+                                    // TODO
+                                }
+                            ),
+                            modifier = Modifier
+                                .widthIn(
                                 min = 96.dp,
                                 max = 140.dp
                             )
+                                .focusRequester(repFocusRequester)
                         )
                     }
                 } else {
@@ -999,7 +1062,7 @@ fun LiftSetInProgressCard(
                         OutlinedTextField(
                             value = setMetricDisplayDetailMap[setMetricPair.second.id]?.hours
                                 ?: "",
-                            onValueChange = {},
+                            onValueChange = { /* TODO */ },
                             label = {
                                 Text(
                                     text = stringResource(R.string.hours)
@@ -1021,6 +1084,16 @@ fun LiftSetInProgressCard(
                                 focusedContainerColor = Color.Transparent,
                                 unfocusedContainerColor = Color.Transparent
                             ),
+                            keyboardOptions = KeyboardOptions.Default.copy(
+                                keyboardType = KeyboardType.Number,
+                                imeAction = ImeAction.Next
+                            ),
+                            keyboardActions = KeyboardActions(
+                                onNext = {
+                                    minuteFocusRequester.requestFocus()
+                                    // TODO
+                                }
+                            ),
                             modifier = Modifier
                                 .widthIn(
                                     min = 96.dp,
@@ -1029,13 +1102,14 @@ fun LiftSetInProgressCard(
                                 .padding(
                                     bottom = 4.dp
                                 )
+                                .focusRequester(hourFocusRequester)
                         )
                     }
                     // text field for minutes
                     OutlinedTextField(
                         value = setMetricDisplayDetailMap[setMetricPair.second.id]?.minutes
                             ?: "",
-                        onValueChange = {},
+                        onValueChange = { /* TODO */ },
                         label = {
                             Text(
                                 text = stringResource(R.string.minutes)
@@ -1057,6 +1131,16 @@ fun LiftSetInProgressCard(
                             focusedContainerColor = Color.Transparent,
                             unfocusedContainerColor = Color.Transparent
                         ),
+                        keyboardOptions = KeyboardOptions.Default.copy(
+                            keyboardType = KeyboardType.Number,
+                            imeAction = ImeAction.Next
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onNext = {
+                                secondFocusRequester.requestFocus()
+                                // TODO
+                            }
+                        ),
                         modifier = Modifier
                             .widthIn(
                                 min = 96.dp,
@@ -1065,12 +1149,13 @@ fun LiftSetInProgressCard(
                             .padding(
                                 bottom = 4.dp
                             )
+                            .focusRequester(minuteFocusRequester)
                     )
                     // text field for seconds
                     OutlinedTextField(
                         value = setMetricDisplayDetailMap[setMetricPair.second.id]?.seconds
                             ?: "",
-                        onValueChange = {},
+                        onValueChange = { /* TODO */ },
                         label = {
                             Text(
                                 text = stringResource(R.string.seconds)
@@ -1092,11 +1177,22 @@ fun LiftSetInProgressCard(
                             focusedContainerColor = Color.Transparent,
                             unfocusedContainerColor = Color.Transparent
                         ),
+                        keyboardOptions = KeyboardOptions.Default.copy(
+                            keyboardType = KeyboardType.Number,
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                focusManager.clearFocus()
+                                // TODO
+                            }
+                        ),
                         modifier = Modifier
                             .widthIn(
                                 min = 96.dp,
                                 max = 140.dp
                             )
+                            .focusRequester(secondFocusRequester)
                     )
                 }
 
