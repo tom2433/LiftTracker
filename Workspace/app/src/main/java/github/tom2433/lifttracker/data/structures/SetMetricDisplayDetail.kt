@@ -5,7 +5,6 @@ data class SetMetricDisplayDetail(
     val hours: String,
     val minutes: String,
     val seconds: String,
-    val note: String,
     val inputIsValid: Boolean,
     val inputIsLogged: Boolean,
 )

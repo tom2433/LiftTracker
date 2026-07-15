@@ -3,6 +3,7 @@ package github.tom2433.lifttracker.ui.viewModels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import github.tom2433.lifttracker.data.lift.Lift
 import github.tom2433.lifttracker.data.lift.LiftRepository
 import github.tom2433.lifttracker.data.liftday.LiftDay
 import github.tom2433.lifttracker.data.liftday.LiftDayRepository
@@ -224,7 +225,6 @@ class RecordSessionViewModel(
                 hours = previousSetMetricDisplayDetailMap[thisSetMetricId]?.hours ?: "",
                 minutes = previousSetMetricDisplayDetailMap[thisSetMetricId]?.minutes ?: "",
                 seconds = previousSetMetricDisplayDetailMap[thisSetMetricId]?.seconds ?: "",
-                note = previousSetMetricDisplayDetailMap[thisSetMetricId]?.note ?: "",
                 inputIsValid = previousSetMetricDisplayDetailMap[thisSetMetricId]?.inputIsValid ?: false,
                 inputIsLogged = previousSetMetricDisplayDetailMap[thisSetMetricId]?.inputIsLogged ?: false
             )
@@ -645,6 +645,133 @@ class RecordSessionViewModel(
             }
         }
     }
+
+    fun showEditLiftSetDialog(liftSet: LiftSet, lift: Lift) {
+        _recordSessionUiState.update { currentState ->
+            currentState.copy(
+                editLiftSetDialogVisible = true,
+                newLiftSetLabel = liftSet.set_label,
+                newLiftSetNote = liftSet.set_note,
+                liftSetToEdit = liftSet,
+                liftWithSetToEdit = lift
+            )
+        }
+    }
+
+    fun validateLiftSetEntry(): Boolean {
+        return _recordSessionUiState.value.newLiftSetLabel.isNotBlank()
+    }
+
+    fun updateLiftSetName(newName: String) {
+        _recordSessionUiState.update { currentState ->
+            currentState.copy(
+                newLiftSetLabel = newName
+            )
+        }
+    }
+
+    fun updateLiftSetNote(newNote: String) {
+        _recordSessionUiState.update { currentState ->
+            currentState.copy(
+                newLiftSetNote = newNote
+            )
+        }
+    }
+
+    fun dismissEditLiftSetDialog() {
+        _recordSessionUiState.update { currentState ->
+            currentState.copy(
+                editLiftSetDialogVisible = false,
+                newLiftSetLabel = "",
+                newLiftSetNote = "",
+                liftSetToEdit = null,
+                liftWithSetToEdit = null
+            )
+        }
+    }
+
+    fun updateLiftSet() {
+        if (!validateLiftSetEntry()) {
+            return
+        }
+
+        val oldLiftSet: LiftSet = _recordSessionUiState.value.liftSetToEdit ?: return
+
+        val newLiftSet = oldLiftSet.copy(
+            set_label = _recordSessionUiState.value.newLiftSetLabel,
+            set_note = _recordSessionUiState.value.newLiftSetNote
+        )
+
+        // update with new lift set
+        viewModelScope.launch {
+            liftSetRepository.updateLiftSet(
+                liftSet = newLiftSet
+            )
+
+            // dismiss edit lift set dialog
+            dismissEditLiftSetDialog()
+        }
+    }
+
+    fun showEditSetMetricNoteDialog(
+        setMetricToEdit: SetMetric,
+        liftSetWithSetMetricToEdit: LiftSet,
+        liftWithSetMetricToEdit: Lift
+    ) {
+        _recordSessionUiState.update { currentState ->
+            currentState.copy(
+                setMetricToEdit = setMetricToEdit,
+                liftSetWithSetMetricToEdit = liftSetWithSetMetricToEdit,
+                liftWithSetMetricToEdit = liftWithSetMetricToEdit,
+                editSetMetricNoteDialogVisible = true,
+                newSetMetricNote = setMetricToEdit.note
+            )
+        }
+    }
+
+    fun dismissEditSetMetricNoteDialog() {
+        _recordSessionUiState.update { currentState ->
+            currentState.copy(
+                setMetricToEdit = null,
+                liftSetWithSetMetricToEdit = null,
+                liftWithSetMetricToEdit = null,
+                editSetMetricNoteDialogVisible = false,
+                newSetMetricNote = ""
+            )
+        }
+    }
+
+    fun updateSetMetricNote(newSetMetricNote: String) {
+        _recordSessionUiState.update { currentState ->
+            currentState.copy(
+                newSetMetricNote = newSetMetricNote
+            )
+        }
+    }
+
+    fun validateSetMetricNote(): Boolean {
+        return _recordSessionUiState.value.newSetMetricNote.isNotBlank()
+    }
+
+    fun updateSetMetric() {
+        if (!validateSetMetricNote()) {
+            return
+        }
+
+        val oldSetMetric: SetMetric = _recordSessionUiState.value.setMetricToEdit ?: return
+        val newSetMetric: SetMetric = oldSetMetric.copy(
+            note = _recordSessionUiState.value.newSetMetricNote
+        )
+
+        // update SetMetric in database
+        viewModelScope.launch {
+            setMetricRepository.updateSetMetric(
+                setMetric = newSetMetric
+            )
+
+            dismissEditSetMetricNoteDialog()
+        }
+    }
 }
 
 /**
@@ -665,4 +792,14 @@ data class RecordSessionUiState(
     val setMetricDisplayDetailMap: Map<Int, SetMetricDisplayDetail> = emptyMap(),
     val deleteLiftInProgressDialogVisible: Boolean = false,
     val liftIdToDelete: Int = -1,
+    val editLiftSetDialogVisible: Boolean = false,
+    val newLiftSetLabel: String = "",
+    val newLiftSetNote: String = "",
+    val liftSetToEdit: LiftSet? = null,
+    val liftWithSetToEdit: Lift? = null,
+    val editSetMetricNoteDialogVisible: Boolean = false,
+    val newSetMetricNote: String = "",
+    val setMetricToEdit: SetMetric? = null,
+    val liftSetWithSetMetricToEdit: LiftSet? = null,
+    val liftWithSetMetricToEdit: Lift? = null
 )

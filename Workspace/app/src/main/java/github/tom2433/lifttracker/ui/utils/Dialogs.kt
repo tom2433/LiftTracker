@@ -1,6 +1,5 @@
 package github.tom2433.lifttracker.ui.utils
 
-import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -203,6 +202,124 @@ fun ShowElementEntryDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(stringResource(R.string.cancel))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ShowMetricEntryDialog(
+    dialogTitle: String,
+    submitBtnText: String,
+    metricInputLabel: String,
+    buttonEnabled: Boolean,
+    newMetric: String,
+    onMetricValueChanged: (String) -> Unit,
+    onSubmit: () -> Unit,
+    onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    // focus requester to pop up the keyboard when the user selects to edit a metric
+    val metricFocusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+    LaunchedEffect(Unit) {
+        delay(100)
+        metricFocusRequester.requestFocus()
+        keyboardController?.show()
+    }
+
+    Dialog(
+        onDismissRequest = onDismissRequest,
+        properties = DialogProperties(
+            dismissOnClickOutside = true,
+            dismissOnBackPress = true
+        )
+    ) {
+        Card(
+            modifier = modifier
+                .wrapContentSize()
+                .padding(4.dp),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .wrapContentHeight()
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f, fill = false)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // title
+                    Text(
+                        text = dialogTitle,
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+
+                    // divider
+                    HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
+
+                    // metric input
+                    TextField(
+                        value = newMetric,
+                        onValueChange = onMetricValueChanged,
+                        label = {
+                            Text(metricInputLabel)
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Filled.Description,
+                                contentDescription = metricInputLabel
+                            )
+                        },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions.Default.copy(
+                            capitalization = KeyboardCapitalization.Sentences,
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                if (buttonEnabled) {
+                                    onSubmit()
+                                }
+                            }
+                        ),
+                        modifier = Modifier
+                            .focusRequester(metricFocusRequester)
+                            .padding(bottom = 16.dp)
+                            .fillMaxWidth()
+                    )
+
+                    // divider
+                    HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
+
+                    // button to submit metric
+                    Button(
+                        onClick = onSubmit,
+                        enabled = buttonEnabled,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp)
+                    ) {
+                        Text(submitBtnText)
+                    }
+
+                    // button to dismiss dialog
+                    OutlinedButton(
+                        onClick = onDismissRequest,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(stringResource(R.string.cancel))
+                    }
                 }
             }
         }

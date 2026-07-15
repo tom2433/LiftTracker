@@ -30,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
@@ -137,7 +138,8 @@ fun LiftDetailFlowRow(
     muscleGroupName: String,
     metricType: String,
     unitName: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    tintColor: Color = Color.Unspecified
 ) {
     FlowRow(
         horizontalArrangement = Arrangement.Center,
@@ -154,7 +156,8 @@ fun LiftDetailFlowRow(
         ) {
             Icon(
                 painter = painterResource(R.drawable.ic_arm_flex),
-                contentDescription = stringResource(R.string.muscle_group)
+                contentDescription = stringResource(R.string.muscle_group),
+                tint = tintColor
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
@@ -176,6 +179,7 @@ fun LiftDetailFlowRow(
             Icon(
                 painter = painterResource(R.drawable.ic_ruler),
                 contentDescription = stringResource(R.string.metric_type),
+                tint = tintColor
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
@@ -196,7 +200,8 @@ fun LiftDetailFlowRow(
         ) {
             Icon(
                 imageVector = Icons.Filled.Scale,
-                contentDescription = stringResource(R.string.unit)
+                contentDescription = stringResource(R.string.unit),
+                tint = tintColor
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
