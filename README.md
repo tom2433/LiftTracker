@@ -6,6 +6,12 @@ A Data Vis project developed using Jetpack Compose.
 
 # Immediate Notes
 
+# 07-15
+
+add a column to the lift sets table called muscle_group_set_number to indicate that muscle group's set number for the day.
+
+## 07-14
+
 add a show all button to existing lift entry card to show all lifts
 
 ## 07-13
