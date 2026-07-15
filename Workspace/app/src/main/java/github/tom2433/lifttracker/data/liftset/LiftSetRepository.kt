@@ -8,7 +8,7 @@ interface LiftSetRepository {
         liftDayId: Int,
         liftId: Int,
         setNote: String = ""
-    )
+    ): Int
     suspend fun updateLiftSet(liftSet: LiftSet)
     suspend fun deleteLiftSet(liftSet: LiftSet)
     fun getLiftSetStream(id: Int): Flow<LiftSet?>

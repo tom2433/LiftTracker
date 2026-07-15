@@ -85,4 +85,5 @@
     <string name="edit_lift_set">Edit lift set</string>
     <string name="edit_note">Edit Note</string>
     <string name="note">Note</string>
+    <string name="add_lift_set">Add lift set</string>
 </resources>

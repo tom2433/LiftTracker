@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.EnterExitState
+import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.animateContentSize
@@ -389,9 +390,11 @@ fun SessionInProgressScreen(
                                                 liftWithSetMetricToEdit = liftDetail.liftObj
                                             )
                                         },
+                                        addLiftSet = { viewModel.addLiftSetForLiftId(liftId) },
                                         liftDetail = liftDetail,
                                         setMap = setMap,
-                                        setMetricDisplayDetailMap = recordSessionUiState.setMetricDisplayDetailMap
+                                        setMetricDisplayDetailMap = recordSessionUiState.setMetricDisplayDetailMap,
+                                        liftSetVisibleMap = recordSessionUiState.liftSetVisibleMap
                                     )
                                 }
                             }
@@ -456,9 +459,11 @@ fun LiftInProgressCard(
     onLiftDelete: () -> Unit,
     showEditLiftSetDialog: (LiftSet) -> Unit,
     showEditSetMetricNoteDialog: (SetMetric, LiftSet) -> Unit,
+    addLiftSet: () -> Unit,
     liftDetail: LiftSearchDetail,
     setMap: Map<LiftSet, Pair<SetMetric, SetMetric>>,
     setMetricDisplayDetailMap: Map<Int, SetMetricDisplayDetail>,
+    liftSetVisibleMap: Map<Int, Boolean>,
     modifier: Modifier = Modifier
 ) {
     val bottomCornerRadius by animateDpAsState(
@@ -613,353 +618,449 @@ fun LiftInProgressCard(
             )
         ) {
             // column to hold lift set cards and add lift set button
-            Column(
-                modifier = Modifier.padding(horizontal = 16.dp)
-            ) {
-                // lift sets go here
-                for ((liftSet, setMetricPair) in setMap) {
-                    // key to differentiate lift set cards
-                    key(liftSet.id) {
-                        // card to represent LiftSet. Each LiftSet has two SetMetrics
-                        Card(
-                            colors = CardDefaults.cardColors().copy(
-                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                            ),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp),
-                        ) {
-                            // LiftSet has:
-                            // - lift set number
-                            // - day set number
-                            // - set label
-                            // - set note
-
-                            // SetMetric has:
-                            // - value
-                            // - note
-
-                            // row to hold lift set details on the left,
-                            // set metric details on the right
-                            Row(
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                    .padding(8.dp)
-                                    .fillMaxWidth()
+            Column {
+                // column to hold lift set cards
+                Column(
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                ) {
+                    // lift sets go here
+                    for ((liftSet, setMetricPair) in setMap) {
+                        // key to differentiate lift set cards
+                        key(liftSet.id) {
+                            // animate the entry/exit of each lift set card
+                            AnimatedVisibility(
+                                visible = liftSetVisibleMap[liftSet.id] ?: false,
+                                enter = if (liftSet.lift_set_number != 1) {
+                                    slideInHorizontally(
+                                        initialOffsetX = { it },
+                                        animationSpec = tween(150)
+                                    ) + fadeIn(tween(150))
+                                } else {
+                                    EnterTransition.None
+                                },
+                                exit = slideOutHorizontally(
+                                    targetOffsetX = { -it },
+                                    animationSpec = tween(150)
+                                ) + fadeOut(tween(150))
                             ) {
-                                // row to hold pencil edit icon, then set label/note/set #'s
-                                Row(
-                                    horizontalArrangement = Arrangement.Start,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    // pencil icon button to edit LiftSet
-                                    IconButton(
-                                        onClick = { showEditLiftSetDialog(liftSet) }
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Filled.Edit,
-                                            contentDescription = stringResource(R.string.edit_lift_set)
-                                        )
-                                    }
-
-                                    // column to hold set label, set note (if applicable), lift set #,
-                                    // and day set #
-                                    Column(
-                                        verticalArrangement = Arrangement.Center,
-                                        horizontalAlignment = Alignment.Start,
-                                    ) {
-                                        // set label
-                                        Text(
-                                            text = liftSet.set_label,
-                                            style = MaterialTheme.typography.titleMedium
-                                        )
-                                        // set note (if applicable)
-                                        if (liftSet.set_note.isNotBlank()) {
-                                            Text(
-                                                text = liftSet.set_note,
-                                                style = MaterialTheme.typography.bodySmall,
-                                                fontSize = 13.sp,
-                                                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(
-                                                    alpha = 0.75f
-                                                )
-                                            )
-                                        }
-                                        // lift set #
-                                        Text(
-                                            text = "Lift's set #${liftSet.lift_set_number}",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            fontSize = 13.sp,
-                                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(
-                                                alpha = 0.75f
-                                            )
-                                        )
-                                        // day set #
-                                        Text(
-                                            text = "Day's set #${liftSet.day_set_number}",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            fontSize = 13.sp,
-                                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(
-                                                alpha = 0.75f
-                                            )
-                                        )
-                                    }
-                                }
-
-                                // column to hold user inputs for weight and reps/time
-                                Column(
-                                    verticalArrangement = Arrangement.Center,
-                                    horizontalAlignment = Alignment.End
-                                ) {
-                                    // row to hold add note icon button and weight text field
-                                    Row(
-                                        horizontalArrangement = Arrangement.End,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        // icon button to add a note for this setMetric
-                                        IconButton(
-                                            onClick = { showEditSetMetricNoteDialog(setMetricPair.first, liftSet) }
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Filled.EditNote,
-                                                contentDescription = stringResource(R.string.edit_note)
-                                            )
-                                        }
-
-                                        // text field for weight
-                                        OutlinedTextField(
-                                            value = setMetricDisplayDetailMap[setMetricPair.first.id]?.value
-                                                ?: "",
-                                            onValueChange = {},
-                                            label = {
-                                                Text(
-                                                    text = liftDetail.unitName
-                                                )
-                                            },
-                                            singleLine = true,
-                                            colors = OutlinedTextFieldDefaults.colors(
-                                                focusedTextColor = screenContentColor,
-                                                unfocusedTextColor = screenContentColor,
-                                                focusedLabelColor = screenContentColor,
-                                                unfocusedLabelColor = screenContentColor.copy(alpha = 0.75f),
-                                                focusedBorderColor = screenContentColor,
-                                                unfocusedBorderColor = screenContentColor.copy(alpha = 0.6f),
-                                                cursorColor = screenContentColor,
-                                                focusedContainerColor = Color.Transparent,
-                                                unfocusedContainerColor = Color.Transparent
-                                            ),
-                                            modifier = Modifier
-                                                .widthIn(
-                                                    min = 96.dp,
-                                                    max = 140.dp
-                                                )
-                                        )
-                                    }
-
-                                    // text to hold first metric note if applicable
-                                    if (setMetricPair.first.note.isNotBlank()) {
-                                        Text(
-                                            text = setMetricPair.first.note,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            fontSize = 13.sp,
-                                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(
-                                                alpha = 0.75f
-                                            ),
-                                            textAlign = TextAlign.End
-                                        )
-                                    }
-
-                                    HorizontalDivider(
-                                        modifier = Modifier
-                                            .width(140.dp)
-                                            .padding(top = 8.dp),
-                                        color = screenContentColor
-                                    )
-
-                                    // determine if the next text fields should be time or reps
-                                    if (liftDetail.metricType == "reps") {
-                                        // row to hold note icon button and reps field
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.End
-                                        ) {
-                                            // icon button to add a note to this setmetric
-                                            IconButton(
-                                                onClick = { showEditSetMetricNoteDialog(setMetricPair.second, liftSet) }
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Filled.EditNote,
-                                                    contentDescription = stringResource(R.string.edit_note)
-                                                )
-                                            }
-
-                                            // text field for reps
-                                            OutlinedTextField(
-                                                value = setMetricDisplayDetailMap[setMetricPair.second.id]?.value
-                                                    ?: "",
-                                                onValueChange = {},
-                                                label = {
-                                                    Text(
-                                                        text = stringResource(R.string.reps)
-                                                    )
-                                                },
-                                                singleLine = true,
-                                                colors = OutlinedTextFieldDefaults.colors(
-                                                    focusedTextColor = screenContentColor,
-                                                    unfocusedTextColor = screenContentColor,
-                                                    focusedLabelColor = screenContentColor,
-                                                    unfocusedLabelColor = screenContentColor.copy(
-                                                        alpha = 0.75f
-                                                    ),
-                                                    focusedBorderColor = screenContentColor,
-                                                    unfocusedBorderColor = screenContentColor.copy(
-                                                        alpha = 0.6f
-                                                    ),
-                                                    cursorColor = screenContentColor,
-                                                    focusedContainerColor = Color.Transparent,
-                                                    unfocusedContainerColor = Color.Transparent
-                                                ),
-                                                modifier = Modifier.widthIn(
-                                                    min = 96.dp,
-                                                    max = 140.dp
-                                                )
-                                            )
-                                        }
-                                    } else {
-                                        // row to hold note icon button and hours field
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.End
-                                        ) {
-                                            // icon button to add a note to this setmetric
-                                            IconButton(
-                                                onClick = {
-                                                    showEditSetMetricNoteDialog(setMetricPair.second, liftSet)
-                                                }
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Filled.EditNote,
-                                                    contentDescription = stringResource(R.string.edit_note)
-                                                )
-                                            }
-
-                                            // text field for hours
-                                            OutlinedTextField(
-                                                value = setMetricDisplayDetailMap[setMetricPair.second.id]?.hours
-                                                    ?: "",
-                                                onValueChange = {},
-                                                label = {
-                                                    Text(
-                                                        text = stringResource(R.string.hours)
-                                                    )
-                                                },
-                                                singleLine = true,
-                                                colors = OutlinedTextFieldDefaults.colors(
-                                                    focusedTextColor = screenContentColor,
-                                                    unfocusedTextColor = screenContentColor,
-                                                    focusedLabelColor = screenContentColor,
-                                                    unfocusedLabelColor = screenContentColor.copy(
-                                                        alpha = 0.75f
-                                                    ),
-                                                    focusedBorderColor = screenContentColor,
-                                                    unfocusedBorderColor = screenContentColor.copy(
-                                                        alpha = 0.6f
-                                                    ),
-                                                    cursorColor = screenContentColor,
-                                                    focusedContainerColor = Color.Transparent,
-                                                    unfocusedContainerColor = Color.Transparent
-                                                ),
-                                                modifier = Modifier
-                                                    .widthIn(
-                                                        min = 96.dp,
-                                                        max = 140.dp
-                                                    )
-                                                    .padding(
-                                                        bottom = 4.dp
-                                                    )
-                                            )
-                                        }
-                                        // text field for minutes
-                                        OutlinedTextField(
-                                            value = setMetricDisplayDetailMap[setMetricPair.second.id]?.minutes ?: "",
-                                            onValueChange = {},
-                                            label = {
-                                                Text(
-                                                    text = stringResource(R.string.minutes)
-                                                )
-                                            },
-                                            singleLine = true,
-                                            colors = OutlinedTextFieldDefaults.colors(
-                                                focusedTextColor = screenContentColor,
-                                                unfocusedTextColor = screenContentColor,
-                                                focusedLabelColor = screenContentColor,
-                                                unfocusedLabelColor = screenContentColor.copy(alpha = 0.75f),
-                                                focusedBorderColor = screenContentColor,
-                                                unfocusedBorderColor = screenContentColor.copy(alpha = 0.6f),
-                                                cursorColor = screenContentColor,
-                                                focusedContainerColor = Color.Transparent,
-                                                unfocusedContainerColor = Color.Transparent
-                                            ),
-                                            modifier = Modifier
-                                                .widthIn(
-                                                    min = 96.dp,
-                                                    max = 140.dp
-                                                )
-                                                .padding(
-                                                    bottom = 4.dp
-                                                )
-                                        )
-                                        // text field for seconds
-                                        OutlinedTextField(
-                                            value = setMetricDisplayDetailMap[setMetricPair.second.id]?.seconds ?: "",
-                                            onValueChange = {},
-                                            label = {
-                                                Text(
-                                                    text = stringResource(R.string.seconds)
-                                                )
-                                            },
-                                            singleLine = true,
-                                            colors = OutlinedTextFieldDefaults.colors(
-                                                focusedTextColor = screenContentColor,
-                                                unfocusedTextColor = screenContentColor,
-                                                focusedLabelColor = screenContentColor,
-                                                unfocusedLabelColor = screenContentColor.copy(alpha = 0.75f),
-                                                focusedBorderColor = screenContentColor,
-                                                unfocusedBorderColor = screenContentColor.copy(alpha = 0.6f),
-                                                cursorColor = screenContentColor,
-                                                focusedContainerColor = Color.Transparent,
-                                                unfocusedContainerColor = Color.Transparent
-                                            ),
-                                            modifier = Modifier
-                                                .widthIn(
-                                                    min = 96.dp,
-                                                    max = 140.dp
-                                                )
-                                        )
-                                    }
-
-                                    // text to hold second metric note if applicable
-                                    if (setMetricPair.second.note.isNotBlank()) {
-                                        Text(
-                                            text = setMetricPair.second.note,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            fontSize = 13.sp,
-                                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(
-                                                alpha = 0.75f
-                                            ),
-                                            textAlign = TextAlign.End
-                                        )
-                                    }
-                                }
+                                // card to represent LiftSet. Each LiftSet has two SetMetrics
+                                LiftSetInProgressCard(
+                                    liftSet = liftSet,
+                                    showEditLiftSetDialog = showEditLiftSetDialog,
+                                    showEditSetMetricNoteDialog = showEditSetMetricNoteDialog,
+                                    setMetricPair = setMetricPair,
+                                    setMetricDisplayDetailMap = setMetricDisplayDetailMap,
+                                    liftDetail = liftDetail,
+                                    screenContentColor = screenContentColor
+                                )
                             }
                         }
+                    }
+                }
+
+                // add lift set button
+                Card(
+                    modifier = Modifier
+                        .height(40.dp)
+                        .fillMaxWidth(),
+                    shape = RoundedCornerShape(
+                        bottomStart = 16.dp,
+                        bottomEnd = 16.dp
+                    ),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    ),
+                    onClick = { addLiftSet() }
+                ) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Add,
+                            contentDescription = stringResource(R.string.add_lift_set)
+                        )
                     }
                 }
             }
         }
 
         Spacer(modifier = Modifier.height(8.dp))
+    }
+}
+
+@Composable
+fun LiftSetInProgressCard(
+    liftSet: LiftSet,
+    showEditLiftSetDialog: (LiftSet) -> Unit,
+    showEditSetMetricNoteDialog: (SetMetric, LiftSet) -> Unit,
+    setMetricPair: Pair<SetMetric, SetMetric>,
+    setMetricDisplayDetailMap: Map<Int, SetMetricDisplayDetail>,
+    liftDetail: LiftSearchDetail,
+    screenContentColor: Color,
+    modifier: Modifier = Modifier
+) {
+    // card to represent LiftSet. Each LiftSet has two SetMetrics
+    Card(
+        colors = CardDefaults.cardColors().copy(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+        ),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+    ) {
+        // LiftSet has:
+        // - lift set number
+        // - day set number
+        // - set label
+        // - set note
+
+        // SetMetric has:
+        // - value
+        // - note
+
+        // row to hold lift set details on the left,
+        // set metric details on the right
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .padding(8.dp)
+                .fillMaxWidth()
+        ) {
+            // row to hold pencil edit icon, then set label/note/set #'s
+            Row(
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // pencil icon button to edit LiftSet
+                IconButton(
+                    onClick = { showEditLiftSetDialog(liftSet) }
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Edit,
+                        contentDescription = stringResource(R.string.edit_lift_set)
+                    )
+                }
+
+                // column to hold set label, set note (if applicable), lift set #,
+                // and day set #
+                Column(
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.Start,
+                ) {
+                    // set label
+                    Text(
+                        text = liftSet.set_label,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    // set note (if applicable)
+                    if (liftSet.set_note.isNotBlank()) {
+                        Text(
+                            text = liftSet.set_note,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(
+                                alpha = 0.75f
+                            )
+                        )
+                    }
+                    // lift set #
+                    Text(
+                        text = "Lift's set #${liftSet.lift_set_number}",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(
+                            alpha = 0.75f
+                        )
+                    )
+                    // day set #
+                    Text(
+                        text = "Day's set #${liftSet.day_set_number}",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(
+                            alpha = 0.75f
+                        )
+                    )
+                }
+            }
+
+            // column to hold user inputs for weight and reps/time
+            Column(
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.End
+            ) {
+                // row to hold add note icon button and weight text field
+                Row(
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // icon button to add a note for this setMetric
+                    IconButton(
+                        onClick = {
+                            showEditSetMetricNoteDialog(
+                                setMetricPair.first,
+                                liftSet
+                            )
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.EditNote,
+                            contentDescription = stringResource(R.string.edit_note)
+                        )
+                    }
+
+                    // text field for weight
+                    OutlinedTextField(
+                        value = setMetricDisplayDetailMap[setMetricPair.first.id]?.value
+                            ?: "",
+                        onValueChange = {},
+                        label = {
+                            Text(
+                                text = liftDetail.unitName
+                            )
+                        },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = screenContentColor,
+                            unfocusedTextColor = screenContentColor,
+                            focusedLabelColor = screenContentColor,
+                            unfocusedLabelColor = screenContentColor.copy(
+                                alpha = 0.75f
+                            ),
+                            focusedBorderColor = screenContentColor,
+                            unfocusedBorderColor = screenContentColor.copy(
+                                alpha = 0.6f
+                            ),
+                            cursorColor = screenContentColor,
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent
+                        ),
+                        modifier = Modifier
+                            .widthIn(
+                                min = 96.dp,
+                                max = 140.dp
+                            )
+                    )
+                }
+
+                // text to hold first metric note if applicable
+                if (setMetricPair.first.note.isNotBlank()) {
+                    Text(
+                        text = setMetricPair.first.note,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(
+                            alpha = 0.75f
+                        ),
+                        textAlign = TextAlign.End
+                    )
+                }
+
+                HorizontalDivider(
+                    modifier = Modifier
+                        .width(140.dp)
+                        .padding(top = 8.dp),
+                    color = screenContentColor
+                )
+
+                // determine if the next text fields should be time or reps
+                if (liftDetail.metricType == "reps") {
+                    // row to hold note icon button and reps field
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        // icon button to add a note to this setmetric
+                        IconButton(
+                            onClick = {
+                                showEditSetMetricNoteDialog(
+                                    setMetricPair.second,
+                                    liftSet
+                                )
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.EditNote,
+                                contentDescription = stringResource(R.string.edit_note)
+                            )
+                        }
+
+                        // text field for reps
+                        OutlinedTextField(
+                            value = setMetricDisplayDetailMap[setMetricPair.second.id]?.value
+                                ?: "",
+                            onValueChange = {},
+                            label = {
+                                Text(
+                                    text = stringResource(R.string.reps)
+                                )
+                            },
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = screenContentColor,
+                                unfocusedTextColor = screenContentColor,
+                                focusedLabelColor = screenContentColor,
+                                unfocusedLabelColor = screenContentColor.copy(
+                                    alpha = 0.75f
+                                ),
+                                focusedBorderColor = screenContentColor,
+                                unfocusedBorderColor = screenContentColor.copy(
+                                    alpha = 0.6f
+                                ),
+                                cursorColor = screenContentColor,
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent
+                            ),
+                            modifier = Modifier.widthIn(
+                                min = 96.dp,
+                                max = 140.dp
+                            )
+                        )
+                    }
+                } else {
+                    // row to hold note icon button and hours field
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        // icon button to add a note to this setmetric
+                        IconButton(
+                            onClick = {
+                                showEditSetMetricNoteDialog(
+                                    setMetricPair.second,
+                                    liftSet
+                                )
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.EditNote,
+                                contentDescription = stringResource(R.string.edit_note)
+                            )
+                        }
+
+                        // text field for hours
+                        OutlinedTextField(
+                            value = setMetricDisplayDetailMap[setMetricPair.second.id]?.hours
+                                ?: "",
+                            onValueChange = {},
+                            label = {
+                                Text(
+                                    text = stringResource(R.string.hours)
+                                )
+                            },
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = screenContentColor,
+                                unfocusedTextColor = screenContentColor,
+                                focusedLabelColor = screenContentColor,
+                                unfocusedLabelColor = screenContentColor.copy(
+                                    alpha = 0.75f
+                                ),
+                                focusedBorderColor = screenContentColor,
+                                unfocusedBorderColor = screenContentColor.copy(
+                                    alpha = 0.6f
+                                ),
+                                cursorColor = screenContentColor,
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent
+                            ),
+                            modifier = Modifier
+                                .widthIn(
+                                    min = 96.dp,
+                                    max = 140.dp
+                                )
+                                .padding(
+                                    bottom = 4.dp
+                                )
+                        )
+                    }
+                    // text field for minutes
+                    OutlinedTextField(
+                        value = setMetricDisplayDetailMap[setMetricPair.second.id]?.minutes
+                            ?: "",
+                        onValueChange = {},
+                        label = {
+                            Text(
+                                text = stringResource(R.string.minutes)
+                            )
+                        },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = screenContentColor,
+                            unfocusedTextColor = screenContentColor,
+                            focusedLabelColor = screenContentColor,
+                            unfocusedLabelColor = screenContentColor.copy(
+                                alpha = 0.75f
+                            ),
+                            focusedBorderColor = screenContentColor,
+                            unfocusedBorderColor = screenContentColor.copy(
+                                alpha = 0.6f
+                            ),
+                            cursorColor = screenContentColor,
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent
+                        ),
+                        modifier = Modifier
+                            .widthIn(
+                                min = 96.dp,
+                                max = 140.dp
+                            )
+                            .padding(
+                                bottom = 4.dp
+                            )
+                    )
+                    // text field for seconds
+                    OutlinedTextField(
+                        value = setMetricDisplayDetailMap[setMetricPair.second.id]?.seconds
+                            ?: "",
+                        onValueChange = {},
+                        label = {
+                            Text(
+                                text = stringResource(R.string.seconds)
+                            )
+                        },
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = screenContentColor,
+                            unfocusedTextColor = screenContentColor,
+                            focusedLabelColor = screenContentColor,
+                            unfocusedLabelColor = screenContentColor.copy(
+                                alpha = 0.75f
+                            ),
+                            focusedBorderColor = screenContentColor,
+                            unfocusedBorderColor = screenContentColor.copy(
+                                alpha = 0.6f
+                            ),
+                            cursorColor = screenContentColor,
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent
+                        ),
+                        modifier = Modifier
+                            .widthIn(
+                                min = 96.dp,
+                                max = 140.dp
+                            )
+                    )
+                }
+
+                // text to hold second metric note if applicable
+                if (setMetricPair.second.note.isNotBlank()) {
+                    Text(
+                        text = setMetricPair.second.note,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(
+                            alpha = 0.75f
+                        ),
+                        textAlign = TextAlign.End
+                    )
+                }
+            }
+        }
     }
 }
 

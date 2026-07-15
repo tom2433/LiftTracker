@@ -169,6 +169,7 @@ fun LiftTrackerDrawer(
     val drawerOffsetX = remember { Animatable(0f) }
     val coroutineScope = rememberCoroutineScope()
     viewModel.checkScreenForFab(titleRes)
+    viewModel.checkScreenForScrollBehavior(titleRes)
     val beginSessionNavElementColors = if (drawerUiState.activeLiftDay == null) {
         NavigationDrawerItemDefaults.colors()
     } else {
@@ -205,7 +206,11 @@ fun LiftTrackerDrawer(
             topBar = {
                 CenterAlignedTopAppBar(
                     title = { Text(stringResource(titleRes)) },
-                    scrollBehavior = scrollBehavior,
+                    scrollBehavior = if (drawerUiState.doEnterAlwaysScrollBehavior) {
+                        scrollBehavior
+                    } else {
+                        null
+                    },
                     navigationIcon = {
                         IconButton(
                             onClick = {

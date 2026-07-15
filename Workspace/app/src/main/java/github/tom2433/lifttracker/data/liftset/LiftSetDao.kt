@@ -20,7 +20,7 @@ interface LiftSetDao {
     suspend fun insertPreparedSetMetric(setMetric: SetMetric)
 
     @Transaction
-    suspend fun insert(liftSet: LiftSet) {
+    suspend fun insert(liftSet: LiftSet): Int {
         val nextLiftSetNumber = getNextLiftSetNumber(
             liftDayId = liftSet.lift_day_id,
             liftId = liftSet.lift_id
@@ -55,6 +55,8 @@ interface LiftSetDao {
                 note = ""
             )
         )
+
+        return insertedLiftSetId
     }
 
     @Query("""

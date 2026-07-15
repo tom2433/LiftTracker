@@ -1,6 +1,9 @@
 package github.tom2433.lifttracker.ui.viewModels
 
 import androidx.annotation.StringRes
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import github.tom2433.lifttracker.R
@@ -10,6 +13,13 @@ import github.tom2433.lifttracker.data.musclegroup.MuscleGroupRepository
 import github.tom2433.lifttracker.data.profile.Profile
 import github.tom2433.lifttracker.data.profile.ProfileRepository
 import github.tom2433.lifttracker.data.liftday.LiftDay
+import github.tom2433.lifttracker.ui.screens.AnalyticsDestination
+import github.tom2433.lifttracker.ui.screens.CalendarDestination
+import github.tom2433.lifttracker.ui.screens.MuscleGroupsDestination
+import github.tom2433.lifttracker.ui.screens.RecordSessionDestination
+import github.tom2433.lifttracker.ui.screens.SessionsDestination
+import github.tom2433.lifttracker.ui.screens.SettingsDestination
+import github.tom2433.lifttracker.ui.screens.ToolsDestination
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -363,12 +373,30 @@ class DrawerViewModel(
             )
         }
     }
+
+    @OptIn(ExperimentalMaterial3Api::class)
+    fun checkScreenForScrollBehavior(titleRes: Int) {
+        _drawerUiState.update { currentState ->
+            currentState.copy(
+                doEnterAlwaysScrollBehavior = when (titleRes) {
+                    MuscleGroupsDestination.titleRes -> true
+                    RecordSessionDestination.titleRes -> false
+                    SessionsDestination.titleRes -> true
+                    CalendarDestination.titleRes -> true
+                    AnalyticsDestination.titleRes -> true
+                    ToolsDestination.titleRes -> true
+                    SettingsDestination.titleRes -> true
+                    else -> false
+                }
+            )
+        }
+    }
 }
 
 /**
  * Ui State for SettingsScreen
  */
-data class DrawerUiState(
+data class DrawerUiState @OptIn(ExperimentalMaterial3Api::class) constructor(
     val profileList: List<Profile> = listOf(),
     val isDrawerOpen: Boolean = false,
     val drawerWidthPx: Float = 0f,
@@ -384,5 +412,6 @@ data class DrawerUiState(
     val muscleGroupEntryDialogVisible: Boolean = false,
     val newMuscleGroupName: String = "",
     val newMuscleGroupNote: String = "",
-    val activeLiftDay: LiftDay? = null
+    val activeLiftDay: LiftDay? = null,
+    val doEnterAlwaysScrollBehavior: Boolean = false
 )

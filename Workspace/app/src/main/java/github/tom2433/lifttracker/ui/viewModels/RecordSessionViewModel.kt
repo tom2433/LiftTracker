@@ -45,6 +45,7 @@ class RecordSessionViewModel(
     private val _recordSessionUiState = MutableStateFlow(RecordSessionUiState())
     private var liftSuggestionsJob: Job? = null
     private var liftIdPendingReveal: Int? = null
+    private var liftSetIdPendingReveal: Int? = null
     val recordSessionUiState: StateFlow<RecordSessionUiState> = _recordSessionUiState.asStateFlow()
 
     init {
@@ -90,6 +91,7 @@ class RecordSessionViewModel(
         }
 
         // constant collection: fill the liftSetMap. liftSetMap will always be updated for the UI state
+        // also fill the liftSetVisible map to indicate which LiftSet cards are visible
         viewModelScope.launch {
             liftDayRepository.getActiveLiftDayForActiveProfileStream()
                 .flatMapLatest { activeLiftDay ->
@@ -99,14 +101,16 @@ class RecordSessionViewModel(
                         liftSetRepository.getRecordSessionLiftSetRowsForDayStream(activeLiftDay.id)
                     }
                 }
-                .collect { rows ->
+                .collect { rows -> // contains LiftSet objects
                     _recordSessionUiState.update { currentState ->
                         currentState.copy(
-                            liftSetMap = rows.toLiftSetMap()
+                            liftSetMap = rows.toLiftSetMap(),
+                            liftSetVisibleMap = rows.toLiftSetVisibleMap(currentState.liftSetVisibleMap)
                         )
                     }
 
                     revealPendingLiftIfReady()
+                    revealPendingLiftSetIfReady()
                 }
         }
 
@@ -130,6 +134,7 @@ class RecordSessionViewModel(
                     }
 
                     revealPendingLiftIfReady()
+                    revealPendingLiftSetIfReady()
                 }
         }
 
@@ -152,6 +157,48 @@ class RecordSessionViewModel(
                         )
                     }
                 }
+        }
+    }
+
+    private fun revealPendingLiftSetIfReady() {
+        val pendingLiftSetId = liftSetIdPendingReveal ?: return
+
+        var pendingLiftSetIsReady: Boolean = false
+
+        for (nestedMap in _recordSessionUiState.value.liftSetMap.values) {
+            for (liftSet in nestedMap.keys) {
+                if (liftSet.id == pendingLiftSetId) {
+                    pendingLiftSetIsReady = true
+                    break
+                }
+            }
+
+            if (pendingLiftSetIsReady) break
+        }
+
+        pendingLiftSetIsReady = pendingLiftSetIsReady &&
+                (pendingLiftSetId in _recordSessionUiState.value.liftSetVisibleMap)
+
+        if (!pendingLiftSetIsReady) {
+            return
+        }
+
+        // pending lift set is officially ready, so now we can set it visible
+        viewModelScope.launch {
+            // wait a little for compose ot render the hidden card
+            delay(50)
+
+            _recordSessionUiState.update { currentState ->
+                currentState.copy(
+                    liftSetVisibleMap = currentState.liftSetVisibleMap.mapValues { (liftSetId, visible) ->
+                        if (liftSetId == pendingLiftSetId) {
+                            true
+                        } else {
+                            visible
+                        }
+                    }
+                )
+            }
         }
     }
 
@@ -247,6 +294,19 @@ class RecordSessionViewModel(
                     else -> true
                 }
             )
+        }
+    }
+
+    private fun List<RecordSessionLiftSetRow>.toLiftSetVisibleMap(
+        previousLiftSetVisibleMap: Map<Int, Boolean>
+    ): Map<Int, Boolean> {
+        return associate { row ->
+            val previousVisible: Boolean? = previousLiftSetVisibleMap[row.liftSet.id]
+            row.liftSet.id to when {
+                previousVisible != null -> previousVisible
+                row.liftSet.id == liftSetIdPendingReveal -> false
+                else -> true
+            }
         }
     }
 
@@ -772,6 +832,19 @@ class RecordSessionViewModel(
             dismissEditSetMetricNoteDialog()
         }
     }
+
+    fun addLiftSetForLiftId(liftId: Int) {
+        viewModelScope.launch {
+            val activeLiftDayId = _recordSessionUiState.value.activeLiftDay?.id ?: return@launch
+
+            val newLiftSetId = liftSetRepository.insertLiftSet(
+                liftDayId = activeLiftDayId,
+                liftId = liftId
+            )
+
+            liftSetIdPendingReveal = newLiftSetId
+        }
+    }
 }
 
 /**
@@ -787,9 +860,14 @@ data class RecordSessionUiState(
     val userIsAddingLift: Boolean = false,
     val inputLiftName: String = "",
     val liftSuggestionsList: List<LiftSearchDetail> = emptyList(),
+    // Map(LiftId -> Map(LiftSet -> Pair(WeightMetric, Time/RepMetric)))
     val liftSetMap: Map<Int, Map<LiftSet, Pair<SetMetric, SetMetric>>> = emptyMap(),
+    // Map(LiftId -> LiftSearchDetail)
     val liftDetailMap: Map<Int, LiftSearchDetail> = emptyMap(),
+    // Map(SetMetricId -> SetMetricDisplayDetail)
     val setMetricDisplayDetailMap: Map<Int, SetMetricDisplayDetail> = emptyMap(),
+    // Map(LiftSetId -> LiftSetCardVisible?)
+    val liftSetVisibleMap: Map<Int, Boolean> = emptyMap(),
     val deleteLiftInProgressDialogVisible: Boolean = false,
     val liftIdToDelete: Int = -1,
     val editLiftSetDialogVisible: Boolean = false,

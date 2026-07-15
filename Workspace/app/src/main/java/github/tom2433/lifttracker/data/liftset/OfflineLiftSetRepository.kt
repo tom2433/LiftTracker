@@ -8,8 +8,8 @@ class OfflineLiftSetRepository(private val liftSetDao: LiftSetDao) : LiftSetRepo
         liftDayId: Int,
         liftId: Int,
         setNote: String
-    ) {
-        liftSetDao.insert(
+    ): Int {
+        return liftSetDao.insert(
             LiftSet(
                 lift_day_id = liftDayId,
                 lift_id = liftId,
