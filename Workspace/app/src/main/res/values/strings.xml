@@ -86,4 +86,6 @@
     <string name="edit_note">Edit Note</string>
     <string name="note">Note</string>
     <string name="add_lift_set">Add lift set</string>
+    <string name="delete_lift_set">Delete lift set</string>
+    <string name="point_of_no_return">This cannot be undone.</string>
 </resources>

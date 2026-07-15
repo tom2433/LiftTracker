@@ -845,6 +845,53 @@ class RecordSessionViewModel(
             liftSetIdPendingReveal = newLiftSetId
         }
     }
+
+    fun showDeleteLiftSetDialog(liftSetToDelete: LiftSet) {
+        _recordSessionUiState.update { currentState ->
+            currentState.copy(
+                liftSetToDelete = liftSetToDelete,
+                deleteLiftSetDialogVisible = true
+            )
+        }
+    }
+
+    fun dismissDeleteLiftSetDialog() {
+        _recordSessionUiState.update { currentState ->
+            currentState.copy(
+                liftSetToDelete = null,
+                deleteLiftSetDialogVisible = false
+            )
+        }
+    }
+
+    fun deleteLiftSet() {
+        val liftSetToDelete: LiftSet = _recordSessionUiState.value.liftSetToDelete ?: return
+
+        viewModelScope.launch {
+            // make not visible the lift set in progress card corresponding to the lift set to delete
+            _recordSessionUiState.update { currentState ->
+                currentState.copy(
+                    liftSetVisibleMap = currentState.liftSetVisibleMap.mapValues { (liftSetId, visible) ->
+                        if (liftSetId == liftSetToDelete.id) {
+                            false
+                        } else {
+                            visible
+                        }
+                    }
+                )
+            }
+
+            dismissDeleteLiftSetDialog()
+
+            // wait for the lift set card to swipe away
+            delay(1000)
+
+            // delete the liftSet
+            liftSetRepository.deleteLiftSet(
+                liftSet = liftSetToDelete
+            )
+        }
+    }
 }
 
 /**
@@ -879,5 +926,7 @@ data class RecordSessionUiState(
     val newSetMetricNote: String = "",
     val setMetricToEdit: SetMetric? = null,
     val liftSetWithSetMetricToEdit: LiftSet? = null,
-    val liftWithSetMetricToEdit: Lift? = null
+    val liftWithSetMetricToEdit: Lift? = null,
+    val deleteLiftSetDialogVisible: Boolean = false,
+    val liftSetToDelete: LiftSet? = null
 )

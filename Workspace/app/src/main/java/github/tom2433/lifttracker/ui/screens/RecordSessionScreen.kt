@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -223,6 +224,30 @@ fun RecordSessionScreen(
             onDismissRequest = { viewModel.dismissEditSetMetricNoteDialog() }
         )
     }
+
+    // dialog to delete a lift set in progress
+    if (recordSessionUiState.deleteLiftSetDialogVisible) {
+        val setLabel = recordSessionUiState.liftSetToDelete?.set_label ?: "null"
+        var liftSetLiftId: Int? = null
+        for ((liftId, nestedMap) in recordSessionUiState.liftSetMap) {
+            for (liftSet in nestedMap.keys) {
+                if (liftSet.id == recordSessionUiState.liftSetToDelete?.id) {
+                    liftSetLiftId = liftId
+                    break
+                }
+            }
+            if (liftSetLiftId != null) break
+        }
+        val liftName: String = recordSessionUiState.liftDetailMap[liftSetLiftId]?.liftObj?.name ?: "null"
+
+        ShowElementDeleteDialog(
+            dialogTitle = "Delete today's $setLabel of ${liftName}?",
+            warningDescription = stringResource(R.string.point_of_no_return),
+            deleteBtnText = "Delete $setLabel",
+            onDismissRequest = { viewModel.dismissDeleteLiftSetDialog() },
+            onDelete = { viewModel.deleteLiftSet() }
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -390,6 +415,7 @@ fun SessionInProgressScreen(
                                                 liftWithSetMetricToEdit = liftDetail.liftObj
                                             )
                                         },
+                                        showDeleteLiftSetDialog = { viewModel.showDeleteLiftSetDialog(it) },
                                         addLiftSet = { viewModel.addLiftSetForLiftId(liftId) },
                                         liftDetail = liftDetail,
                                         setMap = setMap,
@@ -459,6 +485,7 @@ fun LiftInProgressCard(
     onLiftDelete: () -> Unit,
     showEditLiftSetDialog: (LiftSet) -> Unit,
     showEditSetMetricNoteDialog: (SetMetric, LiftSet) -> Unit,
+    showDeleteLiftSetDialog: (LiftSet) -> Unit,
     addLiftSet: () -> Unit,
     liftDetail: LiftSearchDetail,
     setMap: Map<LiftSet, Pair<SetMetric, SetMetric>>,
@@ -648,10 +675,12 @@ fun LiftInProgressCard(
                                     liftSet = liftSet,
                                     showEditLiftSetDialog = showEditLiftSetDialog,
                                     showEditSetMetricNoteDialog = showEditSetMetricNoteDialog,
+                                    showDeleteLiftSetDialog = showDeleteLiftSetDialog,
                                     setMetricPair = setMetricPair,
                                     setMetricDisplayDetailMap = setMetricDisplayDetailMap,
                                     liftDetail = liftDetail,
-                                    screenContentColor = screenContentColor
+                                    screenContentColor = screenContentColor,
+                                    liftHasMoreThanOneSet = setMap.keys.size > 1
                                 )
                             }
                         }
@@ -695,10 +724,12 @@ fun LiftSetInProgressCard(
     liftSet: LiftSet,
     showEditLiftSetDialog: (LiftSet) -> Unit,
     showEditSetMetricNoteDialog: (SetMetric, LiftSet) -> Unit,
+    showDeleteLiftSetDialog: (LiftSet) -> Unit,
     setMetricPair: Pair<SetMetric, SetMetric>,
     setMetricDisplayDetailMap: Map<Int, SetMetricDisplayDetail>,
     liftDetail: LiftSearchDetail,
     screenContentColor: Color,
+    liftHasMoreThanOneSet: Boolean,
     modifier: Modifier = Modifier
 ) {
     // card to represent LiftSet. Each LiftSet has two SetMetrics
@@ -730,19 +761,41 @@ fun LiftSetInProgressCard(
                 .padding(8.dp)
                 .fillMaxWidth()
         ) {
-            // row to hold pencil edit icon, then set label/note/set #'s
+            // row to hold pencil edit icon and delete icon, then set label/note/set #'s
             Row(
                 horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // pencil icon button to edit LiftSet
-                IconButton(
-                    onClick = { showEditLiftSetDialog(liftSet) }
+                // column to hold edit icon button and delete icon button
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier
+                        .padding(vertical = 16.dp)
+                        .fillMaxHeight()
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.Edit,
-                        contentDescription = stringResource(R.string.edit_lift_set)
-                    )
+                    // pencil icon button to edit LiftSet
+                    IconButton(
+                        onClick = { showEditLiftSetDialog(liftSet) }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Edit,
+                            contentDescription = stringResource(R.string.edit_lift_set)
+                        )
+                    }
+
+                    // delete icon button to delete lift set
+                    // only if this lift has more than one lift set
+                    if (liftHasMoreThanOneSet) {
+                        IconButton(
+                            onClick = { showDeleteLiftSetDialog(liftSet) }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Delete,
+                                contentDescription = stringResource(R.string.delete_lift_set)
+                            )
+                        }
+                    }
                 }
 
                 // column to hold set label, set note (if applicable), lift set #,
