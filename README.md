@@ -10,6 +10,8 @@ A Data Vis project developed using Jetpack Compose.
 
 add a column to the lift sets table called muscle_group_day_set_number to indicate that muscle group's set number for the day.
 
+add number of sets on each lift in progress card
+
 ## 07-14
 
 add a show all button to existing lift entry card to show all lifts
