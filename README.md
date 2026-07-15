@@ -8,6 +8,8 @@ A Data Vis project developed using Jetpack Compose.
 
 # 07-15
 
+lift set metric inputs go away when the viewmodel is recreated.
+
 add a column to the lift sets table called muscle_group_day_set_number to indicate that muscle group's set number for the day.
 
 add number of sets on each lift in progress card
