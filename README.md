@@ -16,6 +16,8 @@ make all lift set numbers more clear, make each of them their own row and put th
 
 and put the number before the label
 
+use a label(note) to categorize groups of lifts
+
 ## 07-16
 
 display the active lift day's date on the session in progress screen.
