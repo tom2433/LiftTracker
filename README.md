@@ -18,6 +18,8 @@ and put the number before the label
 
 use a label(note) to categorize groups of lifts
 
+just turn the note into a label at this point
+
 ## 07-16
 
 display the active lift day's date on the session in progress screen.
