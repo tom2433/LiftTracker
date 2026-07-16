@@ -20,6 +20,8 @@ use a label(note) to categorize groups of lifts
 
 just turn the note into a label at this point
 
+% of overall set volume on lift screen literally does not make any sense
+
 ## 07-16
 
 display the active lift day's date on the session in progress screen.
