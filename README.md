@@ -6,6 +6,12 @@ A Data Vis project developed using Jetpack Compose.
 
 # Immediate Notes
 
+## 07-17
+
+ran into an issue where when the user deletes more than one lift in progress or lift sets in progress, the numbering gets messed up. need to implement a system where the delete icons are not visible while something is being deleted.
+
+also need a unique index on the new muscle group day set number.
+
 ## 07-16
 
 display the active lift day's date on the session in progress screen.
