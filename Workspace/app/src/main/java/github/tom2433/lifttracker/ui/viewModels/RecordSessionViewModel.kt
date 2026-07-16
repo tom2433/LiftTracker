@@ -412,15 +412,6 @@ class RecordSessionViewModel(
         }
     }
 
-    fun endSession() {
-        val currentDay: LiftDay = _recordSessionUiState.value.activeLiftDay ?: return
-
-        // delete the lift day. activeLiftDay should update automatically
-        viewModelScope.launch {
-            liftDayRepository.deleteLiftDay(currentDay)
-        }
-    }
-
     fun saveSession() {
         // retrieve all lift set objects where its set metrics are both the default -1.0
         val defaultLiftSets: List<LiftSet> =
@@ -752,7 +743,8 @@ class RecordSessionViewModel(
                         } else {
                             liftDetail
                         }
-                    }
+                    },
+                    deleteButtonsEnabled = false
                 )
             }
 
@@ -767,7 +759,8 @@ class RecordSessionViewModel(
             // reset id to delete
             _recordSessionUiState.update { currentState ->
                 currentState.copy(
-                    liftIdToDelete = -1
+                    liftIdToDelete = -1,
+                    deleteButtonsEnabled = true
                 )
             }
         }
@@ -936,7 +929,8 @@ class RecordSessionViewModel(
                         } else {
                             visible
                         }
-                    }
+                    },
+                    deleteButtonsEnabled = false
                 )
             }
 
@@ -949,6 +943,13 @@ class RecordSessionViewModel(
             liftSetRepository.deleteLiftSet(
                 liftSet = liftSetToDelete
             )
+
+            // re-enable delete buttons
+            _recordSessionUiState.update { currentState ->
+                currentState.copy(
+                    deleteButtonsEnabled = true
+                )
+            }
         }
     }
 
@@ -1141,5 +1142,6 @@ data class RecordSessionUiState(
     val liftSetWithSetMetricToEdit: LiftSet? = null,
     val liftWithSetMetricToEdit: Lift? = null,
     val deleteLiftSetDialogVisible: Boolean = false,
-    val liftSetToDelete: LiftSet? = null
+    val liftSetToDelete: LiftSet? = null,
+    val deleteButtonsEnabled: Boolean = true
 )

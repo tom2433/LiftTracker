@@ -458,7 +458,8 @@ fun SessionInProgressScreen(
                                         setMetricDisplayDetailMap = recordSessionUiState.setMetricDisplayDetailMap,
                                         liftSetVisibleMap = recordSessionUiState.liftSetVisibleMap,
                                         setCountPerLiftMap = recordSessionUiState.setCountPerLiftMap,
-                                        focusManager = focusManager
+                                        focusManager = focusManager,
+                                        deleteButtonsEnabled = recordSessionUiState.deleteButtonsEnabled
                                     )
                                 }
                             }
@@ -485,7 +486,8 @@ fun SessionInProgressScreen(
                                 liftSuggestionClicked = { viewModel.liftSuggestionClicked(it) },
                                 dropdownButtonClicked = { viewModel.liftEntryDropdownButtonClicked() },
                                 onGo = { viewModel.onGoLiftEntry() },
-                                screenContentColor = screenContentColor
+                                screenContentColor = screenContentColor,
+                                deleteButtonsEnabled = recordSessionUiState.deleteButtonsEnabled
                             )
                         }
 
@@ -533,6 +535,7 @@ fun LiftInProgressCard(
     liftSetVisibleMap: Map<Int, Boolean>,
     setCountPerLiftMap: Map<Int, Int>,
     focusManager: FocusManager,
+    deleteButtonsEnabled: Boolean,
     modifier: Modifier = Modifier
 ) {
     val bottomCornerRadius by animateDpAsState(
@@ -623,7 +626,8 @@ fun LiftInProgressCard(
 
                     // icon button to delete
                     IconButton(
-                        onClick = onLiftDelete
+                        onClick = onLiftDelete,
+                        enabled = deleteButtonsEnabled
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Delete,
@@ -738,7 +742,8 @@ fun LiftInProgressCard(
                                     liftDetail = liftDetail,
                                     screenContentColor = screenContentColor,
                                     liftHasMoreThanOneSet = setMap.keys.size > 1,
-                                    focusManager = focusManager
+                                    focusManager = focusManager,
+                                    deleteButtonsEnabled = deleteButtonsEnabled
                                 )
                             }
                         }
@@ -791,6 +796,7 @@ fun LiftSetInProgressCard(
     screenContentColor: Color,
     liftHasMoreThanOneSet: Boolean,
     focusManager: FocusManager,
+    deleteButtonsEnabled: Boolean,
     modifier: Modifier = Modifier
 ) {
     // focus requesters for each input except weight; user will enter the weight field if they want
@@ -859,7 +865,8 @@ fun LiftSetInProgressCard(
                 ) {
                     // pencil icon button to edit LiftSet
                     IconButton(
-                        onClick = { showEditLiftSetDialog(liftSet) }
+                        onClick = { showEditLiftSetDialog(liftSet) },
+                        enabled = deleteButtonsEnabled
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Edit,
@@ -871,7 +878,8 @@ fun LiftSetInProgressCard(
                     // only if this lift has more than one lift set
                     if (liftHasMoreThanOneSet) {
                         IconButton(
-                            onClick = { showDeleteLiftSetDialog(liftSet) }
+                            onClick = { showDeleteLiftSetDialog(liftSet) },
+                            enabled = deleteButtonsEnabled
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.Delete,
@@ -952,7 +960,8 @@ fun LiftSetInProgressCard(
                                 setMetricPair.first,
                                 liftSet
                             )
-                        }
+                        },
+                        enabled = deleteButtonsEnabled
                     ) {
                         Icon(
                             imageVector = Icons.Filled.EditNote,
@@ -1042,7 +1051,8 @@ fun LiftSetInProgressCard(
                                     setMetricPair.second,
                                     liftSet
                                 )
-                            }
+                            },
+                            enabled = deleteButtonsEnabled
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.EditNote,
@@ -1107,7 +1117,8 @@ fun LiftSetInProgressCard(
                                     setMetricPair.second,
                                     liftSet
                                 )
-                            }
+                            },
+                            enabled = deleteButtonsEnabled
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.EditNote,
@@ -1282,6 +1293,7 @@ fun ExistingLiftEntryCard(
     dropdownButtonClicked: () -> Unit,
     onGo: () -> Unit,
     screenContentColor: Color,
+    deleteButtonsEnabled: Boolean,
     modifier: Modifier = Modifier
 ) {
     val liftNameFocusRequester = remember { FocusRequester() }
@@ -1336,6 +1348,7 @@ fun ExistingLiftEntryCard(
                     trailingIcon = {
                         IconButton(
                             onClick = dropdownButtonClicked,
+                            enabled = deleteButtonsEnabled
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.ArrowDropDown,
