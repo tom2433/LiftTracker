@@ -31,10 +31,16 @@ interface LiftSetDao {
             liftDayId = liftSet.lift_day_id
         )
 
+        val nextMuscleGroupDaySetNumber = getNextMuscleGroupDaySetNumber(
+            liftDayId = liftSet.lift_day_id,
+            liftId = liftSet.lift_id
+        )
+
         val insertedLiftSetId = insertPreparedLiftSet(
             liftSet.copy(
                 lift_set_number = nextLiftSetNumber,
                 day_set_number = nextDaySetNumber,
+                muscle_group_day_set_number = nextMuscleGroupDaySetNumber,
                 set_label = "Set $nextLiftSetNumber"
             )
         ).toInt()
@@ -78,6 +84,31 @@ interface LiftSetDao {
     """)
     suspend fun getNextDaySetNumber(liftDayId: Int): Int
 
+    @Query("""
+        SELECT l.muscle_group_id
+        FROM lifts AS l
+        WHERE l.id = :liftId
+    """)
+    suspend fun getMuscleGroupIdFromLiftId(liftId: Int): Int
+
+    @Query("""
+        SELECT COALESCE(MAX(muscle_group_day_set_number), 0) + 1
+        FROM lift_sets AS ls
+        INNER JOIN lifts AS l
+            ON l.id = ls.lift_id
+        WHERE ls.lift_day_id = :liftDayId AND l.muscle_group_id = :muscleGroupId
+    """)
+    suspend fun getNextMuscleGroupDaySetNumberFromApplicableIds(
+        liftDayId: Int,
+        muscleGroupId: Int
+    ): Int
+
+    @Transaction
+    suspend fun getNextMuscleGroupDaySetNumber(liftDayId: Int, liftId: Int): Int {
+        val muscleGroupId = getMuscleGroupIdFromLiftId(liftId)
+        return getNextMuscleGroupDaySetNumberFromApplicableIds(liftDayId, muscleGroupId)
+    }
+
     @Update
     suspend fun update(liftSet: LiftSet)
 
@@ -106,6 +137,27 @@ interface LiftSetDao {
         liftDayId: Int,
         liftId: Int,
         deletedLiftSetNumber: Int
+    )
+
+    @Query("""
+        UPDATE lift_sets
+        SET muscle_group_day_set_number = muscle_group_day_set_number - 1
+        WHERE lift_day_id = :liftDayId
+            AND muscle_group_day_set_number > :deletedMuscleGroupDaySetNumber
+            AND lift_id IN (
+                SELECT l.id
+                FROM lifts AS l
+                WHERE l.muscle_group_id = (
+                    SELECT deleted_lift.muscle_group_id
+                    FROM lifts AS deleted_lift
+                    WHERE deleted_lift.id = :liftId
+                )
+            )
+    """)
+    suspend fun decrementMuscleGroupDaySetNumbersAfterDelete(
+        liftDayId: Int,
+        liftId: Int,
+        deletedMuscleGroupDaySetNumber: Int
     )
 
     @Query("""
@@ -142,6 +194,12 @@ interface LiftSetDao {
             liftDayId = liftSet.lift_day_id,
             deletedDaySetNumber = liftSet.day_set_number
         )
+
+        decrementMuscleGroupDaySetNumbersAfterDelete(
+            liftDayId = liftSet.lift_day_id,
+            liftId = liftSet.lift_id,
+            deletedMuscleGroupDaySetNumber = liftSet.muscle_group_day_set_number
+        )
     }
 
     @Query("SELECT * FROM lift_sets WHERE id = :id")
@@ -158,6 +216,7 @@ interface LiftSetDao {
             ls.lift_id AS set_lift_id,
             ls.lift_set_number AS set_lift_set_number,
             ls.day_set_number AS set_day_set_number,
+            ls.muscle_group_day_set_number AS set_muscle_group_day_set_number,
             ls.set_label AS set_set_label,
             ls.set_note AS set_set_note,
             

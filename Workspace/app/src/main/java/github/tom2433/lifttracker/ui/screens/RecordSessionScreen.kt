@@ -882,7 +882,7 @@ fun LiftSetInProgressCard(
                 }
 
                 // column to hold set label, set note (if applicable), lift set #,
-                // and day set #
+                // and day set # and muscle group set #
                 Column(
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.Start,
@@ -906,7 +906,7 @@ fun LiftSetInProgressCard(
                     }
                     // lift set #
                     Text(
-                        text = "Lift's set #${liftSet.lift_set_number}",
+                        text = "Lift set #${liftSet.lift_set_number}",
                         style = MaterialTheme.typography.bodySmall,
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.onSecondaryContainer.copy(
@@ -915,7 +915,16 @@ fun LiftSetInProgressCard(
                     )
                     // day set #
                     Text(
-                        text = "Day's set #${liftSet.day_set_number}",
+                        text = "Day set #${liftSet.day_set_number}",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(
+                            alpha = 0.75f
+                        )
+                    )
+                    // muscle group set #
+                    Text(
+                        text = "${liftDetail.muscleGroupName} set #${liftSet.muscle_group_day_set_number}",
                         style = MaterialTheme.typography.bodySmall,
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.onSecondaryContainer.copy(

@@ -16,6 +16,7 @@ class OfflineLiftSetRepository(private val liftSetDao: LiftSetDao) : LiftSetRepo
                 lift_id = liftId,
                 lift_set_number = 0,
                 day_set_number = 0,
+                muscle_group_day_set_number = 0,
                 set_label = "",
                 set_note = setNote
             )

@@ -42,13 +42,14 @@ The ```lift_days``` table has 7 columns:
 
 The purpose of the ```lift_sets``` table is to keep track of all sets that the user has completed. It also links each set with the specific lift that was trained, and the day that the user completed the set on.
 
-The ```lift_sets``` table has 6 columns:
+The ```lift_sets``` table has 8 columns:
 
 - ```id``` (INTEGER): primary key. This is the main identifier that the ```set_metrics``` table uses to associate specific set data (weight, reps) with a specific set that was completed for a specific lift on a specific day.
 - ```lift_day_id``` (INTEGER): foreign key referring to ```lift_days```. This is what links this set to a particular day.
 - ```lift_id``` (INTEGER): foreign key referring to ```lifts```. This is what links this set to a particular lift (e.g., bicep curls).
 - ```lift_set_number``` (INTEGER): this set number identifies when this set took place, only in relation to the other sets completed for this specific lift on this specific day.
 - ```day_set_number``` (INTEGER): this set number identifies when this set took place, in relation to all other sets completed on this specific day.
+- ```muscle_group_day_set_number``` (INTEGER): this set number identifies when this set took place in relation to all other sets completed on this specific day for this specific muscle group.
 - ```set_label``` (TEXT): just a string containing the name of the set (e.g., ```"Set 1"```, ```"Set 2"```, ```"Set 3"```, etc. as default). The user may be able to change this label in future versions.
 - ```set_note``` (TEXT): a user-written note for the set, may be blank
 
@@ -122,7 +123,7 @@ The ```lift_units``` table has two columns:
         SetMetric::class,
         LiftUnit::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 abstract class LiftTrackerDatabase : RoomDatabase() {
@@ -145,7 +146,13 @@ abstract class LiftTrackerDatabase : RoomDatabase() {
                     LiftTrackerDatabase::class.java,
                     "lift_tracker_database"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                    .addMigrations(
+                        MIGRATION_1_2,
+                        MIGRATION_2_3,
+                        MIGRATION_3_4,
+                        MIGRATION_4_5,
+                        MIGRATION_5_6
+                    )
                     .build()
                     .also { Instance = it }
             }
@@ -373,6 +380,52 @@ abstract class LiftTrackerDatabase : RoomDatabase() {
                         }
 
                         nextLiftSetNumber += 1
+                    }
+                }
+            }
+        }
+
+        private val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE lift_sets ADD COLUMN muscle_group_day_set_number INTEGER NOT NULL DEFAULT 0"
+                )
+
+                renumberLiftSetsByMuscleGroupAndDay(db)
+            }
+
+            private fun renumberLiftSetsByMuscleGroupAndDay(db: SupportSQLiteDatabase) {
+                val cursor = db.query(
+                    """
+                    SELECT ls.id, ls.lift_day_id, l.muscle_group_id
+                    FROM lift_sets AS ls
+                    INNER JOIN lifts AS l
+                        ON l.id = ls.lift_id
+                    ORDER BY ls.lift_day_id ASC, l.muscle_group_id ASC, ls.day_set_number ASC, ls.id ASC
+                    """.trimIndent()
+                )
+
+                cursor.use {
+                    var currentLiftDayId: Int? = null
+                    var currentMuscleGroupId: Int? = null
+                    var nextMuscleGroupDaySetNumber = 1
+
+                    while (it.moveToNext()) {
+                        val liftSetId = it.getInt(0)
+                        val liftDayId = it.getInt(1)
+                        val muscleGroupId = it.getInt(2)
+
+                        if (liftDayId != currentLiftDayId || muscleGroupId != currentMuscleGroupId) {
+                            currentLiftDayId = liftDayId
+                            currentMuscleGroupId = muscleGroupId
+                            nextMuscleGroupDaySetNumber = 1
+                        }
+
+                        db.execSQL(
+                            "UPDATE lift_sets SET muscle_group_day_set_number = ? WHERE id = ?",
+                            arrayOf(nextMuscleGroupDaySetNumber, liftSetId)
+                        )
+                        nextMuscleGroupDaySetNumber += 1
                     }
                 }
             }
