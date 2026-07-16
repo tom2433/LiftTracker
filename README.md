@@ -14,6 +14,8 @@ also need a unique index on the new muscle group day set number.
 
 make all lift set numbers more clear, make each of them their own row and put the numbers as their own font size/weight, place in a visual container of some sort.
 
+and put the number before the label
+
 ## 07-16
 
 display the active lift day's date on the session in progress screen.
