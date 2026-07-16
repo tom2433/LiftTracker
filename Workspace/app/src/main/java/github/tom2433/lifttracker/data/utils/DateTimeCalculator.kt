@@ -5,8 +5,9 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
+import kotlin.math.round
 
-object DateCalculator {
+object DateTimeCalculator {
     const val ISO_DATE_PATTERN = "yyyy-MM-dd"
     const val MILLIS_PER_DAY = 86_400_000L
     const val DAYS_PER_WEEK = 7L
@@ -112,5 +113,19 @@ object DateCalculator {
             daysAgo == DAYS_PER_YEAR -> "1 year ago"
             else -> "Over 1 year ago"
         }
+    }
+
+    // precondition: minutes must be >= 0
+    fun convertDoubleTimeToTripleTime(minutes: Double): Triple<Int, Int, Double> {
+        val resultHours: Int = minutes.toInt() / 60
+        val resultMinutes: Int = minutes.toInt() % 60
+        val resultSeconds: Double = (minutes - minutes.toInt()) * 60
+
+        return Triple(resultHours, resultMinutes, round(resultSeconds * 100) / 100)
+    }
+
+    fun convertTripleTimeToDoubleTime(hours: Int, minutes: Int, seconds: Double): Double {
+        // calculate minutes as double
+        return (hours * 60.0) + minutes + (seconds / 60.0)
     }
 }

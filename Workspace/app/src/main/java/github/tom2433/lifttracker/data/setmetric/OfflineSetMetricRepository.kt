@@ -12,4 +12,6 @@ class OfflineSetMetricRepository(private val setMetricDao: SetMetricDao) : SetMe
     override fun getSetMetricStream(id: Int): Flow<SetMetric?> = setMetricDao.getSetMetric(id)
 
     override fun getSetMetricIdsFromDayIdStream(dayId: Int): Flow<List<Int>> = setMetricDao.getSetMetricIdsFromDayId(dayId)
+
+    override suspend fun getSetMetricsFromActiveDay(): List<SetMetric> = setMetricDao.getSetMetricsFromActiveDay()
 }

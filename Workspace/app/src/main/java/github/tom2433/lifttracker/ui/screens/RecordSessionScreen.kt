@@ -221,7 +221,7 @@ fun RecordSessionScreen(
             },
             submitBtnText = "Update note for $setLabel",
             metricInputLabel = stringResource(R.string.note),
-            buttonEnabled = viewModel.validateSetMetricNote(),
+            buttonEnabled = true,
             newMetric = recordSessionUiState.newSetMetricNote,
             onMetricValueChanged = { viewModel.updateSetMetricNote(it) },
             onSubmit = { viewModel.updateSetMetric() },
@@ -315,7 +315,7 @@ fun SessionInProgressScreen(
                         // play icon
                         Icon(
                             imageVector = Icons.Filled.Edit,
-                            contentDescription = "Session in progress",
+                            contentDescription = stringResource(R.string.edit_session_name_and_note),
                             modifier = Modifier
                                 .sharedElement(
                                     sharedContentState = rememberSharedContentState(
@@ -355,7 +355,7 @@ fun SessionInProgressScreen(
 
                     // finish session button
                     Button(
-                        onClick = { viewModel.finishSession() },
+                        onClick = { viewModel.saveSession() },
                         modifier = Modifier.weight(1f)
                     ) {
                         Text("Finish")
@@ -426,10 +426,14 @@ fun SessionInProgressScreen(
                                         onSetMetricValueChanged = { newValue, setMetric ->
                                             viewModel.setMetricValueChanged(newValue, setMetric)
                                         },
+                                        onSetMetricTimeValueChanged = { newValue: String, setMetric: SetMetric, inputType: String ->
+                                            viewModel.setMetricTimeValueChanged(newValue, setMetric, inputType)
+                                        },
                                         liftDetail = liftDetail,
                                         setMap = setMap,
                                         setMetricDisplayDetailMap = recordSessionUiState.setMetricDisplayDetailMap,
                                         liftSetVisibleMap = recordSessionUiState.liftSetVisibleMap,
+                                        setCountPerLiftMap = recordSessionUiState.setCountPerLiftMap,
                                         focusManager = focusManager
                                     )
                                 }
@@ -498,10 +502,12 @@ fun LiftInProgressCard(
     showDeleteLiftSetDialog: (LiftSet) -> Unit,
     addLiftSet: () -> Unit,
     onSetMetricValueChanged: (String, SetMetric) -> Unit,
+    onSetMetricTimeValueChanged: (String, SetMetric, String) -> Unit,
     liftDetail: LiftSearchDetail,
     setMap: Map<LiftSet, Pair<SetMetric, SetMetric>>,
     setMetricDisplayDetailMap: Map<Int, SetMetricDisplayDetail>,
     liftSetVisibleMap: Map<Int, Boolean>,
+    setCountPerLiftMap: Map<Int, Int>,
     focusManager: FocusManager,
     modifier: Modifier = Modifier
 ) {
@@ -556,7 +562,7 @@ fun LiftInProgressCard(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    // column to hold lift name and note if applicable
+                    // column to hold lift name and note if applicable, and set count
                     Column(
                         modifier = Modifier.weight(1f)
                     ) {
@@ -576,6 +582,19 @@ fun LiftInProgressCard(
                                 )
                             )
                         }
+                        // lift set count
+                        Text(
+                            text = if (setCountPerLiftMap[liftDetail.liftObj.id] == 1) {
+                                "1 set"
+                            } else {
+                                "${setCountPerLiftMap[liftDetail.liftObj.id]} sets"
+                            },
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontSize = 15.sp,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(
+                                alpha = 0.75f
+                            )
+                        )
                     }
 
                     // icon button to delete
@@ -689,6 +708,7 @@ fun LiftInProgressCard(
                                     showEditSetMetricNoteDialog = showEditSetMetricNoteDialog,
                                     showDeleteLiftSetDialog = showDeleteLiftSetDialog,
                                     onSetMetricValueChanged = onSetMetricValueChanged,
+                                    onSetMetricTimeValueChanged = onSetMetricTimeValueChanged,
                                     setMetricPair = setMetricPair,
                                     setMetricDisplayDetailMap = setMetricDisplayDetailMap,
                                     liftDetail = liftDetail,
@@ -740,6 +760,7 @@ fun LiftSetInProgressCard(
     showEditSetMetricNoteDialog: (SetMetric, LiftSet) -> Unit,
     showDeleteLiftSetDialog: (LiftSet) -> Unit,
     onSetMetricValueChanged: (String, SetMetric) -> Unit,
+    onSetMetricTimeValueChanged: (String, SetMetric, String) -> Unit,
     setMetricPair: Pair<SetMetric, SetMetric>,
     setMetricDisplayDetailMap: Map<Int, SetMetricDisplayDetail>,
     liftDetail: LiftSearchDetail,
@@ -801,7 +822,8 @@ fun LiftSetInProgressCard(
             // row to hold pencil edit icon and delete icon, then set label/note/set #'s
             Row(
                 horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
             ) {
                 // column to hold edit icon button and delete icon button
                 Column(
@@ -840,6 +862,7 @@ fun LiftSetInProgressCard(
                 Column(
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.Start,
+                    modifier = Modifier.weight(1f)
                 ) {
                     // set label
                     Text(
@@ -881,7 +904,8 @@ fun LiftSetInProgressCard(
             // column to hold user inputs for weight and reps/time
             Column(
                 verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.End
+                horizontalAlignment = Alignment.End,
+                modifier = Modifier.weight(1.5f)
             ) {
                 // row to hold add note icon button and weight text field
                 Row(
@@ -1031,9 +1055,9 @@ fun LiftSetInProgressCard(
                             ),
                             modifier = Modifier
                                 .widthIn(
-                                min = 96.dp,
-                                max = 140.dp
-                            )
+                                    min = 96.dp,
+                                    max = 140.dp
+                                )
                                 .focusRequester(repFocusRequester)
                         )
                     }
@@ -1062,7 +1086,7 @@ fun LiftSetInProgressCard(
                         OutlinedTextField(
                             value = setMetricDisplayDetailMap[setMetricPair.second.id]?.hours
                                 ?: "",
-                            onValueChange = { /* TODO */ },
+                            onValueChange = { onSetMetricTimeValueChanged(it, setMetricPair.second, "hours") },
                             label = {
                                 Text(
                                     text = stringResource(R.string.hours)
@@ -1070,17 +1094,17 @@ fun LiftSetInProgressCard(
                             },
                             singleLine = true,
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = screenContentColor,
-                                unfocusedTextColor = screenContentColor,
-                                focusedLabelColor = screenContentColor,
-                                unfocusedLabelColor = screenContentColor.copy(
+                                focusedTextColor = secondMetricInputColor,
+                                unfocusedTextColor = secondMetricInputColor,
+                                focusedLabelColor = secondMetricInputColor,
+                                unfocusedLabelColor = secondMetricInputColor.copy(
                                     alpha = 0.75f
                                 ),
-                                focusedBorderColor = screenContentColor,
-                                unfocusedBorderColor = screenContentColor.copy(
+                                focusedBorderColor = secondMetricInputColor,
+                                unfocusedBorderColor = secondMetricInputColor.copy(
                                     alpha = 0.6f
                                 ),
-                                cursorColor = screenContentColor,
+                                cursorColor = secondMetricInputColor,
                                 focusedContainerColor = Color.Transparent,
                                 unfocusedContainerColor = Color.Transparent
                             ),
@@ -1109,7 +1133,7 @@ fun LiftSetInProgressCard(
                     OutlinedTextField(
                         value = setMetricDisplayDetailMap[setMetricPair.second.id]?.minutes
                             ?: "",
-                        onValueChange = { /* TODO */ },
+                        onValueChange = { onSetMetricTimeValueChanged(it, setMetricPair.second, "minutes") },
                         label = {
                             Text(
                                 text = stringResource(R.string.minutes)
@@ -1117,17 +1141,17 @@ fun LiftSetInProgressCard(
                         },
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = screenContentColor,
-                            unfocusedTextColor = screenContentColor,
-                            focusedLabelColor = screenContentColor,
-                            unfocusedLabelColor = screenContentColor.copy(
+                            focusedTextColor = secondMetricInputColor,
+                            unfocusedTextColor = secondMetricInputColor,
+                            focusedLabelColor = secondMetricInputColor,
+                            unfocusedLabelColor = secondMetricInputColor.copy(
                                 alpha = 0.75f
                             ),
-                            focusedBorderColor = screenContentColor,
-                            unfocusedBorderColor = screenContentColor.copy(
+                            focusedBorderColor = secondMetricInputColor,
+                            unfocusedBorderColor = secondMetricInputColor.copy(
                                 alpha = 0.6f
                             ),
-                            cursorColor = screenContentColor,
+                            cursorColor = secondMetricInputColor,
                             focusedContainerColor = Color.Transparent,
                             unfocusedContainerColor = Color.Transparent
                         ),
@@ -1155,7 +1179,7 @@ fun LiftSetInProgressCard(
                     OutlinedTextField(
                         value = setMetricDisplayDetailMap[setMetricPair.second.id]?.seconds
                             ?: "",
-                        onValueChange = { /* TODO */ },
+                        onValueChange = { onSetMetricTimeValueChanged(it, setMetricPair.second, "seconds") },
                         label = {
                             Text(
                                 text = stringResource(R.string.seconds)
@@ -1163,17 +1187,17 @@ fun LiftSetInProgressCard(
                         },
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = screenContentColor,
-                            unfocusedTextColor = screenContentColor,
-                            focusedLabelColor = screenContentColor,
-                            unfocusedLabelColor = screenContentColor.copy(
+                            focusedTextColor = secondMetricInputColor,
+                            unfocusedTextColor = secondMetricInputColor,
+                            focusedLabelColor = secondMetricInputColor,
+                            unfocusedLabelColor = secondMetricInputColor.copy(
                                 alpha = 0.75f
                             ),
-                            focusedBorderColor = screenContentColor,
-                            unfocusedBorderColor = screenContentColor.copy(
+                            focusedBorderColor = secondMetricInputColor,
+                            unfocusedBorderColor = secondMetricInputColor.copy(
                                 alpha = 0.6f
                             ),
-                            cursorColor = screenContentColor,
+                            cursorColor = secondMetricInputColor,
                             focusedContainerColor = Color.Transparent,
                             unfocusedContainerColor = Color.Transparent
                         ),

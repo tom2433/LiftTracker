@@ -88,4 +88,5 @@
     <string name="add_lift_set">Add lift set</string>
     <string name="delete_lift_set">Delete lift set</string>
     <string name="point_of_no_return">This cannot be undone.</string>
+    <string name="edit_session_name_and_note">Edit session name and note</string>
 </resources>

@@ -14,17 +14,15 @@ import github.tom2433.lifttracker.data.profile.ProfileRepository
 import github.tom2433.lifttracker.data.setmetric.SetMetric
 import github.tom2433.lifttracker.data.setmetric.SetMetricRepository
 import github.tom2433.lifttracker.data.structures.LiftSearchDetail
-import github.tom2433.lifttracker.data.structures.RecordLiftDetail
 import github.tom2433.lifttracker.data.structures.RecordSessionLiftSetRow
 import github.tom2433.lifttracker.data.structures.SetMetricDisplayDetail
-import github.tom2433.lifttracker.data.utils.DateCalculator
+import github.tom2433.lifttracker.data.utils.DateTimeCalculator
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.flatMap
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
@@ -69,25 +67,6 @@ class RecordSessionViewModel(
                     )
                 }
             }
-        }
-
-        // constant collection for a running total of the number of lift sets completed for the day
-        viewModelScope.launch {
-            liftDayRepository.getActiveLiftDayForActiveProfileStream()
-                .flatMapLatest { activeLiftDay ->
-                    if (activeLiftDay == null) {
-                        flowOf(0)
-                    } else {
-                        liftDayRepository.getNumOfLiftsForDay(activeLiftDay.id)
-                    }
-                }
-                .collect { totalNumOfLiftSets ->
-                    _recordSessionUiState.update { currentState ->
-                        currentState.copy(
-                            totalNumOfLiftSets = totalNumOfLiftSets
-                        )
-                    }
-                }
         }
 
         // constant collection: fill the liftSetMap. liftSetMap will always be updated for the UI state
@@ -158,6 +137,95 @@ class RecordSessionViewModel(
                     }
                 }
         }
+
+        // constant collection: fill setCountPerLiftMap to count the number of sets per lift that
+        // the user has logged so far.
+        viewModelScope.launch {
+            liftDayRepository.getActiveLiftDayForActiveProfileStream()
+                .flatMapLatest { activeLiftDay ->
+                    if (activeLiftDay == null) {
+                        flowOf(emptyList())
+                    } else {
+                        liftSetRepository.getLiftSetCountPerLiftIdForDayIdStream(activeLiftDay.id)
+                    }
+                }
+                .collect { liftSetCountPerLifts ->
+                    _recordSessionUiState.update { currentState ->
+                        currentState.copy(
+                            setCountPerLiftMap = liftSetCountPerLifts.associate { liftSetCountPerLift ->
+                                liftSetCountPerLift.liftId to liftSetCountPerLift.liftSetCount
+                            }
+                        )
+                    }
+                }
+        }
+
+        // collect once at the beginning: fill the setMetricDisplayDetailMap with values from the
+        // database when this viewModel is destroyed and re-created
+        // this helps to avoid losing the displayed data when closing the app or switching to
+        // a different screen
+        viewModelScope.launch {
+            val setMetricList: List<SetMetric> = setMetricRepository.getSetMetricsFromActiveDay()
+
+            // fill the setMetricDisplayDetailMap if the list of setMetrics returned is not empty
+            // (meaning that a day is already in progress that has not been accounted for)
+            if (setMetricList.isNotEmpty()) {
+                _recordSessionUiState.update { currentState ->
+                    currentState.copy(
+                        setMetricDisplayDetailMap = setMetricList.associate { setMetricObj ->
+                            // retrieve metric type (1 = reps, 2 = time)
+                            val metricType: Int? = liftRepository.getMetricTypeFromSetMetricId(setMetricObj.id)
+
+                            setMetricObj.id to createSetMetricDisplayDetail(setMetricObj, metricType)
+                        }
+                    )
+                }
+            }
+        }
+    }
+
+    private fun createSetMetricDisplayDetail(setMetric: SetMetric, metricType: Int?): SetMetricDisplayDetail {
+        val value: Double =
+            if (setMetric.metric_position == 1) {
+                // weight
+                setMetric.value
+            } else {
+                // rep or time
+                when (metricType) {
+                    1 -> setMetric.value    // reps
+                    else -> -1.0            // time (calculated later)
+                }
+            }
+        var timeTriple: Triple<Int, Int, Double> = Triple(0, 0, 0.0)
+        val inputIsLogged = setMetric.value != -1.0
+
+        if (setMetric.metric_position == 2 && metricType == 2 && setMetric.value != -1.0) {
+            timeTriple = DateTimeCalculator.convertDoubleTimeToTripleTime(setMetric.value)
+        }
+
+        return SetMetricDisplayDetail(
+            value = if (value != -1.0) {
+                value.toString()
+            } else {
+                ""
+            },
+            hours = if (timeTriple.first != 0) {
+                timeTriple.first.toString()
+            } else {
+                ""
+            },
+            minutes = if (timeTriple.second != 0) {
+                timeTriple.second.toString()
+            } else {
+                ""
+            },
+            seconds = if (timeTriple.third != 0.0) {
+                timeTriple.third.toString()
+            } else {
+                ""
+            },
+            inputIsLogged = inputIsLogged
+        )
     }
 
     private fun revealPendingLiftSetIfReady() {
@@ -272,7 +340,6 @@ class RecordSessionViewModel(
                 hours = previousSetMetricDisplayDetailMap[thisSetMetricId]?.hours ?: "",
                 minutes = previousSetMetricDisplayDetailMap[thisSetMetricId]?.minutes ?: "",
                 seconds = previousSetMetricDisplayDetailMap[thisSetMetricId]?.seconds ?: "",
-                inputIsValid = previousSetMetricDisplayDetailMap[thisSetMetricId]?.inputIsValid ?: false,
                 inputIsLogged = previousSetMetricDisplayDetailMap[thisSetMetricId]?.inputIsLogged ?: false
             )
         }
@@ -333,7 +400,7 @@ class RecordSessionViewModel(
                     profile_id = activeProfileId,
                     day_number = dayNum,
                     day_label = "Day $dayNum",
-                    date = DateCalculator.getCurrentIsoDate(),
+                    date = DateTimeCalculator.getCurrentIsoDate(),
                     note = ""
                 )
             )
@@ -395,14 +462,6 @@ class RecordSessionViewModel(
                     )
                 )
             }
-        }
-    }
-
-    fun finishSession() {
-        if (_recordSessionUiState.value.totalNumOfLiftSets == 0) {
-            endSession()
-        } else {
-            saveSession()
         }
     }
 
@@ -809,15 +868,7 @@ class RecordSessionViewModel(
         }
     }
 
-    fun validateSetMetricNote(): Boolean {
-        return _recordSessionUiState.value.newSetMetricNote.isNotBlank()
-    }
-
     fun updateSetMetric() {
-        if (!validateSetMetricNote()) {
-            return
-        }
-
         val oldSetMetric: SetMetric = _recordSessionUiState.value.setMetricToEdit ?: return
         val newSetMetric: SetMetric = oldSetMetric.copy(
             note = _recordSessionUiState.value.newSetMetricNote
@@ -893,6 +944,101 @@ class RecordSessionViewModel(
         }
     }
 
+    fun setMetricTimeValueChanged(newValue: String, setMetric: SetMetric, inputType: String) {
+        // update the value in the setMetricDisplayDetailMap
+        _recordSessionUiState.update { currentState ->
+            currentState.copy(
+                setMetricDisplayDetailMap = currentState.setMetricDisplayDetailMap.mapValues { (thisSetMetricId, setMetricDisplayDetail) ->
+                    if (thisSetMetricId == setMetric.id) {
+                        setMetricDisplayDetail.copy(
+                            hours = if (inputType == "hours") {
+                                newValue
+                            } else {
+                                setMetricDisplayDetail.hours
+                            },
+                            minutes = if (inputType == "minutes") {
+                                newValue
+                            } else {
+                                setMetricDisplayDetail.minutes
+                            },
+                            seconds = if (inputType == "seconds") {
+                                newValue
+                            } else {
+                                setMetricDisplayDetail.seconds
+                            },
+                            inputIsLogged = false
+                        )
+                    } else {
+                        setMetricDisplayDetail
+                    }
+                }
+            )
+        }
+
+        // check to see if we can log this input
+        val hoursInput: String = _recordSessionUiState.value.setMetricDisplayDetailMap[setMetric.id]?.hours ?: return
+        val minutesInput: String = _recordSessionUiState.value.setMetricDisplayDetailMap[setMetric.id]?.minutes ?: return
+        val secondsInput: String = _recordSessionUiState.value.setMetricDisplayDetailMap[setMetric.id]?.seconds ?: return
+        val hoursToLog: Int? = if (hoursInput.isNotBlank()) {
+            hoursInput.toIntOrNull()
+        } else {
+            0
+        }
+        val minutesToLog: Int? = if (minutesInput.isNotBlank()) {
+            minutesInput.toIntOrNull()
+        } else {
+            0
+        }
+        val secondsToLog: Double? = if (secondsInput.isNotBlank()) {
+            secondsInput.toDoubleOrNull()
+        } else {
+            0.0
+        }
+
+        // if all time inputs are valid, log this time input
+        if (hoursToLog != null && hoursToLog >= 0.0 &&
+            minutesToLog != null && minutesToLog >= 0.0 &&
+            secondsToLog != null && secondsToLog >= 0.0 &&
+            !(hoursInput.isBlank() && minutesInput.isBlank() && secondsInput.isBlank())) {
+            viewModelScope.launch {
+                // log the valid time input in the database
+                setMetricRepository.updateSetMetric(
+                    setMetric = setMetric.copy(
+                        value = DateTimeCalculator.convertTripleTimeToDoubleTime(
+                            hours = hoursToLog,
+                            minutes = minutesToLog,
+                            seconds = secondsToLog
+                        )
+                    )
+                )
+
+                // mark this input as logged
+                _recordSessionUiState.update { currentState ->
+                    currentState.copy(
+                        setMetricDisplayDetailMap = currentState.setMetricDisplayDetailMap.mapValues { (thisSetMetricId, setMetricDisplayDetail) ->
+                            if (thisSetMetricId == setMetric.id) {
+                                setMetricDisplayDetail.copy(
+                                    inputIsLogged = true
+                                )
+                            } else {
+                                setMetricDisplayDetail
+                            }
+                        }
+                    )
+                }
+            }
+        } else {
+            // otherwise, reset the setMetric's value back to -1.0
+            viewModelScope.launch {
+                setMetricRepository.updateSetMetric(
+                    setMetric = setMetric.copy(
+                        value = -1.0
+                    )
+                )
+            }
+        }
+    }
+
     // only called for set metrics belonging to a lift with a metric type of reps
     // (could be either weight or reps)
     fun setMetricValueChanged(newValue: String, setMetric: SetMetric) {
@@ -916,7 +1062,7 @@ class RecordSessionViewModel(
         val valueToLog: Double? = newValue.trim().toDoubleOrNull()
 
         // if inputted value is valid, update the database
-        if (valueToLog != null) {
+        if (valueToLog != null && valueToLog >= 0.0) {
             viewModelScope.launch {
                 setMetricRepository.updateSetMetric(
                     setMetric = setMetric.copy(
@@ -958,7 +1104,6 @@ class RecordSessionViewModel(
 data class RecordSessionUiState(
     val activeProfile: Profile? = null,
     val activeLiftDay: LiftDay? = null,
-    val totalNumOfLiftSets: Int = 0,
     val dayEditDialogVisible: Boolean = false,
     val newDayName: String = "",
     val newDayNote: String = "",
@@ -973,6 +1118,8 @@ data class RecordSessionUiState(
     val setMetricDisplayDetailMap: Map<Int, SetMetricDisplayDetail> = emptyMap(),
     // Map(LiftSetId -> LiftSetCardVisible?)
     val liftSetVisibleMap: Map<Int, Boolean> = emptyMap(),
+    // Map(LiftSetId -> number of completed sets for that lift)
+    val setCountPerLiftMap: Map<Int, Int> = emptyMap(),
     val deleteLiftInProgressDialogVisible: Boolean = false,
     val liftIdToDelete: Int = -1,
     val editLiftSetDialogVisible: Boolean = false,

@@ -9,7 +9,7 @@ import github.tom2433.lifttracker.data.musclegroup.MuscleGroup
 import github.tom2433.lifttracker.data.musclegroup.MuscleGroupRepository
 import github.tom2433.lifttracker.data.liftunit.LiftUnit
 import github.tom2433.lifttracker.data.liftunit.LiftUnitRepository
-import github.tom2433.lifttracker.data.utils.DateCalculator
+import github.tom2433.lifttracker.data.utils.DateTimeCalculator
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -38,7 +38,7 @@ class LiftScreenViewModel(
     init {
         viewModelScope.launch {
             // Capture one local date so all three maps use exactly the same inclusive end boundary. - Codex
-            val today = DateCalculator.getCurrentIsoDate()
+            val today = DateTimeCalculator.getCurrentIsoDate()
 
             // Subtracting 27 days makes today the twenty-eighth and final day of the four-week window. - Codex
             val pastMonthStartDate = calculateStartDate(today, 27L)
@@ -71,7 +71,7 @@ class LiftScreenViewModel(
                 // Publish the relative last date and all formatted maps together so the screen never displays mixed emissions. - Codex
                 _liftScreenUiState.update { currentState ->
                     currentState.copy(
-                        lastDateTrained = DateCalculator.formatLastDateTrained(
+                        lastDateTrained = DateTimeCalculator.formatLastDateTrained(
                             lifetimeStatistics.lastDateTrained,
                             today
                         ),
@@ -168,11 +168,11 @@ class LiftScreenViewModel(
     // This calculates an inclusive rolling-window start date using DateCalculator's strict UTC epoch-day parsing. - Codex
     private fun calculateStartDate(today: String, daysBeforeToday: Long): String {
         // Today's value is generated internally and is therefore valid; this fallback keeps initialization safe if that contract changes. - Codex
-        val todayEpochDay = DateCalculator.parseIsoDateToEpochDay(today) ?: return today
+        val todayEpochDay = DateTimeCalculator.parseIsoDateToEpochDay(today) ?: return today
 
         // Convert the shifted UTC epoch day back to the ISO format stored by lift_days.date. - Codex
-        return DateCalculator.createIsoDateFormatter().format(
-            Date((todayEpochDay - daysBeforeToday) * DateCalculator.MILLIS_PER_DAY)
+        return DateTimeCalculator.createIsoDateFormatter().format(
+            Date((todayEpochDay - daysBeforeToday) * DateTimeCalculator.MILLIS_PER_DAY)
         )
     }
 

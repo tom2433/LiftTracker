@@ -1,5 +1,6 @@
 package github.tom2433.lifttracker.data.liftset
 
+import github.tom2433.lifttracker.data.structures.LiftSetCountPerLift
 import github.tom2433.lifttracker.data.structures.RecordSessionLiftSetRow
 import kotlinx.coroutines.flow.Flow
 
@@ -29,5 +30,8 @@ class OfflineLiftSetRepository(private val liftSetDao: LiftSetDao) : LiftSetRepo
 
     override fun getRecordSessionLiftSetRowsForDayStream(liftDayId: Int): Flow<List<RecordSessionLiftSetRow>> =
         liftSetDao.getRecordSessionLiftSetRowsForDay(liftDayId)
+
+    override fun getLiftSetCountPerLiftIdForDayIdStream(liftDayId: Int): Flow<List<LiftSetCountPerLift>> =
+        liftSetDao.getLiftSetCountPerLiftIdForDayId(liftDayId)
 
 }

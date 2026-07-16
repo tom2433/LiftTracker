@@ -8,6 +8,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import github.tom2433.lifttracker.data.setmetric.SetMetric
+import github.tom2433.lifttracker.data.structures.LiftSetCountPerLift
 import github.tom2433.lifttracker.data.structures.RecordSessionLiftSetRow
 import kotlinx.coroutines.flow.Flow
 
@@ -189,4 +190,14 @@ interface LiftSetDao {
     fun getRecordSessionLiftSetRowsForDay(
         liftDayId: Int
     ): Flow<List<RecordSessionLiftSetRow>>
+
+    @Query("""
+        SELECT
+            ls.lift_id AS liftId,
+            COUNT(ls.id) AS liftSetCount
+        FROM lift_sets AS ls
+        WHERE ls.lift_day_id = :dayId
+        GROUP BY ls.lift_id
+    """)
+    fun getLiftSetCountPerLiftIdForDayId(dayId: Int): Flow<List<LiftSetCountPerLift>>
 }

@@ -25,4 +25,6 @@ class OfflineLiftRepository(private val liftDao: LiftDao) : LiftRepository {
     override fun getLiftSearchDetailsContainingStream(searchText: String): Flow<List<LiftSearchDetail>> = liftDao.getLiftSearchDetailsContaining(searchText)
 
     override fun getLiftSearchDetailsForDayIdStream(liftDayId: Int): Flow<List<LiftSearchDetail>> = liftDao.getLiftSearchDetailsForDayId(liftDayId)
+
+    override suspend fun getMetricTypeFromSetMetricId(setMetricId: Int): Int? = liftDao.getMetricTypeFromSetMetricId(setMetricId)
 }

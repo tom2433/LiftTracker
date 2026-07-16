@@ -20,4 +20,6 @@ interface LiftRepository {
     fun getLiftSearchDetailsContainingStream(searchText: String): Flow<List<LiftSearchDetail>>
 
     fun getLiftSearchDetailsForDayIdStream(liftDayId: Int): Flow<List<LiftSearchDetail>>
+
+    suspend fun getMetricTypeFromSetMetricId(setMetricId: Int): Int?
 }

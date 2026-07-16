@@ -32,4 +32,16 @@ interface SetMetricDao {
         WHERE ls.lift_day_id = :dayId
     """)
     fun getSetMetricIdsFromDayId(dayId: Int): Flow<List<Int>>
+
+    @Query("""
+        SELECT
+            sm.*
+        FROM set_metrics AS sm
+        INNER JOIN lift_sets AS ls
+            ON ls.id = sm.set_id
+        INNER JOIN lift_days AS ld
+            ON ld.id = ls.lift_day_id
+        WHERE ld.in_progress = 1
+    """)
+    suspend fun getSetMetricsFromActiveDay(): List<SetMetric>
 }

@@ -147,7 +147,6 @@ interface LiftDao {
         INNER JOIN lift_units AS lu
             ON lu.id = l.unit_id
         WHERE p.active = 1
-            -- AND :searchText != ''
             AND instr(lower(l.name), lower(:searchText)) > 0
         ORDER BY l.name ASC
     """)
@@ -174,4 +173,17 @@ interface LiftDao {
         WHERE ls.lift_day_id = :liftDayId        
     """)
     fun getLiftSearchDetailsForDayId(liftDayId: Int): Flow<List<LiftSearchDetail>>
+
+    @Query("""
+        SELECT
+            l.metric_type
+        FROM lifts AS l
+        INNER JOIN lift_sets AS ls
+            ON ls.lift_id = l.id
+        INNER JOIN set_metrics AS sm
+            ON sm.set_id = ls.id
+        WHERE sm.id = :setMetricId
+        LIMIT 1
+    """)
+    suspend fun getMetricTypeFromSetMetricId(setMetricId: Int): Int?
 }
