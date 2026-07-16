@@ -6,7 +6,11 @@ A Data Vis project developed using Jetpack Compose.
 
 # Immediate Notes
 
-# 07-15
+## 07-16
+
+display the active lift day's date on the session in progress screen.
+
+## 07-15
 
 lift set notes don't wrap appropriately, they just take up the whole card.
 
