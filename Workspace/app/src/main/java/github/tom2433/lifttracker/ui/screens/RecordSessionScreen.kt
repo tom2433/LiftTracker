@@ -1,5 +1,8 @@
 package github.tom2433.lifttracker.ui.screens
 
+import android.os.Build
+import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
@@ -78,6 +81,7 @@ import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
@@ -92,6 +96,7 @@ import github.tom2433.lifttracker.data.liftset.LiftSet
 import github.tom2433.lifttracker.data.setmetric.SetMetric
 import github.tom2433.lifttracker.data.structures.LiftSearchDetail
 import github.tom2433.lifttracker.data.structures.SetMetricDisplayDetail
+import github.tom2433.lifttracker.data.utils.DateTimeCalculator
 import github.tom2433.lifttracker.ui.AppViewModelProvider
 import github.tom2433.lifttracker.ui.navigation.NavigationDestination
 import github.tom2433.lifttracker.ui.utils.LiftDetailFlowRow
@@ -110,12 +115,20 @@ object RecordSessionDestination : NavigationDestination {
 /**
  * Entry route for Record session screen
  */
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun RecordSessionScreen(
     modifier: Modifier = Modifier,
     viewModel: RecordSessionViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
     val recordSessionUiState by viewModel.recordSessionUiState.collectAsState()
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        viewModel.toastEvents.collect { message ->
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+        }
+    }
 
     Box(
         modifier = modifier.fillMaxSize(),
@@ -254,6 +267,7 @@ fun RecordSessionScreen(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SessionInProgressScreen(
@@ -300,7 +314,7 @@ fun SessionInProgressScreen(
                         .padding(16.dp)
                         .fillMaxWidth()
                 ) {
-                    // row to hold play icon and name/note for current day
+                    // row to hold play icon and name/date/note for current day
                     Row(
                         horizontalArrangement = Arrangement.Start,
                         verticalAlignment = Alignment.CenterVertically,
@@ -330,7 +344,7 @@ fun SessionInProgressScreen(
                                 )
                         )
 
-                        // column to hold day name/note
+                        // column to hold day name/date/note
                         Column(
                             verticalArrangement = Arrangement.Center,
                             horizontalAlignment = Alignment.Start
@@ -341,13 +355,23 @@ fun SessionInProgressScreen(
                                 style = MaterialTheme.typography.titleMedium
                             )
 
+                            // day date
+                            Text(
+                                text = DateTimeCalculator.convertIsoDateToReadableFormat(
+                                    isoDate = recordSessionUiState.activeLiftDay?.date ?: return@Column
+                                ),
+                                style = MaterialTheme.typography.bodySmall,
+                                fontSize = 13.sp,
+                                color = CardDefaults.cardColors().contentColor.copy(alpha = 0.75f)
+                            )
+
                             // day note (if applicable)
-                            if (recordSessionUiState.activeLiftDay?.note?.isNotBlank() ?: false) {
+                            if (recordSessionUiState.activeLiftDay.note.isNotBlank()) {
                                 Text(
                                     text = recordSessionUiState.activeLiftDay.note,
                                     style = MaterialTheme.typography.bodySmall,
                                     fontSize = 13.sp,
-                                    color = MaterialTheme.colorScheme.outline
+                                    color = CardDefaults.cardColors().contentColor.copy(alpha = 0.75f)
                                 )
                             }
                         }
@@ -954,7 +978,7 @@ fun LiftSetInProgressCard(
                             unfocusedContainerColor = Color.Transparent
                         ),
                         keyboardOptions = KeyboardOptions.Default.copy(
-                            keyboardType = KeyboardType.Number,
+                            keyboardType = KeyboardType.Decimal,
                             imeAction = ImeAction.Next
                         ),
                         keyboardActions = KeyboardActions(
@@ -1044,7 +1068,7 @@ fun LiftSetInProgressCard(
                                 unfocusedContainerColor = Color.Transparent
                             ),
                             keyboardOptions = KeyboardOptions.Default.copy(
-                                keyboardType = KeyboardType.Number,
+                                keyboardType = KeyboardType.Decimal,
                                 imeAction = ImeAction.Done
                             ),
                             keyboardActions = KeyboardActions(
@@ -1202,7 +1226,7 @@ fun LiftSetInProgressCard(
                             unfocusedContainerColor = Color.Transparent
                         ),
                         keyboardOptions = KeyboardOptions.Default.copy(
-                            keyboardType = KeyboardType.Number,
+                            keyboardType = KeyboardType.Decimal,
                             imeAction = ImeAction.Done
                         ),
                         keyboardActions = KeyboardActions(

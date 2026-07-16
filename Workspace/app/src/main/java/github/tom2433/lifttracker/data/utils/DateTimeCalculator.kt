@@ -1,7 +1,11 @@
 package github.tom2433.lifttracker.data.utils
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import java.text.ParsePosition
 import java.text.SimpleDateFormat
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
@@ -127,5 +131,10 @@ object DateTimeCalculator {
     fun convertTripleTimeToDoubleTime(hours: Int, minutes: Int, seconds: Double): Double {
         // calculate minutes as double
         return (hours * 60.0) + minutes + (seconds / 60.0)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun convertIsoDateToReadableFormat(isoDate: String): String {
+        return LocalDate.parse(isoDate).format(DateTimeFormatter.ofPattern("MMM d, yyyy"))
     }
 }

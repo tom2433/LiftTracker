@@ -20,8 +20,11 @@ import github.tom2433.lifttracker.data.utils.DateTimeCalculator
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -41,10 +44,12 @@ class RecordSessionViewModel(
     private val setMetricRepository: SetMetricRepository
 ) : ViewModel() {
     private val _recordSessionUiState = MutableStateFlow(RecordSessionUiState())
+    private val _toastEvents = MutableSharedFlow<String>()
     private var liftSuggestionsJob: Job? = null
     private var liftIdPendingReveal: Int? = null
     private var liftSetIdPendingReveal: Int? = null
     val recordSessionUiState: StateFlow<RecordSessionUiState> = _recordSessionUiState.asStateFlow()
+    val toastEvents: SharedFlow<String> = _toastEvents.asSharedFlow()
 
     init {
         // constant collection: retrieve active lift day for currently active profile
@@ -454,6 +459,7 @@ class RecordSessionViewModel(
             // if there are no remaining valid lift sets, delete this day
             if (validLiftSets.isEmpty()) {
                 liftDayRepository.deleteLiftDay(activeLiftDay)
+                _toastEvents.emit("Nothing Saved")
             } else {
                 // otherwise, save this lift day by setting in progress = false
                 liftDayRepository.updateLiftDay(
@@ -461,6 +467,8 @@ class RecordSessionViewModel(
                         in_progress = false
                     )
                 )
+
+                _toastEvents.emit("Session saved! Check it out in the Sessions screen.")
             }
         }
     }
