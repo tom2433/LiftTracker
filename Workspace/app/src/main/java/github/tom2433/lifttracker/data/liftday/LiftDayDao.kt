@@ -59,16 +59,25 @@ interface LiftDayDao {
     @Transaction
     suspend fun deleteAndRenumber(liftDay: LiftDay) {
         delete(liftDay)
-        decrementDayNumbersAfter(liftDay.profile_id, liftDay.day_number)
+        stageDayNumbersForDeleteAfter(liftDay.profile_id, liftDay.day_number)
+        decrementStagedDayNumbersAfter(liftDay.profile_id)
     }
 
     @Query("""
         UPDATE lift_days
-        SET day_number = day_number - 1
+        SET day_number = -(day_number)
         WHERE profile_id = :profileId
             AND day_number > :deletedDayNumber
     """)
-    suspend fun decrementDayNumbersAfter(profileId: Int, deletedDayNumber: Int)
+    suspend fun stageDayNumbersForDeleteAfter(profileId: Int, deletedDayNumber: Int)
+
+    @Query("""
+        UPDATE lift_days
+        SET day_number = (-day_number) - 1
+        WHERE profile_id = :profileId
+            AND day_number < 0
+    """)
+    suspend fun decrementStagedDayNumbersAfter(profileId: Int)
 
     @Query("""
         SELECT COALESCE(MAX(day_number), 0) + 1

@@ -128,15 +128,27 @@ interface LiftSetDao {
 
     @Query("""
         UPDATE lift_sets
-        SET lift_set_number = lift_set_number - 1
+        SET lift_set_number = -lift_set_number
         WHERE lift_day_id = :liftDayId
             AND lift_id = :liftId
             AND lift_set_number > :deletedLiftSetNumber
     """)
-    suspend fun decrementLiftSetNumbersAfterDelete(
+    suspend fun stageLiftSetNumbersAfterDelete(
         liftDayId: Int,
         liftId: Int,
         deletedLiftSetNumber: Int
+    )
+
+    @Query("""
+        UPDATE lift_sets
+        SET lift_set_number = (-lift_set_number) - 1
+        WHERE lift_day_id = :liftDayId
+            AND lift_id = :liftId
+            AND lift_set_number < 0
+    """)
+    suspend fun decrementStagedLiftSetNumbersAfterDelete(
+        liftDayId: Int,
+        liftId: Int,
     )
 
     @Query("""
@@ -162,13 +174,23 @@ interface LiftSetDao {
 
     @Query("""
         UPDATE lift_sets
-        SET day_set_number = day_set_number - 1
+        SET day_set_number = -day_set_number
         WHERE lift_day_id = :liftDayId
             AND day_set_number > :deletedDaySetNumber
     """)
-    suspend fun decrementDaySetNumbersAfterDelete(
+    suspend fun stageDaySetNumbersAfterDelete(
         liftDayId: Int,
         deletedDaySetNumber: Int
+    )
+
+    @Query("""
+        UPDATE lift_sets
+        SET day_set_number = (-day_set_number) - 1
+        WHERE lift_day_id = :liftDayId
+            AND day_set_number < 0
+    """)
+    suspend fun decrementStagedDaySetNumbersAfterDelete(
+        liftDayId: Int
     )
 
     @Delete
@@ -184,15 +206,24 @@ interface LiftSetDao {
             deletedLiftSetNumber = liftSet.lift_set_number
         )
 
-        decrementLiftSetNumbersAfterDelete(
+        stageLiftSetNumbersAfterDelete(
             liftDayId = liftSet.lift_day_id,
             liftId = liftSet.lift_id,
             deletedLiftSetNumber = liftSet.lift_set_number
         )
 
-        decrementDaySetNumbersAfterDelete(
+        decrementStagedLiftSetNumbersAfterDelete(
+            liftDayId = liftSet.lift_day_id,
+            liftId = liftSet.lift_id
+        )
+
+        stageDaySetNumbersAfterDelete(
             liftDayId = liftSet.lift_day_id,
             deletedDaySetNumber = liftSet.day_set_number
+        )
+
+        decrementStagedDaySetNumbersAfterDelete(
+            liftDayId = liftSet.lift_day_id
         )
 
         decrementMuscleGroupDaySetNumbersAfterDelete(
