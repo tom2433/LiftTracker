@@ -485,6 +485,15 @@ fun LiftScreen(
             onSubmit = { viewModel.submitSwitchMuscleGroupDialog() },
             buttonEnabled = viewModel.validateSwitchMuscleGroupDialog(),
             submitBtnText = "Move ${liftScreenUiState.lift.name} to ${liftScreenUiState.selectedMuscleGroup?.name ?: "null"}",
+            switchChecked = liftScreenUiState.migrateOldSetData,
+            onCheckedChange = {
+                viewModel.updateSwitchState(it)
+            },
+            cascadeSwitchChecked = liftScreenUiState.cascadeMigration,
+            onCascadeCheckedChange = {
+                viewModel.updateCascadeSwitchState(it)
+            },
+            cascadeSwitchEnabled = liftScreenUiState.migrateOldSetData
         )
     }
 }

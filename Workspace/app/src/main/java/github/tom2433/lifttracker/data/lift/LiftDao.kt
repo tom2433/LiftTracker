@@ -30,15 +30,22 @@ interface LiftDao {
     suspend fun getLiftDayIdsForLift(liftId: Int): List<Int>
 
     @Query("""
+        SELECT DISTINCT
+            ls.muscle_group_id
+        FROM lift_sets AS ls
+        WHERE ls.lift_id = :liftId
+    """)
+    suspend fun getAllMuscleGroupIdsForLift(liftId: Int): List<Int>
+
+    @Query("""
         UPDATE lift_sets
         SET muscle_group_day_set_number = -id
         WHERE lift_day_id IN (:affectedDayIds)
-            AND muscle_group_id IN (:oldMuscleGroupId, :newMuscleGroupId)
+            AND muscle_group_id IN (:muscleGroupIds)
     """)
     suspend fun stageMuscleGroupDaySetNumbersForMove(
         affectedDayIds: List<Int>,
-        oldMuscleGroupId: Int,
-        newMuscleGroupId: Int
+        muscleGroupIds: List<Int>
     )
 
     @Query("""
@@ -46,9 +53,21 @@ interface LiftDao {
         SET muscle_group_id = :newMuscleGroupId
         WHERE lift_id = :liftId
     """)
-    suspend fun updateLiftSetsMuscleGroup(
+    suspend fun updateLiftSetsMuscleGroupCascade(
         liftId: Int,
         newMuscleGroupId: Int
+    )
+
+    @Query("""
+        UPDATE lift_sets
+        SET muscle_group_id = :newMuscleGroupId
+        WHERE lift_id = :liftId
+            AND muscle_group_id = :oldMuscleGroupId
+    """)
+    suspend fun updateLiftSetsMuscleGroupNoCascade(
+        liftId: Int,
+        newMuscleGroupId: Int,
+        oldMuscleGroupId: Int
     )
 
     @Query("""
@@ -92,39 +111,54 @@ interface LiftDao {
     }
 
     @Transaction
-    suspend fun moveLiftToMuscleGroup(lift: Lift, newMuscleGroupId: Int) {
+    suspend fun moveLiftToMuscleGroup(
+        lift: Lift,
+        newMuscleGroupId: Int,
+        migrateOldSetData: Boolean,
+        cascadeMigration: Boolean
+    ) {
         val oldMuscleGroupId = lift.muscle_group_id
         if (oldMuscleGroupId == newMuscleGroupId) return
 
         val affectedDayIds: List<Int> = getLiftDayIdsForLift(lift.id)
 
-        if (affectedDayIds.isNotEmpty()) {
+        val affectedMuscleGroupIds = if (cascadeMigration) {
+            (getAllMuscleGroupIdsForLift(lift.id) + newMuscleGroupId).distinct()
+        } else {
+            listOf(oldMuscleGroupId, newMuscleGroupId)
+        }
+
+        if (affectedDayIds.isNotEmpty() && migrateOldSetData) {
             stageMuscleGroupDaySetNumbersForMove(
                 affectedDayIds = affectedDayIds,
-                oldMuscleGroupId = oldMuscleGroupId,
-                newMuscleGroupId = newMuscleGroupId
+                muscleGroupIds = affectedMuscleGroupIds
             )
         }
 
         update(lift.copy(muscle_group_id = newMuscleGroupId))
 
-        if (affectedDayIds.isNotEmpty()) {
-            updateLiftSetsMuscleGroup(
-                liftId = lift.id,
-                newMuscleGroupId = newMuscleGroupId
-            )
-        }
+        if (affectedDayIds.isNotEmpty() && migrateOldSetData) {
+            if (cascadeMigration) {
+                updateLiftSetsMuscleGroupCascade(
+                    liftId = lift.id,
+                    newMuscleGroupId = newMuscleGroupId
+                )
+            } else {
+                updateLiftSetsMuscleGroupNoCascade(
+                    liftId = lift.id,
+                    newMuscleGroupId = newMuscleGroupId,
+                    oldMuscleGroupId = oldMuscleGroupId
+                )
+            }
 
-        for (dayId in affectedDayIds) {
-            renumberMuscleGroupDaySetNumbers(
-                liftDayId = dayId,
-                muscleGroupId = oldMuscleGroupId
-            )
-
-            renumberMuscleGroupDaySetNumbers(
-                liftDayId = dayId,
-                muscleGroupId = newMuscleGroupId
-            )
+            for (dayId in affectedDayIds) {
+                for (muscleGroupId in affectedMuscleGroupIds) {
+                    renumberMuscleGroupDaySetNumbers(
+                        liftDayId = dayId,
+                        muscleGroupId = muscleGroupId
+                    )
+                }
+            }
         }
     }
 

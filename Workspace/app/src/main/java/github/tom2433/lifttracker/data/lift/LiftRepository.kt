@@ -23,5 +23,5 @@ interface LiftRepository {
 
     suspend fun getMetricTypeFromSetMetricId(setMetricId: Int): Int?
 
-    suspend fun  moveLiftToMuscleGroup(lift: Lift, newMuscleGroupId: Int)
+    suspend fun  moveLiftToMuscleGroup(lift: Lift, newMuscleGroupId: Int, migrateOldSetData: Boolean, cascadeMigration: Boolean)
 }

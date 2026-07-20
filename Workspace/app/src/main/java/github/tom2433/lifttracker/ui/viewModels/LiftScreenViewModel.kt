@@ -385,7 +385,8 @@ class LiftScreenViewModel(
         _liftScreenUiState.update { currentState ->
             currentState.copy(
                 userIsSwitchingMuscleGroup = true,
-                selectedMuscleGroup = currentState.muscleGroup
+                selectedMuscleGroup = currentState.muscleGroup,
+                migrateOldSetData = true
             )
         }
     }
@@ -394,7 +395,9 @@ class LiftScreenViewModel(
         _liftScreenUiState.update { currentState ->
             currentState.copy(
                 userIsSwitchingMuscleGroup = false,
-                selectedMuscleGroup = null
+                selectedMuscleGroup = null,
+                migrateOldSetData = true,
+                cascadeMigration = true
             )
         }
     }
@@ -418,23 +421,34 @@ class LiftScreenViewModel(
         }
 
         viewModelScope.launch {
-//            // update the lift in the database with the new muscle group FK
-//            liftRepository.updateLift(
-//                lift = _liftScreenUiState.value.lift.copy(
-//                    muscle_group_id = _liftScreenUiState.value.selectedMuscleGroup!!.id
-//                )
-//            )
-
             if (_liftScreenUiState.value.selectedMuscleGroup != null) {
                 // let the backend handle all of the renumbering and transfer
                 liftRepository.moveLiftToMuscleGroup(
                     lift = _liftScreenUiState.value.lift,
-                    newMuscleGroupId = _liftScreenUiState.value.selectedMuscleGroup!!.id
+                    newMuscleGroupId = _liftScreenUiState.value.selectedMuscleGroup!!.id,
+                    migrateOldSetData = _liftScreenUiState.value.migrateOldSetData,
+                    cascadeMigration = _liftScreenUiState.value.cascadeMigration
                 )
 
                 // close the dialog
                 closeSwitchMuscleGroupDialog()
             }
+        }
+    }
+
+    fun updateSwitchState(newState: Boolean) {
+        _liftScreenUiState.update { currentState ->
+            currentState.copy(
+                migrateOldSetData = newState
+            )
+        }
+    }
+
+    fun updateCascadeSwitchState(newState: Boolean) {
+        _liftScreenUiState.update { currentState ->
+            currentState.copy(
+                cascadeMigration = newState
+            )
         }
     }
 
@@ -466,6 +480,8 @@ data class LiftScreenUiState(
     val liftUnitList: List<LiftUnit> = listOf(),
     val userIsSwitchingMuscleGroup: Boolean = false,
     val selectedMuscleGroup: MuscleGroup? = null,
+    val migrateOldSetData: Boolean = true,
+    val cascadeMigration: Boolean = true,
     val lastDateTrained: String = "",
     val pastMonthStatMap: Map<String, String> = mapOf(),
     val pastYearStatMap: Map<String, String> = mapOf(),

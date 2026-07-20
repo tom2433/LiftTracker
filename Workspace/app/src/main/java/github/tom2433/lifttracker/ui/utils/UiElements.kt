@@ -35,8 +35,11 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineHeightStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import github.tom2433.lifttracker.R
 
 @Composable
@@ -130,6 +133,47 @@ fun SectionTitle(
             }
             HorizontalDivider(modifier = Modifier.fillMaxWidth())
         }
+    }
+}
+
+@Composable
+fun SetNumberRow(
+    labelText: String,
+    valueText: String,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(
+                horizontal = 8.dp,
+                vertical = 4.dp
+            )
+    ) {
+        // label
+        Text(
+            text = labelText,
+            style = MaterialTheme.typography.bodySmall,
+            fontSize = 13.sp,
+            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(
+                alpha = 0.75f
+            ),
+            modifier = Modifier.weight(1f)
+        )
+
+        Spacer(modifier = Modifier.width(4.dp))
+
+        // value
+        Text(
+            text = valueText,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSecondaryContainer,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Bold,
+            softWrap = false
+        )
     }
 }
 

@@ -28,5 +28,5 @@ class OfflineLiftRepository(private val liftDao: LiftDao) : LiftRepository {
 
     override suspend fun getMetricTypeFromSetMetricId(setMetricId: Int): Int? = liftDao.getMetricTypeFromSetMetricId(setMetricId)
 
-    override suspend fun moveLiftToMuscleGroup(lift: Lift, newMuscleGroupId: Int) = liftDao.moveLiftToMuscleGroup(lift, newMuscleGroupId)
+    override suspend fun moveLiftToMuscleGroup(lift: Lift, newMuscleGroupId: Int, migrateOldSetData: Boolean, cascadeMigration: Boolean) = liftDao.moveLiftToMuscleGroup(lift, newMuscleGroupId, migrateOldSetData, cascadeMigration)
 }

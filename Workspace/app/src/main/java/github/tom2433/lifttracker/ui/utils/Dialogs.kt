@@ -31,6 +31,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -831,6 +832,11 @@ fun ShowMuscleGroupSelectionDialog(
     onSubmit: () -> Unit,
     buttonEnabled: Boolean,
     submitBtnText: String,
+    switchChecked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    cascadeSwitchChecked: Boolean,
+    onCascadeCheckedChange: (Boolean) -> Unit,
+    cascadeSwitchEnabled: Boolean,
     modifier: Modifier = Modifier
 ) {
     Dialog(
@@ -908,13 +914,79 @@ fun ShowMuscleGroupSelectionDialog(
                 // divider
                 HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
 
+                // row to hold migrate old data switch
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .padding(bottom = 8.dp)
+                        .fillMaxWidth()
+                ) {
+                    // row to hold info button and label
+                    Row(
+                        horizontalArrangement = Arrangement.Start,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(stringResource(R.string.migrate_old_set_data))
+                        InfoButton {
+                            Text(
+                                text = stringResource(R.string.migrate_old_set_data_dialog_text),
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+                        }
+                    }
+
+                    // migrate old data switch
+                    Switch(
+                        checked = switchChecked,
+                        onCheckedChange = onCheckedChange,
+                    )
+                }
+
+                // row to hold cascade migration switch and label
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .padding(bottom = 8.dp)
+                        .fillMaxWidth()
+                ) {
+                    // row to hold info button and label
+                    Row(
+                        horizontalArrangement = Arrangement.Start,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Cascade migration")
+                        InfoButton {
+                            Text(
+                                text = stringResource(R.string.cascade_old_set_data_dialog_text_1),
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(bottom = 4.dp)
+                            )
+                            Text(
+                                text = stringResource(R.string.cascade_old_set_data_dialog_text_2),
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+                        }
+                    }
+
+                    // cascade old set data switch
+                    Switch(
+                        checked = cascadeSwitchChecked,
+                        onCheckedChange = onCascadeCheckedChange,
+                        enabled = cascadeSwitchEnabled
+                    )
+                }
+
                 // button to submit element
                 Button(
                     onClick = onSubmit,
                     enabled = buttonEnabled,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 16.dp)
+                        .padding(bottom = 8.dp)
                 ) {
                     Text(submitBtnText)
                 }

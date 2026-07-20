@@ -24,6 +24,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -85,6 +86,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -100,6 +102,7 @@ import github.tom2433.lifttracker.data.utils.DateTimeCalculator
 import github.tom2433.lifttracker.ui.AppViewModelProvider
 import github.tom2433.lifttracker.ui.navigation.NavigationDestination
 import github.tom2433.lifttracker.ui.utils.LiftDetailFlowRow
+import github.tom2433.lifttracker.ui.utils.SetNumberRow
 import github.tom2433.lifttracker.ui.utils.ShowElementDeleteDialog
 import github.tom2433.lifttracker.ui.utils.ShowElementEntryDialog
 import github.tom2433.lifttracker.ui.utils.ShowMetricEntryDialog
@@ -830,16 +833,6 @@ fun LiftSetInProgressCard(
             .fillMaxWidth()
             .padding(vertical = 8.dp),
     ) {
-        // LiftSet has:
-        // - lift set number
-        // - day set number
-        // - set label
-        // - set note
-
-        // SetMetric has:
-        // - value
-        // - note
-
         // row to hold lift set details on the left,
         // set metric details on the right
         Row(
@@ -853,7 +846,7 @@ fun LiftSetInProgressCard(
             Row(
                 horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1.1f)
             ) {
                 // column to hold edit icon button and delete icon button
                 Column(
@@ -912,33 +905,48 @@ fun LiftSetInProgressCard(
                             )
                         )
                     }
-                    // lift set #
-                    Text(
-                        text = "Lift set #${liftSet.lift_set_number}",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(
-                            alpha = 0.75f
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // column to hold lift set #'s
+                    Column(
+                        modifier = Modifier
+                            .border(
+                                width = 1.dp,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(
+                                    alpha = 0.5f
+                                ),
+                                shape = RoundedCornerShape(4.dp)
+                            )
+                    ) {
+                        // lift set #
+                        SetNumberRow(
+                            labelText = "Lift",
+                            valueText = liftSet.lift_set_number.toString()
                         )
-                    )
-                    // day set #
-                    Text(
-                        text = "Day set #${liftSet.day_set_number}",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(
-                            alpha = 0.75f
+                        HorizontalDivider(
+                            modifier = Modifier.fillMaxWidth(),
+                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(
+                                alpha = 0.5f
+                            )
                         )
-                    )
-                    // muscle group set #
-                    Text(
-                        text = "${liftDetail.muscleGroupName} set #${liftSet.muscle_group_day_set_number}",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer.copy(
-                            alpha = 0.75f
+                        // day set #
+                        SetNumberRow(
+                            labelText = "Session",
+                            valueText = liftSet.day_set_number.toString()
                         )
-                    )
+                        HorizontalDivider(
+                            modifier = Modifier.fillMaxWidth(),
+                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(
+                                alpha = 0.5f
+                            )
+                        )
+                        // muscle group set #
+                        SetNumberRow(
+                            labelText = liftDetail.muscleGroupName,
+                            valueText = liftSet.muscle_group_day_set_number.toString()
+                        )
+                    }
                 }
             }
 
@@ -946,7 +954,7 @@ fun LiftSetInProgressCard(
             Column(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.End,
-                modifier = Modifier.weight(1.5f)
+                modifier = Modifier.weight(1.4f)
             ) {
                 // row to hold add note icon button and weight text field
                 Row(
