@@ -22,4 +22,6 @@ interface LiftRepository {
     fun getLiftSearchDetailsForDayIdStream(liftDayId: Int): Flow<List<LiftSearchDetail>>
 
     suspend fun getMetricTypeFromSetMetricId(setMetricId: Int): Int?
+
+    suspend fun  moveLiftToMuscleGroup(lift: Lift, newMuscleGroupId: Int)
 }

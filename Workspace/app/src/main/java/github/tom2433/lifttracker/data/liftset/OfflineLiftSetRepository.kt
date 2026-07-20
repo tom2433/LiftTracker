@@ -1,5 +1,6 @@
 package github.tom2433.lifttracker.data.liftset
 
+import github.tom2433.lifttracker.data.lift.Lift
 import github.tom2433.lifttracker.data.structures.LiftSetCountPerLift
 import github.tom2433.lifttracker.data.structures.RecordSessionLiftSetRow
 import kotlinx.coroutines.flow.Flow
@@ -14,6 +15,7 @@ class OfflineLiftSetRepository(private val liftSetDao: LiftSetDao) : LiftSetRepo
             LiftSet(
                 lift_day_id = liftDayId,
                 lift_id = liftId,
+                muscle_group_id = 0,
                 lift_set_number = 0,
                 day_set_number = 0,
                 muscle_group_day_set_number = 0,

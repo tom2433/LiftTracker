@@ -42,11 +42,12 @@ The ```lift_days``` table has 7 columns:
 
 The purpose of the ```lift_sets``` table is to keep track of all sets that the user has completed. It also links each set with the specific lift that was trained, and the day that the user completed the set on.
 
-The ```lift_sets``` table has 8 columns:
+The ```lift_sets``` table has 9 columns:
 
 - ```id``` (INTEGER): primary key. This is the main identifier that the ```set_metrics``` table uses to associate specific set data (weight, reps) with a specific set that was completed for a specific lift on a specific day.
 - ```lift_day_id``` (INTEGER): foreign key referring to ```lift_days```. This is what links this set to a particular day.
 - ```lift_id``` (INTEGER): foreign key referring to ```lifts```. This is what links this set to a particular lift (e.g., bicep curls).
+- ```muscle_group_id``` (INTEGER): foreign key referring to ```muscle_groups```. This is what links this set to a particular muscle group (e.g., biceps).
 - ```lift_set_number``` (INTEGER): this set number identifies when this set took place, only in relation to the other sets completed for this specific lift on this specific day.
 - ```day_set_number``` (INTEGER): this set number identifies when this set took place, in relation to all other sets completed on this specific day.
 - ```muscle_group_day_set_number``` (INTEGER): this set number identifies when this set took place in relation to all other sets completed on this specific day for this specific muscle group.
@@ -123,7 +124,7 @@ The ```lift_units``` table has two columns:
         SetMetric::class,
         LiftUnit::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 abstract class LiftTrackerDatabase : RoomDatabase() {
@@ -151,7 +152,8 @@ abstract class LiftTrackerDatabase : RoomDatabase() {
                         MIGRATION_2_3,
                         MIGRATION_3_4,
                         MIGRATION_4_5,
-                        MIGRATION_5_6
+                        MIGRATION_5_6,
+                        MIGRATION_6_7
                     )
                     .build()
                     .also { Instance = it }
@@ -387,21 +389,207 @@ abstract class LiftTrackerDatabase : RoomDatabase() {
 
         private val MIGRATION_5_6 = object : Migration(5, 6) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL(
-                    "ALTER TABLE lift_sets ADD COLUMN muscle_group_day_set_number INTEGER NOT NULL DEFAULT 0"
-                )
+                rebuildLiftSetsTable(db)
 
                 renumberLiftSetsByMuscleGroupAndDay(db)
+
+                db.execSQL(
+                    "CREATE UNIQUE INDEX index_lift_sets_lift_day_id_day_set_number ON lift_sets(lift_day_id, day_set_number)"
+                )
+                db.execSQL(
+                    "CREATE UNIQUE INDEX index_lift_sets_lift_day_id_lift_id_lift_set_number ON lift_sets(lift_day_id, lift_id, lift_set_number)"
+                )
+                db.execSQL("CREATE INDEX index_lift_sets_lift_id ON lift_sets(lift_id)")
+                db.execSQL(
+                    "CREATE UNIQUE INDEX index_lift_sets_lift_day_id_muscle_group_id_muscle_group_day_set_number ON lift_sets(lift_day_id, muscle_group_id, muscle_group_day_set_number)"
+                )
+                db.execSQL("CREATE INDEX index_lift_sets_muscle_group_id ON lift_sets(muscle_group_id)")
+            }
+
+            private fun rebuildLiftSetsTable(db: SupportSQLiteDatabase) {
+                db.execSQL("DROP TABLE IF EXISTS lift_sets_migration")
+                db.execSQL(
+                    """
+                    CREATE TABLE lift_sets_migration (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        lift_day_id INTEGER NOT NULL,
+                        lift_id INTEGER NOT NULL,
+                        muscle_group_id INTEGER NOT NULL,
+                        lift_set_number INTEGER NOT NULL,
+                        day_set_number INTEGER NOT NULL,
+                        muscle_group_day_set_number INTEGER NOT NULL,
+                        set_label TEXT NOT NULL,
+                        set_note TEXT NOT NULL,
+                        FOREIGN KEY(lift_day_id) REFERENCES lift_days(id) ON UPDATE NO ACTION ON DELETE CASCADE,
+                        FOREIGN KEY(lift_id) REFERENCES lifts(id) ON UPDATE NO ACTION ON DELETE CASCADE,
+                        FOREIGN KEY(muscle_group_id) REFERENCES muscle_groups(id) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    INSERT INTO lift_sets_migration (
+                        id,
+                        lift_day_id,
+                        lift_id,
+                        muscle_group_id,
+                        lift_set_number,
+                        day_set_number,
+                        muscle_group_day_set_number,
+                        set_label,
+                        set_note
+                    )
+                    SELECT
+                        ls.id,
+                        ls.lift_day_id,
+                        ls.lift_id,
+                        l.muscle_group_id,
+                        ls.lift_set_number,
+                        ls.day_set_number,
+                        0,
+                        ls.set_label,
+                        ls.set_note
+                    FROM lift_sets AS ls
+                    INNER JOIN lifts AS l
+                        ON l.id = ls.lift_id
+                    """.trimIndent()
+                )
+                db.execSQL("DROP TABLE lift_sets")
+                db.execSQL("ALTER TABLE lift_sets_migration RENAME TO lift_sets")
             }
 
             private fun renumberLiftSetsByMuscleGroupAndDay(db: SupportSQLiteDatabase) {
                 val cursor = db.query(
                     """
-                    SELECT ls.id, ls.lift_day_id, l.muscle_group_id
+                    SELECT ls.id, ls.lift_day_id, ls.muscle_group_id
+                    FROM lift_sets AS ls
+                    ORDER BY ls.lift_day_id ASC, ls.muscle_group_id ASC, ls.day_set_number ASC, ls.id ASC
+                    """.trimIndent()
+                )
+
+                cursor.use {
+                    var currentLiftDayId: Int? = null
+                    var currentMuscleGroupId: Int? = null
+                    var nextMuscleGroupDaySetNumber = 1
+
+                    while (it.moveToNext()) {
+                        val liftSetId = it.getInt(0)
+                        val liftDayId = it.getInt(1)
+                        val muscleGroupId = it.getInt(2)
+
+                        if (liftDayId != currentLiftDayId || muscleGroupId != currentMuscleGroupId) {
+                            currentLiftDayId = liftDayId
+                            currentMuscleGroupId = muscleGroupId
+                            nextMuscleGroupDaySetNumber = 1
+                        }
+
+                        db.execSQL(
+                            "UPDATE lift_sets SET muscle_group_day_set_number = ? WHERE id = ?",
+                            arrayOf(nextMuscleGroupDaySetNumber, liftSetId)
+                        )
+                        nextMuscleGroupDaySetNumber += 1
+                    }
+                }
+            }
+        }
+
+        private val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                if (!columnExists(db, "lift_sets", "muscle_group_id")) {
+                    rebuildLiftSetsTable(db)
+                    renumberLiftSetsByMuscleGroupAndDay(db)
+                }
+
+                db.execSQL(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS index_lift_sets_lift_day_id_day_set_number ON lift_sets(lift_day_id, day_set_number)"
+                )
+                db.execSQL(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS index_lift_sets_lift_day_id_lift_id_lift_set_number ON lift_sets(lift_day_id, lift_id, lift_set_number)"
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_lift_sets_lift_id ON lift_sets(lift_id)")
+                db.execSQL(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS index_lift_sets_lift_day_id_muscle_group_id_muscle_group_day_set_number ON lift_sets(lift_day_id, muscle_group_id, muscle_group_day_set_number)"
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_lift_sets_muscle_group_id ON lift_sets(muscle_group_id)")
+            }
+
+            private fun columnExists(
+                db: SupportSQLiteDatabase,
+                tableName: String,
+                columnName: String
+            ): Boolean {
+                val cursor = db.query("PRAGMA table_info($tableName)")
+
+                return cursor.use {
+                    val nameColumnIndex = it.getColumnIndex("name")
+                    while (it.moveToNext()) {
+                        if (it.getString(nameColumnIndex) == columnName) {
+                            return@use true
+                        }
+                    }
+
+                    false
+                }
+            }
+
+            private fun rebuildLiftSetsTable(db: SupportSQLiteDatabase) {
+                db.execSQL("DROP TABLE IF EXISTS lift_sets_migration")
+                db.execSQL(
+                    """
+                    CREATE TABLE lift_sets_migration (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        lift_day_id INTEGER NOT NULL,
+                        lift_id INTEGER NOT NULL,
+                        muscle_group_id INTEGER NOT NULL,
+                        lift_set_number INTEGER NOT NULL,
+                        day_set_number INTEGER NOT NULL,
+                        muscle_group_day_set_number INTEGER NOT NULL,
+                        set_label TEXT NOT NULL,
+                        set_note TEXT NOT NULL,
+                        FOREIGN KEY(lift_day_id) REFERENCES lift_days(id) ON UPDATE NO ACTION ON DELETE CASCADE,
+                        FOREIGN KEY(lift_id) REFERENCES lifts(id) ON UPDATE NO ACTION ON DELETE CASCADE,
+                        FOREIGN KEY(muscle_group_id) REFERENCES muscle_groups(id) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    INSERT INTO lift_sets_migration (
+                        id,
+                        lift_day_id,
+                        lift_id,
+                        muscle_group_id,
+                        lift_set_number,
+                        day_set_number,
+                        muscle_group_day_set_number,
+                        set_label,
+                        set_note
+                    )
+                    SELECT
+                        ls.id,
+                        ls.lift_day_id,
+                        ls.lift_id,
+                        l.muscle_group_id,
+                        ls.lift_set_number,
+                        ls.day_set_number,
+                        0,
+                        ls.set_label,
+                        ls.set_note
                     FROM lift_sets AS ls
                     INNER JOIN lifts AS l
                         ON l.id = ls.lift_id
-                    ORDER BY ls.lift_day_id ASC, l.muscle_group_id ASC, ls.day_set_number ASC, ls.id ASC
+                    """.trimIndent()
+                )
+                db.execSQL("DROP TABLE lift_sets")
+                db.execSQL("ALTER TABLE lift_sets_migration RENAME TO lift_sets")
+            }
+
+            private fun renumberLiftSetsByMuscleGroupAndDay(db: SupportSQLiteDatabase) {
+                val cursor = db.query(
+                    """
+                    SELECT ls.id, ls.lift_day_id, ls.muscle_group_id
+                    FROM lift_sets AS ls
+                    ORDER BY ls.lift_day_id ASC, ls.muscle_group_id ASC, ls.day_set_number ASC, ls.id ASC
                     """.trimIndent()
                 )
 

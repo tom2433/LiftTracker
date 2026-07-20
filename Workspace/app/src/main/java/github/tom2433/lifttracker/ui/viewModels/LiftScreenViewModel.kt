@@ -418,15 +418,23 @@ class LiftScreenViewModel(
         }
 
         viewModelScope.launch {
-            // update the lift in the database with the new muscle group FK
-            liftRepository.updateLift(
-                lift = _liftScreenUiState.value.lift.copy(
-                    muscle_group_id = _liftScreenUiState.value.selectedMuscleGroup!!.id
-                )
-            )
+//            // update the lift in the database with the new muscle group FK
+//            liftRepository.updateLift(
+//                lift = _liftScreenUiState.value.lift.copy(
+//                    muscle_group_id = _liftScreenUiState.value.selectedMuscleGroup!!.id
+//                )
+//            )
 
-            // close the dialog
-            closeSwitchMuscleGroupDialog()
+            if (_liftScreenUiState.value.selectedMuscleGroup != null) {
+                // let the backend handle all of the renumbering and transfer
+                liftRepository.moveLiftToMuscleGroup(
+                    lift = _liftScreenUiState.value.lift,
+                    newMuscleGroupId = _liftScreenUiState.value.selectedMuscleGroup!!.id
+                )
+
+                // close the dialog
+                closeSwitchMuscleGroupDialog()
+            }
         }
     }
 

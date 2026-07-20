@@ -1420,7 +1420,8 @@ fun ExistingLiftEntryCard(
                                                 unitName = liftSearchDetail.unitName,
                                                 modifier = Modifier.padding(
                                                     top = 4.dp
-                                                )
+                                                ),
+                                                tintColor = LocalContentColor.current
                                             )
                                         }
                                     }

@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
 import github.tom2433.lifttracker.data.structures.LiftSearchDetail
 import github.tom2433.lifttracker.data.structures.LiftStatisticsData
@@ -17,6 +18,115 @@ interface LiftDao {
 
     @Update
     suspend fun update(lift: Lift)
+
+    @Query("""
+        SELECT DISTINCT
+            ld.id
+        FROM lift_days AS ld
+        INNER JOIN lift_sets AS ls
+            ON ls.lift_day_id = ld.id
+        WHERE ls.lift_id = :liftId
+    """)
+    suspend fun getLiftDayIdsForLift(liftId: Int): List<Int>
+
+    @Query("""
+        UPDATE lift_sets
+        SET muscle_group_day_set_number = -id
+        WHERE lift_day_id IN (:affectedDayIds)
+            AND muscle_group_id IN (:oldMuscleGroupId, :newMuscleGroupId)
+    """)
+    suspend fun stageMuscleGroupDaySetNumbersForMove(
+        affectedDayIds: List<Int>,
+        oldMuscleGroupId: Int,
+        newMuscleGroupId: Int
+    )
+
+    @Query("""
+        UPDATE lift_sets
+        SET muscle_group_id = :newMuscleGroupId
+        WHERE lift_id = :liftId
+    """)
+    suspend fun updateLiftSetsMuscleGroup(
+        liftId: Int,
+        newMuscleGroupId: Int
+    )
+
+    @Query("""
+        SELECT id
+        FROM lift_sets
+        WHERE lift_day_id = :liftDayId
+            AND muscle_group_id = :muscleGroupId
+        ORDER BY day_set_number ASC, id ASC
+    """)
+    suspend fun getRowsForMuscleGroupDaySetRenumbering(
+        liftDayId: Int,
+        muscleGroupId: Int
+    ): List<Int>
+
+    @Query("""
+        UPDATE lift_sets
+        SET muscle_group_day_set_number = :muscleGroupDaySetNumber
+        WHERE id = :liftSetId
+    """)
+    suspend fun updateMuscleGroupDaySetNumber(
+        liftSetId: Int,
+        muscleGroupDaySetNumber: Int
+    )
+
+    @Transaction
+    suspend fun renumberMuscleGroupDaySetNumbers(
+        liftDayId: Int,
+        muscleGroupId: Int
+    ) {
+        val rows: List<Int> = getRowsForMuscleGroupDaySetRenumbering(
+            liftDayId = liftDayId,
+            muscleGroupId = muscleGroupId
+        )
+
+        rows.forEachIndexed { index, liftSetId ->
+            updateMuscleGroupDaySetNumber(
+                liftSetId = liftSetId,
+                muscleGroupDaySetNumber = index + 1
+            )
+        }
+    }
+
+    @Transaction
+    suspend fun moveLiftToMuscleGroup(lift: Lift, newMuscleGroupId: Int) {
+        val oldMuscleGroupId = lift.muscle_group_id
+        if (oldMuscleGroupId == newMuscleGroupId) return
+
+        val affectedDayIds: List<Int> = getLiftDayIdsForLift(lift.id)
+
+        if (affectedDayIds.isNotEmpty()) {
+            stageMuscleGroupDaySetNumbersForMove(
+                affectedDayIds = affectedDayIds,
+                oldMuscleGroupId = oldMuscleGroupId,
+                newMuscleGroupId = newMuscleGroupId
+            )
+        }
+
+        update(lift.copy(muscle_group_id = newMuscleGroupId))
+
+        if (affectedDayIds.isNotEmpty()) {
+            updateLiftSetsMuscleGroup(
+                liftId = lift.id,
+                newMuscleGroupId = newMuscleGroupId
+            )
+        }
+
+        for (dayId in affectedDayIds) {
+            renumberMuscleGroupDaySetNumbers(
+                liftDayId = dayId,
+                muscleGroupId = oldMuscleGroupId
+            )
+
+            renumberMuscleGroupDaySetNumbers(
+                liftDayId = dayId,
+                muscleGroupId = newMuscleGroupId
+            )
+        }
+    }
 
     @Delete
     suspend fun delete(lift: Lift)

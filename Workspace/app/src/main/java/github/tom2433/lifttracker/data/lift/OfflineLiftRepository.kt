@@ -27,4 +27,6 @@ class OfflineLiftRepository(private val liftDao: LiftDao) : LiftRepository {
     override fun getLiftSearchDetailsForDayIdStream(liftDayId: Int): Flow<List<LiftSearchDetail>> = liftDao.getLiftSearchDetailsForDayId(liftDayId)
 
     override suspend fun getMetricTypeFromSetMetricId(setMetricId: Int): Int? = liftDao.getMetricTypeFromSetMetricId(setMetricId)
+
+    override suspend fun moveLiftToMuscleGroup(lift: Lift, newMuscleGroupId: Int) = liftDao.moveLiftToMuscleGroup(lift, newMuscleGroupId)
 }

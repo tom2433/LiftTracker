@@ -46,7 +46,7 @@ interface MuscleGroupDao {
             COUNT(DISTINCT CASE WHEN l.metric_type = 1 THEN l.id END) AS numRepLifts,
             AVG(
                 CASE
-                    WHEN l.metric_type = 1
+                    WHEN set_lift.metric_type = 1
                         AND sm.metric_position = 2
                         AND ld.id IS NOT NULL
                     THEN sm.value
@@ -61,7 +61,9 @@ interface MuscleGroupDao {
         LEFT JOIN lifts AS l
             ON l.muscle_group_id = mg.id
         LEFT JOIN lift_sets AS ls
-            ON ls.lift_id = l.id
+            ON ls.muscle_group_id = mg.id
+        LEFT JOIN lifts AS set_lift
+            ON set_lift.id = ls.lift_id
         LEFT JOIN lift_days AS ld
             ON ld.id = ls.lift_day_id
             AND ld.profile_id = mg.profile_id

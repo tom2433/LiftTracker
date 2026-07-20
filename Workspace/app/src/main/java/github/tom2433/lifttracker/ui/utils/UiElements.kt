@@ -139,7 +139,7 @@ fun LiftDetailFlowRow(
     metricType: String,
     unitName: String,
     modifier: Modifier = Modifier,
-    tintColor: Color = Color.Unspecified
+    tintColor: Color = MaterialTheme.colorScheme.onBackground
 ) {
     FlowRow(
         horizontalArrangement = Arrangement.Center,

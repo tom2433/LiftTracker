@@ -250,6 +250,7 @@ fun LiftScreen(
                                 muscleGroupName = liftScreenUiState.muscleGroup?.name ?: "null",
                                 metricType = liftScreenUiState.liftScreenDetail.metricType,
                                 unitName = liftScreenUiState.liftScreenDetail.unitName,
+                                tintColor = MaterialTheme.colorScheme.onSurface
                             )
 
                             // last date trained
