@@ -199,6 +199,8 @@ start also implementing the preferences table
 - [ ] add a setting for managing units
 - [ ] keep the dialog titles fixed in place just like the confirm/cancel buttons
 - [ ] raw data on the muscle group cards should not load until after the user has clicked it.
+- [ ] use a label(note) to categorize groups of lifts
+- [ ] % of overall set volume on lift screen literally does not make any sense; remove it
 
 # Data Structure
 
