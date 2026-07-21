@@ -14,6 +14,8 @@ change the session set number label so it just says "session"
 
 make set number info collapsable
 
+just remove the lift set number from the ui, it's already in the lift name and if the user wants to change it they can
+
 ## 07-21
 
 info description for migration makes it seem like the data is going to two places. remove "also"
