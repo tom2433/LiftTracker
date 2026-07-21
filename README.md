@@ -12,6 +12,8 @@ info description for migration makes it seem like the data is going to two place
 
 split second paragraph of second info button of new switches
 
+change day to session everywhere
+
 make lift set in progress card's eight/rep note take up the same width as the value inputs
 
 ## 07-17
