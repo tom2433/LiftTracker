@@ -61,8 +61,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -75,11 +75,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.BeyondBoundsLayout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -87,7 +85,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.room.util.copy
 import github.tom2433.lifttracker.ui.AppViewModelProvider
 import github.tom2433.lifttracker.ui.navigation.LiftTrackerNavHost
 import github.tom2433.lifttracker.ui.screens.AnalyticsDestination
@@ -97,7 +94,6 @@ import github.tom2433.lifttracker.ui.screens.RecordSessionDestination
 import github.tom2433.lifttracker.ui.screens.SessionsDestination
 import github.tom2433.lifttracker.ui.screens.SettingsDestination
 import github.tom2433.lifttracker.ui.screens.ToolsDestination
-import github.tom2433.lifttracker.ui.theme.LiftTrackerTheme
 import github.tom2433.lifttracker.ui.utils.ShowElementDeleteDialog
 import github.tom2433.lifttracker.ui.utils.ShowElementEntryDialog
 import github.tom2433.lifttracker.ui.viewModels.DrawerViewModel
@@ -115,13 +111,13 @@ fun LiftTrackerApp(navController: NavHostController = rememberNavController()) {
     val layoutDirection = LocalLayoutDirection.current
 
     val titleRes = when (currentRoute) {
-        github.tom2433.lifttracker.ui.screens.MuscleGroupsDestination.route -> github.tom2433.lifttracker.ui.screens.MuscleGroupsDestination.titleRes
-        github.tom2433.lifttracker.ui.screens.RecordSessionDestination.route -> github.tom2433.lifttracker.ui.screens.RecordSessionDestination.titleRes
-        github.tom2433.lifttracker.ui.screens.SessionsDestination.route -> github.tom2433.lifttracker.ui.screens.SessionsDestination.titleRes
-        github.tom2433.lifttracker.ui.screens.CalendarDestination.route -> github.tom2433.lifttracker.ui.screens.CalendarDestination.titleRes
-        github.tom2433.lifttracker.ui.screens.AnalyticsDestination.route -> github.tom2433.lifttracker.ui.screens.AnalyticsDestination.titleRes
-        github.tom2433.lifttracker.ui.screens.ToolsDestination.route -> github.tom2433.lifttracker.ui.screens.ToolsDestination.titleRes
-        github.tom2433.lifttracker.ui.screens.SettingsDestination.route -> github.tom2433.lifttracker.ui.screens.SettingsDestination.titleRes
+        MuscleGroupsDestination.route -> MuscleGroupsDestination.titleRes
+        RecordSessionDestination.route -> RecordSessionDestination.titleRes
+        SessionsDestination.route -> SessionsDestination.titleRes
+        CalendarDestination.route -> CalendarDestination.titleRes
+        AnalyticsDestination.route -> AnalyticsDestination.titleRes
+        ToolsDestination.route -> ToolsDestination.titleRes
+        SettingsDestination.route -> SettingsDestination.titleRes
         else -> R.string.app_name
     }
 
@@ -173,6 +169,19 @@ fun LiftTrackerDrawer(
     val drawerOffsetX = remember { Animatable(0f) }
     val coroutineScope = rememberCoroutineScope()
     viewModel.checkScreenForFab(titleRes)
+    viewModel.checkScreenForScrollBehavior(titleRes)
+    val beginSessionNavElementColors = if (drawerUiState.activeSession == null) {
+        NavigationDrawerItemDefaults.colors()
+    } else {
+        NavigationDrawerItemDefaults.colors(
+            selectedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+            unselectedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+            selectedIconColor = MaterialTheme.colorScheme.onTertiaryContainer,
+            unselectedIconColor = MaterialTheme.colorScheme.onTertiaryContainer,
+            selectedTextColor = MaterialTheme.colorScheme.onTertiaryContainer,
+            unselectedTextColor = MaterialTheme.colorScheme.onTertiaryContainer
+        )
+    }
 
     LaunchedEffect(drawerUiState.isDrawerOpen, drawerUiState.drawerWidthPx) {
         if (drawerUiState.drawerWidthPx > 0f) {
@@ -197,7 +206,11 @@ fun LiftTrackerDrawer(
             topBar = {
                 CenterAlignedTopAppBar(
                     title = { Text(stringResource(titleRes)) },
-                    scrollBehavior = scrollBehavior,
+                    scrollBehavior = if (drawerUiState.doEnterAlwaysScrollBehavior) {
+                        scrollBehavior
+                    } else {
+                        null
+                    },
                     navigationIcon = {
                         IconButton(
                             onClick = {
@@ -239,7 +252,7 @@ fun LiftTrackerDrawer(
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Add,
-                            contentDescription = "" // TODO
+                            contentDescription = stringResource(R.string.add_muscle_group)
                         )
                     }
                 }
@@ -336,9 +349,15 @@ fun LiftTrackerDrawer(
                 // divider to separate app name from drawer items
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
-                // nav drawer element: Begin Session (eventually dynamic for resume/quit session)
+                // nav drawer element: Begin/Resume Session
                 NavigationDrawerItem(
-                    label = { Text(stringResource(R.string.begin_session_title)) },
+                    label = {
+                        if (drawerUiState.activeSession == null) {
+                            Text(stringResource(R.string.begin_session_title))
+                        } else {
+                            Text(stringResource(R.string.resume_session))
+                        }
+                    },
                     selected = titleRes == R.string.record_session_title,
                     icon = {
                         Icon(
@@ -356,7 +375,8 @@ fun LiftTrackerDrawer(
                             delay(200)
                             navigateToRecordSession()
                         }
-                    }
+                    },
+                    colors = beginSessionNavElementColors
                 )
 
                 // nav drawer element: Muscle Groups
@@ -702,8 +722,8 @@ fun LiftTrackerDrawer(
         if (drawerUiState.deleteProfileDialogVisible) {
             ShowElementDeleteDialog(
                 dialogTitle = "Delete \"${drawerUiState.profileToDelete?.name ?: "null (something bad happend. help)"} \"?",
-                warningDescription = R.string.delete_profile_warning,
-                deleteBtnText = R.string.delete_profile_btn_text,
+                warningDescription = stringResource(R.string.delete_profile_warning),
+                deleteBtnText = stringResource(R.string.delete_profile_btn_text),
                 onDismissRequest = {
                     viewModel.dismissDeleteProfileDialog()
                 },
@@ -735,29 +755,6 @@ fun LiftTrackerDrawer(
                 onDismissRequest = {
                     viewModel.dismissMuscleGroupEntryDialog()
                 }
-            )
-        }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun LiftTrackerDrawerPreview() {
-    LiftTrackerTheme(dynamicColor = false, darkTheme = true) {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
-        ) {
-            LiftTrackerDrawer(
-                titleRes = R.string.app_name,
-                navigateToRecordSession = {},
-                navigateToMuscleGroups = {},
-                navigateToSessions = {},
-                navigateToCalendar = {},
-                navigateToAnalytics = {},
-                navigateToTools = {},
-                navigateToSettings = {},
-                content = {},
             )
         }
     }

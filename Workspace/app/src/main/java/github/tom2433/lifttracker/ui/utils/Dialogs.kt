@@ -1,6 +1,5 @@
 package github.tom2433.lifttracker.ui.utils
 
-import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -32,6 +31,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -54,7 +54,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import github.tom2433.lifttracker.R
-import github.tom2433.lifttracker.data.MuscleGroup
+import github.tom2433.lifttracker.data.musclegroup.MuscleGroup
+import github.tom2433.lifttracker.data.liftunit.LiftUnit
 import kotlinx.coroutines.delay
 
 @Composable
@@ -208,6 +209,124 @@ fun ShowElementEntryDialog(
     }
 }
 
+@Composable
+fun ShowMetricEntryDialog(
+    dialogTitle: String,
+    submitBtnText: String,
+    metricInputLabel: String,
+    buttonEnabled: Boolean,
+    newMetric: String,
+    onMetricValueChanged: (String) -> Unit,
+    onSubmit: () -> Unit,
+    onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    // focus requester to pop up the keyboard when the user selects to edit a metric
+    val metricFocusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+    LaunchedEffect(Unit) {
+        delay(100)
+        metricFocusRequester.requestFocus()
+        keyboardController?.show()
+    }
+
+    Dialog(
+        onDismissRequest = onDismissRequest,
+        properties = DialogProperties(
+            dismissOnClickOutside = true,
+            dismissOnBackPress = true
+        )
+    ) {
+        Card(
+            modifier = modifier
+                .wrapContentSize()
+                .padding(4.dp),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .wrapContentHeight()
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f, fill = false)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // title
+                    Text(
+                        text = dialogTitle,
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+
+                    // divider
+                    HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
+
+                    // metric input
+                    TextField(
+                        value = newMetric,
+                        onValueChange = onMetricValueChanged,
+                        label = {
+                            Text(metricInputLabel)
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Filled.Description,
+                                contentDescription = metricInputLabel
+                            )
+                        },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions.Default.copy(
+                            capitalization = KeyboardCapitalization.Sentences,
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                if (buttonEnabled) {
+                                    onSubmit()
+                                }
+                            }
+                        ),
+                        modifier = Modifier
+                            .focusRequester(metricFocusRequester)
+                            .padding(bottom = 16.dp)
+                            .fillMaxWidth()
+                    )
+
+                    // divider
+                    HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
+
+                    // button to submit metric
+                    Button(
+                        onClick = onSubmit,
+                        enabled = buttonEnabled,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp)
+                    ) {
+                        Text(submitBtnText)
+                    }
+
+                    // button to dismiss dialog
+                    OutlinedButton(
+                        onClick = onDismissRequest,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(stringResource(R.string.cancel))
+                    }
+                }
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WelcomeDialog(
@@ -324,8 +443,8 @@ fun WelcomeDialog(
 @Composable
 fun ShowElementDeleteDialog(
     dialogTitle: String,
-    @StringRes warningDescription: Int,
-    @StringRes deleteBtnText: Int,
+    warningDescription: String,
+    deleteBtnText: String,
     onDismissRequest: () -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
@@ -370,7 +489,7 @@ fun ShowElementDeleteDialog(
 
                     // warning description
                     Text(
-                        text = stringResource(warningDescription),
+                        text = warningDescription,
                         style = MaterialTheme.typography.bodyLarge,
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
@@ -391,7 +510,7 @@ fun ShowElementDeleteDialog(
                     )
                 ) {
                     Text(
-                        text = stringResource(deleteBtnText),
+                        text = deleteBtnText,
                         textAlign = TextAlign.Center
                     )
                 }
@@ -425,7 +544,7 @@ fun ShowLiftEntryDialog(
     onRepsSelected: () -> Unit,
     timeSelected: Boolean,
     onTimeSelected: () -> Unit,
-    liftUnitList: List<github.tom2433.lifttracker.data.LiftUnit>,
+    liftUnitList: List<LiftUnit>,
     onLiftUnitValueChanged: (String) -> Unit,
     onSubmit: () -> Unit,
     onDismissRequest: () -> Unit,
@@ -713,6 +832,11 @@ fun ShowMuscleGroupSelectionDialog(
     onSubmit: () -> Unit,
     buttonEnabled: Boolean,
     submitBtnText: String,
+    switchChecked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    cascadeSwitchChecked: Boolean,
+    onCascadeCheckedChange: (Boolean) -> Unit,
+    cascadeSwitchEnabled: Boolean,
     modifier: Modifier = Modifier
 ) {
     Dialog(
@@ -790,13 +914,84 @@ fun ShowMuscleGroupSelectionDialog(
                 // divider
                 HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
 
+                // row to hold migrate old data switch
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .padding(bottom = 8.dp)
+                        .fillMaxWidth()
+                ) {
+                    // row to hold info button and label
+                    Row(
+                        horizontalArrangement = Arrangement.Start,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(stringResource(R.string.migrate_old_set_data))
+                        InfoButton {
+                            Text(
+                                text = stringResource(R.string.migrate_old_set_data_dialog_text),
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+                        }
+                    }
+
+                    // migrate old data switch
+                    Switch(
+                        checked = switchChecked,
+                        onCheckedChange = onCheckedChange,
+                    )
+                }
+
+                // row to hold cascade migration switch and label
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .padding(bottom = 8.dp)
+                        .fillMaxWidth()
+                ) {
+                    // row to hold info button and label
+                    Row(
+                        horizontalArrangement = Arrangement.Start,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Cascade migration")
+                        InfoButton {
+                            Text(
+                                text = stringResource(R.string.cascade_old_set_data_dialog_text_1),
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(bottom = 4.dp)
+                            )
+                            Text(
+                                text = stringResource(R.string.cascade_old_set_data_dialog_text_2),
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(bottom = 4.dp)
+                            )
+                            Text(
+                                text = stringResource(R.string.cascade_old_set_data_dialog_text_3),
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+                        }
+                    }
+
+                    // cascade old set data switch
+                    Switch(
+                        checked = cascadeSwitchChecked,
+                        onCheckedChange = onCascadeCheckedChange,
+                        enabled = cascadeSwitchEnabled
+                    )
+                }
+
                 // button to submit element
                 Button(
                     onClick = onSubmit,
                     enabled = buttonEnabled,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 16.dp)
+                        .padding(bottom = 8.dp)
                 ) {
                     Text(submitBtnText)
                 }
@@ -881,6 +1076,7 @@ fun InfoButton(
     if (showDialog) {
         BasicDialog(
             onDismissRequest = {
+                @Suppress("AssignedValueIsNeverRead")
                 showDialog = false
             },
             dialogContent = content

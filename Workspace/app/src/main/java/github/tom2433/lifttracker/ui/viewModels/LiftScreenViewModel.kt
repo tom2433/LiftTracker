@@ -2,14 +2,14 @@ package github.tom2433.lifttracker.ui.viewModels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import github.tom2433.lifttracker.data.Lift
-import github.tom2433.lifttracker.data.LiftRepository
-import github.tom2433.lifttracker.data.LiftStatisticsData
-import github.tom2433.lifttracker.data.MuscleGroup
-import github.tom2433.lifttracker.data.MuscleGroupRepository
-import github.tom2433.lifttracker.data.LiftUnit
-import github.tom2433.lifttracker.data.LiftUnitRepository
-import github.tom2433.lifttracker.data.utils.DateCalculator
+import github.tom2433.lifttracker.data.lift.Lift
+import github.tom2433.lifttracker.data.lift.LiftRepository
+import github.tom2433.lifttracker.data.structures.LiftStatisticsData
+import github.tom2433.lifttracker.data.musclegroup.MuscleGroup
+import github.tom2433.lifttracker.data.musclegroup.MuscleGroupRepository
+import github.tom2433.lifttracker.data.liftunit.LiftUnit
+import github.tom2433.lifttracker.data.liftunit.LiftUnitRepository
+import github.tom2433.lifttracker.data.utils.DateTimeCalculator
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -38,7 +38,7 @@ class LiftScreenViewModel(
     init {
         viewModelScope.launch {
             // Capture one local date so all three maps use exactly the same inclusive end boundary. - Codex
-            val today = DateCalculator.getCurrentIsoDate()
+            val today = DateTimeCalculator.getCurrentIsoDate()
 
             // Subtracting 27 days makes today the twenty-eighth and final day of the four-week window. - Codex
             val pastMonthStartDate = calculateStartDate(today, 27L)
@@ -71,7 +71,7 @@ class LiftScreenViewModel(
                 // Publish the relative last date and all formatted maps together so the screen never displays mixed emissions. - Codex
                 _liftScreenUiState.update { currentState ->
                     currentState.copy(
-                        lastDateTrained = DateCalculator.formatLastDateTrained(
+                        lastDateTrained = DateTimeCalculator.formatLastDateTrained(
                             lifetimeStatistics.lastDateTrained,
                             today
                         ),
@@ -168,11 +168,11 @@ class LiftScreenViewModel(
     // This calculates an inclusive rolling-window start date using DateCalculator's strict UTC epoch-day parsing. - Codex
     private fun calculateStartDate(today: String, daysBeforeToday: Long): String {
         // Today's value is generated internally and is therefore valid; this fallback keeps initialization safe if that contract changes. - Codex
-        val todayEpochDay = DateCalculator.parseIsoDateToEpochDay(today) ?: return today
+        val todayEpochDay = DateTimeCalculator.parseIsoDateToEpochDay(today) ?: return today
 
-        // Convert the shifted UTC epoch day back to the ISO format stored by lift_days.date. - Codex
-        return DateCalculator.createIsoDateFormatter().format(
-            Date((todayEpochDay - daysBeforeToday) * DateCalculator.MILLIS_PER_DAY)
+        // Convert the shifted UTC epoch day back to the ISO format stored by sessions.date. - Codex
+        return DateTimeCalculator.createIsoDateFormatter().format(
+            Date((todayEpochDay - daysBeforeToday) * DateTimeCalculator.MILLIS_PER_DAY)
         )
     }
 
@@ -385,7 +385,8 @@ class LiftScreenViewModel(
         _liftScreenUiState.update { currentState ->
             currentState.copy(
                 userIsSwitchingMuscleGroup = true,
-                selectedMuscleGroup = currentState.muscleGroup
+                selectedMuscleGroup = currentState.muscleGroup,
+                migrateOldSetData = true
             )
         }
     }
@@ -394,7 +395,9 @@ class LiftScreenViewModel(
         _liftScreenUiState.update { currentState ->
             currentState.copy(
                 userIsSwitchingMuscleGroup = false,
-                selectedMuscleGroup = null
+                selectedMuscleGroup = null,
+                migrateOldSetData = true,
+                cascadeMigration = true
             )
         }
     }
@@ -418,22 +421,41 @@ class LiftScreenViewModel(
         }
 
         viewModelScope.launch {
-            // update the lift in the database with the new muscle group FK
-            liftRepository.updateLift(
-                lift = _liftScreenUiState.value.lift.copy(
-                    muscle_group_id = _liftScreenUiState.value.selectedMuscleGroup!!.id
+            if (_liftScreenUiState.value.selectedMuscleGroup != null) {
+                // let the backend handle all the renumbering and transfer
+                liftRepository.moveLiftToMuscleGroup(
+                    lift = _liftScreenUiState.value.lift,
+                    newMuscleGroupId = _liftScreenUiState.value.selectedMuscleGroup!!.id,
+                    migrateOldSetData = _liftScreenUiState.value.migrateOldSetData,
+                    cascadeMigration = _liftScreenUiState.value.cascadeMigration
                 )
-            )
 
-            // close the dialog
-            closeSwitchMuscleGroupDialog()
+                // close the dialog
+                closeSwitchMuscleGroupDialog()
+            }
+        }
+    }
+
+    fun updateSwitchState(newState: Boolean) {
+        _liftScreenUiState.update { currentState ->
+            currentState.copy(
+                migrateOldSetData = newState
+            )
+        }
+    }
+
+    fun updateCascadeSwitchState(newState: Boolean) {
+        _liftScreenUiState.update { currentState ->
+            currentState.copy(
+                cascadeMigration = newState
+            )
         }
     }
 
     fun filterChipClicked(keyClicked: String) {
         _liftScreenUiState.update { currentState ->
             currentState.copy(
-                statDisplayFilterMap = currentState.statDisplayFilterMap.mapValues { (chipLabel, selected) ->
+                statDisplayFilterMap = currentState.statDisplayFilterMap.mapValues { (chipLabel, _) ->
                     keyClicked == chipLabel
                 }
             )
@@ -458,6 +480,8 @@ data class LiftScreenUiState(
     val liftUnitList: List<LiftUnit> = listOf(),
     val userIsSwitchingMuscleGroup: Boolean = false,
     val selectedMuscleGroup: MuscleGroup? = null,
+    val migrateOldSetData: Boolean = true,
+    val cascadeMigration: Boolean = true,
     val lastDateTrained: String = "",
     val pastMonthStatMap: Map<String, String> = mapOf(),
     val pastYearStatMap: Map<String, String> = mapOf(),

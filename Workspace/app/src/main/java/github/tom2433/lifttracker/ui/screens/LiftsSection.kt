@@ -32,7 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import github.tom2433.lifttracker.R
-import github.tom2433.lifttracker.data.Lift
+import github.tom2433.lifttracker.data.lift.Lift
 import github.tom2433.lifttracker.ui.AppViewModelProvider
 import github.tom2433.lifttracker.ui.utils.ShowElementDeleteDialog
 import github.tom2433.lifttracker.ui.utils.ShowLiftEntryDialog
@@ -53,6 +53,7 @@ fun LiftSection(
 ) {
     val liftsUiState by viewModel.liftsUiState.collectAsState()
 
+    // flow row to hold all lift cards for muscle group
     FlowRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -255,8 +256,8 @@ fun LiftSection(
     if (liftsUiState.userIsDeletingLift) {
         ShowElementDeleteDialog(
             dialogTitle = "Delete '${liftsUiState.liftToDelete?.name ?: "null"}' from '${liftsUiState.muscleGroup?.name ?: "null"}'?",
-            warningDescription = R.string.delete_lift_warning,
-            deleteBtnText = R.string.delete_lift_btn_text,
+            warningDescription = stringResource(R.string.delete_lift_warning),
+            deleteBtnText = stringResource(R.string.delete_lift_btn_text),
             onDismissRequest = { viewModel.dismissDeleteLiftDialog() },
             onDelete = { viewModel.deleteLift() },
         )

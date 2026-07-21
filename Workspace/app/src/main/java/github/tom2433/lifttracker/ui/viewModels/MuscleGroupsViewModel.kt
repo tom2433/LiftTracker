@@ -2,13 +2,13 @@ package github.tom2433.lifttracker.ui.viewModels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import github.tom2433.lifttracker.data.Lift
-import github.tom2433.lifttracker.data.MuscleGroup
-import github.tom2433.lifttracker.data.MuscleGroupDetailData
-import github.tom2433.lifttracker.data.MuscleGroupRepository
-import github.tom2433.lifttracker.data.Profile
-import github.tom2433.lifttracker.data.ProfileRepository
-import github.tom2433.lifttracker.data.utils.DateCalculator
+import github.tom2433.lifttracker.data.lift.Lift
+import github.tom2433.lifttracker.data.musclegroup.MuscleGroup
+import github.tom2433.lifttracker.data.structures.MuscleGroupDetailData
+import github.tom2433.lifttracker.data.musclegroup.MuscleGroupRepository
+import github.tom2433.lifttracker.data.profile.Profile
+import github.tom2433.lifttracker.data.profile.ProfileRepository
+import github.tom2433.lifttracker.data.utils.DateTimeCalculator
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -44,7 +44,7 @@ class MuscleGroupsViewModel(
             // Collect the aggregate rows as a Flow so Room recalculates them whenever any referenced table changes. - Codex
             muscleGroupRepository.getAllMuscleGroupDetailDataForActiveProfileStream().collect { detailData ->
                 // Capture today once per database emission so every card uses the same rolling-week boundary. - Codex
-                val today = DateCalculator.getCurrentIsoDate()
+                val today = DateTimeCalculator.getCurrentIsoDate()
 
                 // Publish the newly calculated immutable list so Compose can react to the database change. - Codex
                 _muscleGroupsUiState.update { currentState ->
@@ -126,7 +126,7 @@ class MuscleGroupsViewModel(
         today: String
     ): MuscleGroupDetail {
         // The rolling averages include the current seven-day bucket and every bucket back through the first session. - Codex
-        val numWeeks = DateCalculator.calculateNumWeeks(data.firstDateTrained, today)
+        val numWeeks = DateTimeCalculator.calculateNumWeeks(data.firstDateTrained, today)
 
         // A muscle group without sessions has no per-session divisor, so its average is defined as zero. - Codex
         val avgNumSetsPerSession = if (data.numSessions == 0) {
@@ -153,7 +153,7 @@ class MuscleGroupsViewModel(
             avgNumSetsPerSession = avgNumSetsPerSession,
             avgNumSetsPerWeek = data.numSets.toDouble() / numWeeks,
             avgNumRepsPerSet = avgNumRepsPerSet,
-            lastDateTrained = DateCalculator.formatLastDateTrained(data.lastDateTrained, today)
+            lastDateTrained = DateTimeCalculator.formatLastDateTrained(data.lastDateTrained, today)
         )
     }
 
@@ -200,7 +200,7 @@ class MuscleGroupsViewModel(
             }
 
             currentState.copy(
-                muscleGroupList = currentState.muscleGroupList.mapValues { (muscleGroupId, muscleGroupDetail) ->
+                muscleGroupList = currentState.muscleGroupList.mapValues { (_, muscleGroupDetail) ->
                     muscleGroupDetail.copy(
                         menuIsOpen = false
                     )

@@ -9,9 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import github.tom2433.lifttracker.ui.theme.LiftTrackerTheme
 
 private const val TAG = "MainActivity"
@@ -61,18 +59,5 @@ class MainActivity : ComponentActivity() {
     override fun onDestroy() {
         super.onDestroy()
         Log.d(TAG, "onDesto")
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun InventoryAppPreview() {
-    LiftTrackerTheme(dynamicColor = false, darkTheme = true) {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
-        ) {
-            LiftTrackerApp()
-        }
     }
 }

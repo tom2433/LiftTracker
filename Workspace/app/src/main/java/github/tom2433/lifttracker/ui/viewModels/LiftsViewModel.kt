@@ -2,12 +2,12 @@ package github.tom2433.lifttracker.ui.viewModels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import github.tom2433.lifttracker.data.Lift
-import github.tom2433.lifttracker.data.LiftRepository
-import github.tom2433.lifttracker.data.MuscleGroup
-import github.tom2433.lifttracker.data.MuscleGroupRepository
-import github.tom2433.lifttracker.data.LiftUnit
-import github.tom2433.lifttracker.data.LiftUnitRepository
+import github.tom2433.lifttracker.data.lift.Lift
+import github.tom2433.lifttracker.data.lift.LiftRepository
+import github.tom2433.lifttracker.data.musclegroup.MuscleGroup
+import github.tom2433.lifttracker.data.musclegroup.MuscleGroupRepository
+import github.tom2433.lifttracker.data.liftunit.LiftUnit
+import github.tom2433.lifttracker.data.liftunit.LiftUnitRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,8 +25,6 @@ class LiftsViewModel(
     private val _liftsUiState = MutableStateFlow(LiftsUiState())
     val liftsUiState: StateFlow<LiftsUiState> = _liftsUiState.asStateFlow()
 
-    // this function is used in place of the init {} block.
-    // terrible coding practice, I know
     init {
         // retrieve all lifts belonging to the given muscle group
         viewModelScope.launch {

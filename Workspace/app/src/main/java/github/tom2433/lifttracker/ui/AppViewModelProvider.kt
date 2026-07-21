@@ -5,7 +5,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import github.tom2433.lifttracker.LiftTrackerApplication
-import github.tom2433.lifttracker.data.Lift
+import github.tom2433.lifttracker.data.lift.Lift
 import github.tom2433.lifttracker.ui.viewModels.LiftScreenViewModel
 import github.tom2433.lifttracker.ui.viewModels.AnalyticsViewModel
 import github.tom2433.lifttracker.ui.viewModels.CalendarViewModel
@@ -69,7 +69,11 @@ object AppViewModelProvider {
         // initializer for RecordSessionViewModel
         initializer {
             RecordSessionViewModel(
-                profileRepository = liftTrackerApplication().container.profileRepository
+                profileRepository = liftTrackerApplication().container.profileRepository,
+                sessionRepository = liftTrackerApplication().container.sessionsRepository,
+                liftRepository = liftTrackerApplication().container.liftRepository,
+                liftSetRepository = liftTrackerApplication().container.liftSetRepository,
+                setMetricRepository = liftTrackerApplication().container.setMetricRepository
             )
         }
 
@@ -98,7 +102,8 @@ object AppViewModelProvider {
         initializer {
             DrawerViewModel(
                 profileRepository = liftTrackerApplication().container.profileRepository,
-                muscleGroupRepository = liftTrackerApplication().container.muscleGroupRepository
+                muscleGroupRepository = liftTrackerApplication().container.muscleGroupRepository,
+                sessionRepository = liftTrackerApplication().container.sessionsRepository
             )
         }
     }
