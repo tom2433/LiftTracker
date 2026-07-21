@@ -8,7 +8,7 @@ A Data Vis project developed using Jetpack Compose.
 
 ## 07-21
 
-info description for migration makes it seem like the data is going to two places 
+info description for migration makes it seem like the data is going to two places. remove "also"
 
 make lift set in progress card's eight/rep note take up the same width as the value inputs
 
