@@ -10,6 +10,8 @@ A Data Vis project developed using Jetpack Compose.
 
 info description for migration makes it seem like the data is going to two places. remove "also"
 
+split second paragraph of second info button of new switches
+
 make lift set in progress card's eight/rep note take up the same width as the value inputs
 
 ## 07-17
