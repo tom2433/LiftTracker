@@ -6,6 +6,8 @@ A Data Vis project developed using Jetpack Compose.
 
 # Immediate Notes
 
+need on lift set in progress card for session in progress screen: average weight/reps for this lift given it's lift set number, muscle group set number, and session set number.
+
 ## 07-21
 
 info description for migration makes it seem like the data is going to two places. remove "also"
