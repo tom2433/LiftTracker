@@ -16,6 +16,8 @@ make set number info collapsable
 
 just remove the lift set number from the ui, it's already in the lift name and if the user wants to change it they can
 
+change the pencil icon on the lift set in progress to an edit note icon.
+
 ## 07-21
 
 info description for migration makes it seem like the data is going to two places. remove "also"
