@@ -190,6 +190,9 @@ start also implementing the preferences table
         - All the way on the right is the Finish button, which will delete the lift_day if the user has not recorded any lifts for it, or it will change the in_progress column of the current lift_day to false (current functionality).
     - Clicking the header row section with the pencil icon and lift_day name and note will popup an element entry dialog allowing the user to edit the name and note of the current session.
         - **Need to implement:** when creating a lift, the user can click the day label and note to edit it, and when the name input pops up, some quick add buttons should also pop up. these should be able to be grouped in the analytics screen.
+- [ ] F8-1: Implement the viewing of historical data for each lift in progress. Button to animate the visibility of this data should be above the top lift set in progress card, and it should bring down an outlined section showing the sets of the most recent session of which this lift was trained.
+    - The name of the session, the date, and the note for the session should be viewable, along with the muscle groups trained during.
+    - Optional ability to view the second most recent session as well as the third, fourth, etc.
 
 ### Misc. things to do:
 
