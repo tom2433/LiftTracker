@@ -14,7 +14,7 @@ split second paragraph of second info button of new switches
 
 change day to session everywhere
 
-make lift set in progress card's eight/rep note take up the same width as the value inputs
+make lift set in progress card's weight/rep note take up the same width as the value inputs
 
 ## 07-17
 
@@ -139,8 +139,7 @@ start also implementing the preferences table
     - Tools
     - Settings
 - [x] F2-1: Map menu drawer items with screens where applicable
-- [ ] F2-3: (Maybe) Animate hamburger menu so that it travels and rotates into an arrow
-- [ ] F3: Colorscheme:
+- [ ] (maybe) F3: Colorscheme:
     - Default to preset colorscheme
     - Toggle dynamic color
     - Toggle Dark theme
@@ -178,10 +177,9 @@ start also implementing the preferences table
 - [ ] F7: Implement Minimal Line Graphs for Muscle Group Cards and Lift Cards.
     - user must be able to change timeframe in preferences
     - show color representing status of improving, maintaining, or declining.
-- [ ] F6-1: Implement a [date range picker](https://developer.android.com/develop/ui/compose/components/datepickers#range) so the user can specify a custom range to view the lift statistics
-- [ ] F6-2: Implement the most recent lift sets at the bottom of LiftScreen
+- [ ] F6-1: Implement a [date range picker](https://developer.android.com/develop/ui/compose/components/datepickers#range) so the user can specify a custom range to view the lift statistics on the lift screen
 - [ ] F6-3: Replace the "% of overall set volume" and "% of set volume for {muscleGroup}" with pie charts
-- [ ] F8: (in progress) Implement the Record Session screen
+- [x] F8: Implement the Record Session screen
     - Clicking the Begin session nav drawer element will bring the user to the Record Session screen, which contains one large central button containing the Play Arrow icon.
     - Clicking this play arrow icon will create a new lift_day in the database, with the in_progress column set to true
         - if a session (lift_day) is in progress, the Begin Session nav drawer element will change its text to "Resume Session" and will change color to tertiary container.
@@ -189,10 +187,14 @@ start also implementing the preferences table
         - this header row contains a pencil icon on the left with the lift session's name and note directly beside it to the right, as well as today's date.
         - All the way on the right is the Finish button, which will delete the lift_day if the user has not recorded any lifts for it, or it will change the in_progress column of the current lift_day to false (current functionality).
     - Clicking the header row section with the pencil icon and lift_day name and note will popup an element entry dialog allowing the user to edit the name and note of the current session.
-        - **Need to implement:** when creating a lift, the user can click the day label and note to edit it, and when the name input pops up, some quick add buttons should also pop up. these should be able to be grouped in the analytics screen.
-- [ ] F8-1: Implement the viewing of historical data for each lift in progress. Button to animate the visibility of this data should be above the top lift set in progress card, and it should bring down an outlined section showing the sets of the most recent session of which this lift was trained.
+- [ ] F8-1: (in progress) Implement the viewing of historical data for each lift in progress. Button to animate the visibility of this data should be above the top lift set in progress card, and it should bring down an outlined section showing the sets of the most recent session of which this lift was trained.
     - The name of the session, the date, and the note for the session should be viewable, along with the muscle groups trained during.
     - Optional ability to view the second most recent session as well as the third, fourth, etc.
+- [ ] F8-2: Implement Session labels:
+    - Sessions will eventually be able to be categorized based on their name as well as their note.
+    - This functionality will be mostly utilized in the analytics screen, but as for the session in progress screen, the user should be able to expand a section for quick-add buttons for both the session name as well as the note.
+- [ ] F9: Implement the Sessions Screen
+- [ ] F6-2: Implement the most recent lift sets at the bottom of LiftScreen (use the same function as used for F8-1?)
 
 ### Misc. things to do:
 
@@ -515,3 +517,48 @@ Edited 15 files+268-256
 - ui/utils/Dialogs.ktui/utils/Dialogs.kt+25-25
 - ui/viewModels/LiftScreenViewModel.ktui/viewModels/LiftScreenViewModel.kt+44-44
 - ui/viewModels/LiftsViewModel.ktui/viewModels/LiftsViewModel.kt+56-56
+
+## F8_6.0
+
+### Table name change from ```lift_days``` to ```sessions```
+
+Version: 5.5 Extra High Effort
+
+**The purpose of this prompt was to not only change the name of this table and create a migration, but also to refactor all parts of the code that relied on this old table name. This also includes the UI.**
+
+You are to change all ocurrences of "day" when referencing a lift day to change to "session". The automatic day label creation should follow the same behavior, except it should use "Session 1", "Session 2", "Session 3", etc. The LiftDay data class should change name to Session, and its table name should change to sessions. All old references to the "lift_days" table should change to "sessions", including any foreign keys in the database and any variable names/values in the code. Ensure that this change is accommodated throughout all of the project code (including documentation and UI), and ensure that the code works. When migrating the database, change all of the old day_label values (now session_label) to follow the new "Session n" pattern. There should be no evidence that this table used to be named "lift_days" anywhere in the code. This includes the other columns in lift_sessions like day_number which will become session_number, and other columns in all other tables, like lift_day_id in lift_sets which will become session_id, day_set_number will become session_set_number, and muscle_group_day_set_number will become muscle_group_session_set_number. Also ensure that all queries to the backend are compatible as well. Look over all of the code in the entire project when you are finished to ensure that every single line of code that will be affected by this change is modified to accommodate this change.
+
+**Output**:
+
+Implemented the full “lift day” -> “session” rename across source, UI text, queries, repositories, and README.
+
+Key pieces:
+- Replaced LiftDay with Session under data/session.
+- Changed Room schema/table/columns to sessions, session_number, session_label, session_id, session_set_number, and muscle_group_session_set_number.
+- Added database migration 7 -> 8 in LiftTrackerDatabase.kt to rebuild sessions and lift_sets, including rewriting labels to Session n.
+- Updated automatic label creation to Session 1, Session 2, etc.
+- Swept backend queries and UI/domain wording; remaining “day” hits are calendar/date math only.
+- Exact legacy identifier search found no matches outside generated build/.gradle artifacts.
+
+Verification passed:
+.\gradlew.bat :app:testDebugUnitTest
+BUILD SUCCESSFUL with 26 tasks.
+
+Edited 16 files+567-362
+
+- Workspace/app/src/main/java/github/tom2433/lifttracker/data/LiftTrackerDatabase.kt+336-135
+- Workspace/app/src/main/java/github/tom2433/lifttracker/ui/viewModels/RecordSessionViewModel.kt+15-15
+- Workspace/app/src/main/java/github/tom2433/lifttracker/ui/screens/RecordSessionScreen.kt+31-30
+- Workspace/app/src/main/res/values/strings.xml+2-2
+- Workspace/app/src/main/java/github/tom2433/lifttracker/data/session/Session.kt+15-15
+- Workspace/app/src/main/java/github/tom2433/lifttracker/data/liftset/LiftSet.kt+7-7
+- Workspace/app/src/main/java/github/tom2433/lifttracker/data/session/SessionRepository.kt+26-26
+- Workspace/app/src/main/java/github/tom2433/lifttracker/data/session/OfflineSessionRepository.kt+2-2
+- Workspace/app/src/main/java/github/tom2433/lifttracker/data/session/SessionDao.kt+10-10
+- Workspace/app/src/main/java/github/tom2433/lifttracker/data/setmetric/SetMetricDao.kt+5-5
+- Workspace/app/src/main/java/github/tom2433/lifttracker/data/lift/LiftDao.kt+41-41
+- Workspace/app/src/main/java/github/tom2433/lifttracker/data/musclegroup/MuscleGroupDao.kt+9-9
+- Workspace/app/src/main/java/github/tom2433/lifttracker/ui/viewModels/DrawerViewModel.kt+2-2
+- Workspace/app/src/main/java/github/tom2433/lifttracker/data/setmetric/SetMetric.kt+2-2
+- README.md+37-34
+- .codex_session_rename.py.codex_session_rename.py+27-27
