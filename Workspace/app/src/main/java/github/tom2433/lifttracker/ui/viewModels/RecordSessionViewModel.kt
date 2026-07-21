@@ -5,8 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import github.tom2433.lifttracker.data.lift.Lift
 import github.tom2433.lifttracker.data.lift.LiftRepository
-import github.tom2433.lifttracker.data.liftday.LiftDay
-import github.tom2433.lifttracker.data.liftday.LiftDayRepository
+import github.tom2433.lifttracker.data.session.Session
+import github.tom2433.lifttracker.data.session.SessionRepository
 import github.tom2433.lifttracker.data.liftset.LiftSet
 import github.tom2433.lifttracker.data.liftset.LiftSetRepository
 import github.tom2433.lifttracker.data.profile.Profile
@@ -14,6 +14,7 @@ import github.tom2433.lifttracker.data.profile.ProfileRepository
 import github.tom2433.lifttracker.data.setmetric.SetMetric
 import github.tom2433.lifttracker.data.setmetric.SetMetricRepository
 import github.tom2433.lifttracker.data.structures.LiftSearchDetail
+import github.tom2433.lifttracker.data.structures.LiftSetCountPerMuscleGroup
 import github.tom2433.lifttracker.data.structures.RecordSessionLiftSetRow
 import github.tom2433.lifttracker.data.structures.SetMetricDisplayDetail
 import github.tom2433.lifttracker.data.utils.DateTimeCalculator
@@ -38,7 +39,7 @@ import kotlin.collections.emptyList
 @OptIn(ExperimentalCoroutinesApi::class)
 class RecordSessionViewModel(
     private val profileRepository: ProfileRepository,
-    private val liftDayRepository: LiftDayRepository,
+    private val sessionRepository: SessionRepository,
     private val liftRepository: LiftRepository,
     private val liftSetRepository: LiftSetRepository,
     private val setMetricRepository: SetMetricRepository
@@ -52,12 +53,12 @@ class RecordSessionViewModel(
     val toastEvents: SharedFlow<String> = _toastEvents.asSharedFlow()
 
     init {
-        // constant collection: retrieve active lift day for currently active profile
+        // constant collection: retrieve active session for currently active profile
         viewModelScope.launch {
-            liftDayRepository.getActiveLiftDayForActiveProfileStream().collect { thisLiftDay ->
+            sessionRepository.getActiveSessionForActiveProfileStream().collect { thisSession ->
                 _recordSessionUiState.update { currentState ->
                     currentState.copy(
-                        activeLiftDay = thisLiftDay
+                        activeSession = thisSession
                     )
                 }
             }
@@ -77,12 +78,12 @@ class RecordSessionViewModel(
         // constant collection: fill the liftSetMap. liftSetMap will always be updated for the UI state
         // also fill the liftSetVisible map to indicate which LiftSet cards are visible
         viewModelScope.launch {
-            liftDayRepository.getActiveLiftDayForActiveProfileStream()
-                .flatMapLatest { activeLiftDay ->
-                    if (activeLiftDay == null) {
+            sessionRepository.getActiveSessionForActiveProfileStream()
+                .flatMapLatest { activeSession ->
+                    if (activeSession == null) {
                         flowOf(emptyList())
                     } else {
-                        liftSetRepository.getRecordSessionLiftSetRowsForDayStream(activeLiftDay.id)
+                        liftSetRepository.getRecordSessionLiftSetRowsForSessionStream(activeSession.id)
                     }
                 }
                 .collect { rows -> // contains LiftSet objects
@@ -100,12 +101,12 @@ class RecordSessionViewModel(
 
         // constant collection: fill the liftDetailMap. liftDetailMap will always be updated for the UI state
         viewModelScope.launch {
-            liftDayRepository.getActiveLiftDayForActiveProfileStream()
-                .flatMapLatest { activeLiftDay ->
-                    if (activeLiftDay == null) {
+            sessionRepository.getActiveSessionForActiveProfileStream()
+                .flatMapLatest { activeSession ->
+                    if (activeSession == null) {
                         flowOf(emptyList())
                     } else {
-                        liftRepository.getLiftSearchDetailsForDayIdStream(activeLiftDay.id)
+                        liftRepository.getLiftSearchDetailsForSessionIdStream(activeSession.id)
                     }
                 }
                 .collect { rows ->
@@ -124,12 +125,12 @@ class RecordSessionViewModel(
 
         // constant collection: fill the setMetricDisplayDetailMap
         viewModelScope.launch {
-            liftDayRepository.getActiveLiftDayForActiveProfileStream()
-                .flatMapLatest { activeLiftDay ->
-                    if (activeLiftDay == null) {
+            sessionRepository.getActiveSessionForActiveProfileStream()
+                .flatMapLatest { activeSession ->
+                    if (activeSession == null) {
                         flowOf(emptyList())
                     } else {
-                        setMetricRepository.getSetMetricIdsFromDayIdStream(activeLiftDay.id)
+                        setMetricRepository.getSetMetricIdsFromSessionIdStream(activeSession.id)
                     }
                 }
                 .collect { setMetricIds ->
@@ -146,12 +147,12 @@ class RecordSessionViewModel(
         // constant collection: fill setCountPerLiftMap to count the number of sets per lift that
         // the user has logged so far.
         viewModelScope.launch {
-            liftDayRepository.getActiveLiftDayForActiveProfileStream()
-                .flatMapLatest { activeLiftDay ->
-                    if (activeLiftDay == null) {
+            sessionRepository.getActiveSessionForActiveProfileStream()
+                .flatMapLatest { activeSession ->
+                    if (activeSession == null) {
                         flowOf(emptyList())
                     } else {
-                        liftSetRepository.getLiftSetCountPerLiftIdForDayIdStream(activeLiftDay.id)
+                        liftSetRepository.getLiftSetCountPerLiftIdForSessionIdStream(activeSession.id)
                     }
                 }
                 .collect { liftSetCountPerLifts ->
@@ -165,15 +166,34 @@ class RecordSessionViewModel(
                 }
         }
 
+        // constant collection: fill the setCountPerMuscleGroupPairList
+        viewModelScope.launch {
+            sessionRepository.getActiveSessionForActiveProfileStream()
+                .flatMapLatest { activeSession ->
+                    if (activeSession == null) {
+                        flowOf(emptyList())
+                    } else {
+                        sessionRepository.getSetCountPerMuscleGroupForSessionIdStream(activeSession.id)
+                    }
+                }
+                .collect { liftSetCountPerMuscleGroups ->
+                    _recordSessionUiState.update { currentState ->
+                        currentState.copy(
+                            setCountPerMuscleGroupList = liftSetCountPerMuscleGroups
+                        )
+                    }
+                }
+        }
+
         // collect once at the beginning: fill the setMetricDisplayDetailMap with values from the
         // database when this viewModel is destroyed and re-created
         // this helps to avoid losing the displayed data when closing the app or switching to
         // a different screen
         viewModelScope.launch {
-            val setMetricList: List<SetMetric> = setMetricRepository.getSetMetricsFromActiveDay()
+            val setMetricList: List<SetMetric> = setMetricRepository.getSetMetricsFromActiveSession()
 
             // fill the setMetricDisplayDetailMap if the list of setMetrics returned is not empty
-            // (meaning that a day is already in progress that has not been accounted for)
+            // (meaning that a session is already in progress that has not been accounted for)
             if (setMetricList.isNotEmpty()) {
                 _recordSessionUiState.update { currentState ->
                     currentState.copy(
@@ -236,7 +256,7 @@ class RecordSessionViewModel(
     private fun revealPendingLiftSetIfReady() {
         val pendingLiftSetId = liftSetIdPendingReveal ?: return
 
-        var pendingLiftSetIsReady: Boolean = false
+        var pendingLiftSetIsReady = false
 
         for (nestedMap in _recordSessionUiState.value.liftSetMap.values) {
             for (liftSet in nestedMap.keys) {
@@ -393,18 +413,18 @@ class RecordSessionViewModel(
     }
 
     fun beginSession() {
-        // need to create a lift day object that is active. the flows defined in init {} should
-        // automatically update the activeLiftDay for RecordSessionUiState
+        // need to create a session object that is active. the flows defined in init {} should
+        // automatically update the activeSession for RecordSessionUiState
         viewModelScope.launch {
             val activeProfileId: Int = _recordSessionUiState.value.activeProfile?.id ?: return@launch
-            val dayNum: Int = liftDayRepository.getNextDayNumber(activeProfileId)
+            val sessionNum: Int = sessionRepository.getNextSessionNumber(activeProfileId)
 
-            liftDayRepository.insertLiftDay(
-                liftDay = LiftDay(
+            sessionRepository.insertSession(
+                session = Session(
                     in_progress = true,
                     profile_id = activeProfileId,
-                    day_number = dayNum,
-                    day_label = "Day $dayNum",
+                    session_number = sessionNum,
+                    session_label = "Session $sessionNum",
                     date = DateTimeCalculator.getCurrentIsoDate(),
                     note = ""
                 )
@@ -440,21 +460,21 @@ class RecordSessionViewModel(
         viewModelScope.launch {
             // if default set metrics are still remaining, delete their LiftSets
             if (defaultLiftSets.isNotEmpty()) {
-                for (liftSet in defaultLiftSets.sortedByDescending { it.day_set_number }) {
+                for (liftSet in defaultLiftSets.sortedByDescending { it.session_set_number }) {
                     liftSetRepository.deleteLiftSet(liftSet)
                 }
             }
 
-            val activeLiftDay: LiftDay = _recordSessionUiState.value.activeLiftDay ?: return@launch
+            val activeSession: Session = _recordSessionUiState.value.activeSession ?: return@launch
 
-            // if there are no remaining valid lift sets, delete this day
+            // if there are no remaining valid lift sets, delete this session
             if (validLiftSets.isEmpty()) {
-                liftDayRepository.deleteLiftDay(activeLiftDay)
+                sessionRepository.deleteSession(activeSession)
                 _toastEvents.emit("Nothing Saved")
             } else {
-                // otherwise, save this lift day by setting in progress = false
-                liftDayRepository.updateLiftDay(
-                    liftDay = activeLiftDay.copy(
+                // otherwise, save this session by setting in progress = false
+                sessionRepository.updateSession(
+                    session = activeSession.copy(
                         in_progress = false
                     )
                 )
@@ -464,66 +484,66 @@ class RecordSessionViewModel(
         }
     }
 
-    fun showDayEditDialog() {
-        val currentActiveDay: LiftDay = _recordSessionUiState.value.activeLiftDay ?: return
+    fun showSessionEditDialog() {
+        val currentActiveSession: Session = _recordSessionUiState.value.activeSession ?: return
 
         _recordSessionUiState.update { currentState ->
             currentState.copy(
-                dayEditDialogVisible = true,
-                newDayName = currentActiveDay.day_label,
-                newDayNote = currentActiveDay.note
+                sessionEditDialogVisible = true,
+                newSessionName = currentActiveSession.session_label,
+                newSessionNote = currentActiveSession.note
             )
         }
     }
 
-    fun dismissDayEditDialog() {
+    fun dismissSessionEditDialog() {
         _recordSessionUiState.update { currentState ->
             currentState.copy(
-                dayEditDialogVisible = false,
-                newDayName = "",
-                newDayNote = ""
+                sessionEditDialogVisible = false,
+                newSessionName = "",
+                newSessionNote = ""
             )
         }
     }
 
-    fun validateDayInput(): Boolean {
-        return (_recordSessionUiState.value.newDayName.isNotBlank())
+    fun validateSessionInput(): Boolean {
+        return (_recordSessionUiState.value.newSessionName.isNotBlank())
     }
 
-    fun updateNewDayName(newDayName: String) {
+    fun updateNewSessionName(newSessionName: String) {
         _recordSessionUiState.update { currentState ->
             currentState.copy(
-                newDayName = newDayName
+                newSessionName = newSessionName
             )
         }
     }
 
-    fun updateNewDayNote(newDayNote: String) {
+    fun updateNewSessionNote(newSessionNote: String) {
         _recordSessionUiState.update { currentState ->
             currentState.copy(
-                newDayNote = newDayNote
+                newSessionNote = newSessionNote
             )
         }
     }
 
-    fun updateDayNameAndNote() {
-        if (!validateDayInput()) {
+    fun updateSessionNameAndNote() {
+        if (!validateSessionInput()) {
             return
         }
 
         viewModelScope.launch {
-            val currentActiveDay: LiftDay = _recordSessionUiState.value.activeLiftDay ?: return@launch
+            val currentActiveSession: Session = _recordSessionUiState.value.activeSession ?: return@launch
 
-            // update day name and note in database
-            liftDayRepository.updateLiftDay(
-                liftDay = currentActiveDay.copy(
-                    day_label = _recordSessionUiState.value.newDayName,
-                    note = _recordSessionUiState.value.newDayNote
+            // update session name and note in database
+            sessionRepository.updateSession(
+                session = currentActiveSession.copy(
+                    session_label = _recordSessionUiState.value.newSessionName,
+                    note = _recordSessionUiState.value.newSessionNote
                 )
             )
 
-            // dismiss day edit dialog
-            dismissDayEditDialog()
+            // dismiss session edit dialog
+            dismissSessionEditDialog()
         }
     }
 
@@ -661,20 +681,20 @@ class RecordSessionViewModel(
             _recordSessionUiState.value.liftSuggestionsList.getSelected()
                 ?: return
 
-        val activeDay: LiftDay =
-            _recordSessionUiState.value.activeLiftDay ?: return
+        val activeSession: Session =
+            _recordSessionUiState.value.activeSession ?: return
 
         // swipe away existingLiftEntryCard since selected lift has been found
         cancelAddLift()
 
         liftIdPendingReveal = selectedLift.liftObj.id
 
-        // insert new lift set for active day and selected lift
+        // insert new lift set for active session and selected lift
         // this will automatically create two lift set metrics
         // UI will also update since liftSetMap will recognize the addition
         viewModelScope.launch {
             liftSetRepository.insertLiftSet(
-                liftDayId = activeDay.id,
+                sessionId = activeSession.id,
                 liftId = selectedLift.liftObj.id
             )
         }
@@ -728,7 +748,7 @@ class RecordSessionViewModel(
         // retrieve all lift sets to delete in descending order
         val liftSetsToDelete: List<LiftSet> =
             _recordSessionUiState.value.liftSetMap[idToDelete]?.keys?.sortedByDescending { liftSet ->
-                liftSet.day_set_number
+                liftSet.session_set_number
             } ?: return
 
         viewModelScope.launch {
@@ -887,10 +907,10 @@ class RecordSessionViewModel(
 
     fun addLiftSetForLiftId(liftId: Int) {
         viewModelScope.launch {
-            val activeLiftDayId = _recordSessionUiState.value.activeLiftDay?.id ?: return@launch
+            val activeSessionId = _recordSessionUiState.value.activeSession?.id ?: return@launch
 
             val newLiftSetId = liftSetRepository.insertLiftSet(
-                liftDayId = activeLiftDayId,
+                sessionId = activeSessionId,
                 liftId = liftId
             )
 
@@ -1112,10 +1132,10 @@ class RecordSessionViewModel(
  */
 data class RecordSessionUiState(
     val activeProfile: Profile? = null,
-    val activeLiftDay: LiftDay? = null,
-    val dayEditDialogVisible: Boolean = false,
-    val newDayName: String = "",
-    val newDayNote: String = "",
+    val activeSession: Session? = null,
+    val sessionEditDialogVisible: Boolean = false,
+    val newSessionName: String = "",
+    val newSessionNote: String = "",
     val userIsAddingLift: Boolean = false,
     val inputLiftName: String = "",
     val liftSuggestionsList: List<LiftSearchDetail> = emptyList(),
@@ -1129,6 +1149,8 @@ data class RecordSessionUiState(
     val liftSetVisibleMap: Map<Int, Boolean> = emptyMap(),
     // Map(LiftSetId -> number of completed sets for that lift)
     val setCountPerLiftMap: Map<Int, Int> = emptyMap(),
+    // List(Pair(Muscle group name, number of sets))
+    val setCountPerMuscleGroupList: List<LiftSetCountPerMuscleGroup> = emptyList(),
     val deleteLiftInProgressDialogVisible: Boolean = false,
     val liftIdToDelete: Int = -1,
     val editLiftSetDialogVisible: Boolean = false,

@@ -1,12 +1,12 @@
 package github.tom2433.lifttracker.ui.navigation
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.navArgument
 import github.tom2433.lifttracker.ui.screens.AnalyticsDestination
 import github.tom2433.lifttracker.ui.screens.AnalyticsScreen
 import github.tom2433.lifttracker.ui.screens.CalendarDestination
@@ -25,6 +25,7 @@ import github.tom2433.lifttracker.ui.screens.ToolsScreen
 /**
  * Provides Navigation Graph for the application
  */
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun LiftTrackerNavHost(
     navController: NavHostController,

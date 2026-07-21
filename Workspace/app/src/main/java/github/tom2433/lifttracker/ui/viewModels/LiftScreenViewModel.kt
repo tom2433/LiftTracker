@@ -170,7 +170,7 @@ class LiftScreenViewModel(
         // Today's value is generated internally and is therefore valid; this fallback keeps initialization safe if that contract changes. - Codex
         val todayEpochDay = DateTimeCalculator.parseIsoDateToEpochDay(today) ?: return today
 
-        // Convert the shifted UTC epoch day back to the ISO format stored by lift_days.date. - Codex
+        // Convert the shifted UTC epoch day back to the ISO format stored by sessions.date. - Codex
         return DateTimeCalculator.createIsoDateFormatter().format(
             Date((todayEpochDay - daysBeforeToday) * DateTimeCalculator.MILLIS_PER_DAY)
         )
@@ -422,7 +422,7 @@ class LiftScreenViewModel(
 
         viewModelScope.launch {
             if (_liftScreenUiState.value.selectedMuscleGroup != null) {
-                // let the backend handle all of the renumbering and transfer
+                // let the backend handle all the renumbering and transfer
                 liftRepository.moveLiftToMuscleGroup(
                     lift = _liftScreenUiState.value.lift,
                     newMuscleGroupId = _liftScreenUiState.value.selectedMuscleGroup!!.id,
@@ -455,7 +455,7 @@ class LiftScreenViewModel(
     fun filterChipClicked(keyClicked: String) {
         _liftScreenUiState.update { currentState ->
             currentState.copy(
-                statDisplayFilterMap = currentState.statDisplayFilterMap.mapValues { (chipLabel, selected) ->
+                statDisplayFilterMap = currentState.statDisplayFilterMap.mapValues { (chipLabel, _) ->
                     keyClicked == chipLabel
                 }
             )

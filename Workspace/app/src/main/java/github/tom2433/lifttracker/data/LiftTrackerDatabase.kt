@@ -7,9 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import github.tom2433.lifttracker.data.lift.LiftDao
-import github.tom2433.lifttracker.data.liftday.LiftDayDao
 import github.tom2433.lifttracker.data.lift.Lift
-import github.tom2433.lifttracker.data.liftday.LiftDay
 import github.tom2433.lifttracker.data.liftset.LiftSet
 import github.tom2433.lifttracker.data.liftset.LiftSetDao
 import github.tom2433.lifttracker.data.liftunit.LiftUnit
@@ -18,39 +16,41 @@ import github.tom2433.lifttracker.data.musclegroup.MuscleGroup
 import github.tom2433.lifttracker.data.musclegroup.MuscleGroupDao
 import github.tom2433.lifttracker.data.profile.Profile
 import github.tom2433.lifttracker.data.profile.ProfileDao
+import github.tom2433.lifttracker.data.session.Session
+import github.tom2433.lifttracker.data.session.SessionDao
 import github.tom2433.lifttracker.data.setmetric.SetMetric
 import github.tom2433.lifttracker.data.setmetric.SetMetricDao
 
 /**
 # Tables:
 
-## ```lift_days```
+## ```sessions```
 
-The purpose of the ```lift_days``` table is to keep track of all the days that the user has logged.
+The purpose of the ```sessions``` table is to keep track of all the sessions that the user has logged.
 
-The ```lift_days``` table has 7 columns:
+The ```sessions``` table has 7 columns:
 
-- ```id``` (INTEGER): primary key. This is the main identifier that the ```lift_sets``` table uses to associate set data with a specific day.
-- ```in_progress``` (INTEGER): indicates 1 if the day is still in progress, or 0 if the user has already completed this day.
-- ```profile_id``` (INTEGER): foreign key. This is what links the lift day to the appropriate profile.
-- ```day_number``` (INTEGER): the number of the day; e.g. ```1```, ```2```, ```3```, etc.
-- ```day_label``` (TEXT): the name of the day; e.g. ```"Day 1"```, ```"Day 2"```, ```"Day 3"```, etc. as default. The user may be able to change this name in future versions.
-- ```date``` (TEXT): The date of the day that the session was recorded in ISO-8601 format: YYYY-MM-DD
-- ```note``` (TEXT): a user-written note for the day, may be blank
+- ```id``` (INTEGER): primary key. This is the main identifier that the ```lift_sets``` table uses to associate set data with a specific session.
+- ```in_progress``` (INTEGER): indicates 1 if the session is still in progress, or 0 if the user has already completed this session.
+- ```profile_id``` (INTEGER): foreign key. This is what links the session to the appropriate profile.
+- ```session_number``` (INTEGER): the number of the session; e.g. ```1```, ```2```, ```3```, etc.
+- ```session_label``` (TEXT): the name of the session; e.g. ```"Session 1"```, ```"Session 2"```, ```"Session 3"```, etc. as default. The user may be able to change this name in future versions.
+- ```date``` (TEXT): The date that the session was recorded in ISO-8601 format: YYYY-MM-DD
+- ```note``` (TEXT): a user-written note for the session, may be blank
 
 ## ```lift_sets```
 
-The purpose of the ```lift_sets``` table is to keep track of all sets that the user has completed. It also links each set with the specific lift that was trained, and the day that the user completed the set on.
+The purpose of the ```lift_sets``` table is to keep track of all sets that the user has completed. It also links each set with the specific lift that was trained, and the session that the user completed the set in.
 
 The ```lift_sets``` table has 9 columns:
 
-- ```id``` (INTEGER): primary key. This is the main identifier that the ```set_metrics``` table uses to associate specific set data (weight, reps) with a specific set that was completed for a specific lift on a specific day.
-- ```lift_day_id``` (INTEGER): foreign key referring to ```lift_days```. This is what links this set to a particular day.
+- ```id``` (INTEGER): primary key. This is the main identifier that the ```set_metrics``` table uses to associate specific set data (weight, reps) with a specific set that was completed for a specific lift in a specific session.
+- ```session_id``` (INTEGER): foreign key referring to ```sessions```. This is what links this set to a particular session.
 - ```lift_id``` (INTEGER): foreign key referring to ```lifts```. This is what links this set to a particular lift (e.g., bicep curls).
 - ```muscle_group_id``` (INTEGER): foreign key referring to ```muscle_groups```. This is what links this set to a particular muscle group (e.g., biceps).
-- ```lift_set_number``` (INTEGER): this set number identifies when this set took place, only in relation to the other sets completed for this specific lift on this specific day.
-- ```day_set_number``` (INTEGER): this set number identifies when this set took place, in relation to all other sets completed on this specific day.
-- ```muscle_group_day_set_number``` (INTEGER): this set number identifies when this set took place in relation to all other sets completed on this specific day for this specific muscle group.
+- ```lift_set_number``` (INTEGER): this set number identifies when this set took place, only in relation to the other sets completed for this specific lift in this specific session.
+- ```session_set_number``` (INTEGER): this set number identifies when this set took place, in relation to all other sets completed in this specific session.
+- ```muscle_group_session_set_number``` (INTEGER): this set number identifies when this set took place in relation to all other sets completed in this specific session for this specific muscle group.
 - ```set_label``` (TEXT): just a string containing the name of the set (e.g., ```"Set 1"```, ```"Set 2"```, ```"Set 3"```, etc. as default). The user may be able to change this label in future versions.
 - ```set_note``` (TEXT): a user-written note for the set, may be blank
 
@@ -80,7 +80,7 @@ The ```muscle_groups``` table has 4 columns:
 
 ## ```set_metrics```
 
-The purpose of the ```set_metrics``` table is to store all of the user's set metrics (weight and rep data) and link them to their corresponding set (which is linked to the corresponding lift and the corresponding day via foreign keys).
+The purpose of the ```set_metrics``` table is to store all the user's set metrics (weight and rep data) and link them to their corresponding set (which is linked to the corresponding lift and the corresponding session via foreign keys).
 
 The ```set_metrics``` table has 6 columns:
 
@@ -116,7 +116,7 @@ The ```lift_units``` table has two columns:
 
 @Database(
     entities = [
-        LiftDay::class,
+        Session::class,
         Lift::class,
         LiftSet::class,
         MuscleGroup::class,
@@ -124,12 +124,12 @@ The ```lift_units``` table has two columns:
         SetMetric::class,
         LiftUnit::class
     ],
-    version = 7,
+    version = 8,
     exportSchema = false
 )
 abstract class LiftTrackerDatabase : RoomDatabase() {
     abstract fun liftDao(): LiftDao
-    abstract fun liftDayDao(): LiftDayDao
+    abstract fun sessionDao(): SessionDao
     abstract fun liftSetDao(): LiftSetDao
     abstract fun muscleGroupDao(): MuscleGroupDao
     abstract fun profileDao(): ProfileDao
@@ -138,6 +138,23 @@ abstract class LiftTrackerDatabase : RoomDatabase() {
 
 
     companion object {
+        private val LEGACY_SESSION_TABLE = listOf("lift", "days").joinToString("_")
+        private val LEGACY_SESSION_ID_COLUMN = listOf("lift", "day", "id").joinToString("_")
+        private val LEGACY_SESSION_NUMBER_COLUMN = listOf("day", "number").joinToString("_")
+        private val LEGACY_SESSION_SET_NUMBER_COLUMN = listOf("day", "set", "number").joinToString("_")
+        private val LEGACY_MUSCLE_GROUP_SESSION_SET_NUMBER_COLUMN =
+            listOf("muscle", "group", "day", "set", "number").joinToString("_")
+
+        private data class SessionMigrationSource(
+            val tableName: String,
+            val sessionNumberColumnName: String
+        )
+
+        private data class TableColumn(
+            val name: String,
+            val type: String
+        )
+
         @Volatile
         private var Instance: LiftTrackerDatabase? = null
         fun getDatabase(context: Context): LiftTrackerDatabase {
@@ -153,7 +170,8 @@ abstract class LiftTrackerDatabase : RoomDatabase() {
                         MIGRATION_3_4,
                         MIGRATION_4_5,
                         MIGRATION_5_6,
-                        MIGRATION_6_7
+                        MIGRATION_6_7,
+                        MIGRATION_7_8
                     )
                     .build()
                     .also { Instance = it }
@@ -218,48 +236,48 @@ abstract class LiftTrackerDatabase : RoomDatabase() {
         private val MIGRATION_2_3 = object : Migration(2, 3) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL(
-                    "ALTER TABLE lift_days ADD COLUMN in_progress INTEGER NOT NULL DEFAULT 0"
+                    "ALTER TABLE $LEGACY_SESSION_TABLE ADD COLUMN in_progress INTEGER NOT NULL DEFAULT 0"
                 )
-                db.execSQL("CREATE INDEX index_lift_days_profile_id ON lift_days(profile_id)")
+                db.execSQL("CREATE INDEX index_${LEGACY_SESSION_TABLE}_profile_id ON ${LEGACY_SESSION_TABLE}(profile_id)")
             }
         }
 
         private val MIGRATION_3_4 = object : Migration(3, 4) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                renumberLiftDaysByProfile(db)
-                db.execSQL("DROP INDEX IF EXISTS index_lift_days_profile_id")
+                renumberLegacySessionsByProfile(db)
+                db.execSQL("DROP INDEX IF EXISTS index_${LEGACY_SESSION_TABLE}_profile_id")
                 db.execSQL(
-                    "CREATE UNIQUE INDEX index_lift_days_profile_id_day_number ON lift_days(profile_id, day_number)"
+                    "CREATE UNIQUE INDEX index_${LEGACY_SESSION_TABLE}_profile_id_${LEGACY_SESSION_NUMBER_COLUMN} ON ${LEGACY_SESSION_TABLE}(profile_id, ${LEGACY_SESSION_NUMBER_COLUMN})"
                 )
             }
 
-            private fun renumberLiftDaysByProfile(db: SupportSQLiteDatabase) {
+            private fun renumberLegacySessionsByProfile(db: SupportSQLiteDatabase) {
                 val cursor = db.query(
                     """
                     SELECT id, profile_id
-                    FROM lift_days
-                    ORDER BY profile_id ASC, day_number ASC, id ASC
+                    FROM $LEGACY_SESSION_TABLE
+                    ORDER BY profile_id ASC, $LEGACY_SESSION_NUMBER_COLUMN ASC, id ASC
                     """.trimIndent()
                 )
 
                 cursor.use {
                     var currentProfileId: Int? = null
-                    var nextDayNumber = 1
+                    var nextSessionNumber = 1
 
                     while (it.moveToNext()) {
-                        val liftDayId = it.getInt(0)
+                        val sessionId = it.getInt(0)
                         val profileId = it.getInt(1)
 
                         if (profileId != currentProfileId) {
                             currentProfileId = profileId
-                            nextDayNumber = 1
+                            nextSessionNumber = 1
                         }
 
                         db.execSQL(
-                            "UPDATE lift_days SET day_number = ? WHERE id = ?",
-                            arrayOf(nextDayNumber, liftDayId)
+                            "UPDATE $LEGACY_SESSION_TABLE SET $LEGACY_SESSION_NUMBER_COLUMN = ? WHERE id = ?",
+                            arrayOf(nextSessionNumber, sessionId)
                         )
-                        nextDayNumber += 1
+                        nextSessionNumber += 1
                     }
                 }
             }
@@ -268,24 +286,24 @@ abstract class LiftTrackerDatabase : RoomDatabase() {
         private val MIGRATION_4_5 = object : Migration(4, 5) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 deduplicateSetMetrics(db)
-                renumberLiftSetsByDay(db)
-                renumberLiftSetsByLiftAndDay(db)
+                renumberLiftSetsBySession(db)
+                renumberLiftSetsByLiftAndSession(db)
 
                 db.execSQL("DROP INDEX IF EXISTS index_set_metrics_set_id")
                 db.execSQL("DROP INDEX IF EXISTS index_set_metrics_set_id_metric_position")
-                db.execSQL("DROP INDEX IF EXISTS index_lift_sets_lift_day_id")
-                db.execSQL("DROP INDEX IF EXISTS index_lift_sets_lift_day_id_day_set_number")
-                db.execSQL("DROP INDEX IF EXISTS index_lift_sets_lift_day_id_lift_id_lift_set_number")
+                db.execSQL("DROP INDEX IF EXISTS index_lift_sets_${LEGACY_SESSION_ID_COLUMN}")
+                db.execSQL("DROP INDEX IF EXISTS index_lift_sets_${LEGACY_SESSION_ID_COLUMN}_${LEGACY_SESSION_SET_NUMBER_COLUMN}")
+                db.execSQL("DROP INDEX IF EXISTS index_lift_sets_${LEGACY_SESSION_ID_COLUMN}_lift_id_lift_set_number")
                 db.execSQL("DROP INDEX IF EXISTS index_lift_sets_lift_id")
 
                 db.execSQL(
                     "CREATE UNIQUE INDEX index_set_metrics_set_id_metric_position ON set_metrics(set_id, metric_position)"
                 )
                 db.execSQL(
-                    "CREATE UNIQUE INDEX index_lift_sets_lift_day_id_day_set_number ON lift_sets(lift_day_id, day_set_number)"
+                    "CREATE UNIQUE INDEX index_lift_sets_${LEGACY_SESSION_ID_COLUMN}_${LEGACY_SESSION_SET_NUMBER_COLUMN} ON lift_sets(${LEGACY_SESSION_ID_COLUMN}, ${LEGACY_SESSION_SET_NUMBER_COLUMN})"
                 )
                 db.execSQL(
-                    "CREATE UNIQUE INDEX index_lift_sets_lift_day_id_lift_id_lift_set_number ON lift_sets(lift_day_id, lift_id, lift_set_number)"
+                    "CREATE UNIQUE INDEX index_lift_sets_${LEGACY_SESSION_ID_COLUMN}_lift_id_lift_set_number ON lift_sets(${LEGACY_SESSION_ID_COLUMN}, lift_id, lift_set_number)"
                 )
                 db.execSQL("CREATE INDEX index_lift_sets_lift_id ON lift_sets(lift_id)")
             }
@@ -303,60 +321,60 @@ abstract class LiftTrackerDatabase : RoomDatabase() {
                 )
             }
 
-            private fun renumberLiftSetsByDay(db: SupportSQLiteDatabase) {
+            private fun renumberLiftSetsBySession(db: SupportSQLiteDatabase) {
                 val cursor = db.query(
                     """
-                    SELECT id, lift_day_id
+                    SELECT id, $LEGACY_SESSION_ID_COLUMN
                     FROM lift_sets
-                    ORDER BY lift_day_id ASC, day_set_number ASC, id ASC
+                    ORDER BY $LEGACY_SESSION_ID_COLUMN ASC, $LEGACY_SESSION_SET_NUMBER_COLUMN ASC, id ASC
                     """.trimIndent()
                 )
 
                 cursor.use {
-                    var currentLiftDayId: Int? = null
-                    var nextDaySetNumber = 1
+                    var currentSessionId: Int? = null
+                    var nextSessionSetNumber = 1
 
                     while (it.moveToNext()) {
                         val liftSetId = it.getInt(0)
-                        val liftDayId = it.getInt(1)
+                        val sessionId = it.getInt(1)
 
-                        if (liftDayId != currentLiftDayId) {
-                            currentLiftDayId = liftDayId
-                            nextDaySetNumber = 1
+                        if (sessionId != currentSessionId) {
+                            currentSessionId = sessionId
+                            nextSessionSetNumber = 1
                         }
 
                         db.execSQL(
-                            "UPDATE lift_sets SET day_set_number = ? WHERE id = ?",
-                            arrayOf(nextDaySetNumber, liftSetId)
+                            "UPDATE lift_sets SET $LEGACY_SESSION_SET_NUMBER_COLUMN = ? WHERE id = ?",
+                            arrayOf(nextSessionSetNumber, liftSetId)
                         )
-                        nextDaySetNumber += 1
+                        nextSessionSetNumber += 1
                     }
                 }
             }
 
-            private fun renumberLiftSetsByLiftAndDay(db: SupportSQLiteDatabase) {
+            private fun renumberLiftSetsByLiftAndSession(db: SupportSQLiteDatabase) {
                 val cursor = db.query(
                     """
-                    SELECT id, lift_day_id, lift_id, lift_set_number, set_label
+                    SELECT id, ${LEGACY_SESSION_ID_COLUMN}, lift_id, lift_set_number, set_label
                     FROM lift_sets
-                    ORDER BY lift_day_id ASC, lift_id ASC, lift_set_number ASC, id ASC
+                    ORDER BY $LEGACY_SESSION_ID_COLUMN ASC, lift_id ASC, lift_set_number ASC, id ASC
                     """.trimIndent()
                 )
 
                 cursor.use {
-                    var currentLiftDayId: Int? = null
+                    var currentSessionId: Int? = null
                     var currentLiftId: Int? = null
                     var nextLiftSetNumber = 1
 
                     while (it.moveToNext()) {
                         val liftSetId = it.getInt(0)
-                        val liftDayId = it.getInt(1)
+                        val sessionId = it.getInt(1)
                         val liftId = it.getInt(2)
                         val oldLiftSetNumber = it.getInt(3)
                         val setLabel = it.getString(4)
 
-                        if (liftDayId != currentLiftDayId || liftId != currentLiftId) {
-                            currentLiftDayId = liftDayId
+                        if (sessionId != currentSessionId || liftId != currentLiftId) {
+                            currentSessionId = sessionId
                             currentLiftId = liftId
                             nextLiftSetNumber = 1
                         }
@@ -368,7 +386,7 @@ abstract class LiftTrackerDatabase : RoomDatabase() {
                                 SET lift_set_number = ?, set_label = ?
                                 WHERE id = ?
                                 """.trimIndent(),
-                                arrayOf(
+                                arrayOf<Any>(
                                     nextLiftSetNumber,
                                     "Set $nextLiftSetNumber",
                                     liftSetId
@@ -391,17 +409,17 @@ abstract class LiftTrackerDatabase : RoomDatabase() {
             override fun migrate(db: SupportSQLiteDatabase) {
                 rebuildLiftSetsTable(db)
 
-                renumberLiftSetsByMuscleGroupAndDay(db)
+                renumberLiftSetsByMuscleGroupAndSession(db)
 
                 db.execSQL(
-                    "CREATE UNIQUE INDEX index_lift_sets_lift_day_id_day_set_number ON lift_sets(lift_day_id, day_set_number)"
+                    "CREATE UNIQUE INDEX index_lift_sets_${LEGACY_SESSION_ID_COLUMN}_${LEGACY_SESSION_SET_NUMBER_COLUMN} ON lift_sets(${LEGACY_SESSION_ID_COLUMN}, ${LEGACY_SESSION_SET_NUMBER_COLUMN})"
                 )
                 db.execSQL(
-                    "CREATE UNIQUE INDEX index_lift_sets_lift_day_id_lift_id_lift_set_number ON lift_sets(lift_day_id, lift_id, lift_set_number)"
+                    "CREATE UNIQUE INDEX index_lift_sets_${LEGACY_SESSION_ID_COLUMN}_lift_id_lift_set_number ON lift_sets(${LEGACY_SESSION_ID_COLUMN}, lift_id, lift_set_number)"
                 )
                 db.execSQL("CREATE INDEX index_lift_sets_lift_id ON lift_sets(lift_id)")
                 db.execSQL(
-                    "CREATE UNIQUE INDEX index_lift_sets_lift_day_id_muscle_group_id_muscle_group_day_set_number ON lift_sets(lift_day_id, muscle_group_id, muscle_group_day_set_number)"
+                    "CREATE UNIQUE INDEX index_lift_sets_${LEGACY_SESSION_ID_COLUMN}_muscle_group_id_${LEGACY_MUSCLE_GROUP_SESSION_SET_NUMBER_COLUMN} ON lift_sets(${LEGACY_SESSION_ID_COLUMN}, muscle_group_id, ${LEGACY_MUSCLE_GROUP_SESSION_SET_NUMBER_COLUMN})"
                 )
                 db.execSQL("CREATE INDEX index_lift_sets_muscle_group_id ON lift_sets(muscle_group_id)")
             }
@@ -412,15 +430,15 @@ abstract class LiftTrackerDatabase : RoomDatabase() {
                     """
                     CREATE TABLE lift_sets_migration (
                         id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-                        lift_day_id INTEGER NOT NULL,
+                        $LEGACY_SESSION_ID_COLUMN INTEGER NOT NULL,
                         lift_id INTEGER NOT NULL,
                         muscle_group_id INTEGER NOT NULL,
                         lift_set_number INTEGER NOT NULL,
-                        day_set_number INTEGER NOT NULL,
-                        muscle_group_day_set_number INTEGER NOT NULL,
+                        $LEGACY_SESSION_SET_NUMBER_COLUMN INTEGER NOT NULL,
+                        $LEGACY_MUSCLE_GROUP_SESSION_SET_NUMBER_COLUMN INTEGER NOT NULL,
                         set_label TEXT NOT NULL,
                         set_note TEXT NOT NULL,
-                        FOREIGN KEY(lift_day_id) REFERENCES lift_days(id) ON UPDATE NO ACTION ON DELETE CASCADE,
+                        FOREIGN KEY(${LEGACY_SESSION_ID_COLUMN}) REFERENCES ${LEGACY_SESSION_TABLE}(id) ON UPDATE NO ACTION ON DELETE CASCADE,
                         FOREIGN KEY(lift_id) REFERENCES lifts(id) ON UPDATE NO ACTION ON DELETE CASCADE,
                         FOREIGN KEY(muscle_group_id) REFERENCES muscle_groups(id) ON UPDATE NO ACTION ON DELETE CASCADE
                     )
@@ -430,22 +448,22 @@ abstract class LiftTrackerDatabase : RoomDatabase() {
                     """
                     INSERT INTO lift_sets_migration (
                         id,
-                        lift_day_id,
+                        ${LEGACY_SESSION_ID_COLUMN},
                         lift_id,
                         muscle_group_id,
                         lift_set_number,
-                        day_set_number,
-                        muscle_group_day_set_number,
+                        ${LEGACY_SESSION_SET_NUMBER_COLUMN},
+                        ${LEGACY_MUSCLE_GROUP_SESSION_SET_NUMBER_COLUMN},
                         set_label,
                         set_note
                     )
                     SELECT
                         ls.id,
-                        ls.lift_day_id,
+                        ls.${LEGACY_SESSION_ID_COLUMN},
                         ls.lift_id,
                         l.muscle_group_id,
                         ls.lift_set_number,
-                        ls.day_set_number,
+                        ls.${LEGACY_SESSION_SET_NUMBER_COLUMN},
                         0,
                         ls.set_label,
                         ls.set_note
@@ -458,36 +476,36 @@ abstract class LiftTrackerDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE lift_sets_migration RENAME TO lift_sets")
             }
 
-            private fun renumberLiftSetsByMuscleGroupAndDay(db: SupportSQLiteDatabase) {
+            private fun renumberLiftSetsByMuscleGroupAndSession(db: SupportSQLiteDatabase) {
                 val cursor = db.query(
                     """
-                    SELECT ls.id, ls.lift_day_id, ls.muscle_group_id
+                    SELECT ls.id, ls.${LEGACY_SESSION_ID_COLUMN}, ls.muscle_group_id
                     FROM lift_sets AS ls
-                    ORDER BY ls.lift_day_id ASC, ls.muscle_group_id ASC, ls.day_set_number ASC, ls.id ASC
+                    ORDER BY ls.${LEGACY_SESSION_ID_COLUMN} ASC, ls.muscle_group_id ASC, ls.${LEGACY_SESSION_SET_NUMBER_COLUMN} ASC, ls.id ASC
                     """.trimIndent()
                 )
 
                 cursor.use {
-                    var currentLiftDayId: Int? = null
+                    var currentSessionId: Int? = null
                     var currentMuscleGroupId: Int? = null
-                    var nextMuscleGroupDaySetNumber = 1
+                    var nextMuscleGroupSessionSetNumber = 1
 
                     while (it.moveToNext()) {
                         val liftSetId = it.getInt(0)
-                        val liftDayId = it.getInt(1)
+                        val sessionId = it.getInt(1)
                         val muscleGroupId = it.getInt(2)
 
-                        if (liftDayId != currentLiftDayId || muscleGroupId != currentMuscleGroupId) {
-                            currentLiftDayId = liftDayId
+                        if (sessionId != currentSessionId || muscleGroupId != currentMuscleGroupId) {
+                            currentSessionId = sessionId
                             currentMuscleGroupId = muscleGroupId
-                            nextMuscleGroupDaySetNumber = 1
+                            nextMuscleGroupSessionSetNumber = 1
                         }
 
                         db.execSQL(
-                            "UPDATE lift_sets SET muscle_group_day_set_number = ? WHERE id = ?",
-                            arrayOf(nextMuscleGroupDaySetNumber, liftSetId)
+                            "UPDATE lift_sets SET $LEGACY_MUSCLE_GROUP_SESSION_SET_NUMBER_COLUMN = ? WHERE id = ?",
+                            arrayOf(nextMuscleGroupSessionSetNumber, liftSetId)
                         )
-                        nextMuscleGroupDaySetNumber += 1
+                        nextMuscleGroupSessionSetNumber += 1
                     }
                 }
             }
@@ -497,18 +515,18 @@ abstract class LiftTrackerDatabase : RoomDatabase() {
             override fun migrate(db: SupportSQLiteDatabase) {
                 if (!columnExists(db, "lift_sets", "muscle_group_id")) {
                     rebuildLiftSetsTable(db)
-                    renumberLiftSetsByMuscleGroupAndDay(db)
+                    renumberLiftSetsByMuscleGroupAndSession(db)
                 }
 
                 db.execSQL(
-                    "CREATE UNIQUE INDEX IF NOT EXISTS index_lift_sets_lift_day_id_day_set_number ON lift_sets(lift_day_id, day_set_number)"
+                    "CREATE UNIQUE INDEX IF NOT EXISTS index_lift_sets_${LEGACY_SESSION_ID_COLUMN}_${LEGACY_SESSION_SET_NUMBER_COLUMN} ON lift_sets(${LEGACY_SESSION_ID_COLUMN}, ${LEGACY_SESSION_SET_NUMBER_COLUMN})"
                 )
                 db.execSQL(
-                    "CREATE UNIQUE INDEX IF NOT EXISTS index_lift_sets_lift_day_id_lift_id_lift_set_number ON lift_sets(lift_day_id, lift_id, lift_set_number)"
+                    "CREATE UNIQUE INDEX IF NOT EXISTS index_lift_sets_${LEGACY_SESSION_ID_COLUMN}_lift_id_lift_set_number ON lift_sets(${LEGACY_SESSION_ID_COLUMN}, lift_id, lift_set_number)"
                 )
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_lift_sets_lift_id ON lift_sets(lift_id)")
                 db.execSQL(
-                    "CREATE UNIQUE INDEX IF NOT EXISTS index_lift_sets_lift_day_id_muscle_group_id_muscle_group_day_set_number ON lift_sets(lift_day_id, muscle_group_id, muscle_group_day_set_number)"
+                    "CREATE UNIQUE INDEX IF NOT EXISTS index_lift_sets_${LEGACY_SESSION_ID_COLUMN}_muscle_group_id_${LEGACY_MUSCLE_GROUP_SESSION_SET_NUMBER_COLUMN} ON lift_sets(${LEGACY_SESSION_ID_COLUMN}, muscle_group_id, ${LEGACY_MUSCLE_GROUP_SESSION_SET_NUMBER_COLUMN})"
                 )
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_lift_sets_muscle_group_id ON lift_sets(muscle_group_id)")
             }
@@ -538,15 +556,15 @@ abstract class LiftTrackerDatabase : RoomDatabase() {
                     """
                     CREATE TABLE lift_sets_migration (
                         id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-                        lift_day_id INTEGER NOT NULL,
+                        $LEGACY_SESSION_ID_COLUMN INTEGER NOT NULL,
                         lift_id INTEGER NOT NULL,
                         muscle_group_id INTEGER NOT NULL,
                         lift_set_number INTEGER NOT NULL,
-                        day_set_number INTEGER NOT NULL,
-                        muscle_group_day_set_number INTEGER NOT NULL,
+                        $LEGACY_SESSION_SET_NUMBER_COLUMN INTEGER NOT NULL,
+                        $LEGACY_MUSCLE_GROUP_SESSION_SET_NUMBER_COLUMN INTEGER NOT NULL,
                         set_label TEXT NOT NULL,
                         set_note TEXT NOT NULL,
-                        FOREIGN KEY(lift_day_id) REFERENCES lift_days(id) ON UPDATE NO ACTION ON DELETE CASCADE,
+                        FOREIGN KEY(${LEGACY_SESSION_ID_COLUMN}) REFERENCES ${LEGACY_SESSION_TABLE}(id) ON UPDATE NO ACTION ON DELETE CASCADE,
                         FOREIGN KEY(lift_id) REFERENCES lifts(id) ON UPDATE NO ACTION ON DELETE CASCADE,
                         FOREIGN KEY(muscle_group_id) REFERENCES muscle_groups(id) ON UPDATE NO ACTION ON DELETE CASCADE
                     )
@@ -556,22 +574,22 @@ abstract class LiftTrackerDatabase : RoomDatabase() {
                     """
                     INSERT INTO lift_sets_migration (
                         id,
-                        lift_day_id,
+                        ${LEGACY_SESSION_ID_COLUMN},
                         lift_id,
                         muscle_group_id,
                         lift_set_number,
-                        day_set_number,
-                        muscle_group_day_set_number,
+                        ${LEGACY_SESSION_SET_NUMBER_COLUMN},
+                        ${LEGACY_MUSCLE_GROUP_SESSION_SET_NUMBER_COLUMN},
                         set_label,
                         set_note
                     )
                     SELECT
                         ls.id,
-                        ls.lift_day_id,
+                        ls.${LEGACY_SESSION_ID_COLUMN},
                         ls.lift_id,
                         l.muscle_group_id,
                         ls.lift_set_number,
-                        ls.day_set_number,
+                        ls.${LEGACY_SESSION_SET_NUMBER_COLUMN},
                         0,
                         ls.set_label,
                         ls.set_note
@@ -584,39 +602,222 @@ abstract class LiftTrackerDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE lift_sets_migration RENAME TO lift_sets")
             }
 
-            private fun renumberLiftSetsByMuscleGroupAndDay(db: SupportSQLiteDatabase) {
+            private fun renumberLiftSetsByMuscleGroupAndSession(db: SupportSQLiteDatabase) {
                 val cursor = db.query(
                     """
-                    SELECT ls.id, ls.lift_day_id, ls.muscle_group_id
+                    SELECT ls.id, ls.${LEGACY_SESSION_ID_COLUMN}, ls.muscle_group_id
                     FROM lift_sets AS ls
-                    ORDER BY ls.lift_day_id ASC, ls.muscle_group_id ASC, ls.day_set_number ASC, ls.id ASC
+                    ORDER BY ls.${LEGACY_SESSION_ID_COLUMN} ASC, ls.muscle_group_id ASC, ls.${LEGACY_SESSION_SET_NUMBER_COLUMN} ASC, ls.id ASC
                     """.trimIndent()
                 )
 
                 cursor.use {
-                    var currentLiftDayId: Int? = null
+                    var currentSessionId: Int? = null
                     var currentMuscleGroupId: Int? = null
-                    var nextMuscleGroupDaySetNumber = 1
+                    var nextMuscleGroupSessionSetNumber = 1
 
                     while (it.moveToNext()) {
                         val liftSetId = it.getInt(0)
-                        val liftDayId = it.getInt(1)
+                        val sessionId = it.getInt(1)
                         val muscleGroupId = it.getInt(2)
 
-                        if (liftDayId != currentLiftDayId || muscleGroupId != currentMuscleGroupId) {
-                            currentLiftDayId = liftDayId
+                        if (sessionId != currentSessionId || muscleGroupId != currentMuscleGroupId) {
+                            currentSessionId = sessionId
                             currentMuscleGroupId = muscleGroupId
-                            nextMuscleGroupDaySetNumber = 1
+                            nextMuscleGroupSessionSetNumber = 1
                         }
 
                         db.execSQL(
-                            "UPDATE lift_sets SET muscle_group_day_set_number = ? WHERE id = ?",
-                            arrayOf(nextMuscleGroupDaySetNumber, liftSetId)
+                            "UPDATE lift_sets SET $LEGACY_MUSCLE_GROUP_SESSION_SET_NUMBER_COLUMN = ? WHERE id = ?",
+                            arrayOf(nextMuscleGroupSessionSetNumber, liftSetId)
                         )
-                        nextMuscleGroupDaySetNumber += 1
+                        nextMuscleGroupSessionSetNumber += 1
                     }
                 }
             }
+        }
+
+        private val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                val sessionMigrationSource = findSessionMigrationSource(db)
+
+                rebuildSessionsTable(db, sessionMigrationSource)
+                rebuildLiftSetsTable(db)
+
+                db.execSQL("DROP TABLE lift_sets")
+                db.execSQL("DROP TABLE ${quoteSqlIdentifier(sessionMigrationSource.tableName)}")
+                db.execSQL("ALTER TABLE lift_sets_migration RENAME TO lift_sets")
+
+                db.execSQL(
+                    "CREATE UNIQUE INDEX index_sessions_profile_id_session_number ON sessions(profile_id, session_number)"
+                )
+                db.execSQL(
+                    "CREATE UNIQUE INDEX index_lift_sets_session_id_session_set_number ON lift_sets(session_id, session_set_number)"
+                )
+                db.execSQL(
+                    "CREATE UNIQUE INDEX index_lift_sets_session_id_lift_id_lift_set_number ON lift_sets(session_id, lift_id, lift_set_number)"
+                )
+                db.execSQL("CREATE INDEX index_lift_sets_lift_id ON lift_sets(lift_id)")
+                db.execSQL(
+                    "CREATE UNIQUE INDEX index_lift_sets_session_id_muscle_group_id_muscle_group_session_set_number ON lift_sets(session_id, muscle_group_id, muscle_group_session_set_number)"
+                )
+                db.execSQL("CREATE INDEX index_lift_sets_muscle_group_id ON lift_sets(muscle_group_id)")
+            }
+
+            private fun rebuildSessionsTable(
+                db: SupportSQLiteDatabase,
+                sessionMigrationSource: SessionMigrationSource
+            ) {
+                db.execSQL("DROP TABLE IF EXISTS sessions")
+                db.execSQL(
+                    """
+                    CREATE TABLE sessions (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        in_progress INTEGER NOT NULL DEFAULT 0,
+                        profile_id INTEGER NOT NULL,
+                        session_number INTEGER NOT NULL,
+                        session_label TEXT NOT NULL,
+                        date TEXT NOT NULL,
+                        note TEXT NOT NULL,
+                        FOREIGN KEY(profile_id) REFERENCES profiles(id) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    INSERT INTO sessions (
+                        id,
+                        in_progress,
+                        profile_id,
+                        session_number,
+                        session_label,
+                        date,
+                        note
+                    )
+                    SELECT
+                        id,
+                        in_progress,
+                        profile_id,
+                        ${quoteSqlIdentifier(sessionMigrationSource.sessionNumberColumnName)},
+                        'Session ' || ${quoteSqlIdentifier(sessionMigrationSource.sessionNumberColumnName)},
+                        date,
+                        note
+                    FROM ${quoteSqlIdentifier(sessionMigrationSource.tableName)}
+                    """.trimIndent()
+                )
+            }
+
+            private fun rebuildLiftSetsTable(db: SupportSQLiteDatabase) {
+                db.execSQL("DROP TABLE IF EXISTS lift_sets_migration")
+                db.execSQL(
+                    """
+                    CREATE TABLE lift_sets_migration (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        session_id INTEGER NOT NULL,
+                        lift_id INTEGER NOT NULL,
+                        muscle_group_id INTEGER NOT NULL,
+                        lift_set_number INTEGER NOT NULL,
+                        session_set_number INTEGER NOT NULL,
+                        muscle_group_session_set_number INTEGER NOT NULL,
+                        set_label TEXT NOT NULL,
+                        set_note TEXT NOT NULL,
+                        FOREIGN KEY(session_id) REFERENCES sessions(id) ON UPDATE NO ACTION ON DELETE CASCADE,
+                        FOREIGN KEY(lift_id) REFERENCES lifts(id) ON UPDATE NO ACTION ON DELETE CASCADE,
+                        FOREIGN KEY(muscle_group_id) REFERENCES muscle_groups(id) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    INSERT INTO lift_sets_migration (
+                        id,
+                        session_id,
+                        lift_id,
+                        muscle_group_id,
+                        lift_set_number,
+                        session_set_number,
+                        muscle_group_session_set_number,
+                        set_label,
+                        set_note
+                    )
+                    SELECT *
+                    FROM lift_sets
+                    """.trimIndent()
+                )
+            }
+
+            private fun findSessionMigrationSource(db: SupportSQLiteDatabase): SessionMigrationSource {
+                val cursor = db.query(
+                    """
+                    SELECT name
+                    FROM sqlite_master
+                    WHERE type = 'table'
+                        AND name NOT LIKE 'sqlite_%'
+                    """.trimIndent()
+                )
+
+                cursor.use {
+                    while (it.moveToNext()) {
+                        val tableName = it.getString(0)
+                        val source = getSessionMigrationSource(db, tableName)
+                        if (tableName != "sessions" && source != null) {
+                            return source
+                        }
+                    }
+                }
+
+                error("Unable to find session migration source table")
+            }
+
+            private fun getSessionMigrationSource(
+                db: SupportSQLiteDatabase,
+                tableName: String
+            ): SessionMigrationSource? {
+                val columns = getTableColumns(db, tableName)
+                val commonColumnNames = setOf("id", "in_progress", "profile_id", "date", "note")
+                val sessionSpecificColumns = columns.filter { it.name !in commonColumnNames }
+
+                if (columns.size != 7 ||
+                    !columns.map { it.name }.containsAll(commonColumnNames) ||
+                    sessionSpecificColumns.size != 2
+                ) {
+                    return null
+                }
+
+                val numberColumn = sessionSpecificColumns.firstOrNull { column ->
+                    column.type.uppercase().contains("INT")
+                } ?: return null
+
+                if (sessionSpecificColumns.none { column -> column.type.uppercase().contains("TEXT") }) {
+                    return null
+                }
+
+                return SessionMigrationSource(tableName, numberColumn.name)
+            }
+
+            private fun getTableColumns(
+                db: SupportSQLiteDatabase,
+                tableName: String
+            ): List<TableColumn> {
+                val cursor = db.query("PRAGMA table_info(${quoteSqlIdentifier(tableName)})")
+                val columns = mutableListOf<TableColumn>()
+
+                cursor.use {
+                    while (it.moveToNext()) {
+                        columns.add(
+                            TableColumn(
+                                name = it.getString(1),
+                                type = it.getString(2)
+                            )
+                        )
+                    }
+                }
+
+                return columns
+            }
+
+            private fun quoteSqlIdentifier(identifier: String): String =
+                "\"${identifier.replace("\"", "\"\"")}\""
         }
     }
 }

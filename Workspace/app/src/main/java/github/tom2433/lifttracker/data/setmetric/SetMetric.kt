@@ -9,7 +9,7 @@ import github.tom2433.lifttracker.data.liftset.LiftSet
 /**
 ## ```set_metrics```
 
-The purpose of the ```set_metrics``` table is to store all of the user's set metrics (weight and rep data) and link them to their corresponding set (which is linked to the corresponding lift and the corresponding day via foreign keys).
+The purpose of the ```set_metrics``` table is to store all of the user's set metrics (weight and rep data) and link them to their corresponding set (which is linked to the corresponding lift and the corresponding session via foreign keys).
 
 The ```set_metrics``` table has 6 columns:
 

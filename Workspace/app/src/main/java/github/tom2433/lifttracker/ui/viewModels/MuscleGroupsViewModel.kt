@@ -200,7 +200,7 @@ class MuscleGroupsViewModel(
             }
 
             currentState.copy(
-                muscleGroupList = currentState.muscleGroupList.mapValues { (muscleGroupId, muscleGroupDetail) ->
+                muscleGroupList = currentState.muscleGroupList.mapValues { (_, muscleGroupDetail) ->
                     muscleGroupDetail.copy(
                         menuIsOpen = false
                     )

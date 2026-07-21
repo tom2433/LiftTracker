@@ -18,7 +18,7 @@ object DateTimeCalculator {
     const val DAYS_PER_MONTH = 28L
     const val DAYS_PER_YEAR = 12L * DAYS_PER_MONTH
 
-    // This produces today's local calendar date in the same ISO-8601 format used by lift_days.date. - Codex
+    // This produces today's local calendar date in the same ISO-8601 format used by sessions.date. - Codex
     fun getCurrentIsoDate(): String {
         // Formatting in the device time zone ensures "Today" follows the user's local calendar day. - Codex
         val localFormatter = SimpleDateFormat(ISO_DATE_PATTERN, Locale.US)

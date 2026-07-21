@@ -7,18 +7,18 @@ import kotlinx.coroutines.flow.Flow
 
 class OfflineLiftSetRepository(private val liftSetDao: LiftSetDao) : LiftSetRepository {
     override suspend fun insertLiftSet(
-        liftDayId: Int,
+        sessionId: Int,
         liftId: Int,
         setNote: String
     ): Int {
         return liftSetDao.insert(
             LiftSet(
-                lift_day_id = liftDayId,
+                session_id = sessionId,
                 lift_id = liftId,
                 muscle_group_id = 0,
                 lift_set_number = 0,
-                day_set_number = 0,
-                muscle_group_day_set_number = 0,
+                session_set_number = 0,
+                muscle_group_session_set_number = 0,
                 set_label = "",
                 set_note = setNote
             )
@@ -31,10 +31,10 @@ class OfflineLiftSetRepository(private val liftSetDao: LiftSetDao) : LiftSetRepo
 
     override fun getLiftSetStream(id: Int): Flow<LiftSet?> = liftSetDao.getLiftSet(id)
 
-    override fun getRecordSessionLiftSetRowsForDayStream(liftDayId: Int): Flow<List<RecordSessionLiftSetRow>> =
-        liftSetDao.getRecordSessionLiftSetRowsForDay(liftDayId)
+    override fun getRecordSessionLiftSetRowsForSessionStream(sessionId: Int): Flow<List<RecordSessionLiftSetRow>> =
+        liftSetDao.getRecordSessionLiftSetRowsForSession(sessionId)
 
-    override fun getLiftSetCountPerLiftIdForDayIdStream(liftDayId: Int): Flow<List<LiftSetCountPerLift>> =
-        liftSetDao.getLiftSetCountPerLiftIdForDayId(liftDayId)
+    override fun getLiftSetCountPerLiftIdForSessionIdStream(sessionId: Int): Flow<List<LiftSetCountPerLift>> =
+        liftSetDao.getLiftSetCountPerLiftIdForSessionId(sessionId)
 
 }

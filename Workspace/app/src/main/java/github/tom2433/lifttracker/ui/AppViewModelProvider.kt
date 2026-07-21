@@ -70,7 +70,7 @@ object AppViewModelProvider {
         initializer {
             RecordSessionViewModel(
                 profileRepository = liftTrackerApplication().container.profileRepository,
-                liftDayRepository = liftTrackerApplication().container.liftDaysRepository,
+                sessionRepository = liftTrackerApplication().container.sessionsRepository,
                 liftRepository = liftTrackerApplication().container.liftRepository,
                 liftSetRepository = liftTrackerApplication().container.liftSetRepository,
                 setMetricRepository = liftTrackerApplication().container.setMetricRepository
@@ -103,7 +103,7 @@ object AppViewModelProvider {
             DrawerViewModel(
                 profileRepository = liftTrackerApplication().container.profileRepository,
                 muscleGroupRepository = liftTrackerApplication().container.muscleGroupRepository,
-                liftDayRepository = liftTrackerApplication().container.liftDaysRepository
+                sessionRepository = liftTrackerApplication().container.sessionsRepository
             )
         }
     }

@@ -21,13 +21,13 @@ interface LiftDao {
 
     @Query("""
         SELECT DISTINCT
-            ld.id
-        FROM lift_days AS ld
+            s.id
+        FROM sessions AS s
         INNER JOIN lift_sets AS ls
-            ON ls.lift_day_id = ld.id
+            ON ls.session_id = s.id
         WHERE ls.lift_id = :liftId
     """)
-    suspend fun getLiftDayIdsForLift(liftId: Int): List<Int>
+    suspend fun getSessionIdsForLift(liftId: Int): List<Int>
 
     @Query("""
         SELECT DISTINCT
@@ -39,12 +39,12 @@ interface LiftDao {
 
     @Query("""
         UPDATE lift_sets
-        SET muscle_group_day_set_number = -id
-        WHERE lift_day_id IN (:affectedDayIds)
+        SET muscle_group_session_set_number = -id
+        WHERE session_id IN (:affectedSessionIds)
             AND muscle_group_id IN (:muscleGroupIds)
     """)
-    suspend fun stageMuscleGroupDaySetNumbersForMove(
-        affectedDayIds: List<Int>,
+    suspend fun stageMuscleGroupSessionSetNumbersForMove(
+        affectedSessionIds: List<Int>,
         muscleGroupIds: List<Int>
     )
 
@@ -73,39 +73,39 @@ interface LiftDao {
     @Query("""
         SELECT id
         FROM lift_sets
-        WHERE lift_day_id = :liftDayId
+        WHERE session_id = :sessionId
             AND muscle_group_id = :muscleGroupId
-        ORDER BY day_set_number ASC, id ASC
+        ORDER BY session_set_number ASC, id ASC
     """)
-    suspend fun getRowsForMuscleGroupDaySetRenumbering(
-        liftDayId: Int,
+    suspend fun getRowsForMuscleGroupSessionSetRenumbering(
+        sessionId: Int,
         muscleGroupId: Int
     ): List<Int>
 
     @Query("""
         UPDATE lift_sets
-        SET muscle_group_day_set_number = :muscleGroupDaySetNumber
+        SET muscle_group_session_set_number = :muscleGroupSessionSetNumber
         WHERE id = :liftSetId
     """)
-    suspend fun updateMuscleGroupDaySetNumber(
+    suspend fun updateMuscleGroupSessionSetNumber(
         liftSetId: Int,
-        muscleGroupDaySetNumber: Int
+        muscleGroupSessionSetNumber: Int
     )
 
     @Transaction
-    suspend fun renumberMuscleGroupDaySetNumbers(
-        liftDayId: Int,
+    suspend fun renumberMuscleGroupSessionSetNumbers(
+        sessionId: Int,
         muscleGroupId: Int
     ) {
-        val rows: List<Int> = getRowsForMuscleGroupDaySetRenumbering(
-            liftDayId = liftDayId,
+        val rows: List<Int> = getRowsForMuscleGroupSessionSetRenumbering(
+            sessionId = sessionId,
             muscleGroupId = muscleGroupId
         )
 
         rows.forEachIndexed { index, liftSetId ->
-            updateMuscleGroupDaySetNumber(
+            updateMuscleGroupSessionSetNumber(
                 liftSetId = liftSetId,
-                muscleGroupDaySetNumber = index + 1
+                muscleGroupSessionSetNumber = index + 1
             )
         }
     }
@@ -120,7 +120,7 @@ interface LiftDao {
         val oldMuscleGroupId = lift.muscle_group_id
         if (oldMuscleGroupId == newMuscleGroupId) return
 
-        val affectedDayIds: List<Int> = getLiftDayIdsForLift(lift.id)
+        val affectedSessionIds: List<Int> = getSessionIdsForLift(lift.id)
 
         val affectedMuscleGroupIds = if (cascadeMigration) {
             (getAllMuscleGroupIdsForLift(lift.id) + newMuscleGroupId).distinct()
@@ -128,16 +128,16 @@ interface LiftDao {
             listOf(oldMuscleGroupId, newMuscleGroupId)
         }
 
-        if (affectedDayIds.isNotEmpty() && migrateOldSetData) {
-            stageMuscleGroupDaySetNumbersForMove(
-                affectedDayIds = affectedDayIds,
+        if (affectedSessionIds.isNotEmpty() && migrateOldSetData) {
+            stageMuscleGroupSessionSetNumbersForMove(
+                affectedSessionIds = affectedSessionIds,
                 muscleGroupIds = affectedMuscleGroupIds
             )
         }
 
         update(lift.copy(muscle_group_id = newMuscleGroupId))
 
-        if (affectedDayIds.isNotEmpty() && migrateOldSetData) {
+        if (affectedSessionIds.isNotEmpty() && migrateOldSetData) {
             if (cascadeMigration) {
                 updateLiftSetsMuscleGroupCascade(
                     liftId = lift.id,
@@ -151,10 +151,10 @@ interface LiftDao {
                 )
             }
 
-            for (dayId in affectedDayIds) {
+            for (sessionId in affectedSessionIds) {
                 for (muscleGroupId in affectedMuscleGroupIds) {
-                    renumberMuscleGroupDaySetNumbers(
-                        liftDayId = dayId,
+                    renumberMuscleGroupSessionSetNumbers(
+                        sessionId = sessionId,
                         muscleGroupId = muscleGroupId
                     )
                 }
@@ -181,81 +181,81 @@ interface LiftDao {
             (
                 SELECT COUNT(*)
                 FROM lift_sets AS target_ls
-                INNER JOIN lift_days AS target_ld
-                    ON target_ld.id = target_ls.lift_day_id
+                INNER JOIN sessions AS target_session
+                    ON target_session.id = target_ls.session_id
                 WHERE target_ls.lift_id = target_lift.id
-                    AND (:startDate IS NULL OR target_ld.date >= :startDate)
-                    AND (:endDate IS NULL OR target_ld.date <= :endDate)
+                    AND (:startDate IS NULL OR target_session.date >= :startDate)
+                    AND (:endDate IS NULL OR target_session.date <= :endDate)
             ) AS liftSetCount,
             (
-                SELECT COUNT(DISTINCT target_ls.lift_day_id)
+                SELECT COUNT(DISTINCT target_ls.session_id)
                 FROM lift_sets AS target_ls
-                INNER JOIN lift_days AS target_ld
-                    ON target_ld.id = target_ls.lift_day_id
+                INNER JOIN sessions AS target_session
+                    ON target_session.id = target_ls.session_id
                 WHERE target_ls.lift_id = target_lift.id
-                    AND (:startDate IS NULL OR target_ld.date >= :startDate)
-                    AND (:endDate IS NULL OR target_ld.date <= :endDate)
+                    AND (:startDate IS NULL OR target_session.date >= :startDate)
+                    AND (:endDate IS NULL OR target_session.date <= :endDate)
             ) AS liftSessionCount,
             (
                 SELECT COUNT(*)
                 FROM lift_sets AS overall_ls
-                INNER JOIN lift_days AS overall_ld
-                    ON overall_ld.id = overall_ls.lift_day_id
+                INNER JOIN sessions AS overall_session
+                    ON overall_session.id = overall_ls.session_id
                 INNER JOIN lifts AS overall_lift
                     ON overall_lift.id = overall_ls.lift_id
                 INNER JOIN muscle_groups AS overall_mg
                     ON overall_mg.id = overall_lift.muscle_group_id
-                    AND overall_mg.profile_id = overall_ld.profile_id
+                    AND overall_mg.profile_id = overall_session.profile_id
                 INNER JOIN profiles AS active_profile
                     ON active_profile.id = overall_mg.profile_id
                     AND active_profile.active = 1
-                WHERE (:startDate IS NULL OR overall_ld.date >= :startDate)
-                    AND (:endDate IS NULL OR overall_ld.date <= :endDate)
+                WHERE (:startDate IS NULL OR overall_session.date >= :startDate)
+                    AND (:endDate IS NULL OR overall_session.date <= :endDate)
             ) AS overallSetCount,
             (
                 SELECT COUNT(*)
                 FROM lift_sets AS group_ls
-                INNER JOIN lift_days AS group_ld
-                    ON group_ld.id = group_ls.lift_day_id
-                    AND group_ld.profile_id = target_mg.profile_id
+                INNER JOIN sessions AS group_session
+                    ON group_session.id = group_ls.session_id
+                    AND group_session.profile_id = target_mg.profile_id
                 INNER JOIN lifts AS group_lift
                     ON group_lift.id = group_ls.lift_id
                 WHERE group_lift.muscle_group_id = target_lift.muscle_group_id
-                    AND (:startDate IS NULL OR group_ld.date >= :startDate)
-                    AND (:endDate IS NULL OR group_ld.date <= :endDate)
+                    AND (:startDate IS NULL OR group_session.date >= :startDate)
+                    AND (:endDate IS NULL OR group_session.date <= :endDate)
             ) AS muscleGroupSetCount,
             (
                 SELECT AVG(weight_metric.value)
                 FROM set_metrics AS weight_metric
                 INNER JOIN lift_sets AS weight_ls
                     ON weight_ls.id = weight_metric.set_id
-                INNER JOIN lift_days AS weight_ld
-                    ON weight_ld.id = weight_ls.lift_day_id
+                INNER JOIN sessions AS weight_session
+                    ON weight_session.id = weight_ls.session_id
                 WHERE weight_ls.lift_id = target_lift.id
                     AND weight_metric.metric_position = 1
-                    AND (:startDate IS NULL OR weight_ld.date >= :startDate)
-                    AND (:endDate IS NULL OR weight_ld.date <= :endDate)
+                    AND (:startDate IS NULL OR weight_session.date >= :startDate)
+                    AND (:endDate IS NULL OR weight_session.date <= :endDate)
             ) AS averageWeight,
             (
                 SELECT AVG(second_metric.value)
                 FROM set_metrics AS second_metric
                 INNER JOIN lift_sets AS second_ls
                     ON second_ls.id = second_metric.set_id
-                INNER JOIN lift_days AS second_ld
-                    ON second_ld.id = second_ls.lift_day_id
+                INNER JOIN sessions AS second_session
+                    ON second_session.id = second_ls.session_id
                 WHERE second_ls.lift_id = target_lift.id
                     AND second_metric.metric_position = 2
-                    AND (:startDate IS NULL OR second_ld.date >= :startDate)
-                    AND (:endDate IS NULL OR second_ld.date <= :endDate)
+                    AND (:startDate IS NULL OR second_session.date >= :startDate)
+                    AND (:endDate IS NULL OR second_session.date <= :endDate)
             ) AS averageSecondMetric,
             target_mg.name AS muscleGroupName,
             target_lift_unit.name AS unitName,
             target_lift.metric_type AS metricType,
             (
-                SELECT MAX(last_ld.date)
+                SELECT MAX(last_session.date)
                 FROM lift_sets AS last_ls
-                INNER JOIN lift_days AS last_ld
-                    ON last_ld.id = last_ls.lift_day_id
+                INNER JOIN sessions AS last_session
+                    ON last_session.id = last_ls.session_id
                 WHERE last_ls.lift_id = target_lift.id
             ) AS lastDateTrained
         FROM lifts AS target_lift
@@ -314,9 +314,9 @@ interface LiftDao {
             ON lu.id = l.unit_id
         INNER JOIN lift_sets AS ls
             ON ls.lift_id = l.id
-        WHERE ls.lift_day_id = :liftDayId        
+        WHERE ls.session_id = :sessionId        
     """)
-    fun getLiftSearchDetailsForDayId(liftDayId: Int): Flow<List<LiftSearchDetail>>
+    fun getLiftSearchDetailsForSessionId(sessionId: Int): Flow<List<LiftSearchDetail>>
 
     @Query("""
         SELECT

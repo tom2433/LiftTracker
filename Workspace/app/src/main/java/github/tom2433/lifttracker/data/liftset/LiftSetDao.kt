@@ -25,16 +25,16 @@ interface LiftSetDao {
         val muscleGroupId = getMuscleGroupIdFromLiftId(liftSet.lift_id)
 
         val nextLiftSetNumber = getNextLiftSetNumber(
-            liftDayId = liftSet.lift_day_id,
+            sessionId = liftSet.session_id,
             liftId = liftSet.lift_id
         )
 
-        val nextDaySetNumber = getNextDaySetNumber(
-            liftDayId = liftSet.lift_day_id
+        val nextSessionSetNumber = getNextSessionSetNumber(
+            sessionId = liftSet.session_id
         )
 
-        val nextMuscleGroupDaySetNumber = getNextMuscleGroupDaySetNumber(
-            liftDayId = liftSet.lift_day_id,
+        val nextMuscleGroupSessionSetNumber = getNextMuscleGroupSessionSetNumber(
+            sessionId = liftSet.session_id,
             muscleGroupId = muscleGroupId
         )
 
@@ -42,8 +42,8 @@ interface LiftSetDao {
             liftSet.copy(
                 muscle_group_id = muscleGroupId,
                 lift_set_number = nextLiftSetNumber,
-                day_set_number = nextDaySetNumber,
-                muscle_group_day_set_number = nextMuscleGroupDaySetNumber,
+                session_set_number = nextSessionSetNumber,
+                muscle_group_session_set_number = nextMuscleGroupSessionSetNumber,
                 set_label = "Set $nextLiftSetNumber"
             )
         ).toInt()
@@ -70,33 +70,33 @@ interface LiftSetDao {
     }
 
     @Query("""
-        SELECT COALESCE(MAX(muscle_group_day_set_number), 0) + 1
+        SELECT COALESCE(MAX(muscle_group_session_set_number), 0) + 1
         FROM lift_sets
-        WHERE lift_day_id = :liftDayId
+        WHERE session_id = :sessionId
             AND muscle_group_id = :muscleGroupId
     """)
-    suspend fun getNextMuscleGroupDaySetNumber(
-        liftDayId: Int,
+    suspend fun getNextMuscleGroupSessionSetNumber(
+        sessionId: Int,
         muscleGroupId: Int
     ): Int
 
     @Query("""
         SELECT COALESCE(MAX(lift_set_number), 0) + 1
         FROM lift_sets
-        WHERE lift_day_id = :liftDayId
+        WHERE session_id = :sessionId
             AND lift_id = :liftId
     """)
     suspend fun getNextLiftSetNumber(
-        liftDayId: Int,
+        sessionId: Int,
         liftId: Int
     ): Int
 
     @Query("""
-        SELECT COALESCE(MAX(day_set_number), 0) + 1
+        SELECT COALESCE(MAX(session_set_number), 0) + 1
         FROM lift_sets
-        WHERE lift_day_id = :liftDayId
+        WHERE session_id = :sessionId
     """)
-    suspend fun getNextDaySetNumber(liftDayId: Int): Int
+    suspend fun getNextSessionSetNumber(sessionId: Int): Int
 
     @Query("""
         SELECT l.muscle_group_id
@@ -111,51 +111,51 @@ interface LiftSetDao {
     @Query("""
         UPDATE lift_sets
         SET set_label = 'Set ' || (lift_set_number - 1)
-        WHERE lift_day_id = :liftDayId
+        WHERE session_id = :sessionId
             AND lift_id = :liftId
             AND lift_set_number > :deletedLiftSetNumber
             AND set_label = 'Set ' || lift_set_number
     """)
     suspend fun updateSetLabelsAfterLiftSetDelete(
-        liftDayId: Int,
+        sessionId: Int,
         liftId: Int,
         deletedLiftSetNumber: Int
     )
 
     @Query("""
         UPDATE lift_sets
-        SET muscle_group_day_set_number = -muscle_group_day_set_number
-        WHERE lift_day_id = :liftDayId
+        SET muscle_group_session_set_number = -muscle_group_session_set_number
+        WHERE session_id = :sessionId
             AND muscle_group_id = :muscleGroupId
-            AND muscle_group_day_set_number > :deletedMuscleGroupDaySetNumber
+            AND muscle_group_session_set_number > :deletedMuscleGroupSessionSetNumber
     """)
-    suspend fun stageMuscleGroupDaySetNumbersAfterDelete(
-        liftDayId: Int,
+    suspend fun stageMuscleGroupSessionSetNumbersAfterDelete(
+        sessionId: Int,
         muscleGroupId: Int,
-        deletedMuscleGroupDaySetNumber: Int
+        deletedMuscleGroupSessionSetNumber: Int
     )
 
     @Query("""
         UPDATE lift_sets
-        SET muscle_group_day_set_number = (-muscle_group_day_set_number) - 1
-        WHERE lift_day_id = :liftDayId
+        SET muscle_group_session_set_number = (-muscle_group_session_set_number) - 1
+        WHERE session_id = :sessionId
             AND muscle_group_id = :muscleGroupId
-            AND muscle_group_day_set_number < 0
+            AND muscle_group_session_set_number < 0
     """)
-    suspend fun decrementStagedMuscleGroupDaySetNumbersAfterDelete(
-        liftDayId: Int,
+    suspend fun decrementStagedMuscleGroupSessionSetNumbersAfterDelete(
+        sessionId: Int,
         muscleGroupId: Int
     )
 
     @Query("""
         UPDATE lift_sets
         SET lift_set_number = -lift_set_number
-        WHERE lift_day_id = :liftDayId
+        WHERE session_id = :sessionId
             AND lift_id = :liftId
             AND lift_set_number > :deletedLiftSetNumber
     """)
     suspend fun stageLiftSetNumbersAfterDelete(
-        liftDayId: Int,
+        sessionId: Int,
         liftId: Int,
         deletedLiftSetNumber: Int
     )
@@ -163,34 +163,34 @@ interface LiftSetDao {
     @Query("""
         UPDATE lift_sets
         SET lift_set_number = (-lift_set_number) - 1
-        WHERE lift_day_id = :liftDayId
+        WHERE session_id = :sessionId
             AND lift_id = :liftId
             AND lift_set_number < 0
     """)
     suspend fun decrementStagedLiftSetNumbersAfterDelete(
-        liftDayId: Int,
+        sessionId: Int,
         liftId: Int,
     )
 
     @Query("""
         UPDATE lift_sets
-        SET day_set_number = -day_set_number
-        WHERE lift_day_id = :liftDayId
-            AND day_set_number > :deletedDaySetNumber
+        SET session_set_number = -session_set_number
+        WHERE session_id = :sessionId
+            AND session_set_number > :deletedSessionSetNumber
     """)
-    suspend fun stageDaySetNumbersAfterDelete(
-        liftDayId: Int,
-        deletedDaySetNumber: Int
+    suspend fun stageSessionSetNumbersAfterDelete(
+        sessionId: Int,
+        deletedSessionSetNumber: Int
     )
 
     @Query("""
         UPDATE lift_sets
-        SET day_set_number = (-day_set_number) - 1
-        WHERE lift_day_id = :liftDayId
-            AND day_set_number < 0
+        SET session_set_number = (-session_set_number) - 1
+        WHERE session_id = :sessionId
+            AND session_set_number < 0
     """)
-    suspend fun decrementStagedDaySetNumbersAfterDelete(
-        liftDayId: Int
+    suspend fun decrementStagedSessionSetNumbersAfterDelete(
+        sessionId: Int
     )
 
     @Delete
@@ -201,39 +201,39 @@ interface LiftSetDao {
         deletePreparedLiftSet(liftSet)
 
         updateSetLabelsAfterLiftSetDelete(
-            liftDayId = liftSet.lift_day_id,
+            sessionId = liftSet.session_id,
             liftId = liftSet.lift_id,
             deletedLiftSetNumber = liftSet.lift_set_number
         )
 
         stageLiftSetNumbersAfterDelete(
-            liftDayId = liftSet.lift_day_id,
+            sessionId = liftSet.session_id,
             liftId = liftSet.lift_id,
             deletedLiftSetNumber = liftSet.lift_set_number
         )
 
         decrementStagedLiftSetNumbersAfterDelete(
-            liftDayId = liftSet.lift_day_id,
+            sessionId = liftSet.session_id,
             liftId = liftSet.lift_id
         )
 
-        stageDaySetNumbersAfterDelete(
-            liftDayId = liftSet.lift_day_id,
-            deletedDaySetNumber = liftSet.day_set_number
+        stageSessionSetNumbersAfterDelete(
+            sessionId = liftSet.session_id,
+            deletedSessionSetNumber = liftSet.session_set_number
         )
 
-        decrementStagedDaySetNumbersAfterDelete(
-            liftDayId = liftSet.lift_day_id
+        decrementStagedSessionSetNumbersAfterDelete(
+            sessionId = liftSet.session_id
         )
 
-        stageMuscleGroupDaySetNumbersAfterDelete(
-            liftDayId = liftSet.lift_day_id,
+        stageMuscleGroupSessionSetNumbersAfterDelete(
+            sessionId = liftSet.session_id,
             muscleGroupId = liftSet.muscle_group_id,
-            deletedMuscleGroupDaySetNumber = liftSet.muscle_group_day_set_number
+            deletedMuscleGroupSessionSetNumber = liftSet.muscle_group_session_set_number
         )
 
-        decrementStagedMuscleGroupDaySetNumbersAfterDelete(
-            liftDayId = liftSet.lift_day_id,
+        decrementStagedMuscleGroupSessionSetNumbersAfterDelete(
+            sessionId = liftSet.session_id,
             muscleGroupId = liftSet.muscle_group_id
         )
     }
@@ -248,12 +248,12 @@ interface LiftSetDao {
             
             -- LiftSet object (LiftSet rows preceded by set_)
             ls.id AS set_id,
-            ls.lift_day_id AS set_lift_day_id,
+            ls.session_id AS set_session_id,
             ls.lift_id AS set_lift_id,
             ls.muscle_group_id AS set_muscle_group_id,
             ls.lift_set_number AS set_lift_set_number,
-            ls.day_set_number AS set_day_set_number,
-            ls.muscle_group_day_set_number AS set_muscle_group_day_set_number,
+            ls.session_set_number AS set_session_set_number,
+            ls.muscle_group_session_set_number AS set_muscle_group_session_set_number,
             ls.set_label AS set_set_label,
             ls.set_note AS set_set_note,
             
@@ -280,11 +280,11 @@ interface LiftSetDao {
         INNER JOIN set_metrics AS second
             ON second.set_id = ls.id
             AND second.metric_position = 2
-        WHERE ls.lift_day_id = :liftDayId
-        ORDER BY ls.day_set_number ASC
+        WHERE ls.session_id = :sessionId
+        ORDER BY ls.session_set_number ASC
     """)
-    fun getRecordSessionLiftSetRowsForDay(
-        liftDayId: Int
+    fun getRecordSessionLiftSetRowsForSession(
+        sessionId: Int
     ): Flow<List<RecordSessionLiftSetRow>>
 
     @Query("""
@@ -292,8 +292,8 @@ interface LiftSetDao {
             ls.lift_id AS liftId,
             COUNT(ls.id) AS liftSetCount
         FROM lift_sets AS ls
-        WHERE ls.lift_day_id = :dayId
+        WHERE ls.session_id = :sessionId
         GROUP BY ls.lift_id
     """)
-    fun getLiftSetCountPerLiftIdForDayId(dayId: Int): Flow<List<LiftSetCountPerLift>>
+    fun getLiftSetCountPerLiftIdForSessionId(sessionId: Int): Flow<List<LiftSetCountPerLift>>
 }

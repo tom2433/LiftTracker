@@ -22,16 +22,16 @@ interface SetMetricDao {
     @Query("SELECT * FROM set_metrics WHERE id = :id")
     fun getSetMetric(id: Int): Flow<SetMetric?>
 
-    // precondition when using inner join is that the lift day must exist.
+    // precondition when using inner join is that the session must exist.
     @Query("""
         SELECT
             sm.id
         FROM set_metrics AS sm
         INNER JOIN lift_sets AS ls
             ON ls.id = sm.set_id
-        WHERE ls.lift_day_id = :dayId
+        WHERE ls.session_id = :sessionId
     """)
-    fun getSetMetricIdsFromDayId(dayId: Int): Flow<List<Int>>
+    fun getSetMetricIdsFromSessionId(sessionId: Int): Flow<List<Int>>
 
     @Query("""
         SELECT
@@ -39,9 +39,9 @@ interface SetMetricDao {
         FROM set_metrics AS sm
         INNER JOIN lift_sets AS ls
             ON ls.id = sm.set_id
-        INNER JOIN lift_days AS ld
-            ON ld.id = ls.lift_day_id
-        WHERE ld.in_progress = 1
+        INNER JOIN sessions AS s
+            ON s.id = ls.session_id
+        WHERE s.in_progress = 1
     """)
-    suspend fun getSetMetricsFromActiveDay(): List<SetMetric>
+    suspend fun getSetMetricsFromActiveSession(): List<SetMetric>
 }

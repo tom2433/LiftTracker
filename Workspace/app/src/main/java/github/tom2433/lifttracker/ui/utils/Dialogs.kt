@@ -1076,6 +1076,7 @@ fun InfoButton(
     if (showDialog) {
         BasicDialog(
             onDismissRequest = {
+                @Suppress("AssignedValueIsNeverRead")
                 showDialog = false
             },
             dialogContent = content

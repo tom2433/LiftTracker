@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface LiftSetRepository {
     suspend fun insertLiftSet(
-        liftDayId: Int,
+        sessionId: Int,
         liftId: Int,
         setNote: String = ""
     ): Int
@@ -14,7 +14,7 @@ interface LiftSetRepository {
     suspend fun deleteLiftSet(liftSet: LiftSet)
     fun getLiftSetStream(id: Int): Flow<LiftSet?>
 
-    fun getRecordSessionLiftSetRowsForDayStream(liftDayId: Int): Flow<List<RecordSessionLiftSetRow>>
+    fun getRecordSessionLiftSetRowsForSessionStream(sessionId: Int): Flow<List<RecordSessionLiftSetRow>>
 
-    fun getLiftSetCountPerLiftIdForDayIdStream(liftDayId: Int): Flow<List<LiftSetCountPerLift>>
+    fun getLiftSetCountPerLiftIdForSessionIdStream(sessionId: Int): Flow<List<LiftSetCountPerLift>>
 }

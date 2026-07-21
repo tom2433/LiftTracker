@@ -2,17 +2,15 @@ package github.tom2433.lifttracker.ui.viewModels
 
 import androidx.annotation.StringRes
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import github.tom2433.lifttracker.R
-import github.tom2433.lifttracker.data.liftday.LiftDayRepository
 import github.tom2433.lifttracker.data.musclegroup.MuscleGroup
 import github.tom2433.lifttracker.data.musclegroup.MuscleGroupRepository
 import github.tom2433.lifttracker.data.profile.Profile
 import github.tom2433.lifttracker.data.profile.ProfileRepository
-import github.tom2433.lifttracker.data.liftday.LiftDay
+import github.tom2433.lifttracker.data.session.Session
+import github.tom2433.lifttracker.data.session.SessionRepository
 import github.tom2433.lifttracker.ui.screens.AnalyticsDestination
 import github.tom2433.lifttracker.ui.screens.CalendarDestination
 import github.tom2433.lifttracker.ui.screens.MuscleGroupsDestination
@@ -32,7 +30,7 @@ import kotlinx.coroutines.launch
 class DrawerViewModel(
     private val profileRepository: ProfileRepository,
     private val muscleGroupRepository: MuscleGroupRepository,
-    private val liftDayRepository: LiftDayRepository
+    private val sessionRepository: SessionRepository
 ) : ViewModel() {
     private val _drawerUiState = MutableStateFlow(DrawerUiState())
     val drawerUiState: StateFlow<DrawerUiState> = _drawerUiState.asStateFlow()
@@ -49,11 +47,11 @@ class DrawerViewModel(
         }
 
         viewModelScope.launch {
-            // infinite collection to store the active lift day object
-            liftDayRepository.getActiveLiftDayForActiveProfileStream().collect { thisLiftDay ->
+            // infinite collection to store the active session object
+            sessionRepository.getActiveSessionForActiveProfileStream().collect { thisSession ->
                 _drawerUiState.update { currentState ->
                     currentState.copy(
-                        activeLiftDay = thisLiftDay
+                        activeSession = thisSession
                     )
                 }
             }
@@ -412,6 +410,6 @@ data class DrawerUiState @OptIn(ExperimentalMaterial3Api::class) constructor(
     val muscleGroupEntryDialogVisible: Boolean = false,
     val newMuscleGroupName: String = "",
     val newMuscleGroupNote: String = "",
-    val activeLiftDay: LiftDay? = null,
+    val activeSession: Session? = null,
     val doEnterAlwaysScrollBehavior: Boolean = false
 )

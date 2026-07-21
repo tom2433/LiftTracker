@@ -78,7 +78,7 @@
     <string name="simple_cancel">Cancel</string>
     <string name="show_all_lifts">Show All Lifts</string>
     <string name="delete_lift_in_progress">Delete lift in progress</string>
-    <string name="delete_lift_in_progress_warning_desc">All of the sets you\'ve completed for this lift today will be deleted. You cannot undo this action.</string>
+    <string name="delete_lift_in_progress_warning_desc">All of the sets you\'ve completed for this lift in this session will be deleted. You cannot undo this action.</string>
     <string name="hours">hours</string>
     <string name="minutes">minutes</string>
     <string name="seconds">seconds</string>
@@ -94,4 +94,6 @@
     <string name="cascade_old_set_data_dialog_text_1">This switch only applies if you have already moved this lift from an older muscle group to this current one WITHOUT migrating the old set data.</string>
     <string name="cascade_old_set_data_dialog_text_2">When checked, this migration will take all old set data from all muscle groups to which this lift has belonged and migrate it to the newly selected group.</string>
     <string name="cascade_old_set_data_dialog_text_3">When unchecked, this migration will only migrate the set data from this current muscle group to the new one.</string>
+    <string name="set_count">Set Count</string>
+    <string name="total">Total</string>
 </resources>

@@ -1,6 +1,5 @@
 package github.tom2433.lifttracker.ui.utils
 
-import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,9 +13,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.Numbers
 import androidx.compose.material.icons.filled.Scale
+import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -31,16 +31,13 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.LineHeightStyle
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import github.tom2433.lifttracker.R
+import github.tom2433.lifttracker.data.structures.LiftSetCountPerMuscleGroup
 
 @Composable
 fun StatRow(
@@ -71,6 +68,123 @@ fun StatRow(
             text = value,
             style = MaterialTheme.typography.bodyMedium
         )
+    }
+}
+
+@Composable
+fun RowWithSeparator(
+    dividerColor: Color,
+    leftHandSide: @Composable () -> Unit,
+    rightHandSide: @Composable () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        horizontalArrangement = Arrangement.Start,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier.fillMaxWidth()
+    ) {
+        leftHandSide()
+        HorizontalDivider(
+            color = dividerColor,
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 4.dp)
+        )
+        rightHandSide()
+    }
+}
+
+@Composable
+fun DisplaySetCountPerMuscleGroup(
+    setCountPerMuscleGroupList: List<LiftSetCountPerMuscleGroup>
+) {
+    var totalSets = 0
+    for (setCount in setCountPerMuscleGroupList) {
+        totalSets += setCount.setCount
+    }
+
+    // card to hold set counts per muscle group
+    Card(
+        shape = RoundedCornerShape(4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(
+                alpha = 0.75f
+            ),
+            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+        ),
+        modifier = Modifier.padding(bottom = 8.dp)
+    ) {
+        // column to hold header and set counts per muscle group
+        Column(
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth()
+        ) {
+            // row to hold muscle group icon and # icon
+            RowWithSeparator(
+                dividerColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                leftHandSide = {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_arm_flex),
+                        contentDescription = stringResource(R.string.muscle_group)
+                    )
+                },
+                rightHandSide = {
+                    Icon(
+                        imageVector = Icons.Filled.Numbers,
+                        contentDescription = stringResource(R.string.set_count)
+                    )
+                }
+            )
+
+            // display all muscle group set counts
+            for (setCountPerMuscleGroup in setCountPerMuscleGroupList) {
+                RowWithSeparator(
+                    dividerColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    leftHandSide = {
+                        Text(
+                            text = setCountPerMuscleGroup.muscleGroupName,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    },
+                    rightHandSide = {
+                        Text(
+                            text = if (setCountPerMuscleGroup.setCount == 1) {
+                                "1 set"
+                            } else {
+                                "${setCountPerMuscleGroup.setCount} sets"
+                            },
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                )
+            }
+
+            // row to display total
+            RowWithSeparator(
+                dividerColor = MaterialTheme.colorScheme.primary,
+                leftHandSide = {
+                    Text(
+                        text = stringResource(R.string.total),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                },
+                rightHandSide = {
+                    Text(
+                        text = if (totalSets == 1) {
+                            "1 set"
+                        } else {
+                            "$totalSets sets"
+                        },
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            )
+        }
     }
 }
 

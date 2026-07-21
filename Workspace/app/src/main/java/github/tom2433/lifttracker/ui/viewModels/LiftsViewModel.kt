@@ -25,8 +25,6 @@ class LiftsViewModel(
     private val _liftsUiState = MutableStateFlow(LiftsUiState())
     val liftsUiState: StateFlow<LiftsUiState> = _liftsUiState.asStateFlow()
 
-    // this function is used in place of the init {} block.
-    // terrible coding practice, I know
     init {
         // retrieve all lifts belonging to the given muscle group
         viewModelScope.launch {

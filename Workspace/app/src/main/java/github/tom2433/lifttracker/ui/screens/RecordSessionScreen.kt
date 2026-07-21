@@ -95,12 +95,14 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import github.tom2433.lifttracker.R
 import github.tom2433.lifttracker.data.liftset.LiftSet
+import github.tom2433.lifttracker.data.session.Session
 import github.tom2433.lifttracker.data.setmetric.SetMetric
 import github.tom2433.lifttracker.data.structures.LiftSearchDetail
 import github.tom2433.lifttracker.data.structures.SetMetricDisplayDetail
 import github.tom2433.lifttracker.data.utils.DateTimeCalculator
 import github.tom2433.lifttracker.ui.AppViewModelProvider
 import github.tom2433.lifttracker.ui.navigation.NavigationDestination
+import github.tom2433.lifttracker.ui.utils.DisplaySetCountPerMuscleGroup
 import github.tom2433.lifttracker.ui.utils.LiftDetailFlowRow
 import github.tom2433.lifttracker.ui.utils.SetNumberRow
 import github.tom2433.lifttracker.ui.utils.ShowElementDeleteDialog
@@ -140,10 +142,10 @@ fun RecordSessionScreen(
         // animated transition between big play button and in progress screen
         SharedTransitionLayout {
             AnimatedContent(
-                targetState = recordSessionUiState.activeLiftDay
-            ) { liftDay ->
-                // if no lift day in progress, display button to begin the lift day
-                if (liftDay == null) {
+                targetState = recordSessionUiState.activeSession
+            ) { activeSession ->
+                // if no session is in progress, display button to begin a session
+                if (activeSession == null) {
                     Card(
                         shape = CircleShape,
                         modifier = Modifier
@@ -179,7 +181,8 @@ fun RecordSessionScreen(
                         viewModel = viewModel,
                         recordSessionUiState = recordSessionUiState,
                         sharedTransitionScope = this@SharedTransitionLayout,
-                        animatedVisibilityScope = this@AnimatedContent
+                        animatedVisibilityScope = this@AnimatedContent,
+                        activeSession = activeSession
                     )
                 }
             }
@@ -192,9 +195,9 @@ fun RecordSessionScreen(
         val title: String = recordSessionUiState.liftDetailMap[recordSessionUiState.liftIdToDelete]?.liftObj?.name ?: "null"
 
         ShowElementDeleteDialog(
-            dialogTitle = "Delete all sets completed today for ${title}?",
+            dialogTitle = "Delete all sets completed in this session for ${title}?",
             warningDescription = stringResource(R.string.delete_lift_in_progress_warning_desc),
-            deleteBtnText = "Delete all of today's sets for $title",
+            deleteBtnText = "Delete this session's sets for $title",
             onDismissRequest = { viewModel.dismissDeleteLiftInProgressDialog() },
             onDelete = { viewModel.deleteLiftInProgress() }
         )
@@ -261,7 +264,7 @@ fun RecordSessionScreen(
         val liftName: String = recordSessionUiState.liftDetailMap[liftSetLiftId]?.liftObj?.name ?: "null"
 
         ShowElementDeleteDialog(
-            dialogTitle = "Delete today's $setLabel of ${liftName}?",
+            dialogTitle = "Delete this session's $setLabel of ${liftName}?",
             warningDescription = stringResource(R.string.point_of_no_return),
             deleteBtnText = "Delete $setLabel",
             onDismissRequest = { viewModel.dismissDeleteLiftSetDialog() },
@@ -278,6 +281,7 @@ fun SessionInProgressScreen(
     recordSessionUiState: RecordSessionUiState,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
+    activeSession: Session,
     modifier: Modifier = Modifier
 ) {
     val focusManager = LocalFocusManager.current
@@ -317,7 +321,7 @@ fun SessionInProgressScreen(
                         .padding(16.dp)
                         .fillMaxWidth()
                 ) {
-                    // row to hold play icon and name/date/note for current day
+                    // row to hold play icon and name/date/note for current session
                     Row(
                         horizontalArrangement = Arrangement.Start,
                         verticalAlignment = Alignment.CenterVertically,
@@ -325,7 +329,7 @@ fun SessionInProgressScreen(
                             .weight(1f)
                             .clickable(
                                 onClick = {
-                                    viewModel.showDayEditDialog()
+                                    viewModel.showSessionEditDialog()
                                 }
                             )
                     ) {
@@ -347,31 +351,31 @@ fun SessionInProgressScreen(
                                 )
                         )
 
-                        // column to hold day name/date/note
+                        // column to hold session name/date/note
                         Column(
                             verticalArrangement = Arrangement.Center,
                             horizontalAlignment = Alignment.Start
                         ) {
-                            // day name
+                            // session name
                             Text(
-                                text = recordSessionUiState.activeLiftDay?.day_label ?: "null",
+                                text = activeSession.session_label,
                                 style = MaterialTheme.typography.titleMedium
                             )
 
-                            // day date
+                            // session date
                             Text(
                                 text = DateTimeCalculator.convertIsoDateToReadableFormat(
-                                    isoDate = recordSessionUiState.activeLiftDay?.date ?: return@Column
+                                    isoDate = activeSession.date
                                 ),
                                 style = MaterialTheme.typography.bodySmall,
                                 fontSize = 13.sp,
                                 color = CardDefaults.cardColors().contentColor.copy(alpha = 0.75f)
                             )
 
-                            // day note (if applicable)
-                            if (recordSessionUiState.activeLiftDay.note.isNotBlank()) {
+                            // session note (if applicable)
+                            if (activeSession.note.isNotBlank()) {
                                 Text(
-                                    text = recordSessionUiState.activeLiftDay.note,
+                                    text = activeSession.note,
                                     style = MaterialTheme.typography.bodySmall,
                                     fontSize = 13.sp,
                                     color = CardDefaults.cardColors().contentColor.copy(alpha = 0.75f)
@@ -412,6 +416,13 @@ fun SessionInProgressScreen(
                             .verticalScroll(rememberScrollState())
                             .padding(16.dp)
                     ) {
+                        // indicate how many sets have been performed for each muscle group
+                        if (recordSessionUiState.setCountPerMuscleGroupList.isNotEmpty()) {
+                            DisplaySetCountPerMuscleGroup(
+                                setCountPerMuscleGroupList = recordSessionUiState.setCountPerMuscleGroupList
+                            )
+                        }
+
                         // lifts in progress will go here
                         loop@ for ((liftId, setMap) in recordSessionUiState.liftSetMap) {
                             key(liftId) {
@@ -462,7 +473,8 @@ fun SessionInProgressScreen(
                                         liftSetVisibleMap = recordSessionUiState.liftSetVisibleMap,
                                         setCountPerLiftMap = recordSessionUiState.setCountPerLiftMap,
                                         focusManager = focusManager,
-                                        deleteButtonsEnabled = recordSessionUiState.deleteButtonsEnabled
+                                        deleteButtonsEnabled = recordSessionUiState.deleteButtonsEnabled,
+                                        activeSession = activeSession
                                     )
                                 }
                             }
@@ -505,19 +517,19 @@ fun SessionInProgressScreen(
         }
     }
 
-    if (recordSessionUiState.dayEditDialogVisible) {
+    if (recordSessionUiState.sessionEditDialogVisible) {
         ShowElementEntryDialog(
             dialogTitle = stringResource(R.string.edit_session_dialog_title),
             submitBtnText = stringResource(R.string.update_session),
             elementNameInputLabel = stringResource(R.string.session_name),
             elementNoteInputLabel = stringResource(R.string.session_note_optional),
-            buttonEnabled = viewModel.validateDayInput(),
-            newElementName = recordSessionUiState.newDayName,
-            newElementNote = recordSessionUiState.newDayNote,
-            onElementNameValueChanged = { viewModel.updateNewDayName(it) },
-            onElementNoteValueChanged = { viewModel.updateNewDayNote(it) },
-            onSubmit = { viewModel.updateDayNameAndNote() },
-            onDismissRequest = { viewModel.dismissDayEditDialog() }
+            buttonEnabled = viewModel.validateSessionInput(),
+            newElementName = recordSessionUiState.newSessionName,
+            newElementNote = recordSessionUiState.newSessionNote,
+            onElementNameValueChanged = { viewModel.updateNewSessionName(it) },
+            onElementNoteValueChanged = { viewModel.updateNewSessionNote(it) },
+            onSubmit = { viewModel.updateSessionNameAndNote() },
+            onDismissRequest = { viewModel.dismissSessionEditDialog() }
         )
     }
 }
@@ -539,6 +551,7 @@ fun LiftInProgressCard(
     setCountPerLiftMap: Map<Int, Int>,
     focusManager: FocusManager,
     deleteButtonsEnabled: Boolean,
+    activeSession: Session,
     modifier: Modifier = Modifier
 ) {
     val bottomCornerRadius by animateDpAsState(
@@ -678,7 +691,7 @@ fun LiftInProgressCard(
             }
         }
 
-        // animated visibility for lift sets and add lift set button outside of the lift IP card
+        // animated visibility for lift sets and add lift set button outside the lift IP card
         AnimatedVisibility(
             visible = liftDetail.selected,
             enter = slideInVertically(
@@ -710,7 +723,11 @@ fun LiftInProgressCard(
             Column {
                 // column to hold lift set cards
                 Column(
-                    modifier = Modifier.padding(horizontal = 16.dp)
+                    modifier = Modifier.padding(
+                        start = 16.dp,
+                        end = 16.dp,
+                        top = 8.dp
+                    )
                 ) {
                     // lift sets go here
                     for ((liftSet, setMetricPair) in setMap) {
@@ -746,7 +763,8 @@ fun LiftInProgressCard(
                                     screenContentColor = screenContentColor,
                                     liftHasMoreThanOneSet = setMap.keys.size > 1,
                                     focusManager = focusManager,
-                                    deleteButtonsEnabled = deleteButtonsEnabled
+                                    deleteButtonsEnabled = deleteButtonsEnabled,
+                                    activeSession = activeSession
                                 )
                             }
                         }
@@ -778,6 +796,8 @@ fun LiftInProgressCard(
                         )
                     }
                 }
+
+                Spacer(modifier = Modifier.height(8.dp))
             }
         }
 
@@ -800,6 +820,7 @@ fun LiftSetInProgressCard(
     liftHasMoreThanOneSet: Boolean,
     focusManager: FocusManager,
     deleteButtonsEnabled: Boolean,
+    activeSession: Session,
     modifier: Modifier = Modifier
 ) {
     // focus requesters for each input except weight; user will enter the weight field if they want
@@ -812,14 +833,14 @@ fun LiftSetInProgressCard(
         targetValue = if (setMetricDisplayDetailMap[setMetricPair.first.id]?.inputIsLogged ?: false) {
             screenContentColor
         } else {
-            MaterialTheme.colorScheme.errorContainer
+            MaterialTheme.colorScheme.tertiary
         }
     )
     val secondMetricInputColor by animateColorAsState(
         targetValue = if (setMetricDisplayDetailMap[setMetricPair.second.id]?.inputIsLogged ?: false) {
             screenContentColor
         } else {
-            MaterialTheme.colorScheme.errorContainer
+            MaterialTheme.colorScheme.tertiary
         }
     )
 
@@ -831,7 +852,7 @@ fun LiftSetInProgressCard(
         ),
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(bottom = 8.dp)
     ) {
         // row to hold lift set details on the left,
         // set metric details on the right
@@ -839,7 +860,12 @@ fun LiftSetInProgressCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
-                .padding(8.dp)
+                .padding(
+                    start = 8.dp,
+                    end = 8.dp,
+                    top = 16.dp,
+                    bottom = 16.dp
+                )
                 .fillMaxWidth()
         ) {
             // row to hold pencil edit icon and delete icon, then set label/note/set #'s
@@ -883,7 +909,7 @@ fun LiftSetInProgressCard(
                 }
 
                 // column to hold set label, set note (if applicable), lift set #,
-                // and day set # and muscle group set #
+                // and session set # and muscle group session set #
                 Column(
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.Start,
@@ -908,6 +934,23 @@ fun LiftSetInProgressCard(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
+                    // row to hold set # table header
+                    Row(
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        // set # table header
+                        Text(
+                            text = "Set #",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(
+                                alpha = 0.75f
+                            )
+                        )
+                    }
+
                     // column to hold lift set #'s
                     Column(
                         modifier = Modifier
@@ -921,7 +964,7 @@ fun LiftSetInProgressCard(
                     ) {
                         // lift set #
                         SetNumberRow(
-                            labelText = "Lift",
+                            labelText = liftDetail.liftObj.name,
                             valueText = "#${liftSet.lift_set_number}"
                         )
                         HorizontalDivider(
@@ -930,10 +973,10 @@ fun LiftSetInProgressCard(
                                 alpha = 0.5f
                             )
                         )
-                        // day set #
+                        // session set #
                         SetNumberRow(
-                            labelText = "Session",
-                            valueText = "#${liftSet.day_set_number}"
+                            labelText = activeSession.session_label,
+                            valueText = "#${liftSet.session_set_number}"
                         )
                         HorizontalDivider(
                             modifier = Modifier.fillMaxWidth(),
@@ -944,7 +987,7 @@ fun LiftSetInProgressCard(
                         // muscle group set #
                         SetNumberRow(
                             labelText = liftDetail.muscleGroupName,
-                            valueText = "#${liftSet.muscle_group_day_set_number}"
+                            valueText = "#${liftSet.muscle_group_session_set_number}"
                         )
                     }
                 }
@@ -984,7 +1027,8 @@ fun LiftSetInProgressCard(
                         onValueChange = { onSetMetricValueChanged(it, setMetricPair.first) },
                         label = {
                             Text(
-                                text = liftDetail.unitName
+                                text = liftDetail.unitName,
+                                fontWeight = FontWeight.Bold
                             )
                         },
                         singleLine = true,
@@ -1034,7 +1078,8 @@ fun LiftSetInProgressCard(
                         color = MaterialTheme.colorScheme.onSecondaryContainer.copy(
                             alpha = 0.75f
                         ),
-                        textAlign = TextAlign.End
+                        textAlign = TextAlign.End,
+                        modifier = Modifier.width(140.dp)
                     )
                 }
 
@@ -1075,7 +1120,8 @@ fun LiftSetInProgressCard(
                             onValueChange = { onSetMetricValueChanged(it, setMetricPair.second) },
                             label = {
                                 Text(
-                                    text = stringResource(R.string.reps)
+                                    text = stringResource(R.string.reps),
+                                    fontWeight = FontWeight.Bold
                                 )
                             },
                             singleLine = true,
@@ -1141,7 +1187,8 @@ fun LiftSetInProgressCard(
                             onValueChange = { onSetMetricTimeValueChanged(it, setMetricPair.second, "hours") },
                             label = {
                                 Text(
-                                    text = stringResource(R.string.hours)
+                                    text = stringResource(R.string.hours),
+                                    fontWeight = FontWeight.Bold
                                 )
                             },
                             singleLine = true,
@@ -1188,7 +1235,8 @@ fun LiftSetInProgressCard(
                         onValueChange = { onSetMetricTimeValueChanged(it, setMetricPair.second, "minutes") },
                         label = {
                             Text(
-                                text = stringResource(R.string.minutes)
+                                text = stringResource(R.string.minutes),
+                                fontWeight = FontWeight.Bold
                             )
                         },
                         singleLine = true,
@@ -1234,7 +1282,8 @@ fun LiftSetInProgressCard(
                         onValueChange = { onSetMetricTimeValueChanged(it, setMetricPair.second, "seconds") },
                         label = {
                             Text(
-                                text = stringResource(R.string.seconds)
+                                text = stringResource(R.string.seconds),
+                                fontWeight = FontWeight.Bold
                             )
                         },
                         singleLine = true,
@@ -1281,7 +1330,8 @@ fun LiftSetInProgressCard(
                         color = MaterialTheme.colorScheme.onSecondaryContainer.copy(
                             alpha = 0.75f
                         ),
-                        textAlign = TextAlign.End
+                        textAlign = TextAlign.End,
+                        modifier = Modifier.width(140.dp)
                     )
                 }
             }
@@ -1328,7 +1378,7 @@ fun ExistingLiftEntryCard(
                 expanded = liftSuggestionsList.isNotEmpty(),
                 onExpandedChange = {}
             ) {
-                // textfield for inputting existing lift name
+                // text field for inputting existing lift name
                 OutlinedTextField(
                     value = inputLiftName,
                     onValueChange = onInputLiftValueChanged,

@@ -41,20 +41,20 @@ interface MuscleGroupDao {
             mg.name AS name,
             mg.note AS note,
             COUNT(DISTINCT l.id) AS numLifts,
-            COUNT(DISTINCT ld.id) AS numSessions,
-            COUNT(DISTINCT CASE WHEN ld.id IS NOT NULL THEN ls.id END) AS numSets,
+            COUNT(DISTINCT s.id) AS numSessions,
+            COUNT(DISTINCT CASE WHEN s.id IS NOT NULL THEN ls.id END) AS numSets,
             COUNT(DISTINCT CASE WHEN l.metric_type = 1 THEN l.id END) AS numRepLifts,
             AVG(
                 CASE
                     WHEN set_lift.metric_type = 1
                         AND sm.metric_position = 2
-                        AND ld.id IS NOT NULL
+                        AND s.id IS NOT NULL
                     THEN sm.value
                     ELSE NULL
                 END
             ) AS avgNumRepsPerSet,
-            MIN(ld.date) AS firstDateTrained,
-            MAX(ld.date) AS lastDateTrained
+            MIN(s.date) AS firstDateTrained,
+            MAX(s.date) AS lastDateTrained
         FROM muscle_groups AS mg
         INNER JOIN profiles AS p
             ON p.id = mg.profile_id
@@ -64,9 +64,9 @@ interface MuscleGroupDao {
             ON ls.muscle_group_id = mg.id
         LEFT JOIN lifts AS set_lift
             ON set_lift.id = ls.lift_id
-        LEFT JOIN lift_days AS ld
-            ON ld.id = ls.lift_day_id
-            AND ld.profile_id = mg.profile_id
+        LEFT JOIN sessions AS s
+            ON s.id = ls.session_id
+            AND s.profile_id = mg.profile_id
         LEFT JOIN set_metrics AS sm
             ON sm.set_id = ls.id
         WHERE p.active = 1

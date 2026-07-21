@@ -170,7 +170,7 @@ fun LiftTrackerDrawer(
     val coroutineScope = rememberCoroutineScope()
     viewModel.checkScreenForFab(titleRes)
     viewModel.checkScreenForScrollBehavior(titleRes)
-    val beginSessionNavElementColors = if (drawerUiState.activeLiftDay == null) {
+    val beginSessionNavElementColors = if (drawerUiState.activeSession == null) {
         NavigationDrawerItemDefaults.colors()
     } else {
         NavigationDrawerItemDefaults.colors(
@@ -252,7 +252,7 @@ fun LiftTrackerDrawer(
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Add,
-                            contentDescription = "" // TODO
+                            contentDescription = stringResource(R.string.add_muscle_group)
                         )
                     }
                 }
@@ -352,7 +352,7 @@ fun LiftTrackerDrawer(
                 // nav drawer element: Begin/Resume Session
                 NavigationDrawerItem(
                     label = {
-                        if (drawerUiState.activeLiftDay == null) {
+                        if (drawerUiState.activeSession == null) {
                             Text(stringResource(R.string.begin_session_title))
                         } else {
                             Text(stringResource(R.string.resume_session))
