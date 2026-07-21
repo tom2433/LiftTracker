@@ -6,6 +6,10 @@ A Data Vis project developed using Jetpack Compose.
 
 # Immediate Notes
 
+## 07-21
+
+make lift set in progress card's eight/rep note take up the same width as the value inputs
+
 ## 07-17
 
 ran into an issue where when the user deletes more than one lift in progress or lift sets in progress, the numbering gets messed up. need to implement a system where the delete icons are not visible while something is being deleted.
