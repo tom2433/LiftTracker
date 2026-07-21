@@ -6,7 +6,11 @@ A Data Vis project developed using Jetpack Compose.
 
 # Immediate Notes
 
+## 07-22
+
 need on lift set in progress card for session in progress screen: average weight/reps for this lift given it's lift set number, muscle group set number, and session set number.
+
+change the session set number label so it just says "session"
 
 ## 07-21
 
