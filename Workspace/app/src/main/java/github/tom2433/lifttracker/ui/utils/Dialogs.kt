@@ -967,6 +967,11 @@ fun ShowMuscleGroupSelectionDialog(
                             Text(
                                 text = stringResource(R.string.cascade_old_set_data_dialog_text_2),
                                 style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(bottom = 4.dp)
+                            )
+                            Text(
+                                text = stringResource(R.string.cascade_old_set_data_dialog_text_3),
+                                style = MaterialTheme.typography.bodyMedium,
                                 modifier = Modifier.padding(bottom = 8.dp)
                             )
                         }

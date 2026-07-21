@@ -89,8 +89,9 @@
     <string name="delete_lift_set">Delete lift set</string>
     <string name="point_of_no_return">This cannot be undone.</string>
     <string name="edit_session_name_and_note">Edit session name and note</string>
-    <string name="migrate_old_set_data_dialog_text">When checked (default), your old set data will also transfer over to this new muscle group. When unchecked, the old weight and rep data from this lift will still be calculated and averaged in the old muscle group for data visualization purposes. New data for this lift will be recorded in the new muscle group regardless of this switch\'s state.</string>
+    <string name="migrate_old_set_data_dialog_text">When checked (default), your old set data will transfer over to this new muscle group. When unchecked, the old weight and rep data from this lift will still be calculated and averaged in the old muscle group for data visualization purposes. New data for this lift will be recorded in the new muscle group regardless of this switch\'s state.</string>
     <string name="migrate_old_set_data">Migrate old set data</string>
     <string name="cascade_old_set_data_dialog_text_1">This switch only applies if you have already moved this lift from an older muscle group to this current one WITHOUT migrating the old set data.</string>
-    <string name="cascade_old_set_data_dialog_text_2">When checked, this migration will take all old set data from all muscle groups to which this lift has belonged and migrate it to the newly selected group. When unchecked, this migration will only migrate the set data from this current muscle group to the new one.</string>
+    <string name="cascade_old_set_data_dialog_text_2">When checked, this migration will take all old set data from all muscle groups to which this lift has belonged and migrate it to the newly selected group.</string>
+    <string name="cascade_old_set_data_dialog_text_3">When unchecked, this migration will only migrate the set data from this current muscle group to the new one.</string>
 </resources>

@@ -922,7 +922,7 @@ fun LiftSetInProgressCard(
                         // lift set #
                         SetNumberRow(
                             labelText = "Lift",
-                            valueText = liftSet.lift_set_number.toString()
+                            valueText = "#${liftSet.lift_set_number}"
                         )
                         HorizontalDivider(
                             modifier = Modifier.fillMaxWidth(),
@@ -933,7 +933,7 @@ fun LiftSetInProgressCard(
                         // day set #
                         SetNumberRow(
                             labelText = "Session",
-                            valueText = liftSet.day_set_number.toString()
+                            valueText = "#${liftSet.day_set_number}"
                         )
                         HorizontalDivider(
                             modifier = Modifier.fillMaxWidth(),
@@ -944,7 +944,7 @@ fun LiftSetInProgressCard(
                         // muscle group set #
                         SetNumberRow(
                             labelText = liftDetail.muscleGroupName,
-                            valueText = liftSet.muscle_group_day_set_number.toString()
+                            valueText = "#${liftSet.muscle_group_day_set_number}"
                         )
                     }
                 }
