@@ -2,6 +2,13 @@
 
 A Data Vis project developed using Jetpack Compose.
 
+This project uses charts provided by Vico:
+
+Vico
+Copyright 2026 Patryk Goworowski and Patrick Michalik
+Licensed under the Apache License, Version 2.0
+https://github.com/patrykandpatrick/vico
+
 ---
 
 # Immediate Notes
