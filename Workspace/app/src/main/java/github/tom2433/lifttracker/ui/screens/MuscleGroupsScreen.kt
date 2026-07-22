@@ -193,7 +193,9 @@ fun MuscleGroupsScreenContent(
             val activeProfile: Profile? = viewModel.getActiveProfile()
             Text(
                 text = "Displaying Muscle Groups for Profile: ${activeProfile?.name ?: "not loaded yet"}${if (activeProfile?.note?.isNotBlank() ?: false) " (${activeProfile.note})" else ""}",
-                color = MaterialTheme.colorScheme.outline,
+                color = MaterialTheme.colorScheme.onBackground.copy(
+                    alpha = 0.75f
+                ),
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
@@ -484,42 +486,6 @@ fun MuscleGroupsScreenContent(
                     onDelete = {
                         viewModel.deleteMuscleGroup()
                     }
-                )
-            }
-        }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun WelcomeDialogPreview() {
-    LiftTrackerTheme(dynamicColor = false, darkTheme = false) {
-        val layoutDirection = LocalLayoutDirection.current
-
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .statusBarsPadding()
-                    .padding(
-                        start = WindowInsets.safeDrawing.asPaddingValues()
-                            .calculateStartPadding(layoutDirection),
-                        end = WindowInsets.safeDrawing.asPaddingValues()
-                            .calculateEndPadding(layoutDirection)
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                WelcomeDialog(
-                    buttonEnabled = true,
-                    newProfileName = "",
-                    newProfileNote = "",
-                    onProfileNameValueChanged = {},
-                    onProfileNoteValueChanged = {},
-                    onCreateProfile = {},
-                    modifier = Modifier
                 )
             }
         }

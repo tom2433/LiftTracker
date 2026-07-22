@@ -137,4 +137,15 @@ object DateTimeCalculator {
     fun convertIsoDateToReadableFormat(isoDate: String): String {
         return LocalDate.parse(isoDate).format(DateTimeFormatter.ofPattern("MMM d, yyyy"))
     }
+
+    // This calculates an inclusive rolling-window start date using DateCalculator's strict UTC epoch-day parsing. - Codex
+    fun calculateStartDate(today: String, daysBeforeToday: Long): String {
+        // Today's value is generated internally and is therefore valid; this fallback keeps initialization safe if that contract changes. - Codex
+        val todayEpochDay = DateTimeCalculator.parseIsoDateToEpochDay(today) ?: return today
+
+        // Convert the shifted UTC epoch day back to the ISO format stored by sessions.date. - Codex
+        return DateTimeCalculator.createIsoDateFormatter().format(
+            Date((todayEpochDay - daysBeforeToday) * DateTimeCalculator.MILLIS_PER_DAY)
+        )
+    }
 }

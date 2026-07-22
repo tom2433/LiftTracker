@@ -408,7 +408,9 @@ fun MuscleGroupDonutChart(
     val colors = listOf(
         MaterialTheme.colorScheme.primaryContainer,
         MaterialTheme.colorScheme.secondaryContainer,
-        MaterialTheme.colorScheme.tertiaryContainer,
+        MaterialTheme.colorScheme.tertiaryContainer.copy(
+            alpha = 0.75f
+        ),
         MaterialTheme.colorScheme.error,
         MaterialTheme.colorScheme.inversePrimary
     )
@@ -419,7 +421,7 @@ fun MuscleGroupDonutChart(
         )
     )
 
-    val labeledSlices = chartItems.mapIndexed { index, _ ->
+    val labeledSlices = List(chartItems.size) { index ->
         PieChart.Slice(
             fill = Fill(colors[index % colors.size]),
             label = PieChart.SliceLabel.Outside(

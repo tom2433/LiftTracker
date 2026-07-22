@@ -4,11 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import github.tom2433.lifttracker.data.lift.Lift
 import github.tom2433.lifttracker.data.lift.LiftRepository
-import github.tom2433.lifttracker.data.structures.LiftStatisticsData
-import github.tom2433.lifttracker.data.musclegroup.MuscleGroup
-import github.tom2433.lifttracker.data.musclegroup.MuscleGroupRepository
 import github.tom2433.lifttracker.data.liftunit.LiftUnit
 import github.tom2433.lifttracker.data.liftunit.LiftUnitRepository
+import github.tom2433.lifttracker.data.musclegroup.MuscleGroup
+import github.tom2433.lifttracker.data.musclegroup.MuscleGroupRepository
+import github.tom2433.lifttracker.data.structures.LiftStatisticsData
 import github.tom2433.lifttracker.data.utils.DateTimeCalculator
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,9 +20,7 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.util.Date
 import java.util.Locale
-import kotlin.collections.mapValues
 import kotlin.math.roundToLong
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -41,10 +39,10 @@ class LiftScreenViewModel(
             val today = DateTimeCalculator.getCurrentIsoDate()
 
             // Subtracting 27 days makes today the twenty-eighth and final day of the four-week window. - Codex
-            val pastMonthStartDate = calculateStartDate(today, 27L)
+            val pastMonthStartDate = DateTimeCalculator.calculateStartDate(today, 27L)
 
             // Subtracting 364 days makes today the three-hundred-sixty-fifth and final day of the annual window. - Codex
-            val pastYearStartDate = calculateStartDate(today, 364L)
+            val pastYearStartDate = DateTimeCalculator.calculateStartDate(today, 364L)
 
             // Observe all three aggregates together so changes to sets, metrics, lifts, profiles, lift units, or groups refresh the UI. - Codex
             combine(
@@ -163,17 +161,6 @@ class LiftScreenViewModel(
                     }
                 }
         }
-    }
-
-    // This calculates an inclusive rolling-window start date using DateCalculator's strict UTC epoch-day parsing. - Codex
-    private fun calculateStartDate(today: String, daysBeforeToday: Long): String {
-        // Today's value is generated internally and is therefore valid; this fallback keeps initialization safe if that contract changes. - Codex
-        val todayEpochDay = DateTimeCalculator.parseIsoDateToEpochDay(today) ?: return today
-
-        // Convert the shifted UTC epoch day back to the ISO format stored by sessions.date. - Codex
-        return DateTimeCalculator.createIsoDateFormatter().format(
-            Date((todayEpochDay - daysBeforeToday) * DateTimeCalculator.MILLIS_PER_DAY)
-        )
     }
 
     // This converts one timeframe projection into the exact ordered labels and values required by LiftScreenUiState. - Codex

@@ -96,4 +96,6 @@
     <string name="cascade_old_set_data_dialog_text_3">When unchecked, this migration will only migrate the set data from this current muscle group to the new one.</string>
     <string name="set_count">Set Count</string>
     <string name="total">Total</string>
+    <string name="select_start_date">Select Start Date</string>
+    <string name="select_date_range">Select date range</string>
 </resources>
