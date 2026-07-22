@@ -1,5 +1,6 @@
 package github.tom2433.lifttracker.data.session
 
+import github.tom2433.lifttracker.data.profile.Profile
 import github.tom2433.lifttracker.data.structures.LiftSetCountPerMuscleGroup
 import kotlinx.coroutines.flow.Flow
 
@@ -49,4 +50,11 @@ interface SessionRepository {
     fun getNumOfSetsForSession(id: Int): Flow<Int>
 
     fun getSetCountPerMuscleGroupForSessionIdStream(sessionId: Int): Flow<List<LiftSetCountPerMuscleGroup>>
+
+    fun getMuscleGroupFrequencyListStream(
+        activeProfileId: Int,
+        startDate: String?,
+        endDate: String?,
+        fetchLimit: Int
+    ): Flow<List<LiftSetCountPerMuscleGroup>>
 }

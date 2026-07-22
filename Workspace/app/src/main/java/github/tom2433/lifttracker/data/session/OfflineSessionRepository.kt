@@ -1,5 +1,6 @@
 package github.tom2433.lifttracker.data.session
 
+import github.tom2433.lifttracker.data.profile.Profile
 import github.tom2433.lifttracker.data.structures.LiftSetCountPerMuscleGroup
 import kotlinx.coroutines.flow.Flow
 
@@ -21,4 +22,16 @@ class OfflineSessionRepository(private val sessionDao: SessionDao) : SessionRepo
     override fun getNumOfSetsForSession(id: Int): Flow<Int> = sessionDao.getNumOfSetsForSession(id)
 
     override fun getSetCountPerMuscleGroupForSessionIdStream(sessionId: Int): Flow<List<LiftSetCountPerMuscleGroup>> = sessionDao.getSetCountPerMuscleGroup(sessionId)
+
+    override fun getMuscleGroupFrequencyListStream(
+        activeProfileId: Int,
+        startDate: String?,
+        endDate: String?,
+        fetchLimit: Int
+    ): Flow<List<LiftSetCountPerMuscleGroup>> = sessionDao.getMuscleGroupFrequencyList(
+        activeProfileId = activeProfileId,
+        startDate = startDate,
+        endDate = endDate,
+        fetchLimit = fetchLimit
+    )
 }

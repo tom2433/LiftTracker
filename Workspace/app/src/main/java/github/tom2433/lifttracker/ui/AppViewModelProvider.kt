@@ -80,7 +80,8 @@ object AppViewModelProvider {
         // initializer for SessionsViewModel
         initializer {
             SessionsViewModel(
-                profileRepository = liftTrackerApplication().container.profileRepository
+                profileRepository = liftTrackerApplication().container.profileRepository,
+                sessionRepository = liftTrackerApplication().container.sessionsRepository
             )
         }
 

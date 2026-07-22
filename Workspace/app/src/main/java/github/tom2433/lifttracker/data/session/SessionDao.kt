@@ -7,7 +7,9 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
+import github.tom2433.lifttracker.data.profile.Profile
 import github.tom2433.lifttracker.data.structures.LiftSetCountPerMuscleGroup
+import github.tom2433.lifttracker.data.utils.DateTimeCalculator
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -99,4 +101,46 @@ interface SessionDao {
         ORDER BY ls.id
     """)
     fun getSetCountPerMuscleGroup(sessionId: Int): Flow<List<LiftSetCountPerMuscleGroup>>
+
+    @Query("""
+        SELECT
+            mg.name AS muscleGroupName,
+            COUNT(ls.id) AS setCount
+        FROM lift_sets AS ls
+        INNER JOIN muscle_groups AS mg
+            ON mg.id = ls.muscle_group_id
+        WHERE ls.session_id IN (
+            SELECT s.id
+            FROM sessions AS s
+            WHERE s.date <= :endDate
+                AND s.date >= :startDate
+                AND s.profile_id = :activeProfileId
+        )
+        GROUP BY mg.id, mg.name
+        ORDER BY mg.name
+        LIMIT :fetchLimit
+    """)
+    fun getMuscleGroupFrequencyListFromStartEndDates(
+        activeProfileId: Int,
+        startDate: String,
+        endDate: String,
+        fetchLimit: Int
+    ): Flow<List<LiftSetCountPerMuscleGroup>>
+
+    fun getMuscleGroupFrequencyList(
+        activeProfileId: Int,
+        startDate: String?,
+        endDate: String?,
+        fetchLimit: Int
+    ): Flow<List<LiftSetCountPerMuscleGroup>> {
+        val realStartDate: String = startDate ?: "2025-07-03"
+        val realEndDate: String = endDate ?: DateTimeCalculator.getCurrentIsoDate()
+
+        return getMuscleGroupFrequencyListFromStartEndDates(
+            activeProfileId = activeProfileId,
+            startDate = realStartDate,
+            endDate = realEndDate,
+            fetchLimit = fetchLimit
+        )
+    }
 }
