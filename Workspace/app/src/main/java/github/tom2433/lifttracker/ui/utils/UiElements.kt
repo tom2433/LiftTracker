@@ -38,6 +38,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.patrykandpatrick.vico.compose.common.Fill
@@ -386,7 +387,9 @@ fun LiftDetailFlowRow(
 @Composable
 fun MuscleGroupDonutChart(
     muscleGroupFrequencyList: List<LiftSetCountPerMuscleGroup>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    height: Dp = 200.dp,
+    innerHeight: Dp = 96.dp
 ) {
     val chartItems = muscleGroupFrequencyList.filter { it.setCount > 0 }
 
@@ -427,16 +430,19 @@ fun MuscleGroupDonutChart(
             label = PieChart.SliceLabel.Outside(
                 textComponent = labelTextComponent,
                 lineColor = MaterialTheme.colorScheme.onBackground
-            )
+            ),
+            strokeFill = Fill(MaterialTheme.colorScheme.onBackground),
+            strokeThickness = 1.dp
         )
     }
 
     val chart = rememberPieChart(
-        innerSize = PieSize.Inner.fixed(96.dp),
+        innerSize = PieSize.Inner.fixed(innerHeight),
         sliceProvider = PieChart.SliceProvider.series(labeledSlices),
         valueFormatter = { _, _, sliceIndex ->
             chartItems.getOrNull(sliceIndex)?.muscleGroupName.orEmpty()
-        }
+        },
+        spacing = 2.dp,
     )
 
     Box(
@@ -448,12 +454,17 @@ fun MuscleGroupDonutChart(
             modelProducer = modelProducer,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(200.dp)
-                .padding(horizontal = 24.dp)
+                .height(height)
         )
 
+        val numSets = chartItems.sumOf { it.setCount }
+
         Text(
-            text = "${chartItems.sumOf { it.setCount }} sets",
+            text = if (numSets == 1) {
+                "1 set"
+            } else {
+                "$numSets sets"
+            },
             style = MaterialTheme.typography.titleMedium
         )
     }

@@ -13,6 +13,7 @@ import github.tom2433.lifttracker.data.utils.DateTimeCalculator
 import github.tom2433.lifttracker.ui.screens.TimeFrameOption
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -59,6 +60,9 @@ class SessionsViewModel(
         refreshJob?.cancel()
 
         refreshJob = viewModelScope.launch {
+            makeAllSessionCardsInvisible()
+            delay(300)
+
             // constant collection to fill the muscleGroupFrequencyMap for the given time period,
             // only updates automatically when the profile is changed or when the data in the database
             // that sessionRepository.getMuscleGroupFrequencyListStream() relies on updates.
@@ -102,7 +106,6 @@ class SessionsViewModel(
                     _sessionsUiState.update { currentState ->
                         val updatedSessionDetails = sessionDetails.map { sessionDetail ->
                             sessionDetail.copy(
-                                visible = true,
                                 selected = currentState.sessionDetailMap[sessionDetail.sessionId]?.selected ?: false
                             )
                         }
@@ -119,8 +122,35 @@ class SessionsViewModel(
                                 }
                         )
                     }
+
+                    delay(300)
+                    makeAllSessionCardsVisible()
                 }
             }
+        }
+    }
+
+    fun makeAllSessionCardsInvisible() {
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                sessionDetailMap = currentState.sessionDetailMap.mapValues { (_, sessionDetail) ->
+                    sessionDetail.copy(
+                        visible = false
+                    )
+                }
+            )
+        }
+    }
+
+    fun makeAllSessionCardsVisible() {
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                sessionDetailMap = currentState.sessionDetailMap.mapValues { (_, sessionDetail) ->
+                    sessionDetail.copy(
+                        visible = true
+                    )
+                }
+            )
         }
     }
 

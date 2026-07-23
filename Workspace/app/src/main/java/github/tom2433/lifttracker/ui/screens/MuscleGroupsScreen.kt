@@ -306,7 +306,9 @@ fun MuscleGroupsScreenContent(
                                             if (muscleGroupDetail.note.isNotBlank()) {
                                                 Text(
                                                     text = muscleGroupDetail.note,
-                                                    color = MaterialTheme.colorScheme.outline,
+                                                    color = CardDefaults.cardColors().contentColor.copy(
+                                                        alpha = 0.75f
+                                                    ),
                                                     fontSize = 13.sp,
                                                     style = MaterialTheme.typography.bodySmall,
                                                 )
