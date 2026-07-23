@@ -1,14 +1,18 @@
 package github.tom2433.lifttracker.ui.viewModels
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import github.tom2433.lifttracker.data.profile.Profile
 import github.tom2433.lifttracker.data.profile.ProfileRepository
 import github.tom2433.lifttracker.data.session.SessionRepository
 import github.tom2433.lifttracker.data.structures.LiftSetCountPerMuscleGroup
+import github.tom2433.lifttracker.data.structures.SessionDetail
 import github.tom2433.lifttracker.data.utils.DateTimeCalculator
 import github.tom2433.lifttracker.ui.screens.TimeFrameOption
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,19 +25,17 @@ import java.util.Date
 /**
  * ViewModel for SessionsScreen
  */
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalCoroutinesApi::class)
 class SessionsViewModel(
     private val profileRepository: ProfileRepository,
     private val sessionRepository: SessionRepository
 ) : ViewModel() {
     private val _sessionsUiState = MutableStateFlow(SessionsUiState())
+    private var refreshJob: Job? = null
     val sessionsUiState: StateFlow<SessionsUiState> = _sessionsUiState.asStateFlow()
 
     init {
-        refresh()
-    }
-
-    private fun refresh() {
         // constant collection to keep active profile up to date
         viewModelScope.launch {
             profileRepository.getActiveProfileStream().collect { activeProfile ->
@@ -45,24 +47,78 @@ class SessionsViewModel(
             }
         }
 
-        // constant collection to fill the muscleGroupFrequencyMap for the given time period
-        viewModelScope.launch {
-            profileRepository.getActiveProfileStream().flatMapLatest { activeProfile ->
-                if (activeProfile != null) {
-                    sessionRepository.getMuscleGroupFrequencyListStream(
-                        activeProfileId = activeProfile.id,
-                        startDate = _sessionsUiState.value.startDate,
-                        endDate = _sessionsUiState.value.endDate,
-                        fetchLimit = _sessionsUiState.value.fetchLimit
-                    )
-                } else {
-                    flowOf(emptyList())
+        refresh()
+    }
+
+    /**
+     * This refresh exists because the muscleGroupFrequencyMap does not automatically update when
+     * startDate/endDate is changed, so it must be called manually
+     */
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun refresh() {
+        refreshJob?.cancel()
+
+        refreshJob = viewModelScope.launch {
+            // constant collection to fill the muscleGroupFrequencyMap for the given time period,
+            // only updates automatically when the profile is changed or when the data in the database
+            // that sessionRepository.getMuscleGroupFrequencyListStream() relies on updates.
+            launch {
+                profileRepository.getActiveProfileStream().flatMapLatest { activeProfile ->
+                    if (activeProfile != null) {
+                        sessionRepository.getMuscleGroupFrequencyListStream(
+                            activeProfileId = activeProfile.id,
+                            startDate = _sessionsUiState.value.startDate,
+                            endDate = _sessionsUiState.value.endDate,
+                            fetchLimit = _sessionsUiState.value.fetchLimit
+                        )
+                    } else {
+                        flowOf(emptyList())
+                    }
+                }.collect { muscleGroupFrequencies ->
+                    _sessionsUiState.update { currentState ->
+                        currentState.copy(
+                            muscleGroupFrequencyList = muscleGroupFrequencies
+                        )
+                    }
                 }
-            }.collect { muscleGroupFrequencies ->
-                _sessionsUiState.update { currentState ->
-                    currentState.copy(
-                        muscleGroupFrequencyList = muscleGroupFrequencies
-                    )
+            }
+
+            // constant collection to retrieve a list of all SessionDetail objects for all sessions
+            // completed in the user-specified timeframe. Each SessionDetail object's visible attribute
+            // is initially set to false, so this sets them to true once they're loaded in
+            launch {
+                profileRepository.getActiveProfileStream().flatMapLatest { activeProfile ->
+                    if (activeProfile == null) {
+                        flowOf(emptyList())
+                    } else {
+                        sessionRepository.getSessionDetailsListStreamForSessionScreen(
+                            activeProfileId = activeProfile.id,
+                            startDate = _sessionsUiState.value.startDate,
+                            endDate = _sessionsUiState.value.endDate,
+                            fetchLimit = _sessionsUiState.value.fetchLimit
+                        )
+                    }
+                }.collect { sessionDetails ->
+                    _sessionsUiState.update { currentState ->
+                        val updatedSessionDetails = sessionDetails.map { sessionDetail ->
+                            sessionDetail.copy(
+                                visible = true,
+                                selected = currentState.sessionDetailMap[sessionDetail.sessionId]?.selected ?: false
+                            )
+                        }
+
+                        currentState.copy(
+                            // map of session ids pointing to SessionDetail objects
+                            sessionDetailMap = updatedSessionDetails.associateBy { it.sessionId },
+                            // pair list with first element as week string and second element as a
+                            // list of session ids
+                            weekStringPairList = updatedSessionDetails
+                                .groupBy { DateTimeCalculator.getWeekStringFromIsoDate(it.sessionDateIso) }
+                                .map { (weekString, sessionsInWeek) ->
+                                    weekString to sessionsInWeek.map { it.sessionId }
+                                }
+                        )
+                    }
                 }
             }
         }
@@ -84,6 +140,7 @@ class SessionsViewModel(
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun updateStartAndEndDate(
         startDate: String?,
         endDate: String?
@@ -98,6 +155,7 @@ class SessionsViewModel(
         refresh()
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun timeFrameMenuOptionClicked(timeFrameLabel: String) {
         _sessionsUiState.update { currentState ->
             currentState.copy(
@@ -192,5 +250,10 @@ data class SessionsUiState(
     val fetchLimit: Int = 10,
     val timeFrameDropdownExpanded: Boolean = false,
     val muscleGroupFrequencyList: List<LiftSetCountPerMuscleGroup> = emptyList(),
+    // sessionDetailMap: session ids pointing to SessionDetail objects
+    val sessionDetailMap: Map<Int, SessionDetail> = emptyMap(),
+    // weekStringPairList: list of pairs with first element as a formatted week string,
+    // second element as a list of session ids
+    val weekStringPairList: List<Pair<String, List<Int>>> = emptyList(),
     val dateRangePickerVisible: Boolean = false
 )

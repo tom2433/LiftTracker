@@ -7,14 +7,17 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
-import github.tom2433.lifttracker.data.profile.Profile
 import github.tom2433.lifttracker.data.structures.LiftSetCountPerMuscleGroup
+import github.tom2433.lifttracker.data.structures.SessionDetail
+import github.tom2433.lifttracker.data.structures.SessionDetailData
+import github.tom2433.lifttracker.data.structures.SessionMuscleGroupCountData
 import github.tom2433.lifttracker.data.utils.DateTimeCalculator
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 
 @Dao
 interface SessionDao {
-    @Insert(onConflict = OnConflictStrategy.Companion.IGNORE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(session: Session)
 
     @Transaction
@@ -142,5 +145,106 @@ interface SessionDao {
             endDate = realEndDate,
             fetchLimit = fetchLimit
         )
+    }
+
+    @Query("""
+        SELECT
+            s.id AS sessionId,
+            s.session_label AS sessionName,
+            s.note AS sessionNote,
+            s.date AS sessionDate,
+            0 AS visible,
+            0 AS selected
+        FROM sessions AS s
+        WHERE s.profile_id = :activeProfileId
+            AND s.date >= :startDate
+            AND s.date <= :endDate
+        ORDER BY s.date DESC, s.id DESC
+        LIMIT :fetchLimit
+    """)
+    fun getSessionDetailDataListFromStartEndDates(
+        activeProfileId: Int,
+        startDate: String,
+        endDate: String,
+        fetchLimit: Int
+    ): Flow<List<SessionDetailData>>
+
+    @Query("""
+        SELECT
+            ls.session_id AS sessionId,
+            mg.name AS muscleGroupName,
+            COUNT(ls.id) AS setCount
+        FROM lift_sets AS ls
+        INNER JOIN muscle_groups AS mg
+            ON mg.id = ls.muscle_group_id
+        WHERE ls.session_id IN (
+            SELECT s.id
+            FROM sessions AS s
+            WHERE s.profile_id = :activeProfileId
+                AND s.date >= :startDate
+                AND s.date <= :endDate
+            ORDER BY s.date DESC, s.id DESC
+            LIMIT :fetchLimit
+        )
+        GROUP BY ls.session_id, mg.id, mg.name
+        ORDER BY ls.session_id, mg.name
+    """)
+    fun getSessionMuscleGroupCountDataListFromStartEndDates(
+        activeProfileId: Int,
+        startDate: String,
+        endDate: String,
+        fetchLimit: Int
+    ): Flow<List<SessionMuscleGroupCountData>>
+
+    fun getSessionDetailsForSessionScreen(
+        activeProfileId: Int,
+        startDate: String?,
+        endDate: String?,
+        fetchLimit: Int
+    ): Flow<List<SessionDetail>> {
+        val realStartDate: String = startDate ?: "2025-07-03"
+        val realEndDate: String = endDate ?: DateTimeCalculator.getCurrentIsoDate()
+
+        val sessionDetailDataListFlow: Flow<List<SessionDetailData>> = getSessionDetailDataListFromStartEndDates(
+            activeProfileId = activeProfileId,
+            startDate = realStartDate,
+            endDate = realEndDate,
+            fetchLimit = fetchLimit
+        )
+
+        val muscleGroupCountDataListFlow: Flow<List<SessionMuscleGroupCountData>> = getSessionMuscleGroupCountDataListFromStartEndDates(
+            activeProfileId = activeProfileId,
+            startDate = realStartDate,
+            endDate = realEndDate,
+            fetchLimit = fetchLimit
+        )
+
+        return combine(
+            sessionDetailDataListFlow,
+            muscleGroupCountDataListFlow
+        ) { sessionDetailDataList, muscleGroupCountDataList ->
+            // turn into a map where sessionId points to list of SessionMuscleGroupCountData objects
+            val countsBySessionId = muscleGroupCountDataList.groupBy { it.sessionId }
+
+            sessionDetailDataList.map { sessionDetailData ->
+                val muscleGroupCounts = countsBySessionId[sessionDetailData.sessionId].orEmpty()
+
+                SessionDetail(
+                    sessionId = sessionDetailData.sessionId,
+                    sessionName = sessionDetailData.sessionName,
+                    sessionNote = sessionDetailData.sessionNote,
+                    sessionDateIso = sessionDetailData.sessionDate,
+                    visible = sessionDetailData.visible,
+                    selected = sessionDetailData.selected,
+                    // create a list for each SessionMuscleGroupCountData in the list pointed to by sessionId
+                    liftSetCountPerMuscleGroupList = muscleGroupCounts.map { countData ->
+                        LiftSetCountPerMuscleGroup(
+                            muscleGroupName = countData.muscleGroupName,
+                            setCount = countData.setCount
+                        )
+                    }
+                )
+            }
+        }
     }
 }

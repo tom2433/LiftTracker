@@ -135,17 +135,63 @@ object DateTimeCalculator {
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun convertIsoDateToReadableFormat(isoDate: String): String {
-        return LocalDate.parse(isoDate).format(DateTimeFormatter.ofPattern("MMM d, yyyy"))
+        return LocalDate.parse(isoDate).format(DateTimeFormatter.ofPattern("EEE, MMM d, yyyy"))
     }
 
     // This calculates an inclusive rolling-window start date using DateCalculator's strict UTC epoch-day parsing. - Codex
     fun calculateStartDate(today: String, daysBeforeToday: Long): String {
         // Today's value is generated internally and is therefore valid; this fallback keeps initialization safe if that contract changes. - Codex
-        val todayEpochDay = DateTimeCalculator.parseIsoDateToEpochDay(today) ?: return today
+        val todayEpochDay = parseIsoDateToEpochDay(today) ?: return today
 
         // Convert the shifted UTC epoch day back to the ISO format stored by sessions.date. - Codex
-        return DateTimeCalculator.createIsoDateFormatter().format(
-            Date((todayEpochDay - daysBeforeToday) * DateTimeCalculator.MILLIS_PER_DAY)
+        return createIsoDateFormatter().format(
+            Date((todayEpochDay - daysBeforeToday) * MILLIS_PER_DAY)
         )
+    }
+
+    fun calculateEndDate(today: String, daysAfterToday: Long): String {
+        val todayEpochDay = parseIsoDateToEpochDay(today) ?: return today
+
+        return createIsoDateFormatter().format(
+            Date((todayEpochDay + daysAfterToday) * MILLIS_PER_DAY)
+        )
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun getWeekStringFromIsoDate(isoDate: String): String {
+        val subtractToBeginning: Long = when (convertIsoDateToReadableFormat(isoDate).substring(0, 3)) {
+            "Mon" -> 0L
+            "Tue" -> 1L
+            "Wed" -> 2L
+            "Thu" -> 3L
+            "Fri" -> 4L
+            "Sat" -> 5L
+            "Sun" -> 6L
+            else -> 0L
+        }
+        val addToEnd: Long = when (convertIsoDateToReadableFormat(isoDate).substring(0, 3)) {
+            "Sun" -> 0L
+            "Sat" -> 1L
+            "Fri" -> 2L
+            "Thu" -> 3L
+            "Wed" -> 4L
+            "Tue" -> 5L
+            "Mon" -> 6L
+            else -> 0L
+        }
+        val beginString = convertIsoDateToReadableFormat(
+            isoDate = calculateStartDate(
+                today = isoDate,
+                daysBeforeToday = subtractToBeginning
+            )
+        )
+        val endString = convertIsoDateToReadableFormat(
+            isoDate = calculateEndDate(
+                today = isoDate,
+                daysAfterToday = addToEnd
+            )
+        )
+
+        return "$beginString - $endString"
     }
 }

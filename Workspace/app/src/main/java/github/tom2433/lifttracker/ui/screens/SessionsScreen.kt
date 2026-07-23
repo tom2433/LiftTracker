@@ -65,16 +65,8 @@ fun SessionsScreen(
     viewModel: SessionsViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val sessionsUiState by viewModel.sessionsUiState.collectAsState()
-    val beginDateLabel: String = if (sessionsUiState.startDate == null) {
-        "Beginning of time"
-    } else {
-        DateTimeCalculator.convertIsoDateToReadableFormat(sessionsUiState.startDate!!)
-    }
-    val endDateLabel: String = if (sessionsUiState.endDate == null) {
-        "Today"
-    } else {
-        DateTimeCalculator.convertIsoDateToReadableFormat(sessionsUiState.endDate!!)
-    }
+    val beginDateLabel = calculateBeginDateLabel(sessionsUiState.startDate)
+    val endDateLabel = calculateEndDateLabel(sessionsUiState.endDate)
     val startDateDropdownOptions: List<String> = listOf(
         TimeFrameOption.ALL_TIME,
         TimeFrameOption.PAST_WEEK,
@@ -173,5 +165,23 @@ fun SessionsScreen(
             },
             onDismiss = { viewModel.dismissDateRangePicker() }
         )
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+private fun calculateBeginDateLabel(startDate: String?): String {
+    return if (startDate == null) {
+        "Beginning of time"
+    } else {
+        DateTimeCalculator.convertIsoDateToReadableFormat(startDate)
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+private fun calculateEndDateLabel(endDate: String?): String {
+    return if (endDate == null) {
+        "Today"
+    } else {
+        DateTimeCalculator.convertIsoDateToReadableFormat(endDate)
     }
 }

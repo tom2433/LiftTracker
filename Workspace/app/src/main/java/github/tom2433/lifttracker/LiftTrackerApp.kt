@@ -1,5 +1,7 @@
 package github.tom2433.lifttracker
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
@@ -102,8 +104,11 @@ import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 /**
- * Top level composable that represents screens for the application
+ * Top level composable that holds all screens of the application via a NavController
+ *
+ * @param navController NavHostController which is given by default
  */
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun LiftTrackerApp(navController: NavHostController = rememberNavController()) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -121,6 +126,8 @@ fun LiftTrackerApp(navController: NavHostController = rememberNavController()) {
         else -> R.string.app_name
     }
 
+    // composable representing the navigation drawer which holds the NavHost
+    // navigation drawer stays persistent throughout all operations
     LiftTrackerDrawer(
         titleRes = titleRes,
         navigateToRecordSession = { navController.navigate(RecordSessionDestination.route) },
@@ -131,6 +138,7 @@ fun LiftTrackerApp(navController: NavHostController = rememberNavController()) {
         navigateToTools = { navController.navigate(ToolsDestination.route) },
         navigateToSettings = { navController.navigate(SettingsDestination.route) },
     ) { innerPadding ->
+        // NavHost to hold all screens' content
         LiftTrackerNavHost(
             navController = navController,
             modifier = Modifier.padding(
@@ -146,10 +154,29 @@ fun LiftTrackerApp(navController: NavHostController = rememberNavController()) {
 }
 
 /**
- * Modal Navigation drawer to be displayed unconditionally
+ * Persistent Modal Navigation drawer to be displayed unconditionally. NavHost is injected via
+ * [content] to allow this to be above the nav host while still accessing its functions/screens.
+ * Uses a scaffold to contain the drawer and the content given by NavHost.
  *
- * Will eventually need parameters for:
- *  - sessionIsActive (Boolean)
+ * @param titleRes a stringResource containing the title of the current screen
+ * @param navigateToRecordSession function to navigate to the RecordSessionScreen
+ * @param navigateToMuscleGroups function to navigate to the MuscleGroupsScreen
+ * @param navigateToSessions function to navigate to the SessionsScreen
+ * @param navigateToCalendar function to navigate to the CalendarScreen
+ * @param navigateToAnalytics function to navigate to the AnalyticsScreen
+ * @param navigateToTools function to navigate to the ToolsScreen
+ * @param navigateToSettings function to navigate to the SettingsScreen
+ * @param viewModel ViewModel for this persistent drawer provided by the [AppViewModelProvider]
+ * object
+ * @param content a [Composable] to hold the NavHost's content
+ *
+ * @see github.tom2433.lifttracker.ui.screens.RecordSessionScreen
+ * @see github.tom2433.lifttracker.ui.screens.MuscleGroupsScreen
+ * @see github.tom2433.lifttracker.ui.screens.SessionsScreen
+ * @see github.tom2433.lifttracker.ui.screens.CalendarScreen
+ * @see github.tom2433.lifttracker.ui.screens.AnalyticsScreen
+ * @see github.tom2433.lifttracker.ui.screens.ToolsScreen
+ * @see github.tom2433.lifttracker.ui.screens.SettingsScreen
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -365,10 +392,6 @@ fun LiftTrackerDrawer(
                             contentDescription = stringResource(R.string.begin_session_title)
                         )
                     },
-                    // placeholder for now.
-                    // the badge is displayed all the way to the right, usually some light text.
-                    // may or may not implement in the future.
-                    badge = {},
                     onClick = {
                         coroutineScope.launch {
                             viewModel.closeDrawer()
@@ -389,7 +412,6 @@ fun LiftTrackerDrawer(
                             contentDescription = stringResource(R.string.muscle_groups_title)
                         )
                     },
-                    badge = {},
                     onClick = {
                         coroutineScope.launch {
                             viewModel.closeDrawer()
@@ -409,7 +431,6 @@ fun LiftTrackerDrawer(
                             contentDescription = stringResource(R.string.sessions_title)
                         )
                     },
-                    badge = {},
                     onClick = {
                         coroutineScope.launch {
                             viewModel.closeDrawer()
@@ -429,7 +450,6 @@ fun LiftTrackerDrawer(
                             contentDescription = stringResource(R.string.calendar_title)
                         )
                     },
-                    badge = {},
                     onClick = {
                         coroutineScope.launch {
                             viewModel.closeDrawer()
@@ -449,7 +469,6 @@ fun LiftTrackerDrawer(
                             contentDescription = stringResource(R.string.switch_profile_title)
                         )
                     },
-                    badge = {},
                     onClick = {
                         viewModel.toggleSwitchProfileSelected()
                     }
