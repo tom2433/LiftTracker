@@ -17,6 +17,8 @@ https://github.com/patrykandpatrick/vico
 
 on lift screen, show most recent sets as bar graph. potentially put a pie chart of lift distribution on expanded muscle group card.
 
+add an option to show sessions in list format vs. card format
+
 ## 07-22
 
 need on lift set in progress card for session in progress screen: average weight/reps for this lift given it's lift set number, muscle group set number, and session set number.
