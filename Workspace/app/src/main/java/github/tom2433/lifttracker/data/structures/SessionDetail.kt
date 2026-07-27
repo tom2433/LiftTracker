@@ -5,8 +5,10 @@ data class SessionDetail(
     val sessionName: String,
     val sessionNote: String,
     val sessionDateIso: String,
+    val sessionInProgress: Boolean,
     val visible: Boolean,
     val selected: Boolean,
+    val menuExpanded: Boolean,
     val liftSetCountPerMuscleGroupList: List<LiftSetCountPerMuscleGroup>
 )
 
@@ -15,8 +17,7 @@ data class SessionDetailData(
     val sessionName: String,
     val sessionNote: String,
     val sessionDate: String,
-    val visible: Boolean,
-    val selected: Boolean
+    val sessionInProgress: Boolean
 )
 
 data class SessionMuscleGroupCountData(

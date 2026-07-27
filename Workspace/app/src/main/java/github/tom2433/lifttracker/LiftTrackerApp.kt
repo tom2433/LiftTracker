@@ -253,6 +253,7 @@ fun LiftTrackerDrawer(
                 )
             },
             floatingActionButton = {
+                // FAB is only shown on certain screens
                 AnimatedVisibility(
                     visible = drawerUiState.showFab,
                     enter = slideInVertically(
@@ -358,6 +359,7 @@ fun LiftTrackerDrawer(
                     )
                 }
         ) {
+            // column to hold nav drawer contents
             Column(
                 modifier = Modifier
                     .padding(

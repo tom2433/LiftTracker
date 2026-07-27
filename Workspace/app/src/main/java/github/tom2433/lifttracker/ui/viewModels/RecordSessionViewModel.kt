@@ -433,53 +433,15 @@ class RecordSessionViewModel(
     }
 
     fun saveSession() {
-        // retrieve all lift set objects where its set metrics are both the default -1.0
-        val defaultLiftSets: List<LiftSet> =
-            _recordSessionUiState.value.liftSetMap
-                .values
-                .flatMap { setMap -> setMap.entries }
-                .filter { (_, setMetrics) ->
-                    val (weightMetric, secondMetric) = setMetrics
-
-                    weightMetric.value == -1.0 || secondMetric.value == -1.0
-                }
-                .map { (liftSet, _) -> liftSet }
-
-        // retrieve all valid lift set objects where their set metrics are both not the default -1.0
-        val validLiftSets: List<LiftSet> =
-            _recordSessionUiState.value.liftSetMap
-                .values
-                .flatMap { setMap -> setMap.entries }
-                .filter { (_, setMetrics) ->
-                    val (weightMetric, secondMetric) = setMetrics
-
-                    weightMetric.value != -1.0 && secondMetric.value != -1.0
-                }
-                .map { (liftSet, _) -> liftSet }
-
         viewModelScope.launch {
-            // if default set metrics are still remaining, delete their LiftSets
-            if (defaultLiftSets.isNotEmpty()) {
-                for (liftSet in defaultLiftSets.sortedByDescending { it.session_set_number }) {
-                    liftSetRepository.deleteLiftSet(liftSet)
-                }
-            }
+            val sessionSaved = sessionRepository.finishSession(
+                id = _recordSessionUiState.value.activeSession?.id ?: return@launch
+            )
 
-            val activeSession: Session = _recordSessionUiState.value.activeSession ?: return@launch
-
-            // if there are no remaining valid lift sets, delete this session
-            if (validLiftSets.isEmpty()) {
-                sessionRepository.deleteSession(activeSession)
-                _toastEvents.emit("Nothing Saved")
-            } else {
-                // otherwise, save this session by setting in progress = false
-                sessionRepository.updateSession(
-                    session = activeSession.copy(
-                        in_progress = false
-                    )
-                )
-
+            if (sessionSaved) {
                 _toastEvents.emit("Session saved! Check it out in the Sessions screen.")
+            } else {
+                _toastEvents.emit("Nothing Saved")
             }
         }
     }

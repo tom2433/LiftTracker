@@ -385,87 +385,37 @@ fun LiftDetailFlowRow(
 }
 
 @Composable
-fun MuscleGroupDonutChart(
-    muscleGroupFrequencyList: List<LiftSetCountPerMuscleGroup>,
-    modifier: Modifier = Modifier,
-    height: Dp = 200.dp,
-    innerHeight: Dp = 96.dp
+fun LabelHeader(
+    headerText: String,
+    color: Color,
+    modifier: Modifier = Modifier
 ) {
-    val chartItems = muscleGroupFrequencyList.filter { it.setCount > 0 }
-
-    if (chartItems.isEmpty()) {
-        Text("No muscle group data yet")
-        return
-    }
-
-    val modelProducer = remember { PieChartModelProducer() }
-
-    LaunchedEffect(chartItems) {
-        modelProducer.runTransaction {
-            pieSeries {
-                series(chartItems.map { it.setCount })
-            }
-        }
-    }
-
-    val colors = listOf(
-        MaterialTheme.colorScheme.primaryContainer,
-        MaterialTheme.colorScheme.secondaryContainer,
-        MaterialTheme.colorScheme.tertiaryContainer.copy(
-            alpha = 0.75f
-        ),
-        MaterialTheme.colorScheme.error,
-        MaterialTheme.colorScheme.inversePrimary
-    )
-
-    val labelTextComponent = rememberTextComponent(
-        style = MaterialTheme.typography.labelMedium.copy(
-            color = MaterialTheme.colorScheme.onBackground
-        )
-    )
-
-    val labeledSlices = List(chartItems.size) { index ->
-        PieChart.Slice(
-            fill = Fill(colors[index % colors.size]),
-            label = PieChart.SliceLabel.Outside(
-                textComponent = labelTextComponent,
-                lineColor = MaterialTheme.colorScheme.onBackground
-            ),
-            strokeFill = Fill(MaterialTheme.colorScheme.onBackground),
-            strokeThickness = 1.dp
-        )
-    }
-
-    val chart = rememberPieChart(
-        innerSize = PieSize.Inner.fixed(innerHeight),
-        sliceProvider = PieChart.SliceProvider.series(labeledSlices),
-        valueFormatter = { _, _, sliceIndex ->
-            chartItems.getOrNull(sliceIndex)?.muscleGroupName.orEmpty()
-        },
-        spacing = 2.dp,
-    )
-
-    Box(
-        modifier = modifier,
-        contentAlignment = Alignment.Center,
+    // row to hold header and dividers
+    Row(
+        horizontalArrangement = Arrangement.Start,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier.fillMaxWidth()
     ) {
-        PieChartHost(
-            chart = chart,
-            modelProducer = modelProducer,
+        // divider 1
+        HorizontalDivider(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(height)
+                .padding(end = 8.dp)
+                .weight(1f),
+            color = color
         )
-
-        val numSets = chartItems.sumOf { it.setCount }
-
+        // header text
         Text(
-            text = if (numSets == 1) {
-                "1 set"
-            } else {
-                "$numSets sets"
-            },
-            style = MaterialTheme.typography.titleMedium
+            text = headerText,
+            style = MaterialTheme.typography.titleSmall,
+            color = color,
+            fontWeight = FontWeight.Bold
+        )
+        // divider 2
+        HorizontalDivider(
+            modifier = Modifier
+                .padding(start = 8.dp)
+                .weight(1f),
+            color = color
         )
     }
 }

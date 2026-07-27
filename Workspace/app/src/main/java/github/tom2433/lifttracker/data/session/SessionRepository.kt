@@ -30,6 +30,8 @@ interface SessionRepository {
      */
     suspend fun deleteSession(session: Session)
 
+    suspend fun deleteSessionById(id: Int)
+
     /**
      * Update session in the data source
      */
@@ -55,8 +57,7 @@ interface SessionRepository {
     fun getMuscleGroupFrequencyListStream(
         activeProfileId: Int,
         startDate: String?,
-        endDate: String?,
-        fetchLimit: Int
+        endDate: String?
     ): Flow<List<LiftSetCountPerMuscleGroup>>
 
     fun getSessionDetailsListStreamForSessionScreen(
@@ -65,4 +66,14 @@ interface SessionRepository {
         endDate: String?,
         fetchLimit: Int
     ): Flow<List<SessionDetail>>
+
+    suspend fun sessionIsInProgress(): Boolean
+
+    suspend fun switchSessionIdToInProgress(id: Int)
+
+    suspend fun sessionHasUnfinishedLifts(id: Int): Boolean
+
+    suspend fun sessionHasLifts(id: Int): Boolean
+
+    suspend fun finishSession(id: Int): Boolean
 }

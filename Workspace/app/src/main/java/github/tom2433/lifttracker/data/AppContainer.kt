@@ -17,7 +17,7 @@ import github.tom2433.lifttracker.data.setmetric.OfflineSetMetricRepository
 import github.tom2433.lifttracker.data.setmetric.SetMetricRepository
 
 /**
- * App Container for dependency injection
+ * Interface for App Container for dependency injection
  */
 interface AppContainer {
     val liftRepository: LiftRepository
@@ -30,9 +30,17 @@ interface AppContainer {
 }
 
 /**
- * [AppContainer] implementation that provides instance of [github.tom2433.lifttracker.data.session.OfflineSessionRepository]
+ * [AppContainer] implementation that provides instances of all repositories to inject into
+ * ViewModels. This implementation requires context provided by an Application.
+ *
+ * @see github.tom2433.lifttracker.LiftTrackerApplication
+ *
+ * @param context the context provided by LiftTrackerApplication
  */
 class AppDataContainer(private val context: Context) : AppContainer {
+    /**
+     * Implementation for [LiftRepository]
+     */
     override val liftRepository: LiftRepository by lazy {
         OfflineLiftRepository(LiftTrackerDatabase.getDatabase(context).liftDao())
     }
@@ -44,22 +52,37 @@ class AppDataContainer(private val context: Context) : AppContainer {
         OfflineSessionRepository(LiftTrackerDatabase.getDatabase(context).sessionDao())
     }
 
+    /**
+     * Implementation for [LiftSetRepository]
+     */
     override val liftSetRepository: LiftSetRepository by lazy {
         OfflineLiftSetRepository(LiftTrackerDatabase.getDatabase(context).liftSetDao())
     }
 
+    /**
+     * Implementation for [MuscleGroupRepository]
+     */
     override val muscleGroupRepository: MuscleGroupRepository by lazy {
         OfflineMuscleGroupRepository(LiftTrackerDatabase.getDatabase(context).muscleGroupDao())
     }
 
+    /**
+     * Implementation for [ProfileRepository]
+     */
     override val profileRepository: ProfileRepository by lazy {
         OfflineProfileRepository(LiftTrackerDatabase.getDatabase(context).profileDao())
     }
 
+    /**
+     * Implementation for [SetMetricRepository]
+     */
     override val setMetricRepository: SetMetricRepository by lazy {
         OfflineSetMetricRepository(LiftTrackerDatabase.getDatabase(context).setMetricDao())
     }
 
+    /**
+     * Implementation for [LiftUnitRepository]
+     */
     override val liftUnitRepository: LiftUnitRepository by lazy {
         OfflineLiftUnitRepository(LiftTrackerDatabase.getDatabase(context).liftUnitDao())
     }

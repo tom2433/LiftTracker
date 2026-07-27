@@ -1,11 +1,13 @@
 package github.tom2433.lifttracker.ui.viewModels
 
+import android.R
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import github.tom2433.lifttracker.data.profile.Profile
 import github.tom2433.lifttracker.data.profile.ProfileRepository
+import github.tom2433.lifttracker.data.session.Session
 import github.tom2433.lifttracker.data.session.SessionRepository
 import github.tom2433.lifttracker.data.structures.LiftSetCountPerMuscleGroup
 import github.tom2433.lifttracker.data.structures.SessionDetail
@@ -14,8 +16,11 @@ import github.tom2433.lifttracker.ui.screens.TimeFrameOption
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -33,8 +38,11 @@ class SessionsViewModel(
     private val sessionRepository: SessionRepository
 ) : ViewModel() {
     private val _sessionsUiState = MutableStateFlow(SessionsUiState())
+    // toast events are called via _toastEvents.emit("message")
+    private val _toastEvents = MutableSharedFlow<String>()
     private var refreshJob: Job? = null
     val sessionsUiState: StateFlow<SessionsUiState> = _sessionsUiState.asStateFlow()
+    val toastEvents: SharedFlow<String> = _toastEvents.asSharedFlow()
 
     init {
         // constant collection to keep active profile up to date
@@ -72,8 +80,7 @@ class SessionsViewModel(
                         sessionRepository.getMuscleGroupFrequencyListStream(
                             activeProfileId = activeProfile.id,
                             startDate = _sessionsUiState.value.startDate,
-                            endDate = _sessionsUiState.value.endDate,
-                            fetchLimit = _sessionsUiState.value.fetchLimit
+                            endDate = _sessionsUiState.value.endDate
                         )
                     } else {
                         flowOf(emptyList())
@@ -106,7 +113,9 @@ class SessionsViewModel(
                     _sessionsUiState.update { currentState ->
                         val updatedSessionDetails = sessionDetails.map { sessionDetail ->
                             sessionDetail.copy(
-                                selected = currentState.sessionDetailMap[sessionDetail.sessionId]?.selected ?: false
+                                visible = currentState.sessionDetailMap[sessionDetail.sessionId]?.visible ?: false,
+                                selected = currentState.sessionDetailMap[sessionDetail.sessionId]?.selected ?: false,
+                                menuExpanded = currentState.sessionDetailMap[sessionDetail.sessionId]?.menuExpanded ?: false
                             )
                         }
 
@@ -135,7 +144,8 @@ class SessionsViewModel(
             currentState.copy(
                 sessionDetailMap = currentState.sessionDetailMap.mapValues { (_, sessionDetail) ->
                     sessionDetail.copy(
-                        visible = false
+                        visible = false,
+                        menuExpanded = false
                     )
                 }
             )
@@ -147,7 +157,8 @@ class SessionsViewModel(
             currentState.copy(
                 sessionDetailMap = currentState.sessionDetailMap.mapValues { (_, sessionDetail) ->
                     sessionDetail.copy(
-                        visible = true
+                        visible = true,
+                        menuExpanded = false
                     )
                 }
             )
@@ -266,6 +277,114 @@ class SessionsViewModel(
         }
 
         updateStartAndEndDate(startDate, endDate)
+    }
+
+    fun threeDotMenuClicked(sessionCardId: Int) {
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                sessionDetailMap = currentState.sessionDetailMap.mapValues { (id, sessionDetail) ->
+                    if (id == sessionCardId) {
+                        sessionDetail.copy(
+                            menuExpanded = true
+                        )
+                    } else {
+                        sessionDetail.copy(
+                            menuExpanded = false
+                        )
+                    }
+                }
+            )
+        }
+    }
+
+    fun dismissThreeDotMenus() {
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                sessionDetailMap = currentState.sessionDetailMap.mapValues { (_, sessionDetail) ->
+                    sessionDetail.copy(
+                        menuExpanded = false
+                    )
+                }
+            )
+        }
+    }
+
+    fun switchSessionToInProgress(sessionCardId: Int) {
+        viewModelScope.launch {
+            // return if the user already has a session in progress
+            if (sessionRepository.sessionIsInProgress()) {
+                _toastEvents.emit("Please finish your existing session.")
+                return@launch
+            }
+
+            // make the card invisible and delay
+            changeSessionCardVisibility(
+                sessionCardId = sessionCardId,
+                newVisibility = false
+            )
+            delay(300)
+
+            // otherwise, switch this session to in progress
+            sessionRepository.switchSessionIdToInProgress(sessionCardId)
+
+            // delay and make the session card visible
+            delay(300)
+            changeSessionCardVisibility(
+                sessionCardId = sessionCardId,
+                newVisibility = true
+            )
+
+            // then instruct the user to navigate to the record session screen
+            _toastEvents.emit("Go to the Resume Session screen to continue your session")
+        }
+    }
+
+    fun finishSession(sessionCardId: Int) {
+        viewModelScope.launch {
+            // make the session card invisible and delay
+            changeSessionCardVisibility(
+                sessionCardId = sessionCardId,
+                newVisibility = false
+            )
+            delay(300)
+
+            val sessionSaved: Boolean = sessionRepository.finishSession(sessionCardId)
+
+            // delay and make the session card visible
+            delay(300)
+            changeSessionCardVisibility(
+                sessionCardId = sessionCardId,
+                newVisibility = true
+            )
+
+            // display toast to inform user whether the session was saved or not
+            if (sessionSaved) {
+                _toastEvents.emit("Session saved!")
+            } else {
+                _toastEvents.emit("No valid sets; Nothing saved.")
+            }
+        }
+    }
+
+    fun changeSessionCardVisibility(
+        sessionCardId: Int,
+        newVisibility: Boolean
+    ) {
+        dismissThreeDotMenus()
+
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                sessionDetailMap = currentState.sessionDetailMap.mapValues { (thisId, sessionDetail) ->
+                    if (thisId == sessionCardId) {
+                        sessionDetail.copy(
+                            visible = newVisibility
+                        )
+                    } else {
+                        sessionDetail
+                    }
+                }
+            )
+        }
     }
 }
 

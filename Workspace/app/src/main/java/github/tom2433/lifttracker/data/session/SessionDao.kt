@@ -7,6 +7,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
+import github.tom2433.lifttracker.data.liftset.LiftSet
 import github.tom2433.lifttracker.data.structures.LiftSetCountPerMuscleGroup
 import github.tom2433.lifttracker.data.structures.SessionDetail
 import github.tom2433.lifttracker.data.structures.SessionDetailData
@@ -70,6 +71,20 @@ interface SessionDao {
     }
 
     @Query("""
+        SELECT *
+        FROM sessions AS s
+        WHERE s.id = :id
+        LIMIT 1
+    """)
+    suspend fun getSessionById(id: Int): Session?
+
+    @Transaction
+    suspend fun deleteSessionById(id: Int) {
+        val sessionToDelete: Session = getSessionById(id) ?: return
+        deleteAndRenumber(sessionToDelete)
+    }
+
+    @Query("""
         UPDATE sessions
         SET session_number = -(session_number)
         WHERE profile_id = :profileId
@@ -121,20 +136,17 @@ interface SessionDao {
         )
         GROUP BY mg.id, mg.name
         ORDER BY mg.name
-        LIMIT :fetchLimit
     """)
     fun getMuscleGroupFrequencyListFromStartEndDates(
         activeProfileId: Int,
         startDate: String,
-        endDate: String,
-        fetchLimit: Int
+        endDate: String
     ): Flow<List<LiftSetCountPerMuscleGroup>>
 
     fun getMuscleGroupFrequencyList(
         activeProfileId: Int,
         startDate: String?,
-        endDate: String?,
-        fetchLimit: Int
+        endDate: String?
     ): Flow<List<LiftSetCountPerMuscleGroup>> {
         val realStartDate: String = startDate ?: "2025-07-03"
         val realEndDate: String = endDate ?: DateTimeCalculator.getCurrentIsoDate()
@@ -142,8 +154,7 @@ interface SessionDao {
         return getMuscleGroupFrequencyListFromStartEndDates(
             activeProfileId = activeProfileId,
             startDate = realStartDate,
-            endDate = realEndDate,
-            fetchLimit = fetchLimit
+            endDate = realEndDate
         )
     }
 
@@ -153,8 +164,7 @@ interface SessionDao {
             s.session_label AS sessionName,
             s.note AS sessionNote,
             s.date AS sessionDate,
-            0 AS visible,
-            0 AS selected
+            s.in_progress AS sessionInProgress
         FROM sessions AS s
         WHERE s.profile_id = :activeProfileId
             AND s.date >= :startDate
@@ -234,8 +244,10 @@ interface SessionDao {
                     sessionName = sessionDetailData.sessionName,
                     sessionNote = sessionDetailData.sessionNote,
                     sessionDateIso = sessionDetailData.sessionDate,
-                    visible = sessionDetailData.visible,
-                    selected = sessionDetailData.selected,
+                    sessionInProgress = sessionDetailData.sessionInProgress,
+                    visible = false,
+                    selected = false,
+                    menuExpanded = false,
                     // create a list for each SessionMuscleGroupCountData in the list pointed to by sessionId
                     liftSetCountPerMuscleGroupList = muscleGroupCounts.map { countData ->
                         LiftSetCountPerMuscleGroup(
@@ -245,6 +257,245 @@ interface SessionDao {
                     }
                 )
             }
+        }
+    }
+
+    @Query("""
+        SELECT EXISTS(
+            SELECT 1
+            FROM sessions AS s
+            INNER JOIN profiles AS p
+                ON p.id = s.profile_id
+            WHERE p.active = 1 AND s.in_progress = 1
+        )
+    """)
+    suspend fun sessionIsInProgress(): Boolean
+
+    @Query("""
+        SELECT EXISTS(
+            SELECT 1
+            FROM set_metrics AS sm
+            INNER JOIN lift_sets AS ls
+                ON ls.id = sm.set_id
+            INNER JOIN sessions AS s
+                ON s.id = ls.session_id
+            WHERE s.id = :id
+                AND sm.value = -1.0
+        )
+    """)
+    suspend fun sessionHasUnfinishedLifts(id: Int): Boolean
+
+    @Query("""
+        UPDATE sessions
+        SET in_progress = 1
+        WHERE id = :id 
+    """)
+    suspend fun switchSessionIdToInProgress(id: Int)
+
+    @Query("""
+        SELECT EXISTS(
+            SELECT 1
+            FROM set_metrics AS sm
+            INNER JOIN lift_sets AS ls
+                ON ls.id = sm.set_id
+            INNER JOIN sessions AS s
+                ON s.id = ls.session_id
+            WHERE s.id = :id
+        )
+    """)
+    suspend fun sessionHasLifts(id: Int): Boolean
+
+    @Query("""
+        SELECT DISTINCT(ls.id)
+        FROM lift_sets AS ls
+        INNER JOIN set_metrics AS sm
+            ON sm.set_id = ls.id
+        WHERE sm.value = -1.0
+            AND ls.session_id = :id
+        ORDER BY ls.session_set_number DESC            
+    """)
+    suspend fun getSortedInvalidLiftSetIdsFromSessionId(id: Int): List<Int>
+
+    @Query("""
+        SELECT *
+        FROM lift_sets AS ls
+        WHERE ls.id = :liftSetId
+        LIMIT 1
+    """)
+    suspend fun getLiftSetById(liftSetId: Int): LiftSet?
+
+    @Query("""
+        DELETE FROM lift_sets WHERE id = :liftSetId
+    """)
+    suspend fun deletePreparedLiftSetById(liftSetId: Int)
+
+    suspend fun deleteLiftSetById(liftSetId: Int) {
+        // retrieve the lift set object to delete (needed for properties)
+        val liftSet: LiftSet = getLiftSetById(liftSetId) ?: return
+
+        // delete the lift set
+        deletePreparedLiftSetById(liftSetId)
+
+        // renumber remaining set labels after deletion
+        updateLiftSetSetLabelsAfterLiftSetDelete(
+            sessionId = liftSet.session_id,
+            liftId = liftSet.lift_id,
+            deletedLiftSetNumber = liftSet.lift_set_number
+        )
+
+        // stage remaining lift set numbers after deletion
+        stageLiftSetNumbersAfterDelete(
+            sessionId = liftSet.session_id,
+            liftId = liftSet.lift_id,
+            deletedLiftSetNumber = liftSet.lift_set_number
+        )
+
+        // renumber lift set numbers
+        decrementStagedLiftSetNumbersAfterDelete(
+            sessionId = liftSet.session_id,
+            liftId = liftSet.lift_id
+        )
+
+        // stage remaining session set numbers after deletion
+        stageSessionSetNumbersAfterDelete(
+            sessionId = liftSet.session_id,
+            deletedSessionSetNumber = liftSet.session_set_number
+        )
+
+        // renumber session set numbers
+        decrementStagedSessionSetNumbersAfterDelete(
+            sessionId = liftSet.session_id
+        )
+
+        // stage remaining muscle group session set numbers after deletion
+        stageMuscleGroupSessionSetNumbersAfterDelete(
+            sessionId = liftSet.session_id,
+            muscleGroupId = liftSet.muscle_group_id,
+            deletedMuscleGroupSessionSetNumber = liftSet.muscle_group_session_set_number
+        )
+
+        // renumber muscle group session set numbers
+        decrementStagedMuscleGroupSessionSetNumbersAfterDelete(
+            sessionId = liftSet.session_id,
+            muscleGroupId = liftSet.muscle_group_id
+        )
+    }
+
+    @Query("""
+        UPDATE lift_sets
+        SET set_label = 'Set ' || (lift_set_number - 1)
+        WHERE session_id = :sessionId
+            AND lift_id = :liftId
+            AND lift_set_number > :deletedLiftSetNumber
+            AND set_label = 'Set ' || lift_set_number
+    """)
+    suspend fun updateLiftSetSetLabelsAfterLiftSetDelete(
+        sessionId: Int,
+        liftId: Int,
+        deletedLiftSetNumber: Int
+    )
+
+    @Query("""
+        UPDATE lift_sets
+        SET lift_set_number = -lift_set_number
+        WHERE session_id = :sessionId
+            AND lift_id = :liftId
+            AND lift_set_number > :deletedLiftSetNumber
+    """)
+    suspend fun stageLiftSetNumbersAfterDelete(
+        sessionId: Int,
+        liftId: Int,
+        deletedLiftSetNumber: Int
+    )
+
+    @Query("""
+        UPDATE lift_sets
+        SET lift_set_number = (-lift_set_number) - 1
+        WHERE session_id = :sessionId
+            AND lift_id = :liftId
+            AND lift_set_number < 0
+    """)
+    suspend fun decrementStagedLiftSetNumbersAfterDelete(
+        sessionId: Int,
+        liftId: Int,
+    )
+
+    @Query("""
+        UPDATE lift_sets
+        SET session_set_number = -session_set_number
+        WHERE session_id = :sessionId
+            AND session_set_number > :deletedSessionSetNumber
+    """)
+    suspend fun stageSessionSetNumbersAfterDelete(
+        sessionId: Int,
+        deletedSessionSetNumber: Int
+    )
+
+    @Query("""
+        UPDATE lift_sets
+        SET session_set_number = (-session_set_number) - 1
+        WHERE session_id = :sessionId
+            AND session_set_number < 0
+    """)
+    suspend fun decrementStagedSessionSetNumbersAfterDelete(
+        sessionId: Int
+    )
+
+    @Query("""
+        UPDATE lift_sets
+        SET muscle_group_session_set_number = -muscle_group_session_set_number
+        WHERE session_id = :sessionId
+            AND muscle_group_id = :muscleGroupId
+            AND muscle_group_session_set_number > :deletedMuscleGroupSessionSetNumber
+    """)
+    suspend fun stageMuscleGroupSessionSetNumbersAfterDelete(
+        sessionId: Int,
+        muscleGroupId: Int,
+        deletedMuscleGroupSessionSetNumber: Int
+    )
+
+    @Query("""
+        UPDATE lift_sets
+        SET muscle_group_session_set_number = (-muscle_group_session_set_number) - 1
+        WHERE session_id = :sessionId
+            AND muscle_group_id = :muscleGroupId
+            AND muscle_group_session_set_number < 0
+    """)
+    suspend fun decrementStagedMuscleGroupSessionSetNumbersAfterDelete(
+        sessionId: Int,
+        muscleGroupId: Int
+    )
+
+    @Query("""
+        UPDATE sessions
+        SET in_progress = 0
+        WHERE id = :id
+    """)
+    suspend fun saveSession(id: Int)
+
+    @Transaction
+    suspend fun finishSession(id: Int): Boolean {
+        // if session has unfinished lifts, delete these unfinished lifts
+        if (sessionHasUnfinishedLifts(id)) {
+            // retrieve all lift set objects where either of its set metrics are -1.0
+            val sortedInvalidLiftSetIds: List<Int> = getSortedInvalidLiftSetIdsFromSessionId(id)
+
+            // delete each invalid lift set
+            for (liftSetId in sortedInvalidLiftSetIds) {
+                deleteLiftSetById(liftSetId)
+            }
+        }
+
+        // if there are remaining lift sets, save session by setting in progress = false
+        // and return true
+        if (sessionHasLifts(id)) {
+            saveSession(id)
+            return true
+        } else {
+            // if there aren't, delete the session and return false
+            // retrieve session to delete
+            deleteSessionById(id)
+            return false
         }
     }
 }

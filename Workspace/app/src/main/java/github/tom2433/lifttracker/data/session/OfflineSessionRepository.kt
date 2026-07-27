@@ -14,6 +14,8 @@ class OfflineSessionRepository(private val sessionDao: SessionDao) : SessionRepo
 
     override suspend fun deleteSession(session: Session) = sessionDao.deleteAndRenumber(session)
 
+    override suspend fun deleteSessionById(id: Int) = sessionDao.deleteSessionById(id)
+
     override suspend fun updateSession(session: Session) = sessionDao.update(session)
 
     override fun getActiveSessionForActiveProfileStream(): Flow<Session?> = sessionDao.getActiveSessionForActiveProfile()
@@ -27,13 +29,11 @@ class OfflineSessionRepository(private val sessionDao: SessionDao) : SessionRepo
     override fun getMuscleGroupFrequencyListStream(
         activeProfileId: Int,
         startDate: String?,
-        endDate: String?,
-        fetchLimit: Int
+        endDate: String?
     ): Flow<List<LiftSetCountPerMuscleGroup>> = sessionDao.getMuscleGroupFrequencyList(
         activeProfileId = activeProfileId,
         startDate = startDate,
-        endDate = endDate,
-        fetchLimit = fetchLimit
+        endDate = endDate
     )
 
     override fun getSessionDetailsListStreamForSessionScreen(
@@ -47,4 +47,14 @@ class OfflineSessionRepository(private val sessionDao: SessionDao) : SessionRepo
         endDate = endDate,
         fetchLimit = fetchLimit
     )
+
+    override suspend fun sessionIsInProgress(): Boolean = sessionDao.sessionIsInProgress()
+
+    override suspend fun switchSessionIdToInProgress(id: Int) = sessionDao.switchSessionIdToInProgress(id)
+
+    override suspend fun sessionHasUnfinishedLifts(id: Int): Boolean = sessionDao.sessionHasUnfinishedLifts(id)
+
+    override suspend fun sessionHasLifts(id: Int): Boolean = sessionDao.sessionHasLifts(id)
+
+    override suspend fun finishSession(id: Int): Boolean = sessionDao.finishSession(id)
 }

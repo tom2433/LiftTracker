@@ -98,4 +98,8 @@
     <string name="total">Total</string>
     <string name="select_start_date">Select Start Date</string>
     <string name="select_date_range">Select date range</string>
+    <string name="session_menu">Session Menu</string>
+    <string name="change_session_to_in_progress">Change session to \'in progress\'</string>
+    <string name="delete_session">Delete session</string>
+    <string name="in_progress">In Progress...</string>
 </resources>
