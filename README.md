@@ -21,6 +21,8 @@ allow search suggestions to include muscle groups in addition to lift names on t
 
 put a "usual pattern" line graph of average distribution between weight values per set in the session in progress screen underneath a lift in progress. put time-frame tags on the line graph for past month and all time.
 
+on the sessions screen, put also the date in relative terms like on the muscle groups screen
+
 ## 07-23
 
 on lift screen, show most recent sets as bar graph. potentially put a pie chart of lift distribution on expanded muscle group card.
