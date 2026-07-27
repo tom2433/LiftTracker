@@ -12,6 +12,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -37,7 +38,6 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -56,11 +56,12 @@ import github.tom2433.lifttracker.data.structures.SessionDetail
 import github.tom2433.lifttracker.data.utils.DateTimeCalculator
 import github.tom2433.lifttracker.ui.AppViewModelProvider
 import github.tom2433.lifttracker.ui.navigation.NavigationDestination
-import github.tom2433.lifttracker.ui.utils.BasicDialog
 import github.tom2433.lifttracker.ui.utils.DateRangePickerModal
 import github.tom2433.lifttracker.ui.utils.MuscleGroupDonutChart
 import github.tom2433.lifttracker.ui.utils.ThreeDotMenu
 import github.tom2433.lifttracker.ui.utils.LabelHeader
+import github.tom2433.lifttracker.ui.utils.ShowElementDeleteDialog
+import github.tom2433.lifttracker.ui.utils.ShowElementEntryDialog
 import github.tom2433.lifttracker.ui.viewModels.SessionsViewModel
 
 object SessionsDestination : NavigationDestination {
@@ -268,6 +269,12 @@ fun SessionsScreen(
                                     },
                                     onClickFinishSession = {
                                         viewModel.finishSession(sessionDetail.sessionId)
+                                    },
+                                    onClickEditSession = {
+                                        viewModel.showEditSessionDialog(sessionDetail.sessionId)
+                                    },
+                                    onClickDeleteSession = {
+                                        viewModel.showDeleteSessionDialog(sessionDetail.sessionId)
                                     }
                                 )
                             }
@@ -278,6 +285,7 @@ fun SessionsScreen(
         }
     }
 
+    // show date range picker dialog if applicable
     if (sessionsUiState.dateRangePickerVisible) {
         DateRangePickerModal(
             onDateRangeSelected = { datePair ->
@@ -287,6 +295,43 @@ fun SessionsScreen(
                 )
             },
             onDismiss = { viewModel.dismissDateRangePicker() }
+        )
+    }
+    
+    // show delete session dialog if applicable
+    if (sessionsUiState.deleteSessionDialogVisible && sessionsUiState.sessionToDelete != null) {
+        val sessionName: String = sessionsUiState.sessionToDelete!!.session_label
+        val sessionDate: String = DateTimeCalculator.convertIsoDateToReadableFormat(
+            isoDate = sessionsUiState.sessionToDelete!!.date
+        )
+
+        ShowElementDeleteDialog(
+            dialogTitle = "Delete '${sessionName}'?",
+            warningDescription = "You are about to delete '${sessionName}', which was completed on ${sessionDate}. This will delete all set data completed during this session. You cannot undo this action.",
+            deleteBtnText = "Delete $sessionName",
+            onDismissRequest = { viewModel.dismissDeleteSessionDialog() },
+            onDelete = { viewModel.deleteSession() }
+        )
+    }
+    
+    // show edit session dialog if applicable
+    if (sessionsUiState.editSessionDialogVisible && sessionsUiState.sessionToEdit != null) {
+        val formattedDate: String = DateTimeCalculator.convertIsoDateToReadableFormat(sessionsUiState.sessionToEdit!!.date)
+        val dialogTitle: String = "Edit '${sessionsUiState.sessionToEdit!!.session_label}' from ${formattedDate}:"
+        val submitBtnText: String = "Update '${sessionsUiState.sessionToEdit!!.session_label}'"
+
+        ShowElementEntryDialog(
+            dialogTitle = dialogTitle,
+            submitBtnText = submitBtnText,
+            elementNameInputLabel = stringResource(R.string.session_name),
+            elementNoteInputLabel = stringResource(R.string.session_note_optional),
+            buttonEnabled = viewModel.validateSessionEntry(),
+            newElementName = sessionsUiState.newSessionName,
+            newElementNote = sessionsUiState.newSessionNote,
+            onElementNameValueChanged = { viewModel.updateNewSessionName(it) },
+            onElementNoteValueChanged = { viewModel.updateNewSessionNote(it) },
+            onSubmit = { viewModel.updateSession() },
+            onDismissRequest = { viewModel.dismissEditSessionDialog() },
         )
     }
 }
@@ -299,6 +344,8 @@ fun SessionCard(
     onDismissThreeDotMenu: () -> Unit,
     onClickSwitchToInProgress: () -> Unit,
     onClickFinishSession: () -> Unit,
+    onClickEditSession: () -> Unit,
+    onClickDeleteSession: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val noteColor = CardDefaults.cardColors().contentColor.copy(
@@ -321,10 +368,18 @@ fun SessionCard(
                 .fillMaxWidth()
                 .wrapContentHeight()
                 .padding(bottom = 16.dp),
+            border = if (sessionDetail.sessionInProgress) {
+                BorderStroke(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            } else {
+                null
+            },
             onClick = { /* TODO: Session Card clicked */ }
         ) {
             // Column to hold session card contents:
-            // labels on top, donut chart on bottom
+            // labels/three dot menu on top, donut chart on bottom
             Column(
                 verticalArrangement = Arrangement.Top,
                 horizontalAlignment = Alignment.Start,
@@ -350,49 +405,52 @@ fun SessionCard(
                     )
                 }
 
-                // row to hold session label and three dot menu
+                // row to hold session label info and three dot menu
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
+                    verticalAlignment = Alignment.Top,
                     modifier = Modifier
                         .fillMaxWidth()
                 ) {
-                    // session label
-                    Text(
-                        text = sessionDetail.sessionName,
-                        style = MaterialTheme.typography.titleLarge
-                    )
+                    Column {
+                        // session label
+                        Text(
+                            text = sessionDetail.sessionName,
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                        // session note (if applicable)
+                        if (sessionDetail.sessionNote.isNotBlank()) {
+                            Text(
+                                text = sessionDetail.sessionNote,
+                                color = noteColor,
+                                style = MaterialTheme.typography.bodySmall,
+                                fontSize = 13.sp
+                            )
+                        }
+                        // session date (readable format)
+                        Text(
+                            text = DateTimeCalculator.convertIsoDateToReadableFormat(
+                                isoDate = sessionDetail.sessionDateIso
+                            ),
+                            color = noteColor,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 13.sp
+                        )
+                    }
                     // three dot menu to set lift to "in progress" or delete
                     ThreeDotMenu(
                         contentDescRes = R.string.session_menu,
                         element1TextRes = R.string.change_session_to_in_progress,
-                        element2TextRes = R.string.delete_session,
+                        element2TextRes = R.string.edit_session,
+                        element3TextRes = R.string.delete_session,
                         expanded = sessionDetail.menuExpanded,
                         onClickDots = onClickThreeDotMenu,
                         onClickElement1 = onClickSwitchToInProgress,
-                        onClickElement2 = { /* TODO: onClick delete session */ },
+                        onClickElement2 = onClickEditSession,
+                        onClickElement3 = onClickDeleteSession,
                         onDismissRequest = onDismissThreeDotMenu,
                     )
                 }
-
-                // session note (if applicable)
-                if (sessionDetail.sessionNote.isNotBlank()) {
-                    Text(
-                        text = sessionDetail.sessionNote,
-                        color = noteColor,
-                        style = MaterialTheme.typography.bodySmall,
-                        fontSize = 13.sp
-                    )
-                }
-                // session date (readable format)
-                Text(
-                    text = DateTimeCalculator.convertIsoDateToReadableFormat(
-                        isoDate = sessionDetail.sessionDateIso
-                    ),
-                    color = noteColor,
-                    style = MaterialTheme.typography.bodySmall,
-                    fontSize = 13.sp
-                )
 
                 // bottom of column: donut chart for muscle groups in this session
                 MuscleGroupDonutChart(

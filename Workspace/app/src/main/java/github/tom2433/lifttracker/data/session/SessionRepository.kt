@@ -76,4 +76,6 @@ interface SessionRepository {
     suspend fun sessionHasLifts(id: Int): Boolean
 
     suspend fun finishSession(id: Int): Boolean
+
+    suspend fun getSessionById(id: Int): Session?
 }

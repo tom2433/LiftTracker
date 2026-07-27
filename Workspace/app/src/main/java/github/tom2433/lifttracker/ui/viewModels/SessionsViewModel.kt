@@ -1,6 +1,5 @@
 package github.tom2433.lifttracker.ui.viewModels
 
-import android.R
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
@@ -73,7 +72,7 @@ class SessionsViewModel(
 
             // constant collection to fill the muscleGroupFrequencyMap for the given time period,
             // only updates automatically when the profile is changed or when the data in the database
-            // that sessionRepository.getMuscleGroupFrequencyListStream() relies on updates.
+            // changes. Must manually refresh when start/end dates are changed.
             launch {
                 profileRepository.getActiveProfileStream().flatMapLatest { activeProfile ->
                     if (activeProfile != null) {
@@ -386,6 +385,113 @@ class SessionsViewModel(
             )
         }
     }
+
+    fun showDeleteSessionDialog(sessionCardId: Int) {
+        dismissThreeDotMenus()
+
+        viewModelScope.launch {
+            val sessionToDelete: Session =
+                sessionRepository.getSessionById(sessionCardId) ?: return@launch
+
+            _sessionsUiState.update { currentState ->
+                currentState.copy(
+                    deleteSessionDialogVisible = true,
+                    sessionToDelete = sessionToDelete
+                )
+            }
+        }
+    }
+
+    fun showEditSessionDialog(sessionCardId: Int) {
+        dismissThreeDotMenus()
+
+        viewModelScope.launch {
+            val sessionToEdit: Session =
+                sessionRepository.getSessionById(sessionCardId) ?: return@launch
+
+            _sessionsUiState.update { currentState ->
+                currentState.copy(
+                    editSessionDialogVisible = true,
+                    sessionToEdit = sessionToEdit,
+                    newSessionName = sessionToEdit.session_label,
+                    newSessionNote = sessionToEdit.note
+                )
+            }
+        }
+    }
+
+    fun dismissEditSessionDialog() {
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                editSessionDialogVisible = false,
+                sessionToEdit = null,
+                newSessionName = "",
+                newSessionNote = ""
+            )
+        }
+    }
+
+    fun updateNewSessionName(newSessionName: String) {
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                newSessionName = newSessionName
+            )
+        }
+    }
+
+    fun updateNewSessionNote(newSessionNote: String) {
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                newSessionNote = newSessionNote
+            )
+        }
+    }
+
+    fun validateSessionEntry(): Boolean {
+        return _sessionsUiState.value.newSessionName.isNotBlank()
+    }
+
+    fun updateSession() {
+        if (validateSessionEntry()) {
+            viewModelScope.launch {
+                val sessionToUpdate: Session =
+                    _sessionsUiState.value.sessionToEdit ?: return@launch
+
+                sessionRepository.updateSession(sessionToUpdate.copy(
+                    session_label = _sessionsUiState.value.newSessionName,
+                    note = _sessionsUiState.value.newSessionNote
+                ))
+
+                dismissEditSessionDialog()
+            }
+        }
+    }
+
+    fun dismissDeleteSessionDialog() {
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                deleteSessionDialogVisible = false,
+                sessionToDelete = null
+            )
+        }
+    }
+
+    fun deleteSession() {
+        val sessionToDelete: Session = _sessionsUiState.value.sessionToDelete ?: return
+
+        viewModelScope.launch {
+            // dismiss delete session dialog and make corresponding session card invisible and delay
+            dismissDeleteSessionDialog()
+            changeSessionCardVisibility(
+                sessionCardId = sessionToDelete.id,
+                newVisibility = false
+            )
+            delay(300)
+
+            // delete session from database
+            sessionRepository.deleteSession(sessionToDelete)
+        }
+    }
 }
 
 /**
@@ -404,5 +510,11 @@ data class SessionsUiState(
     // weekStringPairList: list of pairs with first element as a formatted week string,
     // second element as a list of session ids
     val weekStringPairList: List<Pair<String, List<Int>>> = emptyList(),
-    val dateRangePickerVisible: Boolean = false
+    val dateRangePickerVisible: Boolean = false,
+    val deleteSessionDialogVisible: Boolean = false,
+    val editSessionDialogVisible: Boolean = false,
+    val sessionToDelete: Session? = null,
+    val sessionToEdit: Session? = null,
+    val newSessionName: String = "",
+    val newSessionNote: String = ""
 )

@@ -23,7 +23,9 @@ fun ThreeDotMenu(
     onClickElement1: () -> Unit,
     onClickElement2: () -> Unit,
     onDismissRequest: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    @StringRes element3TextRes: Int? = null,
+    onClickElement3: () -> Unit = {}
 ) {
     // box to hold 3 dot menu
     Box(modifier = modifier) {
@@ -42,17 +44,25 @@ fun ThreeDotMenu(
             expanded = expanded,
             onDismissRequest = onDismissRequest
         ) {
-            // menu item for edit
+            // menu item 1
             DropdownMenuItem(
                 text = { Text(stringResource(element1TextRes)) },
                 onClick = onClickElement1
             )
 
-            // menu item for delete
+            // menu item 2
             DropdownMenuItem(
                 text = { Text(stringResource(element2TextRes)) },
                 onClick = onClickElement2
             )
+
+            // optional menu item 3
+            if (element3TextRes != null) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(element3TextRes)) },
+                    onClick = onClickElement3
+                )
+            }
         }
     }
 }

@@ -57,4 +57,6 @@ class OfflineSessionRepository(private val sessionDao: SessionDao) : SessionRepo
     override suspend fun sessionHasLifts(id: Int): Boolean = sessionDao.sessionHasLifts(id)
 
     override suspend fun finishSession(id: Int): Boolean = sessionDao.finishSession(id)
+
+    override suspend fun getSessionById(id: Int): Session? = sessionDao.getSessionById(id)
 }
