@@ -17,6 +17,8 @@ https://github.com/patrykandpatrick/vico
 
 should have a sort of indicator for each muscle group that can show the last day you've trained it. keep things minimal on the muscle groups screen visually. should still present more significant and impressive data when the card is opened.
 
+allow search suggestions to include muscle groups in addition to lift names on the existing lift entry card on the session in progress screen.
+
 ## 07-23
 
 on lift screen, show most recent sets as bar graph. potentially put a pie chart of lift distribution on expanded muscle group card.
