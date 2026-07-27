@@ -19,7 +19,7 @@ should have a sort of indicator for each muscle group that can show the last day
 
 allow search suggestions to include muscle groups in addition to lift names on the existing lift entry card on the session in progress screen.
 
-put a "usual pattern" line graph of average distribution between weight values per set in the session in progress screen underneath a lift in progress.
+put a "usual pattern" line graph of average distribution between weight values per set in the session in progress screen underneath a lift in progress. put time-frame tags on the line graph for past month and all time.
 
 ## 07-23
 
