@@ -90,6 +90,14 @@ https://github.com/patrykandpatrick/vico
     - user can customize time frame from which sessions are fetched, only displaying 10 at a time with an option to load more at the bottom. By default, the sessions screen uses the "All time" timeframe while only displaying the 10 most recent sessions.
     - Donut chart is present at the top of the screen showing the set distribution across muscle groups within the user-specified timeframe (not affected by the fetch limit)
     - Donut charts are also present on the session cards showing the muscle group set distribution of that particular session. User can hide these donut charts via the icon buttons at the top right of the list of session cards.
+    - **Everything beyond this point has not been implemented yet**
+    - When a session card is selected, it will display its muscle group frequency donut chart. It will also display the following elements:
+        - number of sets per muscle group as shown in the session in progress screen
+        - list of lift sets and their set metric values in the order of which they were trained. If two sets of the same lift were trained at different parts of the session, they will appear as such.
+        - If a set of a new lift is present, a new lift header will pop up to group those sets together. lift groups should be able to be expanded and collapsed.
+        - User can also choose whether to group by lifts or by muscle group. When grouping by muscle group, the muscle groups will be expandable/collapsible.
+        - An expandable/collapsible analytics section to display analytics data (determine what to put here later)
+            - some ideas: line graph showing deviation from the average (+, -) for each lift or for each set, take into account the session set number if possible.
 - [ ] F9-1: Allow user to filter by session name, session note, session name and note, muscle groups trained, lifts trained on sessions screen
 - [ ] F6-2: Implement the most recent lift sets at the bottom of LiftScreen (use the same function as used for F8-1?)
 
