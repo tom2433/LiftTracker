@@ -11,163 +11,6 @@ https://github.com/patrykandpatrick/vico
 
 ---
 
-# Immediate Notes
-
-## 07-27
-
-keep on muscle group card:
-
-- while closed:
-    - name
-    - note
-    - last date trained
-- while opened:
-    - all of the above
-    - # of lifts
-    -decide on more
-
-## 07-26
-
-should have a sort of indicator for each muscle group that can show the last day you've trained it. keep things minimal on the muscle groups screen visually. should still present more significant and impressive data when the card is opened.
-
-allow search suggestions to include muscle groups in addition to lift names on the existing lift entry card on the session in progress screen.
-
-put a "usual pattern" line graph of average distribution between weight values per set in the session in progress screen underneath a lift in progress. put time-frame tags on the line graph for past month and all time.
-
-on the sessions screen, put also the date in relative terms like on the muscle groups screen
-
-## 07-23
-
-on lift screen, show most recent sets as bar graph. potentially put a pie chart of lift distribution on expanded muscle group card.
-
-add an option to show sessions in list format vs. card format
-
-## 07-22
-
-need on lift set in progress card for session in progress screen: average weight/reps for this lift given it's lift set number, muscle group set number, and session set number.
-
-change the session set number label so it just says "session"
-
-make set number info collapsable
-
-just remove the lift set number from the ui, it's already in the lift name and if the user wants to change it they can
-
-change the pencil icon on the lift set in progress to an edit note icon.
-
-## 07-21
-
-info description for migration makes it seem like the data is going to two places. remove "also"
-
-split second paragraph of second info button of new switches
-
-change day to session everywhere
-
-make lift set in progress card's weight/rep note take up the same width as the value inputs
-
-## 07-17
-
-ran into an issue where when the user deletes more than one lift in progress or lift sets in progress, the numbering gets messed up. need to implement a system where the delete icons are not visible while something is being deleted.
-
-also need a unique index on the new muscle group day set number.
-
-make all lift set numbers more clear, make each of them their own row and put the numbers as their own font size/weight, place in a visual container of some sort.
-
-and put the number before the label
-
-use a label(note) to categorize groups of lifts
-
-just turn the note into a label at this point
-
-% of overall set volume on lift screen literally does not make any sense
-
-really also need a way to manage units
-
-## 07-16
-
-display the active lift day's date on the session in progress screen.
-
-## 07-15
-
-lift set notes don't wrap appropriately, they just take up the whole card.
-
-lift set metric inputs go away when the viewmodel is recreated.
-
-add a column to the lift sets table called muscle_group_day_set_number to indicate that muscle group's set number for the day.
-
-add number of sets on each lift in progress card
-
-## 07-14
-
-add a show all button to existing lift entry card to show all lifts
-
-## 07-13
-
-Consider putting the analytics button toggle-able on the lift screen, so the user sees previous sessions OR the analytics
-
-## 07-11
-
-days with the same day_label should display the day number in the note. when creating a lift, the user can click the day label and note to edit it, and when the name input pops up, some quick add buttons should also pop up. these should be able to be grouped in the analytics screen.
-
-start also implementing the preferences table
-
-## 07-10
-
-- maybe keep the dislog titles fixed in place and have the scrollable column only contain the body of the Dialog. maybe create a function for a dialog and content.
-
-- maybe include some muscle group data on the lift screen as well that the user can expand/collapse. maybe this could also be implemented into the muscle group card.
-
-- viewmodels are what store ui state. To have data persist over multiple screens, those screens need to share the same view model, or they write data to the database. which one is more efficient?
-
-- room database should store result values into a data class object which is then parsed thru on the front end. most if not all of the calculation done on the backend, minimal on the frontend.
-
-- shorten the content visibility animation on the lift screen (or simplify it)
-- also change the muscle group cards so the raw data doesn't load in until after the user clicks it.
-- move the scrollable columns on the dialogs so the user can see the buttons the entire time (completed)
-- a user may not want to see a crap ton of data thrown at their face when they open the app
-    - change the muscle group screen and the lift screen. their data will eventually be represented by line graphs and pie charts.
-    - raw data is displeasing to look at.
-    - user wants to have a good idea of how their lifts are progressing but does not want to go thru the trouble of looking at numbers.
-
-- raw data on the muscle group cards should not load in until after the user has clicked it. ^
-
-## 07-09
-
-- edit the profile note color on the switch profile nav drawer dropdown element to improve readability issues due to contrast.
-
-## 07-08
-
-- modify the info dialogs for the add/edit lift to be more descriptive
-- ask codex how to make everything less laggy
-- try to make lift screen take up the entire screen
-- bring back entry animation for muscle group cards
-
-## 07-07
-
-- increase size of lift note
-- eventually add a preferences table to store user preferences like setting a default unit.
-- gradually add these changes to the settings screen
-- eventually include a pie graph to show breakup of muscle groups.
-    - user can filter for a specific day, the last week, a week interval, a specific time period chosen by a calendar
-    - bar graph with each of the past weeks (rolling) and a bar graph of each of the past weeks (starting Mondays), and scroll through all of the previous weeks.
-    - user should be able to customize this bar graph along the x axis with specific time frames, and then the y axis with muscle group data, averaged muscle group data, a specific lift, multiple specific lifts in groups.
-        - should be able to create a function with all of these options just as parameters.
-    - bar graph with editable x and y axis, pie graph with customizable categories, option to save the graph and store a name for it.
-        - maybe eventually export to excel or even copy and put into your session message every time you finish a lift.
-- will need to work on storing data as quickly as possible and is first priority. the working with data will come mostly after it. more personal testing will be needed with the app in order to more strongly and quickly continue development.
-
-- also get data from Textlifttracker and convert it.
-
-## 07-06
-
-- the descriptions in the lift entry dialog should be hidden behind an info button
-    - the descriptions take too long to read, also previous units should be shown in a grid format
-    - entry screens should be read quickly since the user will be adding and editing the lifts often.
-
-- read the codex suggestions on how to use a key for lifts view model so it is able to be copied and recomposed.
-
-- look at viewmodelstore and viewmodelstoreowner
-
-
 # Development
 
 ## Features:
@@ -252,8 +95,15 @@ start also implementing the preferences table
 - [ ] add a setting for managing units
 - [ ] keep the dialog titles fixed in place just like the confirm/cancel buttons
 - [ ] raw data on the muscle group cards should not load until after the user has clicked it.
-- [ ] use a label(note) to categorize groups of lifts
+- [ ] use a label(note) to categorize groups of lifts and sessions
 - [ ] % of overall set volume on lift screen literally does not make any sense; remove it
+- [ ] also include the muscle groups in the search suggestions on the existing lift entry card.
+- [ ] put a "usual pattern" line graph of average distribution between weight values per set in the session in progress screen underneath a lift in progress. put time-frame tags on the line graph for past month and all time.
+- [ ] on lift screen, show most recent sets as bar graph. potentially put a pie chart of lift distribution on expanded muscle group card.
+- [ ] need on lift set in progress card for session in progress screen: average weight/reps for this lift given it's lift set number, muscle group set number, and session set number.
+- [ ] change the session set number label so it just says "session"
+- [ ] make set number info collapsable
+- [ ] just remove the lift set number from the ui, it's already in the lift name and if the user wants to change it they can
 
 # Data Structure
 
@@ -610,3 +460,159 @@ Edited 16 files+567-362
 - Workspace/app/src/main/java/github/tom2433/lifttracker/data/setmetric/SetMetric.kt+2-2
 - README.md+37-34
 - .codex_session_rename.py.codex_session_rename.py+27-27
+
+# Immediate Notes
+
+## 07-06
+
+- the descriptions in the lift entry dialog should be hidden behind an info button
+    - the descriptions take too long to read, also previous units should be shown in a grid format
+    - entry screens should be read quickly since the user will be adding and editing the lifts often.
+
+- read the codex suggestions on how to use a key for lifts view model so it is able to be copied and recomposed.
+
+- look at viewmodelstore and viewmodelstoreowner
+
+## 07-07
+
+- increase size of lift note
+- eventually add a preferences table to store user preferences like setting a default unit.
+- gradually add these changes to the settings screen
+- eventually include a pie graph to show breakup of muscle groups.
+    - user can filter for a specific day, the last week, a week interval, a specific time period chosen by a calendar
+    - bar graph with each of the past weeks (rolling) and a bar graph of each of the past weeks (starting Mondays), and scroll through all of the previous weeks.
+    - user should be able to customize this bar graph along the x axis with specific time frames, and then the y axis with muscle group data, averaged muscle group data, a specific lift, multiple specific lifts in groups.
+        - should be able to create a function with all of these options just as parameters.
+    - bar graph with editable x and y axis, pie graph with customizable categories, option to save the graph and store a name for it.
+        - maybe eventually export to excel or even copy and put into your session message every time you finish a lift.
+- will need to work on storing data as quickly as possible and is first priority. the working with data will come mostly after it. more personal testing will be needed with the app in order to more strongly and quickly continue development.
+
+- also get data from Textlifttracker and convert it.
+
+## 07-08
+
+- modify the info dialogs for the add/edit lift to be more descriptive
+- ask codex how to make everything less laggy
+- try to make lift screen take up the entire screen
+- bring back entry animation for muscle group cards
+
+## 07-09
+
+- edit the profile note color on the switch profile nav drawer dropdown element to improve readability issues due to contrast.
+
+## 07-10
+
+- maybe keep the dislog titles fixed in place and have the scrollable column only contain the body of the Dialog. maybe create a function for a dialog and content.
+
+- maybe include some muscle group data on the lift screen as well that the user can expand/collapse. maybe this could also be implemented into the muscle group card.
+
+- viewmodels are what store ui state. To have data persist over multiple screens, those screens need to share the same view model, or they write data to the database. which one is more efficient?
+
+- room database should store result values into a data class object which is then parsed thru on the front end. most if not all of the calculation done on the backend, minimal on the frontend.
+
+- shorten the content visibility animation on the lift screen (or simplify it)
+- also change the muscle group cards so the raw data doesn't load in until after the user clicks it.
+- move the scrollable columns on the dialogs so the user can see the buttons the entire time (completed)
+- a user may not want to see a crap ton of data thrown at their face when they open the app
+    - change the muscle group screen and the lift screen. their data will eventually be represented by line graphs and pie charts.
+    - raw data is displeasing to look at.
+    - user wants to have a good idea of how their lifts are progressing but does not want to go thru the trouble of looking at numbers.
+
+- raw data on the muscle group cards should not load in until after the user has clicked it. ^
+
+## 07-11
+
+days with the same day_label should display the day number in the note. when creating a lift, the user can click the day label and note to edit it, and when the name input pops up, some quick add buttons should also pop up. these should be able to be grouped in the analytics screen.
+
+start also implementing the preferences table
+
+## 07-13
+
+Consider putting the analytics button toggle-able on the lift screen, so the user sees previous sessions OR the analytics
+
+## 07-14
+
+add a show all button to existing lift entry card to show all lifts
+
+## 07-15
+
+lift set notes don't wrap appropriately, they just take up the whole card.
+
+lift set metric inputs go away when the viewmodel is recreated.
+
+add a column to the lift sets table called muscle_group_day_set_number to indicate that muscle group's set number for the day.
+
+add number of sets on each lift in progress card
+
+## 07-16
+
+display the active lift day's date on the session in progress screen.
+
+## 07-17
+
+ran into an issue where when the user deletes more than one lift in progress or lift sets in progress, the numbering gets messed up. need to implement a system where the delete icons are not visible while something is being deleted.
+
+also need a unique index on the new muscle group day set number.
+
+make all lift set numbers more clear, make each of them their own row and put the numbers as their own font size/weight, place in a visual container of some sort.
+
+and put the number before the label
+
+use a label(note) to categorize groups of lifts
+
+just turn the note into a label at this point
+
+% of overall set volume on lift screen literally does not make any sense
+
+really also need a way to manage units
+
+## 07-21
+
+info description for migration makes it seem like the data is going to two places. remove "also"
+
+split second paragraph of second info button of new switches
+
+change day to session everywhere
+
+make lift set in progress card's weight/rep note take up the same width as the value inputs
+
+## 07-22
+
+need on lift set in progress card for session in progress screen: average weight/reps for this lift given it's lift set number, muscle group set number, and session set number.
+
+change the session set number label so it just says "session"
+
+make set number info collapsable
+
+just remove the lift set number from the ui, it's already in the lift name and if the user wants to change it they can
+
+change the pencil icon on the lift set in progress to an edit note icon.
+
+## 07-23
+
+on lift screen, show most recent sets as bar graph. potentially put a pie chart of lift distribution on expanded muscle group card.
+
+add an option to show sessions in list format vs. card format
+
+## 07-26
+
+should have a sort of indicator for each muscle group that can show the last day you've trained it. keep things minimal on the muscle groups screen visually. should still present more significant and impressive data when the card is opened.
+
+allow search suggestions to include muscle groups in addition to lift names on the existing lift entry card on the session in progress screen.
+
+put a "usual pattern" line graph of average distribution between weight values per set in the session in progress screen underneath a lift in progress. put time-frame tags on the line graph for past month and all time.
+
+on the sessions screen, put also the date in relative terms like on the muscle groups screen
+
+## 07-27
+
+keep on muscle group card:
+
+- while closed:
+    - name
+    - note
+    - last date trained
+- while opened:
+    - all of the above
+    - \# of lifts
+    -decide on more
