@@ -85,6 +85,12 @@ https://github.com/patrykandpatrick/vico
     - Sessions will eventually be able to be categorized based on their name as well as their note.
     - This functionality will be mostly utilized in the analytics screen, but as for the session in progress screen, the user should be able to expand a section for quick-add buttons for both the session name as well as the note.
 - [ ] F9: Implement the Sessions Screen
+    - interactable list of sessions that the user has logged
+    - should stay relatively simple while maximizing functionality
+    - user can customize time frame from which sessions are fetched, only displaying 10 at a time with an option to load more at the bottom. By default, the sessions screen uses the "All time" timeframe while only displaying the 10 most recent sessions.
+    - Donut chart is present at the top of the screen showing the set distribution across muscle groups within the user-specified timeframe (not affected by the fetch limit)
+    - Donut charts are also present on the session cards showing the muscle group set distribution of that particular session. User can hide these donut charts via the icon buttons at the top right of the list of session cards.
+- [ ] F9-1: Allow user to filter by session name, session note, session name and note, muscle groups trained, lifts trained on sessions screen
 - [ ] F6-2: Implement the most recent lift sets at the bottom of LiftScreen (use the same function as used for F8-1?)
 
 ### Misc. things to do:
