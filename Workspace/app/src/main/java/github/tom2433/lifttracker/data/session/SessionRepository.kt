@@ -60,6 +60,12 @@ interface SessionRepository {
         endDate: String?
     ): Flow<List<LiftSetCountPerMuscleGroup>>
 
+    fun getNumSessionsStreamForTimeFrame(
+        activeProfileId: Int,
+        startDate: String?,
+        endDate: String?
+    ): Flow<Int>
+
     fun getSessionDetailsListStreamForSessionScreen(
         activeProfileId: Int,
         startDate: String?,

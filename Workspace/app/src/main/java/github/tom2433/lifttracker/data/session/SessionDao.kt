@@ -157,6 +157,33 @@ interface SessionDao {
             endDate = realEndDate
         )
     }
+    @Query("""
+        SELECT COUNT(s.id)
+        FROM sessions AS s
+        WHERE s.date <= :endDate
+            AND s.date >= :startDate
+            AND s.profile_id = :activeProfileId
+    """)
+    fun getNumSessionsFromStartEndDates(
+        activeProfileId: Int,
+        startDate: String,
+        endDate: String
+    ): Flow<Int>
+
+    fun getNumSessionsFromTimeFrame(
+        activeProfileId: Int,
+        startDate: String?,
+        endDate: String?
+    ): Flow<Int> {
+        val realStartDate: String = startDate ?: "2025-07-03"
+        val realEndDate: String = endDate ?: DateTimeCalculator.getCurrentIsoDate()
+
+        return getNumSessionsFromStartEndDates(
+            activeProfileId = activeProfileId,
+            startDate = realStartDate,
+            endDate = realEndDate
+        )
+    }
 
     @Query("""
         SELECT

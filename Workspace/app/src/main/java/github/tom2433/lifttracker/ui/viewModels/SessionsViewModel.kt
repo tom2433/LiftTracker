@@ -63,12 +63,43 @@ class SessionsViewModel(
      * startDate/endDate is changed, so it must be called manually
      */
     @RequiresApi(Build.VERSION_CODES.O)
-    private fun refresh() {
+    private fun refresh(refreshEverything: Boolean = false) {
         refreshJob?.cancel()
 
         refreshJob = viewModelScope.launch {
-            makeAllSessionCardsInvisible()
-            delay(300)
+            if (refreshEverything) {
+                // redo exit/entry animation on all cards
+                makeAllSessionCardsInvisible()
+                delay(300)
+                // reset the fetch limit
+                _sessionsUiState.update { currentState ->
+                    currentState.copy(
+                        fetchLimit = 10
+                    )
+                }
+            }
+
+            // constant collection to keep numSessionsInTimeFrame up to date; this informs the user
+            // how many sessions are in the time frame (not how many are actually displayed)
+            launch {
+                profileRepository.getActiveProfileStream().flatMapLatest { activeProfile ->
+                    if (activeProfile != null) {
+                        sessionRepository.getNumSessionsStreamForTimeFrame(
+                            activeProfileId = activeProfile.id,
+                            startDate = _sessionsUiState.value.startDate,
+                            endDate = _sessionsUiState.value.endDate
+                        )
+                    } else {
+                        flowOf(0)
+                    }
+                }.collect { numSessions ->
+                    _sessionsUiState.update { currentState ->
+                        currentState.copy(
+                            numSessionsInTimeFrame = numSessions
+                        )
+                    }
+                }
+            }
 
             // constant collection to fill the muscleGroupFrequencyMap for the given time period,
             // only updates automatically when the profile is changed or when the data in the database
@@ -192,7 +223,7 @@ class SessionsViewModel(
             )
         }
 
-        refresh()
+        refresh(true)
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -492,6 +523,16 @@ class SessionsViewModel(
             sessionRepository.deleteSession(sessionToDelete)
         }
     }
+
+    fun loadMoreSessions(moreSessionsToLoad: Int) {
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                fetchLimit = currentState.fetchLimit + moreSessionsToLoad
+            )
+        }
+
+        refresh()
+    }
 }
 
 /**
@@ -503,9 +544,12 @@ data class SessionsUiState(
     val timeFrameLabel: String = TimeFrameOption.ALL_TIME,
     val endDate: String? = null,
     val fetchLimit: Int = 10,
+    val numSessionsInTimeFrame: Int = 0,
     val timeFrameDropdownExpanded: Boolean = false,
+    // list of LiftSetCountPerMuscleGroup objects to create the donut chart at the top.
+    // this includes ALL data in the selected timeframe, not affected by fetchLimit
     val muscleGroupFrequencyList: List<LiftSetCountPerMuscleGroup> = emptyList(),
-    // sessionDetailMap: session ids pointing to SessionDetail objects
+    // sessionDetailMap: session ids pointing to SessionDetail objects; affected by fetchLimit
     val sessionDetailMap: Map<Int, SessionDetail> = emptyMap(),
     // weekStringPairList: list of pairs with first element as a formatted week string,
     // second element as a list of session ids

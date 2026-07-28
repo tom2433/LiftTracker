@@ -36,6 +36,16 @@ class OfflineSessionRepository(private val sessionDao: SessionDao) : SessionRepo
         endDate = endDate
     )
 
+    override fun getNumSessionsStreamForTimeFrame(
+        activeProfileId: Int,
+        startDate: String?,
+        endDate: String?
+    ): Flow<Int> = sessionDao.getNumSessionsFromTimeFrame(
+        activeProfileId = activeProfileId,
+        startDate = startDate,
+        endDate = endDate
+    )
+
     override fun getSessionDetailsListStreamForSessionScreen(
         activeProfileId: Int,
         startDate: String?,

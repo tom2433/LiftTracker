@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -48,6 +49,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -60,6 +62,7 @@ import github.tom2433.lifttracker.ui.utils.DateRangePickerModal
 import github.tom2433.lifttracker.ui.utils.MuscleGroupDonutChart
 import github.tom2433.lifttracker.ui.utils.ThreeDotMenu
 import github.tom2433.lifttracker.ui.utils.LabelHeader
+import github.tom2433.lifttracker.ui.utils.LoadMoreLabelAndButton
 import github.tom2433.lifttracker.ui.utils.ShowElementDeleteDialog
 import github.tom2433.lifttracker.ui.utils.ShowElementEntryDialog
 import github.tom2433.lifttracker.ui.viewModels.SessionsViewModel
@@ -207,6 +210,7 @@ fun SessionsScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
+                // column to hold sessions for this week
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -217,6 +221,7 @@ fun SessionsScreen(
                             )
                         )
                 ) {
+                    // animated visibility for the week label
                     AnimatedVisibility(
                         visible = sessionsUiState.sessionDetailMap[weekPair.second[0]]?.visible ?: continue@loop,
                         enter = fadeIn(tween(300)),
@@ -232,11 +237,14 @@ fun SessionsScreen(
                         )
                     }
 
+                    // loop to display all session cards for this week
                     id_loop@ for (sessionId in weekPair.second) {
+                        // key to differentiate session cards
                         key(sessionId) {
                             val sessionDetail: SessionDetail =
                                 sessionsUiState.sessionDetailMap[sessionId] ?: continue@id_loop
 
+                            // animated visibility for each session card
                             AnimatedVisibility(
                                 visible = sessionDetail.visible,
                                 enter = slideInHorizontally(
@@ -283,6 +291,14 @@ fun SessionsScreen(
                 }
             }
         }
+
+        // prompt user to load more sessions if applicable
+        LoadMoreLabelAndButton(
+            numDisplayed = sessionsUiState.sessionDetailMap.keys.size,
+            numExisting = sessionsUiState.numSessionsInTimeFrame,
+            elementNamePlural = "sessions",
+            onClickLoadMore = { viewModel.loadMoreSessions(it) }
+        )
     }
 
     // show date range picker dialog if applicable
