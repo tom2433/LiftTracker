@@ -13,6 +13,19 @@ https://github.com/patrykandpatrick/vico
 
 # Immediate Notes
 
+## 07-27
+
+keep on muscle group card:
+
+- while closed:
+    - name
+    - note
+    - last date trained
+- while opened:
+    - all of the above
+    - # of lifts
+    -decide on more
+
 ## 07-26
 
 should have a sort of indicator for each muscle group that can show the last day you've trained it. keep things minimal on the muscle groups screen visually. should still present more significant and impressive data when the card is opened.
