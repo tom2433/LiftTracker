@@ -533,6 +533,32 @@ class SessionsViewModel(
 
         refresh()
     }
+
+    fun toggleListLayout() {
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                donutChartsVisible = !currentState.donutChartsVisible
+            )
+        }
+    }
+
+    fun toggleCardSelected(sessionCardId: Int) {
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                sessionDetailMap = currentState.sessionDetailMap.mapValues { (thisSessionId, thisSessionDetail) ->
+                    if (thisSessionId == sessionCardId) {
+                        thisSessionDetail.copy(
+                            selected = !thisSessionDetail.selected
+                        )
+                    } else {
+                        thisSessionDetail.copy(
+                            selected = false
+                        )
+                    }
+                }
+            )
+        }
+    }
 }
 
 /**
@@ -560,5 +586,6 @@ data class SessionsUiState(
     val sessionToDelete: Session? = null,
     val sessionToEdit: Session? = null,
     val newSessionName: String = "",
-    val newSessionNote: String = ""
+    val newSessionNote: String = "",
+    val donutChartsVisible: Boolean = true
 )

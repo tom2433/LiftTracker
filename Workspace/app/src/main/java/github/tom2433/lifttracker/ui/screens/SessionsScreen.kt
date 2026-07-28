@@ -5,13 +5,15 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -20,7 +22,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -49,7 +50,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -59,12 +59,13 @@ import github.tom2433.lifttracker.data.utils.DateTimeCalculator
 import github.tom2433.lifttracker.ui.AppViewModelProvider
 import github.tom2433.lifttracker.ui.navigation.NavigationDestination
 import github.tom2433.lifttracker.ui.utils.DateRangePickerModal
-import github.tom2433.lifttracker.ui.utils.MuscleGroupDonutChart
-import github.tom2433.lifttracker.ui.utils.ThreeDotMenu
 import github.tom2433.lifttracker.ui.utils.LabelHeader
+import github.tom2433.lifttracker.ui.utils.LayoutSwitcher
 import github.tom2433.lifttracker.ui.utils.LoadMoreLabelAndButton
+import github.tom2433.lifttracker.ui.utils.MuscleGroupDonutChart
 import github.tom2433.lifttracker.ui.utils.ShowElementDeleteDialog
 import github.tom2433.lifttracker.ui.utils.ShowElementEntryDialog
+import github.tom2433.lifttracker.ui.utils.ThreeDotMenu
 import github.tom2433.lifttracker.ui.viewModels.SessionsViewModel
 
 object SessionsDestination : NavigationDestination {
@@ -203,7 +204,7 @@ fun SessionsScreen(
         )
 
         // list of session cards
-        loop@ for (weekPair in sessionsUiState.weekStringPairList) {
+        loop@ for ((index, weekPair) in sessionsUiState.weekStringPairList.withIndex()) {
             // row to hold label for this week
             Row(
                 horizontalArrangement = Arrangement.Start,
@@ -214,27 +215,39 @@ fun SessionsScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .animateContentSize(
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                stiffness = Spring.StiffnessMediumLow
-                            )
-                        )
                 ) {
-                    // animated visibility for the week label
+                    // animated visibility for the week label and layout switcher if first index
                     AnimatedVisibility(
                         visible = sessionsUiState.sessionDetailMap[weekPair.second[0]]?.visible ?: continue@loop,
                         enter = fadeIn(tween(300)),
                         exit = fadeOut(tween(300))
                     ) {
-                        Text(
-                            text = weekPair.first,
-                            color = MaterialTheme.colorScheme.onBackground.copy(
-                                alpha = 0.75f
-                            ),
-                            style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier.padding(bottom = 16.dp)
-                        )
+                        // row to hold week label and layout switcher if first index
+                        Row(
+                            horizontalArrangement = if (index == 0) {
+                                Arrangement.SpaceBetween
+                            } else {
+                                Arrangement.Start
+                            },
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 16.dp)
+                        ) {
+                            Text(
+                                text = weekPair.first,
+                                color = MaterialTheme.colorScheme.onBackground.copy(
+                                    alpha = 0.75f
+                                ),
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                            if (index == 0) {
+                                LayoutSwitcher(
+                                    onListLayoutClicked = { viewModel.toggleListLayout() },
+                                    listLayoutEnabled = !sessionsUiState.donutChartsVisible,
+                                )
+                            }
+                        }
                     }
 
                     // loop to display all session cards for this week
@@ -262,6 +275,7 @@ fun SessionsScreen(
                             ) {
                                 SessionCard(
                                     sessionDetail = sessionDetail,
+                                    donutChartsVisible = sessionsUiState.donutChartsVisible,
                                     onClickThreeDotMenu = {
                                         viewModel.threeDotMenuClicked(
                                             sessionCardId = sessionDetail.sessionId
@@ -283,6 +297,9 @@ fun SessionsScreen(
                                     },
                                     onClickDeleteSession = {
                                         viewModel.showDeleteSessionDialog(sessionDetail.sessionId)
+                                    },
+                                    onClickCard = {
+                                        viewModel.toggleCardSelected(sessionDetail.sessionId)
                                     }
                                 )
                             }
@@ -333,8 +350,8 @@ fun SessionsScreen(
     // show edit session dialog if applicable
     if (sessionsUiState.editSessionDialogVisible && sessionsUiState.sessionToEdit != null) {
         val formattedDate: String = DateTimeCalculator.convertIsoDateToReadableFormat(sessionsUiState.sessionToEdit!!.date)
-        val dialogTitle: String = "Edit '${sessionsUiState.sessionToEdit!!.session_label}' from ${formattedDate}:"
-        val submitBtnText: String = "Update '${sessionsUiState.sessionToEdit!!.session_label}'"
+        val dialogTitle = "Edit '${sessionsUiState.sessionToEdit!!.session_label}' from ${formattedDate}:"
+        val submitBtnText = "Update '${sessionsUiState.sessionToEdit!!.session_label}'"
 
         ShowElementEntryDialog(
             dialogTitle = dialogTitle,
@@ -356,12 +373,14 @@ fun SessionsScreen(
 @Composable
 fun SessionCard(
     sessionDetail: SessionDetail,
+    donutChartsVisible: Boolean,
     onClickThreeDotMenu: () -> Unit,
     onDismissThreeDotMenu: () -> Unit,
     onClickSwitchToInProgress: () -> Unit,
     onClickFinishSession: () -> Unit,
     onClickEditSession: () -> Unit,
     onClickDeleteSession: () -> Unit,
+    onClickCard: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val noteColor = CardDefaults.cardColors().contentColor.copy(
@@ -371,13 +390,8 @@ fun SessionCard(
     // Column to hold session's card and animated content below it
     Column(
         modifier = modifier
-            .animateContentSize(
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioNoBouncy,
-                    stiffness = Spring.StiffnessMediumLow
-                )
-            )
     ) {
+        // card to hold labels and three dot menu on top, donut chart on bottom if applicable
         Card(
             shape = RoundedCornerShape(16.dp),
             modifier = Modifier
@@ -392,7 +406,7 @@ fun SessionCard(
             } else {
                 null
             },
-            onClick = { /* TODO: Session Card clicked */ }
+            onClick = onClickCard
         ) {
             // Column to hold session card contents:
             // labels/three dot menu on top, donut chart on bottom
@@ -402,12 +416,6 @@ fun SessionCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)
-                    .animateContentSize(
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioNoBouncy,
-                            stiffness = Spring.StiffnessMediumLow
-                        )
-                    )
             ) {
                 // if session is in progress, display label that the session is in progress
                 // and provide a "finish" button
@@ -469,14 +477,27 @@ fun SessionCard(
                 }
 
                 // bottom of column: donut chart for muscle groups in this session
-                MuscleGroupDonutChart(
-                    muscleGroupFrequencyList = sessionDetail.liftSetCountPerMuscleGroupList,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 12.dp),
-                    height = 150.dp,
-                    innerHeight = 75.dp
-                )
+                // animated content since the user may select to not see these
+                AnimatedVisibility(
+                    visible = donutChartsVisible || sessionDetail.selected,
+                    enter = expandVertically(
+                        expandFrom = Alignment.Top,
+                        animationSpec = tween(300)
+                    ) + fadeIn(tween(300)),
+                    exit = shrinkVertically(
+                        shrinkTowards = Alignment.Top,
+                        animationSpec = tween(300)
+                    ) + fadeOut(tween(300))
+                ) {
+                    MuscleGroupDonutChart(
+                        muscleGroupFrequencyList = sessionDetail.liftSetCountPerMuscleGroupList,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 12.dp),
+                        height = 150.dp,
+                        innerHeight = 75.dp
+                    )
+                }
             }
         }
     }

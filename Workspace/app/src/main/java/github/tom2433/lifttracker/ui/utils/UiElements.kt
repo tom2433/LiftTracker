@@ -17,15 +17,22 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ViewList
+import androidx.compose.material.icons.automirrored.outlined.ViewList
 import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Numbers
 import androidx.compose.material.icons.filled.Scale
+import androidx.compose.material.icons.filled.ViewList
+import androidx.compose.material.icons.outlined.GridView
+import androidx.compose.material.icons.outlined.ViewList
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -488,5 +495,27 @@ fun LoadMoreLabelAndButton(
         }
 
         Spacer(modifier = Modifier.height(20.dp))
+    }
+}
+
+@Composable
+fun LayoutSwitcher(
+    onListLayoutClicked: () -> Unit,
+    listLayoutEnabled: Boolean,
+    modifier: Modifier = Modifier
+) {
+    // list format icon button
+    IconButton(
+        onClick = onListLayoutClicked,
+        modifier = modifier
+    ) {
+        Icon(
+            imageVector = if (listLayoutEnabled) {
+                Icons.AutoMirrored.Filled.ViewList
+            } else {
+                Icons.AutoMirrored.Outlined.ViewList
+            },
+            contentDescription = "Switch to list layout"
+        )
     }
 }
