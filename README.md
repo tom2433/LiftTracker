@@ -634,3 +634,5 @@ keep on muscle group card:
 ## 07-29
 
 make the fill color of the in progress cards on session screen the border color, and make their fill transparent.
+
+add a new option to the drop-down in sessions screen called "view by week" allowing the user to cycle thru the weeks they've trained via forward and backword icon buttons.
