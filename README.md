@@ -630,3 +630,7 @@ keep on muscle group card:
     - all of the above
     - \# of lifts
     -decide on more
+
+## 07-29
+
+make the fill color of the in progress cards on session screen the border color, and make their fill transparent.
