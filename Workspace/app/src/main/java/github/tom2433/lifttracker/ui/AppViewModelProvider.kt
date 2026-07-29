@@ -1,5 +1,7 @@
 package github.tom2433.lifttracker.ui
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
@@ -43,6 +45,7 @@ object AppViewModelProvider {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     val Factory = viewModelFactory {
         // initializer for MuscleGroupsViewModel
         initializer {
@@ -81,7 +84,8 @@ object AppViewModelProvider {
         initializer {
             SessionsViewModel(
                 profileRepository = liftTrackerApplication().container.profileRepository,
-                sessionRepository = liftTrackerApplication().container.sessionsRepository
+                sessionRepository = liftTrackerApplication().container.sessionsRepository,
+                liftRepository = liftTrackerApplication().container.liftRepository
             )
         }
 

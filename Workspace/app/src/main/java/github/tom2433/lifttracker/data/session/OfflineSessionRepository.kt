@@ -1,6 +1,7 @@
 package github.tom2433.lifttracker.data.session
 
 import github.tom2433.lifttracker.data.profile.Profile
+import github.tom2433.lifttracker.data.structures.DisplaySessionLiftSetRow
 import github.tom2433.lifttracker.data.structures.LiftSetCountPerMuscleGroup
 import github.tom2433.lifttracker.data.structures.SessionDetail
 import kotlinx.coroutines.flow.Flow
@@ -22,7 +23,9 @@ class OfflineSessionRepository(private val sessionDao: SessionDao) : SessionRepo
 
     override suspend fun getNextSessionNumber(profile_id: Int): Int = sessionDao.getNextSessionNumber(profile_id)
 
-    override fun getNumOfSetsForSession(id: Int): Flow<Int> = sessionDao.getNumOfSetsForSession(id)
+    override suspend fun getNumOfSetsForSession(id: Int): Int = sessionDao.getNumOfSetsForSession(id)
+
+    override suspend fun getNumOfLiftsForSession(id: Int): Int = sessionDao.getNumOfLiftsForSession(id)
 
     override fun getSetCountPerMuscleGroupForSessionIdStream(sessionId: Int): Flow<List<LiftSetCountPerMuscleGroup>> = sessionDao.getSetCountPerMuscleGroup(sessionId)
 
@@ -69,4 +72,6 @@ class OfflineSessionRepository(private val sessionDao: SessionDao) : SessionRepo
     override suspend fun finishSession(id: Int): Boolean = sessionDao.finishSession(id)
 
     override suspend fun getSessionById(id: Int): Session? = sessionDao.getSessionById(id)
+
+    override fun getDisplaySessionLiftSetRowsStream(id: Int): Flow<List<DisplaySessionLiftSetRow>> = sessionDao.getDisplaySessionLiftSetRows(id)
 }

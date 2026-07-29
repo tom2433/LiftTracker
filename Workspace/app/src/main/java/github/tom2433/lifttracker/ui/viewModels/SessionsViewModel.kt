@@ -4,10 +4,15 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import github.tom2433.lifttracker.data.lift.LiftRepository
 import github.tom2433.lifttracker.data.profile.Profile
+import github.tom2433.lifttracker.data.liftset.LiftSet
+import github.tom2433.lifttracker.data.setmetric.SetMetric
 import github.tom2433.lifttracker.data.profile.ProfileRepository
 import github.tom2433.lifttracker.data.session.Session
 import github.tom2433.lifttracker.data.session.SessionRepository
+import github.tom2433.lifttracker.data.structures.DisplaySessionLiftSetRow
+import github.tom2433.lifttracker.data.structures.LiftSearchDetail
 import github.tom2433.lifttracker.data.structures.LiftSetCountPerMuscleGroup
 import github.tom2433.lifttracker.data.structures.SessionDetail
 import github.tom2433.lifttracker.data.utils.DateTimeCalculator
@@ -21,6 +26,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
@@ -34,12 +40,15 @@ import java.util.Date
 @OptIn(ExperimentalCoroutinesApi::class)
 class SessionsViewModel(
     private val profileRepository: ProfileRepository,
-    private val sessionRepository: SessionRepository
+    private val sessionRepository: SessionRepository,
+    private val liftRepository: LiftRepository
 ) : ViewModel() {
     private val _sessionsUiState = MutableStateFlow(SessionsUiState())
     // toast events are called via _toastEvents.emit("message")
     private val _toastEvents = MutableSharedFlow<String>()
     private var refreshJob: Job? = null
+    private var setCollectionJob: Job? = null
+//    private var sessionCardIdPendingExpand: Int? = null
     val sessionsUiState: StateFlow<SessionsUiState> = _sessionsUiState.asStateFlow()
     val toastEvents: SharedFlow<String> = _toastEvents.asSharedFlow()
 
@@ -535,30 +544,248 @@ class SessionsViewModel(
     }
 
     fun toggleListLayout() {
-        _sessionsUiState.update { currentState ->
-            currentState.copy(
-                donutChartsVisible = !currentState.donutChartsVisible
-            )
+        // if user is going from donutCharts visible to donut charts not visible, we need to reset
+        // the session data
+        if (_sessionsUiState.value.donutChartsVisible) {
+            resetSessionData()
         }
-    }
 
-    fun toggleCardSelected(sessionCardId: Int) {
         _sessionsUiState.update { currentState ->
             currentState.copy(
-                sessionDetailMap = currentState.sessionDetailMap.mapValues { (thisSessionId, thisSessionDetail) ->
-                    if (thisSessionId == sessionCardId) {
-                        thisSessionDetail.copy(
-                            selected = !thisSessionDetail.selected
-                        )
-                    } else {
+                donutChartsVisible = !currentState.donutChartsVisible,
+                sessionDetailMap = currentState.sessionDetailMap.mapValues { (_, thisSessionDetail) ->
+                    if (currentState.donutChartsVisible) {
                         thisSessionDetail.copy(
                             selected = false
                         )
+                    } else {
+                        thisSessionDetail
                     }
                 }
             )
         }
     }
+
+    private fun convertLiftSetRowsToSetList(
+        displaySessionLiftSetRows: List<DisplaySessionLiftSetRow>
+    ): List<Pair<Int, List<Int>>> {
+        // displaySetList: ordered list of pairs (ordered by session_set_number):
+        //      first element: Lift id
+        //      second element: list of LiftSet ids maintaining order
+        val mutableDisplaySetList = mutableListOf<Pair<Int, List<Int>>>()
+        var index = 0
+        while (index < displaySessionLiftSetRows.size) {
+            val newLiftId = displaySessionLiftSetRows[index].liftSet.lift_id
+
+            // determine the last index where this lift id shows up
+            var newLiftIdEndIndex = index
+            while (displaySessionLiftSetRows[newLiftIdEndIndex].liftSet.lift_id == newLiftId) {
+                newLiftIdEndIndex++
+                if (newLiftIdEndIndex == displaySessionLiftSetRows.size) {
+                    break
+                }
+            }
+            newLiftIdEndIndex--
+
+            // now create list of liftset ids that belong to this new lift id
+            val liftSetIdsForNewLift: List<Int> = displaySessionLiftSetRows
+                .slice(index..newLiftIdEndIndex)
+                .map { it.liftSet.id }
+
+            mutableDisplaySetList.add(Pair(newLiftId, liftSetIdsForNewLift))
+
+            // index now goes to the next index after the end index of this lift id
+            index = newLiftIdEndIndex + 1
+        }
+
+        return mutableDisplaySetList.toList()
+    }
+
+    private fun resetSessionData() {
+        setCollectionJob?.cancel()
+
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                currentSessionLiftSetMap = emptyMap(),
+                currentSessionLiftDetailMap = emptyMap(),
+                currentSessionDisplaySetList = emptyList()
+            )
+        }
+    }
+
+    fun toggleCardSelected(sessionCardId: Int) {
+        // cancel the setCollectionJob and reset session display data
+        resetSessionData()
+
+        // ensure that the session still exists in the UI and backend
+        val sessionDetail: SessionDetail =
+            _sessionsUiState.value.sessionDetailMap[sessionCardId] ?: return
+
+        // determine if the card is being opened.
+        // if it is, begin the collection for its lift sets
+        if (!sessionDetail.selected) {
+            // indicate that this session card is about to be expanded
+//            sessionCardIdPendingExpand = sessionCardId
+
+            // load all data before opening card
+            setCollectionJob = viewModelScope.launch {
+                combine(
+                    sessionRepository.getDisplaySessionLiftSetRowsStream(sessionDetail.sessionId),
+                    liftRepository.getLiftSearchDetailsForSessionIdStream(sessionDetail.sessionId)
+                ) { displaySessionLiftSetRows, liftSearchDetails ->
+                    displaySessionLiftSetRows to liftSearchDetails
+                }.collect { (displaySessionLiftSetRows, liftSearchDetails) ->
+                    _sessionsUiState.update { currentState ->
+                        currentState.copy(
+                            currentSessionLiftSetMap = displaySessionLiftSetRows.associate { displaySessionLiftSetRow ->
+                                displaySessionLiftSetRow.liftSet.id to Triple(
+                                    first = displaySessionLiftSetRow.liftSet,
+                                    second = displaySessionLiftSetRow.weightMetric,
+                                    third = displaySessionLiftSetRow.secondMetric
+                                )
+                            },
+                            currentSessionDisplaySetList = convertLiftSetRowsToSetList(
+                                displaySessionLiftSetRows = displaySessionLiftSetRows
+                            ),
+                            currentSessionLiftDetailMap = liftSearchDetails.associate { liftSearchDetail ->
+                                liftSearchDetail.liftObj.id to liftSearchDetail.copy(
+                                    selected = currentState.currentSessionLiftDetailMap[liftSearchDetail.liftObj.id]?.selected ?: false
+                                )
+                            },
+                            sessionDetailMap = currentState.sessionDetailMap.mapValues { (thisSessionId, thisSessionDetail) ->
+                                if (thisSessionId == sessionCardId) {
+                                    thisSessionDetail.copy(
+                                        selected = true
+                                    )
+                                } else {
+                                    thisSessionDetail.copy(
+                                        selected = false
+                                    )
+                                }
+                            }
+                        )
+                    }
+                }
+
+//                // launch to fill currentSessionLiftSetMap and currentSessionDisplaySetList
+//                launch {
+//                    sessionRepository.getDisplaySessionLiftSetRowsStream(sessionDetail.sessionId)
+//                        .collect { displaySessionLiftSetRows ->
+//                            // update ui state to fill currentSessionLiftSetMap,
+//                            // currentSessionDisplaySetList
+//                            _sessionsUiState.update { currentState ->
+//                                currentState.copy(
+//                                    currentSessionLiftSetMap = displaySessionLiftSetRows.associate { displaySessionLiftSetRow ->
+//                                        displaySessionLiftSetRow.liftSet.id to Triple(
+//                                            first = displaySessionLiftSetRow.liftSet,
+//                                            second = displaySessionLiftSetRow.weightMetric,
+//                                            third = displaySessionLiftSetRow.secondMetric
+//                                        )
+//                                    },
+//                                    currentSessionDisplaySetList = convertLiftSetRowsToSetList(
+//                                        displaySessionLiftSetRows = displaySessionLiftSetRows
+//                                    )
+//                                )
+//                            }
+//
+//                            expandPendingSessionCardIfReady()
+//                        }
+//                }
+//
+//                // launch to fill currentSessionLiftDetailMap
+//                launch {
+//                    // now collect the LiftSearchDetails and update the ui state
+//                    liftRepository.getLiftSearchDetailsForSessionIdStream(sessionDetail.sessionId).collect { liftSearchDetails ->
+//                        _sessionsUiState.update { currentState ->
+//                            currentState.copy(
+//                                currentSessionLiftDetailMap = liftSearchDetails.associate { liftSearchDetail ->
+//                                    liftSearchDetail.liftObj.id to liftSearchDetail.copy(
+//                                        selected = currentState.currentSessionLiftDetailMap[liftSearchDetail.liftObj.id]?.selected ?: false
+//                                    )
+//                                }
+//                            )
+//                        }
+//
+//                        expandPendingSessionCardIfReady()
+//                    }
+//                }
+            }
+        } else {
+            // if it's not, close card and delete all data, cancel collection job
+            // first cancel the collection job and reset session data
+            resetSessionData()
+
+            // then close the card
+            _sessionsUiState.update { currentState ->
+                currentState.copy(
+                    sessionDetailMap = currentState.sessionDetailMap.mapValues { (thisSessionId, thisSessionDetail) ->
+                        if (thisSessionId == sessionCardId) {
+                            thisSessionDetail.copy(
+                                selected = false
+                            )
+                        } else {
+                            thisSessionDetail
+                        }
+                    }
+                )
+            }
+        }
+    }
+
+//    private fun expandPendingSessionCardIfReady() {
+//        val sessionId: Int = sessionCardIdPendingExpand ?: return
+//        var currentSessionLiftSetMapValidated = false
+//        var currentSessionLiftDetailMapValidated = false
+//        var currentSessionDisplaySetListValidated = false
+//
+//        viewModelScope.launch {
+//            val numLiftSetsForSession = sessionRepository.getNumOfSetsForSession(sessionId)
+//            val numLiftsForSession = sessionRepository.getNumOfLiftsForSession(sessionId)
+//
+//            // ensure that the number of keys in currentSessionLiftSetMap matches the number of
+//            // LiftSets recorded for the selected session
+//            if (_sessionsUiState.value.currentSessionLiftSetMap.keys.size == numLiftSetsForSession) {
+//                currentSessionLiftSetMapValidated = true
+//            }
+//
+//            // ensure that the number of keys in currentSessionLiftDetailMap matches the number of
+//            // unique lifts trained for the selected session
+//            if (_sessionsUiState.value.currentSessionLiftDetailMap.keys.size == numLiftsForSession) {
+//                currentSessionLiftDetailMapValidated = true
+//            }
+//
+//            // ensure that the number of LiftSet ids accounted for in currentSessionDisplaySetList
+//            // matches the number of LiftSets recorded for the selected session
+//            var numLiftSetIds = 0
+//            for (liftPair in _sessionsUiState.value.currentSessionDisplaySetList) {
+//                numLiftSetIds += liftPair.second.size
+//            }
+//            if (numLiftSetIds == numLiftSetsForSession) {
+//                currentSessionDisplaySetListValidated = true
+//            }
+//
+//            // if everything is validated, expand the session card
+//            if (currentSessionLiftSetMapValidated &&
+//                    currentSessionLiftDetailMapValidated &&
+//                    currentSessionDisplaySetListValidated) {
+//                _sessionsUiState.update { currentState ->
+//                    currentState.copy(
+//                        sessionDetailMap = currentState.sessionDetailMap.mapValues { (thisSessionId, thisSessionDetail) ->
+//                            if (thisSessionId == sessionId) {
+//                                thisSessionDetail.copy(
+//                                    selected = true
+//                                )
+//                            } else {
+//                                thisSessionDetail.copy(
+//                                    selected = false
+//                                )
+//                            }
+//                        }
+//                    )
+//                }
+//            }
+//        }
+//    }
 }
 
 /**
@@ -580,6 +807,16 @@ data class SessionsUiState(
     // weekStringPairList: list of pairs with first element as a formatted week string,
     // second element as a list of session ids
     val weekStringPairList: List<Pair<String, List<Int>>> = emptyList(),
+    // currentSessionLiftSetMap: Map of LiftSet ids pointing to triples containing a lift set object
+    // and both of its SetMetric objects. The first SetMetric is weight, second is reps or time
+    val currentSessionLiftSetMap: Map<Int, Triple<LiftSet, SetMetric, SetMetric>> = emptyMap(),
+    // currentSessionLiftDetailMap: Map of lift ids pointing to their corresponding LiftSearchDetail
+    // objects
+    val currentSessionLiftDetailMap: Map<Int, LiftSearchDetail> = emptyMap(),
+    // displaySetList: ordered list of pairs (ordered by session_set_number):
+    //      first element: Lift id
+    //      second element: list of LiftSet ids maintaining order
+    val currentSessionDisplaySetList: List<Pair<Int, List<Int>>> = emptyList(),
     val dateRangePickerVisible: Boolean = false,
     val deleteSessionDialogVisible: Boolean = false,
     val editSessionDialogVisible: Boolean = false,
@@ -587,5 +824,6 @@ data class SessionsUiState(
     val sessionToEdit: Session? = null,
     val newSessionName: String = "",
     val newSessionNote: String = "",
-    val donutChartsVisible: Boolean = true
-)
+    val donutChartsVisible: Boolean = true,
+
+    )

@@ -1,6 +1,6 @@
 package github.tom2433.lifttracker.data.session
 
-import github.tom2433.lifttracker.data.profile.Profile
+import github.tom2433.lifttracker.data.structures.DisplaySessionLiftSetRow
 import github.tom2433.lifttracker.data.structures.LiftSetCountPerMuscleGroup
 import github.tom2433.lifttracker.data.structures.SessionDetail
 import kotlinx.coroutines.flow.Flow
@@ -50,7 +50,9 @@ interface SessionRepository {
     /**
      * Retrieve number of sets for a given session id.
      */
-    fun getNumOfSetsForSession(id: Int): Flow<Int>
+    suspend fun getNumOfSetsForSession(id: Int): Int
+
+    suspend fun getNumOfLiftsForSession(id: Int): Int
 
     fun getSetCountPerMuscleGroupForSessionIdStream(sessionId: Int): Flow<List<LiftSetCountPerMuscleGroup>>
 
@@ -84,4 +86,6 @@ interface SessionRepository {
     suspend fun finishSession(id: Int): Boolean
 
     suspend fun getSessionById(id: Int): Session?
+
+    fun getDisplaySessionLiftSetRowsStream(id: Int): Flow<List<DisplaySessionLiftSetRow>>
 }

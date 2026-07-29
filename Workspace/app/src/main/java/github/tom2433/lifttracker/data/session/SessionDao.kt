@@ -8,6 +8,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import github.tom2433.lifttracker.data.liftset.LiftSet
+import github.tom2433.lifttracker.data.structures.DisplaySessionLiftSetRow
 import github.tom2433.lifttracker.data.structures.LiftSetCountPerMuscleGroup
 import github.tom2433.lifttracker.data.structures.SessionDetail
 import github.tom2433.lifttracker.data.structures.SessionDetailData
@@ -55,13 +56,24 @@ interface SessionDao {
     fun getActiveSessionForActiveProfile(): Flow<Session?>
 
     @Query("""
-        SELECT COUNT(*)
+        SELECT COUNT(ls.id)
         FROM lift_sets AS ls
         INNER JOIN sessions AS s
             ON ls.session_id = s.id
         WHERE s.id = :sessionId
     """)
-    fun getNumOfSetsForSession(sessionId: Int): Flow<Int>
+    suspend fun getNumOfSetsForSession(sessionId: Int): Int
+
+    @Query("""
+        SELECT COUNT(DISTINCT l.id)
+        FROM lifts AS l
+        INNER JOIN lift_sets AS ls
+            ON ls.lift_id = l.id
+        INNER JOIN sessions AS s
+            ON s.id = ls.session_id
+        WHERE s.id = :sessionId
+    """)
+    suspend fun getNumOfLiftsForSession(sessionId: Int): Int
 
     @Transaction
     suspend fun deleteAndRenumber(session: Session) {
@@ -525,4 +537,42 @@ interface SessionDao {
             return false
         }
     }
+
+    @Query("""
+        SELECT
+            -- LiftSet object (LiftSet rows preceded by set_)
+            ls.id AS set_id,
+            ls.session_id AS set_session_id,
+            ls.lift_id AS set_lift_id,
+            ls.muscle_group_id AS set_muscle_group_id,
+            ls.lift_set_number AS set_lift_set_number,
+            ls.session_set_number AS set_session_set_number,
+            ls.muscle_group_session_set_number AS set_muscle_group_session_set_number,
+            ls.set_label AS set_set_label,
+            ls.set_note AS set_set_note,
+            
+            -- SetMetric object for weight (rows where metric_position = 1, preceded by weight_)
+            weight.id AS weight_id,
+            weight.set_id AS weight_set_id,
+            weight.metric_position AS weight_metric_position,
+            weight.value AS weight_value,
+            weight.note AS weight_note,
+            
+            -- SetMetric object for reps/time (rows where metric_position = 2, preceded by second_)
+            second.id AS second_id,
+            second.set_id AS second_set_id,
+            second.metric_position AS second_metric_position,
+            second.value AS second_value,
+            second.note AS second_note
+        FROM lift_sets AS ls
+        INNER JOIN set_metrics AS weight
+            ON weight.set_id = ls.id
+            AND weight.metric_position = 1
+        INNER JOIN set_metrics AS second
+            ON second.set_id = ls.id
+            AND second.metric_position = 2
+        WHERE ls.session_id = :id
+        ORDER BY ls.session_set_number ASC
+    """)
+    fun getDisplaySessionLiftSetRows(id: Int): Flow<List<DisplaySessionLiftSetRow>>
 }
