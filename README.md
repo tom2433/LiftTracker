@@ -92,11 +92,10 @@ https://github.com/patrykandpatrick/vico
         - Past 2 weeks
         - Past month
         - Custom date range (prompts the user with a datepicker)
-        - **(not implemented yet)** View by week (allows the user to cycle thru the weeks they've trained via forward and backward icon buttons)
+        - <ins>**(not implemented yet)**</ins> View by week (allows the user to cycle thru the weeks they've trained via forward and backward icon buttons)
     - Donut chart is present at the top of the screen showing the set distribution across muscle groups within the user-specified timeframe (not affected by the fetch limit)
     - Donut charts are also present on the session cards showing the muscle group set distribution of that particular session. User can hide these donut charts via the icon buttons at the top right of the list of session cards.
-    - **Everything beyond this point has not been implemented yet**
-    - 
+    - <ins>**Everything beyond this point has not been implemented yet**</ins>
     - When a session card is selected, it will display its muscle group frequency donut chart. It will also display the following elements:
         - number of sets per muscle group as shown in the session in progress screen
         - list of lift sets and their set metric values in the order of which they were trained. If two sets of the same lift were trained at different parts of the session, they will appear as such.
