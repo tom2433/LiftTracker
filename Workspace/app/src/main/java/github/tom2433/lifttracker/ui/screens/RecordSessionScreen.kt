@@ -419,7 +419,8 @@ fun SessionInProgressScreen(
                         // indicate how many sets have been performed for each muscle group
                         if (recordSessionUiState.setCountPerMuscleGroupList.isNotEmpty()) {
                             DisplaySetCountPerMuscleGroup(
-                                setCountPerMuscleGroupList = recordSessionUiState.setCountPerMuscleGroupList
+                                setCountPerMuscleGroupList = recordSessionUiState.setCountPerMuscleGroupList,
+                                modifier = Modifier.padding(bottom = 8.dp)
                             )
                         }
 

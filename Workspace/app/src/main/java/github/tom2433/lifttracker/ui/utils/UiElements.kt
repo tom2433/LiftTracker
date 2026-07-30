@@ -1,6 +1,16 @@
 package github.tom2433.lifttracker.ui.utils
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,9 +50,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -62,6 +75,9 @@ import com.patrykandpatrick.vico.compose.pie.data.PieChartModelProducer
 import com.patrykandpatrick.vico.compose.pie.data.pieSeries
 import com.patrykandpatrick.vico.compose.pie.rememberPieChart
 import github.tom2433.lifttracker.R
+import github.tom2433.lifttracker.data.liftset.LiftSet
+import github.tom2433.lifttracker.data.setmetric.SetMetric
+import github.tom2433.lifttracker.data.structures.LiftSearchDetail
 import github.tom2433.lifttracker.data.structures.LiftSetCountPerMuscleGroup
 
 @Composable
@@ -121,7 +137,9 @@ fun RowWithSeparator(
 
 @Composable
 fun DisplaySetCountPerMuscleGroup(
-    setCountPerMuscleGroupList: List<LiftSetCountPerMuscleGroup>
+    setCountPerMuscleGroupList: List<LiftSetCountPerMuscleGroup>,
+    modifier: Modifier = Modifier,
+    showTotalSets: Boolean = true
 ) {
     var totalSets = 0
     for (setCount in setCountPerMuscleGroupList) {
@@ -137,7 +155,7 @@ fun DisplaySetCountPerMuscleGroup(
             ),
             contentColor = MaterialTheme.colorScheme.onSecondaryContainer
         ),
-        modifier = Modifier.padding(bottom = 8.dp)
+        modifier = modifier
     ) {
         // column to hold header and set counts per muscle group
         Column(
@@ -188,27 +206,29 @@ fun DisplaySetCountPerMuscleGroup(
             }
 
             // row to display total
-            RowWithSeparator(
-                dividerColor = MaterialTheme.colorScheme.primary,
-                leftHandSide = {
-                    Text(
-                        text = stringResource(R.string.total),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                },
-                rightHandSide = {
-                    Text(
-                        text = if (totalSets == 1) {
-                            "1 set"
-                        } else {
-                            "$totalSets sets"
-                        },
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-            )
+            if (showTotalSets) {
+                RowWithSeparator(
+                    dividerColor = MaterialTheme.colorScheme.primary,
+                    leftHandSide = {
+                        Text(
+                            text = stringResource(R.string.total),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    },
+                    rightHandSide = {
+                        Text(
+                            text = if (totalSets == 1) {
+                                "1 set"
+                            } else {
+                                "$totalSets sets"
+                            },
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                )
+            }
         }
     }
 }
@@ -517,5 +537,206 @@ fun LayoutSwitcher(
             },
             contentDescription = "Switch to list layout"
         )
+    }
+}
+
+/**
+ * Displays expandable lift cards for a session in order specified by [displaySetList].
+ *
+ * @param displaySetList ordered list of pairs ordered by session_set_number with first element
+ * the Lift id, and the second element a List of LiftSet ids maintaining order.
+ * @param liftDetailMap map of lift ids pointing to their corresponding [LiftSearchDetail]
+ * objects.
+ * @param liftSetMap map of LiftSet ids pointing to Triples containing a LiftSet object and
+ * both of its SetMetric objects.
+ * @param modifier optional modifier for the [Column] that the expandable lift cards are stored in.
+ */
+@Composable
+fun DisplayAllSetDataForSession(
+    displaySetList: List<Pair<Int, List<Int>>>,
+    liftDetailMap: Map<Int, LiftSearchDetail>,
+    liftSetMap: Map<Int, Triple<LiftSet, SetMetric, SetMetric>>,
+    noteColor: Color,
+    onClickLiftCard: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column (
+        modifier = modifier.fillMaxWidth()
+    ) {
+        // loop thru each pair<Lift id, list of LiftSet ids>
+        for ((index, liftAndSetsPair) in displaySetList.withIndex()) {
+            // retrieve the LiftSearchDetail object from liftDetailMap
+            val liftDetail: LiftSearchDetail = liftDetailMap[liftAndSetsPair.first] ?: continue
+            val liftSetIds: List<Int> = liftAndSetsPair.second
+            key(liftDetail.liftObj.id) {
+                // animate the border color
+                val borderColor by animateColorAsState(
+                    targetValue = if (liftDetail.selected) {
+                        MaterialTheme.colorScheme.secondary
+                    } else {
+                        Color.Transparent
+                    }
+                )
+                // animate the corner radius
+                val bottomCornerRadius by animateDpAsState(
+                    targetValue = if (liftDetail.selected) {
+                        0.dp
+                    } else {
+                        8.dp
+                    }
+                )
+
+                // column to hold lift card and its set data
+                Column(
+                    modifier = Modifier
+                        .border(
+                            width = 1.dp,
+                            color = borderColor,
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                ) {
+                    // lift card to hold lift name, num of sets, and muscle group
+                    Card(
+                        shape = RoundedCornerShape(
+                            topStart = 8.dp,
+                            topEnd = 8.dp,
+                            bottomStart = bottomCornerRadius,
+                            bottomEnd = bottomCornerRadius
+                        ),
+                        onClick = { onClickLiftCard(liftDetail.liftObj.id) },
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        border = BorderStroke(
+                            width = 1.dp,
+                            color = borderColor
+                        )
+                    ) {
+                        // row to hold card contents (lift name, note, set count on left, muscle
+                        // group on right)
+                        Row(
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp)
+                        ) {
+                            // column to hold lift name, note, set count
+                            Column(
+                                verticalArrangement = Arrangement.Top,
+                                horizontalAlignment = Alignment.Start,
+                                modifier = Modifier.weight(2f)
+                            ) {
+                                // lift name
+                                Text(
+                                    text = liftDetail.liftObj.name,
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                // lift note (if applicable)
+                                if (liftDetail.liftObj.note.isNotBlank()) {
+                                    Text(
+                                        text = liftDetail.liftObj.note,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontSize = 15.sp,
+                                        color = noteColor
+                                    )
+                                }
+                                // lift set count
+                                Text(
+                                    text = if (liftSetIds.size == 1) {
+                                        "1 set"
+                                    } else {
+                                        "${liftSetIds.size} sets"
+                                    },
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontSize = 15.sp,
+                                    color = noteColor
+                                )
+                            }
+
+                            // row to hold muscle group icon and name
+                            Row(
+                                horizontalArrangement = Arrangement.End,
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .weight(1f, fill = true)
+                            ) {
+                                Icon(
+                                    painterResource(R.drawable.ic_arm_flex),
+                                    contentDescription = stringResource(R.string.muscle_group),
+                                    tint = noteColor,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = liftDetail.muscleGroupName,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontSize = 15.sp,
+                                    color = noteColor
+                                )
+                            }
+                        }
+
+//                        // column to hold card contents
+//                        Column(
+//                            verticalArrangement = Arrangement.Top,
+//                            horizontalAlignment = Alignment.Start,
+//                            modifier = Modifier
+//                                .padding(16.dp)
+//                        ) {
+//                            // lift name
+//                            Text(
+//                                text = liftDetail.liftObj.name,
+//                                style = MaterialTheme.typography.titleMedium
+//                            )
+//                            // lift note (if applicable)
+//                            if (liftDetail.liftObj.note.isNotBlank()) {
+//                                Text(
+//                                    text = liftDetail.liftObj.note,
+//                                    style = MaterialTheme.typography.bodyMedium,
+//                                    fontSize = 15.sp,
+//                                    color = noteColor
+//                                )
+//                            }
+//                            // lift set count
+//                            Text(
+//                                text = if (liftSetIds.size == 1) {
+//                                    "1 set"
+//                                } else {
+//                                    "${liftSetIds.size} sets"
+//                                },
+//                                style = MaterialTheme.typography.bodyMedium,
+//                                fontSize = 15.sp,
+//                                color = noteColor
+//                            )
+//
+//                            // animate the visibility of the lift detail flow row
+//                            AnimatedVisibility(
+//                                visible = liftDetail.selected,
+//                                enter = expandVertically(
+//                                    expandFrom = Alignment.Top,
+//                                    animationSpec = tween(300)
+//                                ) + fadeIn(tween(300)),
+//                                exit = shrinkVertically(
+//                                    shrinkTowards = Alignment.Top,
+//                                    animationSpec = tween(300)
+//                                ) + fadeOut(tween(300))
+//                            ) {
+//                                LiftDetailFlowRow(
+//                                    muscleGroupName = liftDetail.muscleGroupName,
+//                                    metricType = liftDetail.metricType,
+//                                    unitName = liftDetail.unitName,
+//                                    modifier = Modifier.padding(top = 24.dp),
+//                                    tintColor = noteColor
+//                                )
+//                            }
+//                        }
+                    }
+                }
+
+                if (index != displaySetList.size - 1) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            }
+        }
     }
 }

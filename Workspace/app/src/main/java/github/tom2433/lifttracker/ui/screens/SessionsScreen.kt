@@ -4,7 +4,9 @@ import android.os.Build
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -15,6 +17,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -22,6 +25,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -48,17 +52,23 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import github.tom2433.lifttracker.R
+import github.tom2433.lifttracker.data.liftset.LiftSet
+import github.tom2433.lifttracker.data.setmetric.SetMetric
+import github.tom2433.lifttracker.data.structures.LiftSearchDetail
 import github.tom2433.lifttracker.data.structures.SessionDetail
 import github.tom2433.lifttracker.data.utils.DateTimeCalculator
 import github.tom2433.lifttracker.ui.AppViewModelProvider
 import github.tom2433.lifttracker.ui.navigation.NavigationDestination
 import github.tom2433.lifttracker.ui.utils.DateRangePickerModal
+import github.tom2433.lifttracker.ui.utils.DisplayAllSetDataForSession
+import github.tom2433.lifttracker.ui.utils.DisplaySetCountPerMuscleGroup
 import github.tom2433.lifttracker.ui.utils.LabelHeader
 import github.tom2433.lifttracker.ui.utils.LayoutSwitcher
 import github.tom2433.lifttracker.ui.utils.LoadMoreLabelAndButton
@@ -257,51 +267,64 @@ fun SessionsScreen(
                             val sessionDetail: SessionDetail =
                                 sessionsUiState.sessionDetailMap[sessionId] ?: continue@id_loop
 
-                            // animated visibility for each session card
-                            AnimatedVisibility(
-                                visible = sessionDetail.visible,
-                                enter = slideInHorizontally(
-                                    initialOffsetX = { it },
-                                    animationSpec = tween(300)
-                                ) + fadeIn(
-                                    animationSpec = tween(300)
-                                ),
-                                exit = slideOutHorizontally(
-                                    targetOffsetX = { -it },
-                                    animationSpec = tween(300)
-                                ) + fadeOut(
-                                    animationSpec = tween(300)
-                                )
+                            // column to hold each session card's animated visibility and bottom
+                            // spacer
+                            Column(
+                                modifier = Modifier.fillMaxWidth()
                             ) {
-                                SessionCard(
-                                    sessionDetail = sessionDetail,
-                                    donutChartsVisible = sessionsUiState.donutChartsVisible,
-                                    onClickThreeDotMenu = {
-                                        viewModel.threeDotMenuClicked(
-                                            sessionCardId = sessionDetail.sessionId
-                                        )
-                                    },
-                                    onDismissThreeDotMenu = {
-                                        viewModel.dismissThreeDotMenus()
-                                    },
-                                    onClickSwitchToInProgress = {
-                                        viewModel.switchSessionToInProgress(
-                                            sessionCardId = sessionDetail.sessionId
-                                        )
-                                    },
-                                    onClickFinishSession = {
-                                        viewModel.finishSession(sessionDetail.sessionId)
-                                    },
-                                    onClickEditSession = {
-                                        viewModel.showEditSessionDialog(sessionDetail.sessionId)
-                                    },
-                                    onClickDeleteSession = {
-                                        viewModel.showDeleteSessionDialog(sessionDetail.sessionId)
-                                    },
-                                    onClickCard = {
-                                        viewModel.toggleCardSelected(sessionDetail.sessionId)
-                                    }
-                                )
+                                // animated visibility for each session card
+                                AnimatedVisibility(
+                                    visible = sessionDetail.visible,
+                                    enter = slideInHorizontally(
+                                        initialOffsetX = { it },
+                                        animationSpec = tween(300)
+                                    ) + fadeIn(
+                                        animationSpec = tween(300)
+                                    ),
+                                    exit = slideOutHorizontally(
+                                        targetOffsetX = { -it },
+                                        animationSpec = tween(300)
+                                    ) + fadeOut(
+                                        animationSpec = tween(300)
+                                    )
+                                ) {
+                                    SessionCard(
+                                        sessionDetail = sessionDetail,
+                                        donutChartsVisible = sessionsUiState.donutChartsVisible,
+                                        currentSessionDisplaySetList = sessionsUiState.currentSessionDisplaySetList,
+                                        currentSessionLiftDetailMap = sessionsUiState.currentSessionLiftDetailMap,
+                                        currentSessionLiftSetMap = sessionsUiState.currentSessionLiftSetMap,
+                                        onClickThreeDotMenu = {
+                                            viewModel.threeDotMenuClicked(
+                                                sessionCardId = sessionDetail.sessionId
+                                            )
+                                        },
+                                        onDismissThreeDotMenu = {
+                                            viewModel.dismissThreeDotMenus()
+                                        },
+                                        onClickSwitchToInProgress = {
+                                            viewModel.switchSessionToInProgress(
+                                                sessionCardId = sessionDetail.sessionId
+                                            )
+                                        },
+                                        onClickFinishSession = {
+                                            viewModel.finishSession(sessionDetail.sessionId)
+                                        },
+                                        onClickEditSession = {
+                                            viewModel.showEditSessionDialog(sessionDetail.sessionId)
+                                        },
+                                        onClickDeleteSession = {
+                                            viewModel.showDeleteSessionDialog(sessionDetail.sessionId)
+                                        },
+                                        onClickCard = {
+                                            viewModel.toggleCardSelected(sessionDetail.sessionId)
+                                        },
+                                        onClickLiftCard = {
+                                            viewModel.liftCardClicked(it)
+                                        }
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(16.dp))
                             }
                         }
                     }
@@ -374,6 +397,9 @@ fun SessionsScreen(
 fun SessionCard(
     sessionDetail: SessionDetail,
     donutChartsVisible: Boolean,
+    currentSessionDisplaySetList: List<Pair<Int, List<Int>>>,
+    currentSessionLiftDetailMap: Map<Int, LiftSearchDetail>,
+    currentSessionLiftSetMap: Map<Int, Triple<LiftSet, SetMetric, SetMetric>>,
     onClickThreeDotMenu: () -> Unit,
     onDismissThreeDotMenu: () -> Unit,
     onClickSwitchToInProgress: () -> Unit,
@@ -381,27 +407,59 @@ fun SessionCard(
     onClickEditSession: () -> Unit,
     onClickDeleteSession: () -> Unit,
     onClickCard: () -> Unit,
+    onClickLiftCard: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // opaque text color for notes/dates
     val noteColor = CardDefaults.cardColors().contentColor.copy(
         alpha = 0.75f
+    )
+    // animated border color for selected session
+    val borderColor by animateColorAsState(
+        targetValue = if (sessionDetail.selected) {
+            MaterialTheme.colorScheme.secondary
+        } else {
+            Color.Transparent
+        }
+    )
+    // animated bottom corner radius for selected session
+    val bottomCornerRadius by animateDpAsState(
+        targetValue = if (sessionDetail.selected) {
+            0.dp
+        } else {
+            16.dp
+        }
     )
 
     // Column to hold session's card and animated content below it
     Column(
         modifier = modifier
+            .border(
+                width = 1.dp,
+                color = borderColor,
+                shape = RoundedCornerShape(16.dp)
+            )
     ) {
         // card to hold labels and three dot menu on top, donut chart on bottom if applicable
         Card(
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(
+                topStart = 16.dp,
+                topEnd = 16.dp,
+                bottomStart = bottomCornerRadius,
+                bottomEnd = bottomCornerRadius
+            ),
             modifier = Modifier
                 .fillMaxWidth()
-                .wrapContentHeight()
-                .padding(bottom = 16.dp),
+                .wrapContentHeight(),
             border = if (sessionDetail.sessionInProgress) {
                 BorderStroke(
                     width = 1.dp,
                     color = MaterialTheme.colorScheme.primary
+                )
+            } else if (sessionDetail.selected) {
+                BorderStroke(
+                    width = 1.dp,
+                    color = borderColor
                 )
             } else {
                 null
@@ -498,6 +556,43 @@ fun SessionCard(
                         innerHeight = 75.dp
                     )
                 }
+            }
+        }
+
+        // animated visibility for if this card is selected: display the quantitative muscle
+        // group frequency and all set data
+        AnimatedVisibility(
+            visible = sessionDetail.selected,
+            enter = expandVertically(
+                expandFrom = Alignment.Top,
+                animationSpec = tween(300)
+            ) + fadeIn(tween(300)),
+            exit = shrinkVertically(
+                shrinkTowards = Alignment.Top,
+                animationSpec = tween(300)
+            ) + fadeOut(tween(300))
+        ) {
+            // column to hold quantitative muscle group frequency and all set data
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                // display quantitative muscle group frequency
+                DisplaySetCountPerMuscleGroup(
+                    setCountPerMuscleGroupList = sessionDetail.liftSetCountPerMuscleGroupList,
+                    showTotalSets = false
+                )
+
+                // display all set data
+                DisplayAllSetDataForSession(
+                    displaySetList = currentSessionDisplaySetList,
+                    liftDetailMap = currentSessionLiftDetailMap,
+                    liftSetMap = currentSessionLiftSetMap,
+                    noteColor = noteColor,
+                    onClickLiftCard = { onClickLiftCard(it) },
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
             }
         }
     }
