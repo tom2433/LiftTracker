@@ -87,10 +87,16 @@ https://github.com/patrykandpatrick/vico
 - [ ] F9: Implement the Sessions Screen
     - interactable list of sessions that the user has logged
     - should stay relatively simple while maximizing functionality
-    - user can customize time frame from which sessions are fetched, only displaying 10 at a time with an option to load more at the bottom. By default, the sessions screen uses the "All time" timeframe while only displaying the 10 most recent sessions.
+    - user can customize time frame from which sessions are fetched, only displaying 10 at a time with an option to load more at the bottom. By default, the sessions screen uses the "All time" timeframe while only displaying the 10 most recent sessions. Other timeframe options include:
+        - Past week
+        - Past 2 weeks
+        - Past month
+        - Custom date range (prompts the user with a datepicker)
+        - **(not implemented yet)** View by week (allows the user to cycle thru the weeks they've trained via forward and backward icon buttons)
     - Donut chart is present at the top of the screen showing the set distribution across muscle groups within the user-specified timeframe (not affected by the fetch limit)
     - Donut charts are also present on the session cards showing the muscle group set distribution of that particular session. User can hide these donut charts via the icon buttons at the top right of the list of session cards.
     - **Everything beyond this point has not been implemented yet**
+    - 
     - When a session card is selected, it will display its muscle group frequency donut chart. It will also display the following elements:
         - number of sets per muscle group as shown in the session in progress screen
         - list of lift sets and their set metric values in the order of which they were trained. If two sets of the same lift were trained at different parts of the session, they will appear as such.
@@ -118,6 +124,7 @@ https://github.com/patrykandpatrick/vico
 - [ ] change the session set number label so it just says "session"
 - [ ] make set number info collapsable
 - [ ] just remove the lift set number from the ui, it's already in the lift name and if the user wants to change it they can
+- [ ] make the fill color of the in progress cards on session screen the border color, and make their fill transparent.
 
 # Data Structure
 
@@ -635,4 +642,4 @@ keep on muscle group card:
 
 make the fill color of the in progress cards on session screen the border color, and make their fill transparent.
 
-add a new option to the drop-down in sessions screen called "view by week" allowing the user to cycle thru the weeks they've trained via forward and backword icon buttons.
+add a new option to the drop-down in sessions screen called "view by week" allowing the user to cycle thru the weeks they've trained via forward and backward icon buttons.
