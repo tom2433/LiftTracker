@@ -103,4 +103,5 @@
     <string name="delete_session">Delete session</string>
     <string name="in_progress">In Progress...</string>
     <string name="edit_session">Edit session</string>
+    <string name="session">Session</string>
 </resources>

@@ -104,6 +104,7 @@ import github.tom2433.lifttracker.ui.AppViewModelProvider
 import github.tom2433.lifttracker.ui.navigation.NavigationDestination
 import github.tom2433.lifttracker.ui.utils.DisplaySetCountPerMuscleGroup
 import github.tom2433.lifttracker.ui.utils.LiftDetailFlowRow
+import github.tom2433.lifttracker.ui.utils.LiftSetLabels
 import github.tom2433.lifttracker.ui.utils.SetNumberRow
 import github.tom2433.lifttracker.ui.utils.ShowElementDeleteDialog
 import github.tom2433.lifttracker.ui.utils.ShowElementEntryDialog
@@ -909,89 +910,23 @@ fun LiftSetInProgressCard(
                     }
                 }
 
-                // column to hold set label, set note (if applicable), lift set #,
+                // column to hold set label, set note (if applicable),
                 // and session set # and muscle group session set #
-                Column(
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.Start,
+                LiftSetLabels(
+                    setLabel = liftSet.set_label,
+                    setNote = liftSet.set_note,
+                    muscleGroupName = liftDetail.muscleGroupName,
+                    sessionSetNumber = liftSet.session_set_number,
+                    muscleGroupSessionSetNumber = liftSet.muscle_group_session_set_number,
+                    noteColor = MaterialTheme.colorScheme.onSecondaryContainer.copy(
+                        alpha = 0.75f
+                    ),
+                    borderColor = MaterialTheme.colorScheme.onSecondaryContainer.copy(
+                        alpha = 0.5f
+                    ),
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
                     modifier = Modifier.weight(1f)
-                ) {
-                    // set label
-                    Text(
-                        text = liftSet.set_label,
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                    // set note (if applicable)
-                    if (liftSet.set_note.isNotBlank()) {
-                        Text(
-                            text = liftSet.set_note,
-                            style = MaterialTheme.typography.bodySmall,
-                            fontSize = 13.sp,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(
-                                alpha = 0.75f
-                            )
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // row to hold set # table header
-                    Row(
-                        horizontalArrangement = Arrangement.End,
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        // set # table header
-                        Text(
-                            text = "Set #",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontSize = 13.sp,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(
-                                alpha = 0.75f
-                            )
-                        )
-                    }
-
-                    // column to hold lift set #'s
-                    Column(
-                        modifier = Modifier
-                            .border(
-                                width = 1.dp,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer.copy(
-                                    alpha = 0.5f
-                                ),
-                                shape = RoundedCornerShape(4.dp)
-                            )
-                    ) {
-                        // lift set #
-                        SetNumberRow(
-                            labelText = liftDetail.liftObj.name,
-                            valueText = "#${liftSet.lift_set_number}"
-                        )
-                        HorizontalDivider(
-                            modifier = Modifier.fillMaxWidth(),
-                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(
-                                alpha = 0.5f
-                            )
-                        )
-                        // session set #
-                        SetNumberRow(
-                            labelText = activeSession.session_label,
-                            valueText = "#${liftSet.session_set_number}"
-                        )
-                        HorizontalDivider(
-                            modifier = Modifier.fillMaxWidth(),
-                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(
-                                alpha = 0.5f
-                            )
-                        )
-                        // muscle group set #
-                        SetNumberRow(
-                            labelText = liftDetail.muscleGroupName,
-                            valueText = "#${liftSet.muscle_group_session_set_number}"
-                        )
-                    }
-                }
+                )
             }
 
             // column to hold user inputs for weight and reps/time
