@@ -95,14 +95,18 @@ https://github.com/patrykandpatrick/vico
         - <ins>**(not implemented yet)**</ins> View by week (allows the user to cycle thru the weeks they've trained via forward and backward icon buttons)
     - Donut chart is present at the top of the screen showing the set distribution across muscle groups within the user-specified timeframe (not affected by the fetch limit)
     - Donut charts are also present on the session cards showing the muscle group set distribution of that particular session. User can hide these donut charts via the icon buttons at the top right of the list of session cards.
-    - <ins>**Everything beyond this point has not been implemented yet**</ins>
     - When a session card is selected, it will display its muscle group frequency donut chart. It will also display the following elements:
         - number of sets per muscle group as shown in the session in progress screen
         - list of lift sets and their set metric values in the order of which they were trained. If two sets of the same lift were trained at different parts of the session, they will appear as such.
         - If a set of a new lift is present, a new lift header will pop up to group those sets together. lift groups should be able to be expanded and collapsed.
-        - User can also choose whether to group by lifts or by muscle group. When grouping by muscle group, the muscle groups will be expandable/collapsible.
-        - An expandable/collapsible analytics section to display analytics data (determine what to put here later)
-            - some ideas: line graph showing deviation from the average (+, -) for each lift or for each set, take into account the session set number if possible.
+        - <ins>**Everything beyond this point has not been implemented yet**</ins>
+        - allow user to filter the sessions screen by session name or session tag. (elements of a note separated by semicolons).
+            - may need to edit the element entry dialogs to trim the element names before entering them into the database?
+        - by default, the session cards should be in list layout.
+        - user shall be able to tap a particular set, where an edit button will pop up. If the user clicks it, a dialog will prompt the user to edit all of the fields associated with a set, including the set name and note, the weight metric note, and the second metric note.
+        - An expandable/collapsible analytics section to display analytics data (determine what to put here). some ideas:
+            - line graph showing deviation from the average (+, -) for each lift or for each set, take into account the session set number if possible.
+            - line graph showing the progression of the currently selected lift. This could be average weight, average reps, or a ratio of weight to reps (user should be able to switch between these). If no lifts are selected, it should take into account every lift for the session.
 - [ ] F9-1: Allow user to filter by session name, session note, session name and note, muscle groups trained, lifts trained on sessions screen
 - [ ] F6-2: Implement the most recent lift sets at the bottom of LiftScreen (use the same function as used for F8-1?)
 
@@ -123,7 +127,6 @@ https://github.com/patrykandpatrick/vico
 - [ ] change the session set number label so it just says "session"
 - [ ] make set number info collapsable
 - [ ] just remove the lift set number from the ui, it's already in the lift name and if the user wants to change it they can
-- [ ] make the fill color of the in progress cards on session screen the border color, and make their fill transparent.
 
 # Data Structure
 
