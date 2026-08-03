@@ -101,7 +101,8 @@ https://github.com/patrykandpatrick/vico
         - If a set of a new lift is present, a new lift header will pop up to group those sets together. lift groups should be able to be expanded and collapsed.
         - user shall be able to tap a particular set, where an edit button will pop up. If the user clicks it, a dialog will prompt the user to edit all of the fields associated with a set, including the set name and note, the weight metric note, and the second metric note.
         - <ins>**Everything beyond this point has not been implemented yet**</ins>
-        - user shall be able to reorder sets via up and down buttons on the sessions screen.
+        - user shall be able to reorder sets via up and down buttons on the sessions screen; these buttons will appear after clicking the set.
+            - this button section will include the up and down buttons first, then the edit button, then the delete button.
         - allow user to filter the sessions screen by session name or session tag. (elements of a note separated by semicolons).
             - may need to edit the element entry dialogs to trim the element names before entering them into the database?
         - by default, the session cards should be in list layout.
