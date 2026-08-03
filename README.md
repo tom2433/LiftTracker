@@ -99,11 +99,12 @@ https://github.com/patrykandpatrick/vico
         - number of sets per muscle group as shown in the session in progress screen
         - list of lift sets and their set metric values in the order of which they were trained. If two sets of the same lift were trained at different parts of the session, they will appear as such.
         - If a set of a new lift is present, a new lift header will pop up to group those sets together. lift groups should be able to be expanded and collapsed.
+        - user shall be able to tap a particular set, where an edit button will pop up. If the user clicks it, a dialog will prompt the user to edit all of the fields associated with a set, including the set name and note, the weight metric note, and the second metric note.
         - <ins>**Everything beyond this point has not been implemented yet**</ins>
+        - user shall be able to reorder sets via up and down buttons on the sessions screen.
         - allow user to filter the sessions screen by session name or session tag. (elements of a note separated by semicolons).
             - may need to edit the element entry dialogs to trim the element names before entering them into the database?
         - by default, the session cards should be in list layout.
-        - user shall be able to tap a particular set, where an edit button will pop up. If the user clicks it, a dialog will prompt the user to edit all of the fields associated with a set, including the set name and note, the weight metric note, and the second metric note.
         - An expandable/collapsible analytics section to display analytics data (determine what to put here). some ideas:
             - line graph showing deviation from the average (+, -) for each lift or for each set, take into account the session set number if possible.
             - line graph showing the progression of the currently selected lift. This could be average weight, average reps, or a ratio of weight to reps (user should be able to switch between these). If no lifts are selected, it should take into account every lift for the session.
