@@ -63,6 +63,7 @@ import github.tom2433.lifttracker.data.liftset.LiftSet
 import github.tom2433.lifttracker.data.setmetric.SetMetric
 import github.tom2433.lifttracker.data.structures.LiftSearchDetail
 import github.tom2433.lifttracker.data.structures.SessionDetail
+import github.tom2433.lifttracker.data.structures.SetCardData
 import github.tom2433.lifttracker.data.utils.DateTimeCalculator
 import github.tom2433.lifttracker.ui.AppViewModelProvider
 import github.tom2433.lifttracker.ui.navigation.NavigationDestination
@@ -75,6 +76,7 @@ import github.tom2433.lifttracker.ui.utils.LoadMoreLabelAndButton
 import github.tom2433.lifttracker.ui.utils.MuscleGroupDonutChart
 import github.tom2433.lifttracker.ui.utils.ShowElementDeleteDialog
 import github.tom2433.lifttracker.ui.utils.ShowElementEntryDialog
+import github.tom2433.lifttracker.ui.utils.ShowHistoricalSetEditDialog
 import github.tom2433.lifttracker.ui.utils.ThreeDotMenu
 import github.tom2433.lifttracker.ui.viewModels.SessionsViewModel
 
@@ -321,6 +323,12 @@ fun SessionsScreen(
                                         },
                                         onClickLiftCard = {
                                             viewModel.liftCardClicked(it)
+                                        },
+                                        onClickHistoricalSetSection = {
+                                            viewModel.historicalSetSectionClicked(it)
+                                        },
+                                        onClickEditHistoricalSet = {
+                                            viewModel.editHistoricalSetSectionClicked(it)
                                         }
                                     )
                                 }
@@ -390,6 +398,48 @@ fun SessionsScreen(
             onDismissRequest = { viewModel.dismissEditSessionDialog() },
         )
     }
+
+    // show edit historical set dialog if applicable
+    if (sessionsUiState.editSetDialogVisible &&
+        sessionsUiState.liftSetIdToEdit != null &&
+        sessionsUiState.currentSessionLiftSetMap[sessionsUiState.liftSetIdToEdit] != null) {
+        val liftSetId: Int = sessionsUiState.liftSetIdToEdit!!
+        val liftSetName: String = sessionsUiState.newSetName
+        val liftId: Int = sessionsUiState.currentSessionLiftSetMap[liftSetId]!!.liftSet.lift_id
+        val liftName: String = sessionsUiState.currentSessionLiftDetailMap[liftId]?.liftObj?.name
+            ?: "null"
+        val unitName: String = sessionsUiState.currentSessionLiftDetailMap[liftId]?.unitName ?: "reps"
+        val metricType: String = sessionsUiState.currentSessionLiftDetailMap[liftId]?.metricType ?: "pounds"
+
+        ShowHistoricalSetEditDialog(
+            dialogTitle = "Edit '${liftSetName}' of $liftName",
+            unitName = unitName,
+            metricType = metricType,
+            newSetName = sessionsUiState.newSetName,
+            newSetNote = sessionsUiState.newSetNote,
+            newSetWeightValue = sessionsUiState.newWeightValue,
+            newSetWeightNote = sessionsUiState.newWeightNote,
+            newSetSecondMetricNote = sessionsUiState.newSecondMetricNote,
+            submitBtnText = "Update $liftSetName of $liftName",
+            buttonEnabled = viewModel.validateHistoricalSetEdit(),
+            onSetNameValueChanged = { viewModel.updateNewSetName(it) },
+            onSetNoteValueChanged = { viewModel.updateNewSetNote(it) },
+            onSetWeightValueChanged = { viewModel.updateNewWeightValue(it) },
+            onSetWeightNoteValueChanged = { viewModel.updateNewWeightNote(it) },
+            onSetSecondMetricNoteValueChanged = { viewModel.updateNewSecondMetricNote(it) },
+            onDismissRequest = { viewModel.dismissEditHistoricalSetDialog() },
+            onSubmit = { viewModel.updateHistoricalSet() },
+            modifier = Modifier,
+            newSetRepsValue = sessionsUiState.newRepsValue,
+            newSetHoursValue = sessionsUiState.newHoursValue,
+            newSetMinutesValue = sessionsUiState.newMinutesValue,
+            newSetSecondsValue = sessionsUiState.newSecondsValue,
+            onSetRepsValueChanged = { viewModel.updateNewRepsValue(it) },
+            onSetHoursValueChanged = { viewModel.updateNewHoursValue(it) },
+            onSetMinutesValueChanged = { viewModel.updateNewMinutesValue(it) },
+            onSetSecondsValueChanged = { viewModel.updateNewSecondsValue(it) }
+        )
+    }
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -399,7 +449,7 @@ fun SessionCard(
     donutChartsVisible: Boolean,
     currentSessionDisplaySetList: List<Pair<Int, List<Int>>>,
     currentSessionLiftDetailMap: Map<Int, LiftSearchDetail>,
-    currentSessionLiftSetMap: Map<Int, Triple<LiftSet, SetMetric, SetMetric>>,
+    currentSessionLiftSetMap: Map<Int, SetCardData>,
     onClickThreeDotMenu: () -> Unit,
     onDismissThreeDotMenu: () -> Unit,
     onClickSwitchToInProgress: () -> Unit,
@@ -408,6 +458,8 @@ fun SessionCard(
     onClickDeleteSession: () -> Unit,
     onClickCard: () -> Unit,
     onClickLiftCard: (Int) -> Unit,
+    onClickHistoricalSetSection: (Int) -> Unit,
+    onClickEditHistoricalSet: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     // opaque text color for notes/dates
@@ -591,6 +643,8 @@ fun SessionCard(
                     liftSetMap = currentSessionLiftSetMap,
                     noteColor = noteColor,
                     onClickLiftCard = { onClickLiftCard(it) },
+                    onClickHistoricalSetSection = { onClickHistoricalSetSection(it) },
+                    onClickEditHistoricalSet = { onClickEditHistoricalSet(it) },
                     modifier = Modifier.padding(top = 8.dp)
                 )
             }

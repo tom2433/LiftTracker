@@ -104,4 +104,11 @@
     <string name="in_progress">In Progress...</string>
     <string name="edit_session">Edit session</string>
     <string name="session">Session</string>
+    <string name="edit_historical_set">Edit historical set</string>
+    <string name="set_name">Set Name</string>
+    <string name="set_name_input">Set Name Input</string>
+    <string name="set_note">Set Note</string>
+    <string name="set_note_input">Set Note Input</string>
+    <string name="weight_value">Weight Value</string>
+    <string name="weight_value_input">Weight Value Input</string>
 </resources>

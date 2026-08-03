@@ -18,9 +18,12 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Label
+import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Scale
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -53,6 +56,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -182,6 +186,410 @@ fun ShowElementEntryDialog(
                         ),
                         modifier = Modifier
                             .focusRequester(elementNoteFocusRequester)
+                            .padding(bottom = 16.dp)
+                            .fillMaxWidth()
+                    )
+                }
+
+                // divider
+                HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
+
+                // button to submit element
+                Button(
+                    onClick = onSubmit,
+                    enabled = buttonEnabled,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
+                ) {
+                    Text(submitBtnText)
+                }
+
+                // button to dismiss dialog
+                OutlinedButton(
+                    onClick = onDismissRequest,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Prompt user for LiftSet name, LiftSet note, weightMetric value, weightMetric note, secondMetric
+ * value, secondMetric note
+ */
+@Composable
+fun ShowHistoricalSetEditDialog(
+    dialogTitle: String,
+    unitName: String,
+    metricType: String,
+    newSetName: String,
+    newSetNote: String,
+    newSetWeightValue: String,
+    newSetWeightNote: String,
+    newSetSecondMetricNote: String,
+    submitBtnText: String,
+    buttonEnabled: Boolean,
+    onSetNameValueChanged: (String) -> Unit,
+    onSetNoteValueChanged: (String) -> Unit,
+    onSetWeightValueChanged: (String) -> Unit,
+    onSetWeightNoteValueChanged: (String) -> Unit,
+    onSetSecondMetricNoteValueChanged: (String) -> Unit,
+    onDismissRequest: () -> Unit,
+    onSubmit: () -> Unit,
+    modifier: Modifier = Modifier,
+    newSetRepsValue: String = "",
+    newSetHoursValue: String = "",
+    newSetMinutesValue: String = "",
+    newSetSecondsValue: String = "",
+    onSetRepsValueChanged: (String) -> Unit = {},
+    onSetHoursValueChanged: (String) -> Unit = {},
+    onSetMinutesValueChanged: (String) -> Unit = {},
+    onSetSecondsValueChanged: (String) -> Unit = {}
+) {
+    val liftSetNameFocusRequester = remember { FocusRequester() }
+    val liftSetNoteFocusRequester = remember { FocusRequester() }
+    val weightMetricValueFocusRequester = remember { FocusRequester() }
+    val weightMetricNoteFocusRequester = remember { FocusRequester() }
+    val secondMetricValueFocusRequester = remember { FocusRequester() }
+    val secondMetricValue2FocusRequester = remember { FocusRequester() }
+    val secondMetricValue3FocusRequester = remember { FocusRequester() }
+    val secondMetricNoteFocusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    LaunchedEffect(Unit) {
+        delay(100)
+        liftSetNameFocusRequester.requestFocus()
+        keyboardController?.show()
+    }
+
+    Dialog(
+        onDismissRequest = onDismissRequest,
+        properties = DialogProperties(
+            dismissOnBackPress = true,
+            dismissOnClickOutside = true
+        )
+    ) {
+        // card to hold dialog content
+        Card(
+            modifier = modifier
+                .wrapContentSize()
+                .padding(4.dp),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            // column to hold card contents
+            Column(
+                modifier = Modifier
+                    .wrapContentHeight()
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // column to hold scrollable content
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f, fill = false)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    // title
+                    Text(
+                        text = dialogTitle,
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+
+                    // divider
+                    HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
+
+                    // title for set name and note
+                    Text(
+                        text = "Name and note for '${newSetName}'",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+
+                    // text field for set name
+                    TextField(
+                        value = newSetName,
+                        onValueChange = onSetNameValueChanged,
+                        label = {
+                            Text(stringResource(R.string.set_name))
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Label,
+                                contentDescription = stringResource(R.string.set_name_input)
+                            )
+                        },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions.Default.copy(
+                            capitalization = KeyboardCapitalization.Words,
+                            imeAction = ImeAction.Next
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onNext = {
+                                liftSetNoteFocusRequester.requestFocus()
+                            }
+                        ),
+                        modifier = Modifier
+                            .focusRequester(liftSetNameFocusRequester)
+                            .padding(bottom = 8.dp)
+                            .fillMaxWidth()
+                    )
+
+                    // text field for set note
+                    TextField(
+                        value = newSetNote,
+                        onValueChange = onSetNoteValueChanged,
+                        label = {
+                            Text(stringResource(R.string.set_note))
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Filled.Description,
+                                contentDescription = stringResource(R.string.set_note_input)
+                            )
+                        },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions.Default.copy(
+                            capitalization = KeyboardCapitalization.Sentences,
+                            imeAction = ImeAction.Next
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onNext = {
+                                weightMetricValueFocusRequester.requestFocus()
+                            }
+                        ),
+                        modifier = Modifier
+                            .focusRequester(liftSetNoteFocusRequester)
+                            .padding(bottom = 16.dp)
+                            .fillMaxWidth()
+                    )
+
+                    // title for weight metric value and note
+                    Text(
+                        text = "Value and note for $unitName",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+
+                    // text field for weight value
+                    TextField(
+                        value = newSetWeightValue,
+                        onValueChange = onSetWeightValueChanged,
+                        label = {
+                            Text(unitName)
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Filled.FitnessCenter,
+                                contentDescription = unitName
+                            )
+                        },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions.Default.copy(
+                            keyboardType = KeyboardType.Decimal,
+                            imeAction = ImeAction.Next
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onNext = {
+                                weightMetricNoteFocusRequester.requestFocus()
+                            }
+                        ),
+                        modifier = Modifier
+                            .focusRequester(weightMetricValueFocusRequester)
+                            .padding(bottom = 8.dp)
+                            .fillMaxWidth()
+                    )
+
+                    // text field for weight note
+                    TextField(
+                        value = newSetWeightNote,
+                        onValueChange = onSetWeightNoteValueChanged,
+                        label = {
+                            Text("Note for $unitName")
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Filled.Description,
+                                contentDescription = "$unitName note input"
+                            )
+                        },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions.Default.copy(
+                            capitalization = KeyboardCapitalization.Sentences,
+                            imeAction = ImeAction.Next
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onNext = {
+                                secondMetricValueFocusRequester.requestFocus()
+                            }
+                        ),
+                        modifier = Modifier
+                            .focusRequester(weightMetricNoteFocusRequester)
+                            .padding(bottom = 16.dp)
+                            .fillMaxWidth()
+                    )
+
+                    // title for second metric value and note
+                    Text(
+                        text = "Value and note for $metricType",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+
+                    if (metricType == "reps") {
+                        // text field for reps value
+                        TextField(
+                            value = newSetRepsValue,
+                            onValueChange = onSetRepsValueChanged,
+                            label = {
+                                Text(metricType)
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Filled.FitnessCenter,
+                                    contentDescription = metricType
+                                )
+                            },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions.Default.copy(
+                                keyboardType = KeyboardType.Decimal,
+                                imeAction = ImeAction.Next
+                            ),
+                            keyboardActions = KeyboardActions(
+                                onNext = {
+                                    secondMetricNoteFocusRequester.requestFocus()
+                                }
+                            ),
+                            modifier = Modifier
+                                .focusRequester(secondMetricValueFocusRequester)
+                                .padding(bottom = 8.dp)
+                                .fillMaxWidth()
+                        )
+                    } else {
+                        // textfield for hours value
+                        TextField(
+                            value = newSetHoursValue,
+                            onValueChange = onSetHoursValueChanged,
+                            label = {
+                                Text(stringResource(R.string.hours))
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Filled.Timer,
+                                    contentDescription = stringResource(R.string.hours)
+                                )
+                            },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions.Default.copy(
+                                keyboardType = KeyboardType.Number,
+                                imeAction = ImeAction.Next
+                            ),
+                            keyboardActions = KeyboardActions(
+                                onNext = {
+                                    secondMetricValue2FocusRequester.requestFocus()
+                                }
+                            ),
+                            modifier = Modifier
+                                .focusRequester(secondMetricValueFocusRequester)
+                                .padding(bottom = 8.dp)
+                                .fillMaxWidth()
+                        )
+
+                        // textfield for minutes value
+                        TextField(
+                            value = newSetMinutesValue,
+                            onValueChange = onSetMinutesValueChanged,
+                            label = {
+                                Text(stringResource(R.string.minutes))
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Filled.Timer,
+                                    contentDescription = stringResource(R.string.minutes)
+                                )
+                            },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions.Default.copy(
+                                keyboardType = KeyboardType.Number,
+                                imeAction = ImeAction.Next
+                            ),
+                            keyboardActions = KeyboardActions(
+                                onNext = {
+                                    secondMetricValue3FocusRequester.requestFocus()
+                                }
+                            ),
+                            modifier = Modifier
+                                .focusRequester(secondMetricValue2FocusRequester)
+                                .padding(bottom = 8.dp)
+                                .fillMaxWidth()
+                        )
+
+                        // textfield for seconds value
+                        TextField(
+                            value = newSetSecondsValue,
+                            onValueChange = onSetSecondsValueChanged,
+                            label = {
+                                Text(stringResource(R.string.seconds))
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Filled.Timer,
+                                    contentDescription = stringResource(R.string.seconds)
+                                )
+                            },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions.Default.copy(
+                                keyboardType = KeyboardType.Decimal,
+                                imeAction = ImeAction.Next
+                            ),
+                            keyboardActions = KeyboardActions(
+                                onNext = {
+                                    secondMetricNoteFocusRequester.requestFocus()
+                                }
+                            ),
+                            modifier = Modifier
+                                .focusRequester(secondMetricValue3FocusRequester)
+                                .padding(bottom = 8.dp)
+                                .fillMaxWidth()
+                        )
+                    }
+
+                    // textfield for second metric note
+                    TextField(
+                        value = newSetSecondMetricNote,
+                        onValueChange = onSetSecondMetricNoteValueChanged,
+                        label = {
+                            Text("Note for $metricType")
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Filled.Description,
+                                contentDescription = "$metricType note input"
+                            )
+                        },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions.Default.copy(
+                            capitalization = KeyboardCapitalization.Sentences,
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                if (buttonEnabled) {
+                                    onSubmit()
+                                }
+                            }
+                        ),
+                        modifier = Modifier
+                            .focusRequester(secondMetricNoteFocusRequester)
                             .padding(bottom = 16.dp)
                             .fillMaxWidth()
                     )

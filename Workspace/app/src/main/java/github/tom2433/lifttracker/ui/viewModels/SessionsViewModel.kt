@@ -3,19 +3,23 @@ package github.tom2433.lifttracker.ui.viewModels
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import github.tom2433.lifttracker.data.lift.LiftRepository
 import github.tom2433.lifttracker.data.profile.Profile
 import github.tom2433.lifttracker.data.liftset.LiftSet
+import github.tom2433.lifttracker.data.liftset.LiftSetRepository
 import github.tom2433.lifttracker.data.setmetric.SetMetric
 import github.tom2433.lifttracker.data.profile.ProfileRepository
 import github.tom2433.lifttracker.data.session.Session
 import github.tom2433.lifttracker.data.session.SessionRepository
+import github.tom2433.lifttracker.data.setmetric.SetMetricRepository
 import github.tom2433.lifttracker.data.structures.DisplaySessionLiftSetRow
 import github.tom2433.lifttracker.data.structures.LiftSearchDetail
 import github.tom2433.lifttracker.data.structures.LiftSetCountPerMuscleGroup
 import github.tom2433.lifttracker.data.structures.SessionDetail
+import github.tom2433.lifttracker.data.structures.SetCardData
 import github.tom2433.lifttracker.data.utils.DateTimeCalculator
 import github.tom2433.lifttracker.ui.screens.TimeFrameOption
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -34,7 +38,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.Date
 
-// TODO: delete these debug calls before release
+// TODO: delete these debug calls before pull request
 private const val TAG = "MainActivity"
 
 /**
@@ -45,14 +49,15 @@ private const val TAG = "MainActivity"
 class SessionsViewModel(
     private val profileRepository: ProfileRepository,
     private val sessionRepository: SessionRepository,
-    private val liftRepository: LiftRepository
+    private val liftRepository: LiftRepository,
+    private val liftSetRepository: LiftSetRepository,
+    private val setMetricRepository: SetMetricRepository
 ) : ViewModel() {
     private val _sessionsUiState = MutableStateFlow(SessionsUiState())
     // toast events are called via _toastEvents.emit("message")
     private val _toastEvents = MutableSharedFlow<String>()
     private var refreshJob: Job? = null
     private var setCollectionJob: Job? = null
-//    private var sessionCardIdPendingExpand: Int? = null
     val sessionsUiState: StateFlow<SessionsUiState> = _sessionsUiState.asStateFlow()
     val toastEvents: SharedFlow<String> = _toastEvents.asSharedFlow()
 
@@ -656,10 +661,11 @@ class SessionsViewModel(
                         _sessionsUiState.update { currentState ->
                             currentState.copy(
                                 currentSessionLiftSetMap = displaySessionLiftSetRows.associate { displaySessionLiftSetRow ->
-                                    displaySessionLiftSetRow.liftSet.id to Triple(
-                                        first = displaySessionLiftSetRow.liftSet,
-                                        second = displaySessionLiftSetRow.weightMetric,
-                                        third = displaySessionLiftSetRow.secondMetric
+                                    displaySessionLiftSetRow.liftSet.id to SetCardData(
+                                        liftSet = displaySessionLiftSetRow.liftSet,
+                                        weightMetric = displaySessionLiftSetRow.weightMetric,
+                                        secondMetric = displaySessionLiftSetRow.secondMetric,
+                                        selected = false
                                     )
                                 },
                                 currentSessionDisplaySetList = convertLiftSetRowsToSetList(
@@ -714,6 +720,286 @@ class SessionsViewModel(
             )
         }
     }
+
+    fun historicalSetSectionClicked(liftSetId: Int) {
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                currentSessionLiftSetMap = currentState.currentSessionLiftSetMap.mapValues { (thisLiftSetId, thisSetCardData) ->
+                    if (thisLiftSetId == liftSetId) {
+                        thisSetCardData.copy(
+                            selected = !thisSetCardData.selected
+                        )
+                    } else {
+                        thisSetCardData.copy(
+                            selected = false
+                        )
+                    }
+                }
+            )
+        }
+    }
+
+    fun dismissEditHistoricalSetDialog() {
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                editSetDialogVisible = false,
+                liftSetIdToEdit = null,
+                newSetName = "",
+                newSetNote = "",
+                newWeightValue = "",
+                newWeightNote = "",
+                newRepsValue = "",
+                newHoursValue = "",
+                newMinutesValue = "",
+                newSecondsValue = "",
+                newSecondMetricNote = "",
+            )
+        }
+    }
+
+    fun editHistoricalSetSectionClicked(liftSetId: Int) {
+        _sessionsUiState.update { currentState ->
+            val setCardData: SetCardData = currentState.currentSessionLiftSetMap[liftSetId] ?: return
+            val liftId: Int = setCardData.liftSet.lift_id
+            val metricType: String = currentState.currentSessionLiftDetailMap[liftId]?.metricType ?: return
+            val timeTriple: Triple<Int, Int, Double> = if (metricType == "time") {
+                DateTimeCalculator.convertDoubleTimeToTripleTime(
+                    minutes = setCardData.secondMetric.value
+                )
+            } else {
+                Triple(0, 0, 0.0)
+            }
+
+            currentState.copy(
+                editSetDialogVisible = true,
+                liftSetIdToEdit = liftSetId,
+                newSetName = setCardData.liftSet.set_label,
+                newSetNote = setCardData.liftSet.set_note,
+                newWeightValue = setCardData.weightMetric.value.toString(),
+                newWeightNote = setCardData.weightMetric.note,
+                newRepsValue = if (metricType == "reps") {
+                    setCardData.secondMetric.value.toString()
+                } else {
+                    ""
+                },
+                newHoursValue = if (metricType == "time") {
+                    timeTriple.first.toString()
+                } else {
+                    ""
+                },
+                newMinutesValue = if (metricType == "time") {
+                    timeTriple.second.toString()
+                } else {
+                    ""
+                },
+                newSecondsValue = if (metricType == "time") {
+                    timeTriple.third.toString()
+                } else {
+                    ""
+                },
+                newSecondMetricNote = setCardData.secondMetric.note
+            )
+        }
+    }
+
+    fun validateHistoricalSetEdit(): Boolean {
+        // check that the lift set id is real
+        val liftSetId: Int = _sessionsUiState.value.liftSetIdToEdit ?: return false
+        val liftId: Int = _sessionsUiState.value.currentSessionLiftSetMap[liftSetId]?.liftSet?.lift_id ?: return false
+        val metricType: String = _sessionsUiState.value.currentSessionLiftDetailMap[liftId]?.metricType ?: return false
+
+        // check set name
+        if (_sessionsUiState.value.newSetName.isBlank()) {
+            return false
+        }
+
+        // check weight metric
+        if ((_sessionsUiState.value.newWeightValue.toDoubleOrNull() ?: -1.0) < 0.0) {
+            return false
+        }
+
+        // check reps metric if applicable
+        if (metricType == "reps") {
+            if ((_sessionsUiState.value.newRepsValue.toDoubleOrNull() ?: -1.0) < 0.0) {
+                return false
+            }
+        } else {
+            // check time metrics if applicable
+            val hoursValue: Int? = _sessionsUiState.value.newHoursValue.toIntOrNull() ?:
+                if (_sessionsUiState.value.newHoursValue.isBlank()) {
+                    0
+                } else {
+                    null
+                }
+            val minutesValue: Int? = _sessionsUiState.value.newMinutesValue.toIntOrNull() ?:
+                if (_sessionsUiState.value.newMinutesValue.isBlank()) {
+                    0
+                } else {
+                    null
+                }
+            val secondsValue: Double? = _sessionsUiState.value.newSecondsValue.toDoubleOrNull() ?:
+                if (_sessionsUiState.value.newSecondsValue.isBlank()) {
+                    0.0
+                } else {
+                    null
+                }
+            if (hoursValue != null && minutesValue != null && secondsValue != null) {
+                if (hoursValue < 0 || minutesValue < 0 || secondsValue < 0.0) {
+                    return false
+                }
+                if (hoursValue.toDouble() + minutesValue.toDouble() + secondsValue <= 0.0) {
+                    return false
+                }
+            } else {
+                return false
+            }
+        }
+
+        return true
+    }
+
+    fun updateHistoricalSet() {
+        if (validateHistoricalSetEdit()) {
+            // retrieve the lift set and its two metrics
+            val liftSetIdToEdit: Int = _sessionsUiState.value.liftSetIdToEdit ?: return
+            val setCardData: SetCardData = _sessionsUiState.value.currentSessionLiftSetMap[liftSetIdToEdit] ?: return
+            val liftSetToUpdate: LiftSet = setCardData.liftSet
+            val weightMetricToUpdate: SetMetric = setCardData.weightMetric
+            val secondMetricToUpdate: SetMetric = setCardData.secondMetric
+            val newWeightValue: Double = _sessionsUiState.value.newWeightValue.toDoubleOrNull() ?: return
+            val liftId: Int = setCardData.liftSet.lift_id
+            val metricType: String = _sessionsUiState.value.currentSessionLiftDetailMap[liftId]?.metricType ?: return
+            val newSecondMetricValue: Double = if (metricType == "reps") {
+                _sessionsUiState.value.newRepsValue.toDoubleOrNull() ?: return
+            } else {
+                DateTimeCalculator.convertTripleTimeToDoubleTime(
+                    hours = _sessionsUiState.value.newHoursValue.toIntOrNull() ?:
+                    if (_sessionsUiState.value.newHoursValue.isBlank()) {
+                        0
+                    } else {
+                        return
+                    },
+                    minutes = _sessionsUiState.value.newMinutesValue.toIntOrNull() ?:
+                    if (_sessionsUiState.value.newMinutesValue.isBlank()) {
+                        0
+                    } else {
+                        return
+                    },
+                    seconds = _sessionsUiState.value.newSecondsValue.toDoubleOrNull() ?:
+                    if (_sessionsUiState.value.newSecondsValue.isBlank()) {
+                        0.0
+                    } else {
+                        return
+                    }
+                )
+            }
+            val newSetName: String = _sessionsUiState.value.newSetName
+            val newSetNote: String = _sessionsUiState.value.newSetNote
+            val newWeightNote: String = _sessionsUiState.value.newWeightNote
+            val newSecondMetricNote: String = _sessionsUiState.value.newSecondMetricNote
+
+            viewModelScope.launch {
+                // first update the lift set
+                liftSetRepository.updateLiftSet(
+                    liftSet = liftSetToUpdate.copy(
+                        set_label = newSetName,
+                        set_note = newSetNote
+                    )
+                )
+
+                // then update the weight metric
+                setMetricRepository.updateSetMetric(
+                    setMetric = weightMetricToUpdate.copy(
+                        value = newWeightValue,
+                        note = newWeightNote
+                    )
+                )
+
+                // then update the second metric
+                setMetricRepository.updateSetMetric(
+                    setMetric = secondMetricToUpdate.copy(
+                        value = newSecondMetricValue,
+                        note = newSecondMetricNote
+                    )
+                )
+
+                // dismiss dialog
+                dismissEditHistoricalSetDialog()
+            }
+        }
+    }
+
+    fun updateNewSetName(setName: String) {
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                newSetName = setName
+            )
+        }
+    }
+
+    fun updateNewSetNote(setNote: String) {
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                newSetNote = setNote
+            )
+        }
+    }
+
+    fun updateNewWeightValue(weightValue: String) {
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                newWeightValue = weightValue
+            )
+        }
+    }
+
+    fun updateNewWeightNote(weightNote: String) {
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                newWeightNote = weightNote
+            )
+        }
+    }
+
+    fun updateNewSecondMetricNote(secondMetricNote: String) {
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                newSecondMetricNote = secondMetricNote
+            )
+        }
+    }
+
+    fun updateNewRepsValue(repsValue: String) {
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                newRepsValue = repsValue
+            )
+        }
+    }
+
+    fun updateNewHoursValue(hoursValue: String) {
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                newHoursValue = hoursValue
+            )
+        }
+    }
+
+    fun updateNewMinutesValue(minutesValue: String) {
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                newMinutesValue = minutesValue
+            )
+        }
+    }
+
+    fun updateNewSecondsValue(secondsValue: String) {
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                newSecondsValue = secondsValue
+            )
+        }
+    }
 }
 
 /**
@@ -735,9 +1021,9 @@ data class SessionsUiState(
     // weekStringPairList: list of pairs with first element as a formatted week string,
     // second element as a list of session ids
     val weekStringPairList: List<Pair<String, List<Int>>> = emptyList(),
-    // currentSessionLiftSetMap: Map of LiftSet ids pointing to triples containing a lift set object
-    // and both of its SetMetric objects. The first SetMetric is weight, second is reps or time
-    val currentSessionLiftSetMap: Map<Int, Triple<LiftSet, SetMetric, SetMetric>> = emptyMap(),
+    // currentSessionLiftSetMap: Map of LiftSet ids pointing to SetCardData containing a lift set
+    // object,  both of its SetMetric objects, and its selected state
+    val currentSessionLiftSetMap: Map<Int, SetCardData> = emptyMap(),
     // currentSessionLiftDetailMap: Map of lift ids pointing to their corresponding LiftSearchDetail
     // objects
     val currentSessionLiftDetailMap: Map<Int, LiftSearchDetail> = emptyMap(),
@@ -752,6 +1038,17 @@ data class SessionsUiState(
     val sessionToEdit: Session? = null,
     val newSessionName: String = "",
     val newSessionNote: String = "",
-    val donutChartsVisible: Boolean = true,
-
-    )
+    val donutChartsVisible: Boolean = false,
+    // fields for editing a set
+    val editSetDialogVisible: Boolean = false,
+    val liftSetIdToEdit: Int? = null,
+    val newSetName: String = "",
+    val newSetNote: String = "",
+    val newWeightValue: String = "",
+    val newWeightNote: String = "",
+    val newRepsValue: String = "",
+    val newHoursValue: String = "",
+    val newMinutesValue: String = "",
+    val newSecondsValue: String = "",
+    val newSecondMetricNote: String = "",
+)

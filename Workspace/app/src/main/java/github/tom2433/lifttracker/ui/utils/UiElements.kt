@@ -2,7 +2,6 @@ package github.tom2433.lifttracker.ui.utils
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
@@ -11,6 +10,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
@@ -32,12 +31,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ViewList
 import androidx.compose.material.icons.automirrored.outlined.ViewList
 import androidx.compose.material.icons.filled.Done
-import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Numbers
 import androidx.compose.material.icons.filled.Scale
-import androidx.compose.material.icons.filled.ViewList
-import androidx.compose.material.icons.outlined.GridView
-import androidx.compose.material.icons.outlined.ViewList
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
@@ -51,36 +47,23 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.patrykandpatrick.vico.compose.common.Fill
-import com.patrykandpatrick.vico.compose.common.component.TextComponent
-import com.patrykandpatrick.vico.compose.common.component.rememberTextComponent
-import com.patrykandpatrick.vico.compose.pie.PieChart
-import com.patrykandpatrick.vico.compose.pie.PieChartHost
-import com.patrykandpatrick.vico.compose.pie.PieSize
-import com.patrykandpatrick.vico.compose.pie.data.PieChartModelProducer
-import com.patrykandpatrick.vico.compose.pie.data.pieSeries
-import com.patrykandpatrick.vico.compose.pie.rememberPieChart
 import github.tom2433.lifttracker.R
 import github.tom2433.lifttracker.data.liftset.LiftSet
 import github.tom2433.lifttracker.data.setmetric.SetMetric
 import github.tom2433.lifttracker.data.structures.LiftSearchDetail
 import github.tom2433.lifttracker.data.structures.LiftSetCountPerMuscleGroup
+import github.tom2433.lifttracker.data.structures.SetCardData
 import github.tom2433.lifttracker.data.utils.DateTimeCalculator
 
 @Composable
@@ -563,9 +546,11 @@ fun LayoutSwitcher(
 fun DisplayAllSetDataForSession(
     displaySetList: List<Pair<Int, List<Int>>>,
     liftDetailMap: Map<Int, LiftSearchDetail>,
-    liftSetMap: Map<Int, Triple<LiftSet, SetMetric, SetMetric>>,
+    liftSetMap: Map<Int, SetCardData>,
     noteColor: Color,
     onClickLiftCard: (Int) -> Unit,
+    onClickHistoricalSetSection: (Int) -> Unit,
+    onClickEditHistoricalSet: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column (
@@ -582,7 +567,9 @@ fun DisplayAllSetDataForSession(
                     noteColor = noteColor,
                     liftSetIds = liftSetIds,
                     liftSetMap = liftSetMap,
-                    onClickLiftCard = onClickLiftCard
+                    onClickLiftCard = onClickLiftCard,
+                    onClickHistoricalSetSection = { onClickHistoricalSetSection(it) },
+                    onClickEditHistoricalSet = { onClickEditHistoricalSet(it) }
                 )
 
                 if (index != displaySetList.size - 1) {
@@ -598,8 +585,10 @@ fun HistoricalLiftCard(
     liftDetail: LiftSearchDetail,
     noteColor: Color,
     liftSetIds: List<Int>,
-    liftSetMap: Map<Int, Triple<LiftSet, SetMetric, SetMetric>>,
+    liftSetMap: Map<Int, SetCardData>,
     onClickLiftCard: (Int) -> Unit,
+    onClickHistoricalSetSection: (Int) -> Unit,
+    onClickEditHistoricalSet: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     // animate the border color
@@ -727,12 +716,15 @@ fun HistoricalLiftCard(
                 // loop thru each set and display its section
                 for ((index, liftSetId) in liftSetIds.withIndex()) {
                     HistoricalSetSection(
-                        liftSet = liftSetMap[liftSetId]?.first ?: continue,
-                        weightMetric = liftSetMap[liftSetId]?.second ?: continue,
-                        secondMetric = liftSetMap[liftSetId]?.third ?: continue,
+                        liftSet = liftSetMap[liftSetId]?.liftSet ?: continue,
+                        weightMetric = liftSetMap[liftSetId]?.weightMetric ?: continue,
+                        secondMetric = liftSetMap[liftSetId]?.secondMetric ?: continue,
                         muscleGroupName = liftDetail.muscleGroupName,
                         unitName = liftDetail.unitName,
                         metricType = liftDetail.metricType,
+                        selected = liftSetMap[liftSetId]?.selected ?: continue,
+                        onClickHistoricalSetSection = { onClickHistoricalSetSection(liftSetId) },
+                        onClickEditHistoricalSet = { onClickEditHistoricalSet(liftSetId) },
                         modifier = Modifier.padding(
                             top = 8.dp,
                             bottom = 8.dp,
@@ -763,91 +755,145 @@ fun HistoricalSetSection(
     muscleGroupName: String,
     unitName: String,
     metricType: String,
+    selected: Boolean,
+    onClickHistoricalSetSection: () -> Unit,
+    onClickEditHistoricalSet: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // row to hold lift set details on the left, set metric details on the right
-    Row(
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier.fillMaxWidth()
+    // column to hold all lift set details and set metric details on top, expandable edit button on
+    // the bottom
+    Column(
+        verticalArrangement = Arrangement.Top,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth()
     ) {
-        // column to hold set label, set note (if applicable), session set # and muscle group
-        // session set #
-        LiftSetLabels(
-            setLabel = liftSet.set_label,
-            setNote = liftSet.set_note,
-            muscleGroupName = muscleGroupName,
-            sessionSetNumber = liftSet.session_set_number,
-            muscleGroupSessionSetNumber = liftSet.muscle_group_session_set_number,
-            noteColor = MaterialTheme.colorScheme.onBackground.copy(
-                alpha = 0.75f
-            ),
-            borderColor = MaterialTheme.colorScheme.onBackground.copy(
-                alpha = 0.5f
-            ),
-            contentColor = MaterialTheme.colorScheme.onBackground,
-            showSpacerToSeparateSetLabel = false,
-            boldSetNumbers = false,
-            modifier = Modifier
-                .weight(0.75f)
-                .padding(end = 4.dp)
-        )
-
-        // column to hold weight metrics and rep/time metrics
-        Column(
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.End,
-            modifier = Modifier
-                .weight(1f)
-                .padding(start = 4.dp)
+        // row to hold lift set details on the left, set metric details on the right
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = modifier
+                .fillMaxWidth()
+                .clickable(
+                    onClick = onClickHistoricalSetSection
+                )
         ) {
-            // card to hold weight metric
-            MetricContainer(
-                value = weightMetric.value.toString(),
-                label = unitName
+            // column to hold set label, set note (if applicable), session set # and muscle group
+            // session set #
+            LiftSetLabels(
+                setLabel = liftSet.set_label,
+                setNote = liftSet.set_note,
+                muscleGroupName = muscleGroupName,
+                sessionSetNumber = liftSet.session_set_number,
+                muscleGroupSessionSetNumber = liftSet.muscle_group_session_set_number,
+                noteColor = MaterialTheme.colorScheme.onBackground.copy(
+                    alpha = 0.75f
+                ),
+                borderColor = MaterialTheme.colorScheme.onBackground.copy(
+                    alpha = 0.5f
+                ),
+                contentColor = MaterialTheme.colorScheme.onBackground,
+                showSpacerToSeparateSetLabel = false,
+                boldSetNumbers = false,
+                modifier = Modifier
+                    .weight(0.75f)
+                    .padding(end = 4.dp)
             )
-            // card to hold weight metric note if applicable
-            if (weightMetric.note.isNotBlank()) {
-                Text(
-                    text = weightMetric.note,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onBackground.copy(
-                        alpha = 0.75f
-                    ),
-                    textAlign = TextAlign.Right
-                )
-            }
-            Spacer(modifier = Modifier.height(4.dp))
-            // determine whether to format for reps or time
-            if (metricType == "reps") {
+
+            // column to hold weight metrics and rep/time metrics
+            Column(
+                verticalArrangement = Arrangement.Top,
+                horizontalAlignment = Alignment.End,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 4.dp)
+            ) {
+                // card to hold weight metric
                 MetricContainer(
-                    value = secondMetric.value.toString(),
-                    label = metricType
+                    value = weightMetric.value.toString(),
+                    label = unitName
                 )
-            } else {
-                val timeTriple: Triple<Int, Int, Double>
-                    = DateTimeCalculator.convertDoubleTimeToTripleTime(
-                        minutes = secondMetric.value
+                // card to hold weight metric note if applicable
+                if (weightMetric.note.isNotBlank()) {
+                    Text(
+                        text = weightMetric.note,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onBackground.copy(
+                            alpha = 0.75f
+                        ),
+                        textAlign = TextAlign.Right
                     )
-                MetricContainer(
-                    value = timeTriple.first.toString(),
-                    label = "hours",
-                    value2 = timeTriple.second.toString(),
-                    label2 = "minutes",
-                    value3 = timeTriple.third.toString(),
-                    label3 = "seconds"
-                )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                // determine whether to format for reps or time
+                if (metricType == "reps") {
+                    MetricContainer(
+                        value = secondMetric.value.toString(),
+                        label = metricType
+                    )
+                } else {
+                    val timeTriple: Triple<Int, Int, Double> =
+                        DateTimeCalculator.convertDoubleTimeToTripleTime(
+                            minutes = secondMetric.value
+                        )
+                    MetricContainer(
+                        value = timeTriple.first.toString(),
+                        label = "hours",
+                        value2 = timeTriple.second.toString(),
+                        label2 = "minutes",
+                        value3 = timeTriple.third.toString(),
+                        label3 = "seconds"
+                    )
+                }
+                // card to hold second metric note if applicable
+                if (secondMetric.note.isNotBlank()) {
+                    Text(
+                        text = secondMetric.note,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onBackground.copy(
+                            alpha = 0.75f
+                        ),
+                        textAlign = TextAlign.Right
+                    )
+                }
             }
-            // card to hold second metric note if applicable
-            if (secondMetric.note.isNotBlank()) {
-                Text(
-                    text = secondMetric.note,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onBackground.copy(
-                        alpha = 0.75f
-                    ),
-                    textAlign = TextAlign.Right
-                )
+        }
+
+        // animated visibility for the edit button
+        AnimatedVisibility(
+            visible = selected,
+            enter = expandVertically(
+                expandFrom = Alignment.Top,
+                animationSpec = tween(300)
+            ) + fadeIn(tween(300)),
+            exit = shrinkVertically(
+                shrinkTowards = Alignment.Top,
+                animationSpec = tween(300)
+            ) + fadeOut(tween(300))
+        ) {
+            // edit button (card)
+            Card(
+                colors = CardDefaults.cardColors().copy(
+                    containerColor = MaterialTheme.colorScheme.secondary,
+                    contentColor = MaterialTheme.colorScheme.onSecondary
+                ),
+                shape = RoundedCornerShape(4.dp),
+                onClick = onClickEditHistoricalSet,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+            ) {
+                // box to hold edit icon
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Edit,
+                        contentDescription = stringResource(R.string.edit_historical_set)
+                    )
+                }
             }
         }
     }

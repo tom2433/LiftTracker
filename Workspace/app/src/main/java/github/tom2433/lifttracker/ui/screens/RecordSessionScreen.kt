@@ -994,7 +994,6 @@ fun LiftSetInProgressCard(
                                 } else {
                                     hourFocusRequester.requestFocus()
                                 }
-                                // TODO
                             }
                         ),
                         modifier = Modifier

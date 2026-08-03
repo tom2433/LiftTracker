@@ -85,7 +85,9 @@ object AppViewModelProvider {
             SessionsViewModel(
                 profileRepository = liftTrackerApplication().container.profileRepository,
                 sessionRepository = liftTrackerApplication().container.sessionsRepository,
-                liftRepository = liftTrackerApplication().container.liftRepository
+                liftRepository = liftTrackerApplication().container.liftRepository,
+                liftSetRepository = liftTrackerApplication().container.liftSetRepository,
+                setMetricRepository = liftTrackerApplication().container.setMetricRepository
             )
         }
 
