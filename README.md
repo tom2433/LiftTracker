@@ -655,3 +655,5 @@ user shall view all set sections in all historical lift cards by pressing the "e
 put the edit note button on the right side of the weight and rep/time entry textfields. try to mirror this UI in the set entry dialogs.
 
 add a "sort by" on the muscle groups screen.
+
+definitely a "sort by" on the sessions screen too
