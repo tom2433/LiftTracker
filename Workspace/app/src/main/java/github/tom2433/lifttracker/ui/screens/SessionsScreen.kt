@@ -20,6 +20,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -29,6 +30,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -70,6 +72,7 @@ import github.tom2433.lifttracker.ui.navigation.NavigationDestination
 import github.tom2433.lifttracker.ui.utils.DateRangePickerModal
 import github.tom2433.lifttracker.ui.utils.DisplayAllSetDataForSession
 import github.tom2433.lifttracker.ui.utils.DisplaySetCountPerMuscleGroup
+import github.tom2433.lifttracker.ui.utils.FilterMenu
 import github.tom2433.lifttracker.ui.utils.LabelHeader
 import github.tom2433.lifttracker.ui.utils.LayoutSwitcher
 import github.tom2433.lifttracker.ui.utils.LoadMoreLabelAndButton
@@ -130,9 +133,9 @@ fun SessionsScreen(
             .padding(horizontal = 16.dp)
             .verticalScroll(rememberScrollState())
     ) {
-        // row to hold dropdown menu box for timeframe selector
+        // row to hold dropdown menu box for timeframe selector, and filter button
         Row(
-            horizontalArrangement = Arrangement.Start,
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
@@ -153,16 +156,26 @@ fun SessionsScreen(
                         .menuAnchor(
                             type = ExposedDropdownMenuAnchorType.PrimaryNotEditable
                         )
+                        .border(
+                            width = 1.dp,
+                            color = MaterialTheme.colorScheme.onBackground.copy(0.5f),
+                            shape = RoundedCornerShape(4.dp),
+                        )
                 ) {
                     Text(
                         text = sessionsUiState.timeFrameLabel,
                         style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(vertical = 4.dp)
+                        modifier = Modifier.padding(
+                            top = 8.dp,
+                            bottom = 8.dp,
+                            start = 12.dp,
+                            end = 4.dp
+                        )
                     )
-                    Spacer(modifier = Modifier.width(32.dp))
                     Icon(
                         imageVector = Icons.Filled.ArrowDropDown,
-                        contentDescription = stringResource(R.string.select_start_date)
+                        contentDescription = stringResource(R.string.select_start_date),
+                        modifier = Modifier.padding(end = 8.dp)
                     )
                 }
 
@@ -184,7 +197,22 @@ fun SessionsScreen(
                     }
                 }
             }
+            // card to represent filter button
+            FilterButton(
+                filterText = sessionsUiState.filterText,
+                filterSectionExpanded = sessionsUiState.filterSectionExpanded && sessionsUiState.filterSectionStage2Expanded,
+                onClickFilter = { viewModel.filterButtonClicked() }
+            )
         }
+
+        FilterMenu(
+            dividerColor = MaterialTheme.colorScheme.secondaryContainer,
+            cardContentColor = MaterialTheme.colorScheme.onBackground,
+            cardContainerColor = MaterialTheme.colorScheme.background,
+            stage1Visible = sessionsUiState.filterSectionExpanded,
+            stage2Visible = sessionsUiState.filterSectionStage2Expanded,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
 
         MuscleGroupDonutChart(
             muscleGroupFrequencyList = sessionsUiState.muscleGroupFrequencyList,
@@ -466,6 +494,65 @@ fun SessionsScreen(
             onDismissRequest = { viewModel.dismissDeleteHistoricalSetDialog() },
             onDelete = { viewModel.deleteHistoricalSet() }
         )
+    }
+}
+
+@Composable
+fun FilterButton(
+    filterText: String,
+    filterSectionExpanded: Boolean,
+    onClickFilter: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val cardContentColor by animateColorAsState(
+        targetValue = if (filterSectionExpanded) {
+            MaterialTheme.colorScheme.onSecondaryContainer
+        } else {
+            MaterialTheme.colorScheme.onBackground
+        }
+    )
+    val cardContainerColor by animateColorAsState(
+        targetValue = if (filterSectionExpanded) {
+            MaterialTheme.colorScheme.secondaryContainer
+        } else {
+            MaterialTheme.colorScheme.background
+        }
+    )
+    val cardBorderColor by animateColorAsState(
+        targetValue = if (filterSectionExpanded) {
+            MaterialTheme.colorScheme.background
+        } else {
+            MaterialTheme.colorScheme.onBackground.copy(0.5f)
+        }
+    )
+
+    // card to act as button
+    Card(
+        modifier = modifier,
+        onClick = onClickFilter,
+        colors = CardDefaults.cardColors().copy(
+            containerColor = cardContainerColor,
+            contentColor = cardContentColor
+        ),
+        shape = RoundedCornerShape(4.dp),
+        border = BorderStroke(
+            width = 1.dp,
+            color = cardBorderColor
+        )
+    ) {
+        // box to hold Filter text
+        Box(
+            modifier = Modifier
+                .padding(
+                    vertical = 8.dp,
+                    horizontal = 12.dp
+                )
+        ) {
+            Text(
+                text = filterText,
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
     }
 }
 

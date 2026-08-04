@@ -1065,6 +1065,53 @@ class SessionsViewModel(
             )
         }
     }
+
+    fun closeFilterSection() {
+        viewModelScope.launch {
+            _sessionsUiState.update { currentState ->
+                currentState.copy(
+                    filterSectionStage2Expanded = false
+                )
+            }
+
+            delay(300)
+
+            _sessionsUiState.update { currentState ->
+                currentState.copy(
+                    filterSectionExpanded = false
+                )
+            }
+        }
+    }
+
+    fun openFilterSection() {
+        viewModelScope.launch {
+            _sessionsUiState.update { currentState ->
+                currentState.copy(
+                    filterSectionExpanded = true
+                )
+            }
+
+            delay(150)
+
+            _sessionsUiState.update { currentState ->
+                currentState.copy(
+                    filterSectionStage2Expanded = true
+                )
+            }
+        }
+    }
+
+    fun filterButtonClicked() {
+        val filterCurrentlyOpen = _sessionsUiState.value.filterSectionExpanded ||
+                _sessionsUiState.value.filterSectionStage2Expanded
+
+        if (filterCurrentlyOpen) {
+            closeFilterSection()
+        } else {
+            openFilterSection()
+        }
+    }
 }
 
 /**
@@ -1118,5 +1165,9 @@ data class SessionsUiState(
     val newSecondMetricNote: String = "",
     // fields for deleting a set
     val deleteSetDialogVisible: Boolean = false,
-    val liftSetIdToDelete: Int? = null
+    val liftSetIdToDelete: Int? = null,
+    // properties for filtering
+    val filterText: String = "Filter",
+    val filterSectionExpanded: Boolean = false,
+    val filterSectionStage2Expanded: Boolean = false,
 )

@@ -16,8 +16,10 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
@@ -657,8 +659,8 @@ fun LiftInProgressCard(
                 // animate the visibility of the lift detail flow row
                 AnimatedVisibility(
                     visible = liftDetail.selected,
-                    enter = slideInVertically(
-                        initialOffsetY = { -it },
+                    enter = expandVertically(
+                        expandFrom = Alignment.Top,
                         animationSpec = spring(
                             dampingRatio = Spring.DampingRatioNoBouncy,
                             stiffness = Spring.StiffnessMediumLow
@@ -669,8 +671,8 @@ fun LiftInProgressCard(
                             stiffness = Spring.StiffnessMediumLow
                         )
                     ),
-                    exit = slideOutVertically(
-                        targetOffsetY = { -it },
+                    exit = shrinkVertically(
+                        shrinkTowards = Alignment.Top,
                         animationSpec = spring(
                             dampingRatio = Spring.DampingRatioNoBouncy,
                             stiffness = Spring.StiffnessMediumLow
@@ -696,8 +698,8 @@ fun LiftInProgressCard(
         // animated visibility for lift sets and add lift set button outside the lift IP card
         AnimatedVisibility(
             visible = liftDetail.selected,
-            enter = slideInVertically(
-                initialOffsetY = { -it },
+            enter = expandVertically(
+                expandFrom = Alignment.Top,
                 animationSpec = spring(
                     dampingRatio = Spring.DampingRatioNoBouncy,
                     stiffness = Spring.StiffnessMediumLow
@@ -708,8 +710,8 @@ fun LiftInProgressCard(
                     stiffness = Spring.StiffnessMediumLow
                 )
             ),
-            exit = slideOutVertically(
-                targetOffsetY = { -it },
+            exit = shrinkVertically(
+                shrinkTowards = Alignment.Top,
                 animationSpec = spring(
                     dampingRatio = Spring.DampingRatioNoBouncy,
                     stiffness = Spring.StiffnessMediumLow
