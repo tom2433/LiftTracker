@@ -99,16 +99,14 @@ https://github.com/patrykandpatrick/vico
         - number of sets per muscle group as shown in the session in progress screen
         - list of lift sets and their set metric values in the order of which they were trained. If two sets of the same lift were trained at different parts of the session, they will appear as such.
         - If a set of a new lift is present, a new lift header will pop up to group those sets together. lift groups should be able to be expanded and collapsed.
-        - user shall be able to tap a particular set, where an edit button will pop up. If the user clicks it, a dialog will prompt the user to edit all of the fields associated with a set, including the set name and note, the weight metric note, and the second metric note.
-        - <ins>**Everything beyond this point has not been implemented yet**</ins>
-        - user shall be able to reorder sets via up and down buttons on the sessions screen; these buttons will appear after clicking the set.
-            - this button section will include the up and down buttons first, then the edit button, then the delete button.
-        - allow user to filter the sessions screen by session name or session tag. (elements of a note separated by semicolons).
-            - may need to edit the element entry dialogs to trim the element names before entering them into the database?
-        - by default, the session cards should be in list layout.
-        - An expandable/collapsible analytics section to display analytics data (determine what to put here). some ideas:
-            - line graph showing deviation from the average (+, -) for each lift or for each set, take into account the session set number if possible.
-            - line graph showing the progression of the currently selected lift. This could be average weight, average reps, or a ratio of weight to reps (user should be able to switch between these). If no lifts are selected, it should take into account every lift for the session.
+        - user shall be able to long-tap a particular set, where an edit button will pop up. If the user clicks it, a dialog will prompt the user to edit all of the fields associated with a set, including the set name and note, the weight metric note, and the second metric note. User can also reorder this set via up/down buttons, or delete it via the delete button, all of which are in this expandable section.
+    - <ins>**Everything beyond this point has not been implemented yet**</ins>
+    - allow user to filter the sessions screen by session name or session tag. (elements of a note separated by semicolons).
+        - potentially add a "sort" functionality as well.
+    - user shall view all set sections in all historical lift cards by pressing the "expand all" button at the top of the DisplayAllSetDataForSession.
+    - An expandable/collapsible analytics section to display analytics data in each expanded session section (determine what to put here). some ideas:
+        - line graph showing deviation from the average (+, -) for each lift or for each set, take into account the session set number if possible.
+        - line graph showing the progression of the currently selected lift. This could be average weight, average reps, or a ratio of weight to reps (user should be able to switch between these). If no lifts are selected, it should take into account every lift for the session.
 - [ ] F9-1: Allow user to filter by session name, session note, session name and note, muscle groups trained, lifts trained on sessions screen
 - [ ] F6-2: Implement the most recent lift sets at the bottom of LiftScreen (use the same function as used for F8-1?)
 
@@ -118,17 +116,14 @@ https://github.com/patrykandpatrick/vico
 - [x] change the name of the ```units``` table to ```lift_units``` to avoid confusion with Kotlin's ```Unit``` type.
 - [x] move the scrollable columns on the dialogs so the user can see the buttons the entire time
 - [ ] add a setting for managing units
-- [ ] keep the dialog titles fixed in place just like the confirm/cancel buttons
 - [ ] raw data on the muscle group cards should not load until after the user has clicked it.
-- [ ] use a label(note) to categorize groups of lifts and sessions
 - [ ] % of overall set volume on lift screen literally does not make any sense; remove it
 - [ ] also include the muscle groups in the search suggestions on the existing lift entry card.
 - [ ] put a "usual pattern" line graph of average distribution between weight values per set in the session in progress screen underneath a lift in progress. put time-frame tags on the line graph for past month and all time.
 - [ ] on lift screen, show most recent sets as bar graph. potentially put a pie chart of lift distribution on expanded muscle group card.
 - [ ] need on lift set in progress card for session in progress screen: average weight/reps for this lift given it's lift set number, muscle group set number, and session set number.
-- [ ] change the session set number label so it just says "session"
-- [ ] make set number info collapsable
-- [ ] just remove the lift set number from the ui, it's already in the lift name and if the user wants to change it they can
+- [ ] add a "sort by" on the muscle groups screen.
+- [ ] put the edit note button on the right side of the weight and rep/time entry textfields. try to mirror this UI in the set entry dialogs.
 
 # Data Structure
 
