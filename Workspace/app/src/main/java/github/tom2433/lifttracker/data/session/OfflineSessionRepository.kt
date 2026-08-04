@@ -74,4 +74,6 @@ class OfflineSessionRepository(private val sessionDao: SessionDao) : SessionRepo
     override suspend fun getSessionById(id: Int): Session? = sessionDao.getSessionById(id)
 
     override fun getDisplaySessionLiftSetRowsStream(id: Int): Flow<List<DisplaySessionLiftSetRow>> = sessionDao.getDisplaySessionLiftSetRows(id)
+
+    override suspend fun moveLiftSet(liftSetId: Int, down: Boolean) = sessionDao.moveLiftSet(liftSetId, down)
 }

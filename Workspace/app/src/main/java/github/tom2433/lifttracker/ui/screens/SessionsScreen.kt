@@ -324,11 +324,23 @@ fun SessionsScreen(
                                         onClickLiftCard = {
                                             viewModel.liftCardClicked(it)
                                         },
+                                        onLongClickHistoricalSetSection = {
+                                            viewModel.historicalSetSectionLongClicked(it)
+                                        },
                                         onClickHistoricalSetSection = {
                                             viewModel.historicalSetSectionClicked(it)
                                         },
                                         onClickEditHistoricalSet = {
                                             viewModel.editHistoricalSetSectionClicked(it)
+                                        },
+                                        onClickMoveHistoricalSetUp = {
+                                            viewModel.moveHistoricalSetUp(it)
+                                        },
+                                        onClickMoveHistoricalSetDown = {
+                                            viewModel.moveHistoricalSetDown(it)
+                                        },
+                                        onClickDeleteHistoricalSet = {
+                                            viewModel.showDeleteHistoricalSetDialog(it)
                                         }
                                     )
                                 }
@@ -440,6 +452,21 @@ fun SessionsScreen(
             onSetSecondsValueChanged = { viewModel.updateNewSecondsValue(it) }
         )
     }
+
+    // show delete historical set dialog if applicable
+    if (sessionsUiState.deleteSetDialogVisible && sessionsUiState.liftSetIdToDelete != null &&
+        sessionsUiState.currentSessionLiftSetMap[sessionsUiState.liftSetIdToDelete] != null) {
+        val setCardData: SetCardData = sessionsUiState.currentSessionLiftSetMap[sessionsUiState.liftSetIdToDelete]!!
+        val liftName: String = sessionsUiState.currentSessionLiftDetailMap[setCardData.liftSet.lift_id]?.liftObj?.name ?: "null"
+
+        ShowElementDeleteDialog(
+            dialogTitle = "Delete ${setCardData.liftSet.set_label} from ${liftName}?",
+            warningDescription = "This will delete the two metrics (weight and reps/time) associated with ${setCardData.liftSet.set_label} from ${liftName}. You cannot undo this action.",
+            deleteBtnText = "Delete ${setCardData.liftSet.set_label} from $liftName",
+            onDismissRequest = { viewModel.dismissDeleteHistoricalSetDialog() },
+            onDelete = { viewModel.deleteHistoricalSet() }
+        )
+    }
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -458,8 +485,12 @@ fun SessionCard(
     onClickDeleteSession: () -> Unit,
     onClickCard: () -> Unit,
     onClickLiftCard: (Int) -> Unit,
+    onLongClickHistoricalSetSection: (Int) -> Unit,
     onClickHistoricalSetSection: (Int) -> Unit,
     onClickEditHistoricalSet: (Int) -> Unit,
+    onClickMoveHistoricalSetUp: (Int) -> Unit,
+    onClickMoveHistoricalSetDown: (Int) -> Unit,
+    onClickDeleteHistoricalSet: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     // opaque text color for notes/dates
@@ -643,8 +674,12 @@ fun SessionCard(
                     liftSetMap = currentSessionLiftSetMap,
                     noteColor = noteColor,
                     onClickLiftCard = { onClickLiftCard(it) },
+                    onLongClickHistoricalSetSection = { onLongClickHistoricalSetSection(it) },
                     onClickHistoricalSetSection = { onClickHistoricalSetSection(it) },
                     onClickEditHistoricalSet = { onClickEditHistoricalSet(it) },
+                    onClickMoveHistoricalSetDown = { onClickMoveHistoricalSetDown(it) },
+                    onClickMoveHistoricalSetUp = { onClickMoveHistoricalSetUp(it) },
+                    onClickDeleteHistoricalSet = { onClickDeleteHistoricalSet(it) },
                     modifier = Modifier.padding(top = 8.dp)
                 )
             }

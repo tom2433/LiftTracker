@@ -88,4 +88,6 @@ interface SessionRepository {
     suspend fun getSessionById(id: Int): Session?
 
     fun getDisplaySessionLiftSetRowsStream(id: Int): Flow<List<DisplaySessionLiftSetRow>>
+
+    suspend fun moveLiftSet(liftSetId: Int, down: Boolean = false)
 }

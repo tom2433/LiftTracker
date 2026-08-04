@@ -575,4 +575,130 @@ interface SessionDao {
         ORDER BY ls.session_set_number ASC
     """)
     fun getDisplaySessionLiftSetRows(id: Int): Flow<List<DisplaySessionLiftSetRow>>
+
+    @Query("""
+        SELECT ls.*
+        FROM lift_sets AS ls
+        WHERE ls.session_id = :sessionId
+            AND ls.session_set_number = :sessionSetNumber
+        LIMIT 1
+    """)
+    suspend fun getLiftSetBySessionSetNumber(
+        sessionId: Int,
+        sessionSetNumber: Int
+    ): LiftSet?
+
+    @Query("""
+        UPDATE lift_sets
+        SET session_set_number = -id,
+            lift_set_number = -id,
+            muscle_group_session_set_number = -id
+        WHERE id IN (:liftSetIds)
+    """)
+    suspend fun stageLiftSetsForMove(liftSetIds: List<Int>)
+
+    @Query("""
+        UPDATE lift_sets
+        SET session_set_number = :newSessionSetNumber,
+            lift_set_number = :newLiftSetNumber,
+            muscle_group_session_set_number = :newMuscleGroupSessionSetNumber,
+            set_label = 
+                CASE set_label
+                    WHEN :oldAutoSetLabel THEN :newAutoSetLabel
+                    ELSE set_label
+                END
+        WHERE id = :liftSetId
+    """)
+    suspend fun updateLiftSetMoveNumbers(
+        liftSetId: Int,
+        newSessionSetNumber: Int,
+        newLiftSetNumber: Int,
+        newMuscleGroupSessionSetNumber: Int,
+        oldAutoSetLabel: String,
+        newAutoSetLabel: String
+    )
+
+    @Query("""
+        SELECT COUNT(DISTINCT ls.id)
+        FROM lift_sets AS ls
+            WHERE ls.session_id = :sessionId
+    """)
+    suspend fun getTotalNumOfLiftSetsForSession(sessionId: Int): Int
+
+    @Transaction
+    suspend fun moveLiftSet(liftSetId: Int, down: Boolean) {
+        // retrieve the lift set
+        val movingLiftSet: LiftSet = getLiftSetById(liftSetId) ?: return
+
+        // retrieve the number of lift sets for the LiftSet's session
+        val totalNumLiftSets: Int = getTotalNumOfLiftSetsForSession(
+            sessionId = movingLiftSet.session_id
+        )
+
+        // lift sets that are first of the session can't be moved down,
+        // and lift sets that are last of the session can't be moved up
+        if (down && movingLiftSet.session_set_number == 1) {
+            return
+        } else if (!down && movingLiftSet.session_set_number == totalNumLiftSets) {
+            return
+        }
+
+        // determine the lift set being displaced
+        // moving down: (current session # - 1)
+        // moving up: (current session # + 1)
+        val displacedLiftSet: LiftSet = getLiftSetBySessionSetNumber(
+            sessionId = movingLiftSet.session_id,
+            sessionSetNumber = if (down) {
+                movingLiftSet.session_set_number - 1
+            } else {
+                movingLiftSet.session_set_number + 1
+            }
+        ) ?: return
+
+        // stage the lift set session, lift, and muscle group # to avoid collision
+        stageLiftSetsForMove(listOf(movingLiftSet.id, displacedLiftSet.id))
+
+        // determine the new session #s, lift #s, and muscle group #s
+        val movingLiftSetNewSessionNumber: Int = displacedLiftSet.session_set_number
+        val displacedLiftSetNewSessionNumber: Int = movingLiftSet.session_set_number
+        // lift set # will only be different if the two sets are of the same lift
+        val movingLiftSetNewLiftSetNumber: Int = if (movingLiftSet.lift_id == displacedLiftSet.lift_id) {
+            displacedLiftSet.lift_set_number
+        } else {
+            movingLiftSet.lift_set_number
+        }
+        val displacedLiftSetNewLiftSetNumber: Int = if (movingLiftSet.lift_id == displacedLiftSet.lift_id) {
+            movingLiftSet.lift_set_number
+        } else {
+            displacedLiftSet.lift_set_number
+        }
+        val movingLiftSetNewMuscleGroupSessionSetNumber: Int = if (movingLiftSet.muscle_group_id == displacedLiftSet.muscle_group_id) {
+            displacedLiftSet.muscle_group_session_set_number
+        } else {
+            movingLiftSet.muscle_group_session_set_number
+        }
+        val displacedLiftSetNewMuscleGroupSessionSetNumber: Int = if (movingLiftSet.muscle_group_id == displacedLiftSet.muscle_group_id) {
+            movingLiftSet.muscle_group_session_set_number
+        } else {
+            displacedLiftSet.muscle_group_session_set_number
+        }
+
+        // update each lift set's new session #s, lift #s, and muscle group #s
+        updateLiftSetMoveNumbers(
+            liftSetId = movingLiftSet.id,
+            newSessionSetNumber = movingLiftSetNewSessionNumber,
+            newLiftSetNumber = movingLiftSetNewLiftSetNumber,
+            newMuscleGroupSessionSetNumber = movingLiftSetNewMuscleGroupSessionSetNumber,
+            oldAutoSetLabel = "Set ${movingLiftSet.lift_set_number}",
+            newAutoSetLabel = "Set $movingLiftSetNewLiftSetNumber"
+        )
+        updateLiftSetMoveNumbers(
+            liftSetId = displacedLiftSet.id,
+            newSessionSetNumber = displacedLiftSetNewSessionNumber,
+            newLiftSetNumber = displacedLiftSetNewLiftSetNumber,
+            newMuscleGroupSessionSetNumber = displacedLiftSetNewMuscleGroupSessionSetNumber,
+            oldAutoSetLabel = "Set ${displacedLiftSet.lift_set_number}",
+            newAutoSetLabel = "Set $displacedLiftSetNewLiftSetNumber"
+        )
+    }
 }

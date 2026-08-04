@@ -665,7 +665,7 @@ class SessionsViewModel(
                                         liftSet = displaySessionLiftSetRow.liftSet,
                                         weightMetric = displaySessionLiftSetRow.weightMetric,
                                         secondMetric = displaySessionLiftSetRow.secondMetric,
-                                        selected = false
+                                        selected = currentState.currentSessionLiftSetMap[displaySessionLiftSetRow.liftSet.id]?.selected ?: false
                                     )
                                 },
                                 currentSessionDisplaySetList = convertLiftSetRowsToSetList(
@@ -721,7 +721,7 @@ class SessionsViewModel(
         }
     }
 
-    fun historicalSetSectionClicked(liftSetId: Int) {
+    fun historicalSetSectionLongClicked(liftSetId: Int) {
         _sessionsUiState.update { currentState ->
             currentState.copy(
                 currentSessionLiftSetMap = currentState.currentSessionLiftSetMap.mapValues { (thisLiftSetId, thisSetCardData) ->
@@ -733,6 +733,22 @@ class SessionsViewModel(
                         thisSetCardData.copy(
                             selected = false
                         )
+                    }
+                }
+            )
+        }
+    }
+
+    fun historicalSetSectionClicked(liftSetId: Int) {
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                currentSessionLiftSetMap = currentState.currentSessionLiftSetMap.mapValues { (thisLiftSetId, thisSetCardData) ->
+                    if (thisLiftSetId == liftSetId) {
+                        thisSetCardData.copy(
+                            selected = false
+                        )
+                    } else {
+                        thisSetCardData
                     }
                 }
             )
@@ -1000,6 +1016,55 @@ class SessionsViewModel(
             )
         }
     }
+
+    fun moveHistoricalSetUp(liftSetId: Int) {
+        viewModelScope.launch {
+            sessionRepository.moveLiftSet(
+                liftSetId = liftSetId
+            )
+        }
+    }
+
+    fun moveHistoricalSetDown(liftSetId: Int) {
+        viewModelScope.launch {
+            sessionRepository.moveLiftSet(
+                liftSetId = liftSetId,
+                down = true
+            )
+        }
+    }
+
+    fun showDeleteHistoricalSetDialog(liftSetId: Int) {
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                deleteSetDialogVisible = true,
+                liftSetIdToDelete = liftSetId
+            )
+        }
+    }
+
+    fun deleteHistoricalSet() {
+        // retrieve the lift set to delete
+        val liftIdToDelete: Int = _sessionsUiState.value.liftSetIdToDelete ?: return
+        val liftSetToDelete: LiftSet = _sessionsUiState.value.currentSessionLiftSetMap[liftIdToDelete]?.liftSet ?: return
+
+        // delete the lift set and dismiss the dialog
+        viewModelScope.launch {
+            liftSetRepository.deleteLiftSet(
+                liftSet = liftSetToDelete
+            )
+            dismissDeleteHistoricalSetDialog()
+        }
+    }
+
+    fun dismissDeleteHistoricalSetDialog() {
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                deleteSetDialogVisible = false,
+                liftSetIdToDelete = null
+            )
+        }
+    }
 }
 
 /**
@@ -1051,4 +1116,7 @@ data class SessionsUiState(
     val newMinutesValue: String = "",
     val newSecondsValue: String = "",
     val newSecondMetricNote: String = "",
+    // fields for deleting a set
+    val deleteSetDialogVisible: Boolean = false,
+    val liftSetIdToDelete: Int? = null
 )

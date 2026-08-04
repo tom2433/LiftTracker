@@ -11,6 +11,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,8 +31,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ViewList
 import androidx.compose.material.icons.automirrored.outlined.ViewList
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Numbers
 import androidx.compose.material.icons.filled.Scale
 import androidx.compose.material3.Card
@@ -51,6 +55,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -549,8 +554,12 @@ fun DisplayAllSetDataForSession(
     liftSetMap: Map<Int, SetCardData>,
     noteColor: Color,
     onClickLiftCard: (Int) -> Unit,
+    onLongClickHistoricalSetSection: (Int) -> Unit,
     onClickHistoricalSetSection: (Int) -> Unit,
     onClickEditHistoricalSet: (Int) -> Unit,
+    onClickMoveHistoricalSetUp: (Int) -> Unit,
+    onClickMoveHistoricalSetDown: (Int) -> Unit,
+    onClickDeleteHistoricalSet: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column (
@@ -568,8 +577,12 @@ fun DisplayAllSetDataForSession(
                     liftSetIds = liftSetIds,
                     liftSetMap = liftSetMap,
                     onClickLiftCard = onClickLiftCard,
+                    onLongClickHistoricalSetSection = { onLongClickHistoricalSetSection(it) },
                     onClickHistoricalSetSection = { onClickHistoricalSetSection(it) },
-                    onClickEditHistoricalSet = { onClickEditHistoricalSet(it) }
+                    onClickMoveHistoricalSetDown = { onClickMoveHistoricalSetDown(it) },
+                    onClickMoveHistoricalSetUp = { onClickMoveHistoricalSetUp(it) },
+                    onClickEditHistoricalSet = { onClickEditHistoricalSet(it) },
+                    onClickDeleteHistoricalSet = { onClickDeleteHistoricalSet(it) }
                 )
 
                 if (index != displaySetList.size - 1) {
@@ -587,8 +600,12 @@ fun HistoricalLiftCard(
     liftSetIds: List<Int>,
     liftSetMap: Map<Int, SetCardData>,
     onClickLiftCard: (Int) -> Unit,
+    onLongClickHistoricalSetSection: (Int) -> Unit,
     onClickHistoricalSetSection: (Int) -> Unit,
     onClickEditHistoricalSet: (Int) -> Unit,
+    onClickMoveHistoricalSetUp: (Int) -> Unit,
+    onClickMoveHistoricalSetDown: (Int) -> Unit,
+    onClickDeleteHistoricalSet: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     // animate the border color
@@ -723,8 +740,18 @@ fun HistoricalLiftCard(
                         unitName = liftDetail.unitName,
                         metricType = liftDetail.metricType,
                         selected = liftSetMap[liftSetId]?.selected ?: continue,
+                        onLongClickHistoricalSetSection = { onLongClickHistoricalSetSection(liftSetId) },
                         onClickHistoricalSetSection = { onClickHistoricalSetSection(liftSetId) },
                         onClickEditHistoricalSet = { onClickEditHistoricalSet(liftSetId) },
+                        onClickMoveHistoricalSetUp = {
+                            onClickMoveHistoricalSetUp(liftSetId)
+                        },
+                        onClickMoveHistoricalSetDown = {
+                            onClickMoveHistoricalSetDown(liftSetId)
+                        },
+                        onClickDeleteHistoricalSet = {
+                            onClickDeleteHistoricalSet(liftSetId)
+                        },
                         modifier = Modifier.padding(
                             top = 8.dp,
                             bottom = 8.dp,
@@ -756,8 +783,12 @@ fun HistoricalSetSection(
     unitName: String,
     metricType: String,
     selected: Boolean,
+    onLongClickHistoricalSetSection: () -> Unit,
     onClickHistoricalSetSection: () -> Unit,
     onClickEditHistoricalSet: () -> Unit,
+    onClickMoveHistoricalSetDown: () -> Unit,
+    onClickMoveHistoricalSetUp: () -> Unit,
+    onClickDeleteHistoricalSet: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     // column to hold all lift set details and set metric details on top, expandable edit button on
@@ -773,7 +804,8 @@ fun HistoricalSetSection(
             verticalAlignment = Alignment.CenterVertically,
             modifier = modifier
                 .fillMaxWidth()
-                .clickable(
+                .combinedClickable(
+                    onLongClick = onLongClickHistoricalSetSection,
                     onClick = onClickHistoricalSetSection
                 )
         ) {
@@ -858,7 +890,7 @@ fun HistoricalSetSection(
             }
         }
 
-        // animated visibility for the edit button
+        // animated visibility for the move buttons, edit button, and delete button
         AnimatedVisibility(
             visible = selected,
             enter = expandVertically(
@@ -870,29 +902,125 @@ fun HistoricalSetSection(
                 animationSpec = tween(300)
             ) + fadeOut(tween(300))
         ) {
-            // edit button (card)
-            Card(
-                colors = CardDefaults.cardColors().copy(
-                    containerColor = MaterialTheme.colorScheme.secondary,
-                    contentColor = MaterialTheme.colorScheme.onSecondary
-                ),
-                shape = RoundedCornerShape(4.dp),
-                onClick = onClickEditHistoricalSet,
+            // column to hold all buttons
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-            ) {
-                // box to hold edit icon
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(4.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Edit,
-                        contentDescription = stringResource(R.string.edit_historical_set)
+                    .padding(
+                        start = 16.dp,
+                        end = 16.dp,
+                        bottom = 8.dp
                     )
+            ) {
+                // row to hold move buttons
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                ) {
+                    // up button (down in number)
+                    Card(
+                        colors = CardDefaults.cardColors().copy(
+                            containerColor = MaterialTheme.colorScheme.secondary,
+                            contentColor = MaterialTheme.colorScheme.onSecondary
+                        ),
+                        shape = RoundedCornerShape(4.dp),
+                        onClick = onClickMoveHistoricalSetDown,
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .padding(end = 8.dp)
+                    ) {
+                        // box to hold up icon
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.KeyboardArrowUp,
+                                contentDescription = "Move set up"
+                            )
+                        }
+                    }
+
+                    // down button (up in number)
+                    Card(
+                        colors = CardDefaults.cardColors().copy(
+                            containerColor = MaterialTheme.colorScheme.secondary,
+                            contentColor = MaterialTheme.colorScheme.onSecondary
+                        ),
+                        shape = RoundedCornerShape(4.dp),
+                        onClick = onClickMoveHistoricalSetUp,
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .padding(start = 8.dp)
+                    ) {
+                        // box to hold down icon
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.KeyboardArrowDown,
+                                contentDescription = "Move set down"
+                            )
+                        }
+                    }
+                }
+                // edit button (card)
+                Card(
+                    colors = CardDefaults.cardColors().copy(
+                        containerColor = MaterialTheme.colorScheme.secondary.copy(0.75f),
+                        contentColor = MaterialTheme.colorScheme.onSecondary
+                    ),
+                    shape = RoundedCornerShape(4.dp),
+                    onClick = onClickEditHistoricalSet,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                ) {
+                    // box to hold edit icon
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Edit,
+                            contentDescription = stringResource(R.string.edit_historical_set)
+                        )
+                    }
+                }
+
+                // delete button (card)
+                Card(
+                    colors = CardDefaults.cardColors().copy(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    ),
+                    shape = RoundedCornerShape(4.dp),
+                    onClick = onClickDeleteHistoricalSet,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                ) {
+                    // Box to hold delete icon
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Delete,
+                            contentDescription = "Delete historical set"
+                        )
+                    }
                 }
             }
         }
