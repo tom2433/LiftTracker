@@ -647,3 +647,7 @@ keep on muscle group card:
 make the fill color of the in progress cards on session screen the border color, and make their fill transparent.
 
 add a new option to the drop-down in sessions screen called "view by week" allowing the user to cycle thru the weeks they've trained via forward and backward icon buttons.
+
+## 08/03
+
+user shall view all set sections in all historical lift cards by pressing the "expand all" button at the top of the DisplayAllSetDataForSession.
