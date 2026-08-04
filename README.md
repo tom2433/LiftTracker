@@ -652,3 +652,13 @@ put the edit note button on the right side of the weight and rep/time entry text
 add a "sort by" on the muscle groups screen.
 
 definitely a "sort by" on the sessions screen too
+
+## 08/04
+
+filter options:
+by session name
+by session note
+has muscle group
+has lift
+has set weight w/note
+has set rep/time w/note
