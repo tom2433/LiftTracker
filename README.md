@@ -653,3 +653,5 @@ add a new option to the drop-down in sessions screen called "view by week" allow
 user shall view all set sections in all historical lift cards by pressing the "expand all" button at the top of the DisplayAllSetDataForSession.
 
 put the edit note button on the right side of the weight and rep/time entry textfields. try to mirror this UI in the set entry dialogs.
+
+add a "sort by" on the muscle groups screen.
