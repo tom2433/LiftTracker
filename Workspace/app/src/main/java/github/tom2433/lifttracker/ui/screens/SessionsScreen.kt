@@ -664,7 +664,11 @@ fun SessionCard(
                     modifier = Modifier
                         .fillMaxWidth()
                 ) {
-                    Column {
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(end = 8.dp)
+                    ) {
                         // session label
                         Text(
                             text = sessionDetail.sessionName,

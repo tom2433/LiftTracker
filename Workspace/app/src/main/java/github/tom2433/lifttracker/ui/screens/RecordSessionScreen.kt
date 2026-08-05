@@ -330,6 +330,7 @@ fun SessionInProgressScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .weight(1f)
+                            .padding(end = 8.dp)
                             .clickable(
                                 onClick = {
                                     viewModel.showSessionEditDialog()
