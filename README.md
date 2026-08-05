@@ -656,12 +656,12 @@ definitely a "sort by" on the sessions screen too
 ## 08/04
 
 filter options:
-by session name
-by session note
-has muscle group
-has lift
-has set weight w/note
-has set rep/time w/note
+- by session name
+- by session note
+- has muscle group
+- has lift
+- has set weight w/note
+- has set rep/time w/note
 
 <ins>**Critical:**</ins>
 when a session note is too long, the three dot menu disappears from the historical session card
