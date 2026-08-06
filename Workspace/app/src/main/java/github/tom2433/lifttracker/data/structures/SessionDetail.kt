@@ -25,3 +25,8 @@ data class SessionMuscleGroupCountData(
     val muscleGroupName: String,
     val setCount: Int
 )
+
+data class SessionNameAndFrequency(
+    val sessionName: String,
+    val sessionFrequency: Int
+)

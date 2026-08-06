@@ -4,6 +4,7 @@ import github.tom2433.lifttracker.data.profile.Profile
 import github.tom2433.lifttracker.data.structures.DisplaySessionLiftSetRow
 import github.tom2433.lifttracker.data.structures.LiftSetCountPerMuscleGroup
 import github.tom2433.lifttracker.data.structures.SessionDetail
+import github.tom2433.lifttracker.data.structures.SessionNameAndFrequency
 import kotlinx.coroutines.flow.Flow
 
 class OfflineSessionRepository(private val sessionDao: SessionDao) : SessionRepository {
@@ -32,19 +33,19 @@ class OfflineSessionRepository(private val sessionDao: SessionDao) : SessionRepo
     override fun getMuscleGroupFrequencyListStream(
         activeProfileId: Int,
         startDate: String?,
-        endDate: String?
+        endDate: String?,
+        sessionName: String?
     ): Flow<List<LiftSetCountPerMuscleGroup>> = sessionDao.getMuscleGroupFrequencyList(
         activeProfileId = activeProfileId,
         startDate = startDate,
-        endDate = endDate
+        endDate = endDate,
+        sessionName = sessionName
     )
 
     override fun getNumSessionsStreamForTimeFrame(
-        activeProfileId: Int,
         startDate: String?,
         endDate: String?
     ): Flow<Int> = sessionDao.getNumSessionsFromTimeFrame(
-        activeProfileId = activeProfileId,
         startDate = startDate,
         endDate = endDate
     )
@@ -53,12 +54,14 @@ class OfflineSessionRepository(private val sessionDao: SessionDao) : SessionRepo
         activeProfileId: Int,
         startDate: String?,
         endDate: String?,
-        fetchLimit: Int
+        fetchLimit: Int,
+        sessionName: String?
     ): Flow<List<SessionDetail>> = sessionDao.getSessionDetailsForSessionScreen(
         activeProfileId = activeProfileId,
         startDate = startDate,
         endDate = endDate,
-        fetchLimit = fetchLimit
+        fetchLimit = fetchLimit,
+        sessionName = sessionName
     )
 
     override suspend fun sessionIsInProgress(): Boolean = sessionDao.sessionIsInProgress()
@@ -76,4 +79,24 @@ class OfflineSessionRepository(private val sessionDao: SessionDao) : SessionRepo
     override fun getDisplaySessionLiftSetRowsStream(id: Int): Flow<List<DisplaySessionLiftSetRow>> = sessionDao.getDisplaySessionLiftSetRows(id)
 
     override suspend fun moveLiftSet(liftSetId: Int, down: Boolean) = sessionDao.moveLiftSet(liftSetId, down)
+
+    override fun getUniqueSessionNamesAndFrequenciesStream(
+        fetchLimit: Int,
+        startDate: String?,
+        endDate: String?
+    ): Flow<List<SessionNameAndFrequency>> = sessionDao.getUniqueSessionNamesAndFrequencies(
+        fetchLimit = fetchLimit,
+        startDate = startDate,
+        endDate = endDate
+    )
+
+    override fun getNumSessionsStreamForFilteredTimeFrame(
+        startDate: String?,
+        endDate: String?,
+        sessionName: String?
+    ): Flow<Int> = sessionDao.getNumSessionsForFilteredTimeFrame(
+        startDate = startDate,
+        endDate = endDate,
+        sessionName = sessionName
+    )
 }

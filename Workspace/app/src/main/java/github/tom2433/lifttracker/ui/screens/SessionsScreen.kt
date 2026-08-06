@@ -5,7 +5,6 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
@@ -13,9 +12,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -28,9 +25,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -61,8 +56,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import github.tom2433.lifttracker.R
-import github.tom2433.lifttracker.data.liftset.LiftSet
-import github.tom2433.lifttracker.data.setmetric.SetMetric
 import github.tom2433.lifttracker.data.structures.LiftSearchDetail
 import github.tom2433.lifttracker.data.structures.SessionDetail
 import github.tom2433.lifttracker.data.structures.SetCardData
@@ -199,19 +192,23 @@ fun SessionsScreen(
             }
             // card to represent filter button
             FilterButton(
-                filterText = sessionsUiState.filterText,
-                filterSectionExpanded = sessionsUiState.filterSectionExpanded && sessionsUiState.filterSectionStage2Expanded,
+                filterText = sessionsUiState.filterState.filterText,
+                filterSectionExpanded = sessionsUiState.filterState.filterSectionExpanded &&
+                        sessionsUiState.filterState.filterSectionStage2Expanded,
                 onClickFilter = { viewModel.filterButtonClicked() }
             )
         }
 
         FilterMenu(
-            dividerColor = MaterialTheme.colorScheme.secondaryContainer,
+            borderColor = MaterialTheme.colorScheme.secondaryContainer,
             cardContentColor = MaterialTheme.colorScheme.onBackground,
             cardContainerColor = MaterialTheme.colorScheme.background,
-            stage1Visible = sessionsUiState.filterSectionExpanded,
-            stage2Visible = sessionsUiState.filterSectionStage2Expanded,
-            modifier = Modifier.padding(bottom = 16.dp)
+            filterState = sessionsUiState.filterState,
+            onClickSessionNameDropdown = { viewModel.sessionNameDropdownClicked() },
+            dismissSessionNameDropdown = { viewModel.dismissSessionNameDropdown() },
+            onClickSessionNameDropdownItem = { viewModel.sessionNameDropdownItemClicked(it) },
+            onClickLoadMoreSessionNames = { viewModel.loadMoreSessionNamesClicked() },
+            modifier = Modifier.padding(bottom = 16.dp),
         )
 
         MuscleGroupDonutChart(
@@ -383,7 +380,7 @@ fun SessionsScreen(
         // prompt user to load more sessions if applicable
         LoadMoreLabelAndButton(
             numDisplayed = sessionsUiState.sessionDetailMap.keys.size,
-            numExisting = sessionsUiState.numSessionsInTimeFrame,
+            numExisting = sessionsUiState.numSessionsInFilteredTimeFrame,
             elementNamePlural = "sessions",
             onClickLoadMore = { viewModel.loadMoreSessions(it) }
         )

@@ -58,6 +58,7 @@ class SessionsViewModel(
     private val _toastEvents = MutableSharedFlow<String>()
     private var refreshJob: Job? = null
     private var setCollectionJob: Job? = null
+    private var filterCollectionJob: Job? = null
     val sessionsUiState: StateFlow<SessionsUiState> = _sessionsUiState.asStateFlow()
     val toastEvents: SharedFlow<String> = _toastEvents.asSharedFlow()
 
@@ -84,6 +85,20 @@ class SessionsViewModel(
     private fun refresh(refreshEverything: Boolean = false) {
         refreshJob?.cancel()
 
+        val sessionNameList: List<Pair<String, Int>> = _sessionsUiState.value.filterState.sessionNameList
+        val selectedSessionName: Pair<String, Int> = _sessionsUiState.value.filterState.selectedSessionName
+        val sessionNameFilter: String? = if (sessionNameList.isEmpty()) {
+            null
+        } else {
+            if (selectedSessionName.first == "Any ") {
+                null
+            } else {
+                selectedSessionName.first
+            }
+        }
+        val startDate: String? = _sessionsUiState.value.startDate
+        val endDate: String? = _sessionsUiState.value.endDate
+
         refreshJob = viewModelScope.launch {
             if (refreshEverything) {
                 // redo exit/entry animation on all cards
@@ -97,23 +112,38 @@ class SessionsViewModel(
                 }
             }
 
-            // constant collection to keep numSessionsInTimeFrame up to date; this informs the user
-            // how many sessions are in the time frame (not how many are actually displayed)
+            // constant collection to keep numSessionsInTimeFrame up to date; this is used to
+            // determine how many sessions can be displayed via the filter menu
+            launch {
+                sessionRepository.getNumSessionsStreamForTimeFrame(
+                    startDate = startDate,
+                    endDate = endDate
+                ).collect { numSessions ->
+                    _sessionsUiState.update { currentState ->
+                        currentState.copy(
+                            numSessionsInTimeFrame = numSessions
+                        )
+                    }
+                }
+            }
+
+            // constant collection to keep numSessionsInFilteredTimeFrame up to date; this informs
+            // the user how many sessions are available to display
             launch {
                 profileRepository.getActiveProfileStream().flatMapLatest { activeProfile ->
-                    if (activeProfile != null) {
-                        sessionRepository.getNumSessionsStreamForTimeFrame(
-                            activeProfileId = activeProfile.id,
-                            startDate = _sessionsUiState.value.startDate,
-                            endDate = _sessionsUiState.value.endDate
-                        )
-                    } else {
+                    if (activeProfile == null) {
                         flowOf(0)
+                    } else {
+                        sessionRepository.getNumSessionsStreamForFilteredTimeFrame(
+                            startDate = startDate,
+                            endDate = endDate,
+                            sessionName = sessionNameFilter
+                        )
                     }
                 }.collect { numSessions ->
                     _sessionsUiState.update { currentState ->
                         currentState.copy(
-                            numSessionsInTimeFrame = numSessions
+                            numSessionsInFilteredTimeFrame = numSessions
                         )
                     }
                 }
@@ -128,7 +158,8 @@ class SessionsViewModel(
                         sessionRepository.getMuscleGroupFrequencyListStream(
                             activeProfileId = activeProfile.id,
                             startDate = _sessionsUiState.value.startDate,
-                            endDate = _sessionsUiState.value.endDate
+                            endDate = _sessionsUiState.value.endDate,
+                            sessionName = sessionNameFilter
                         )
                     } else {
                         flowOf(emptyList())
@@ -154,7 +185,8 @@ class SessionsViewModel(
                             activeProfileId = activeProfile.id,
                             startDate = _sessionsUiState.value.startDate,
                             endDate = _sessionsUiState.value.endDate,
-                            fetchLimit = _sessionsUiState.value.fetchLimit
+                            fetchLimit = _sessionsUiState.value.fetchLimit,
+                            sessionName = sessionNameFilter
                         )
                     }
                 }.collect { sessionDetails ->
@@ -241,6 +273,10 @@ class SessionsViewModel(
             )
         }
 
+        if (filterCollectionJob != null) {
+            filterCollectionJob?.cancel()
+            beginFilterCollectionJob()
+        }
         refresh(true)
     }
 
@@ -1070,7 +1106,9 @@ class SessionsViewModel(
         viewModelScope.launch {
             _sessionsUiState.update { currentState ->
                 currentState.copy(
-                    filterSectionStage2Expanded = false
+                    filterState = currentState.filterState.copy(
+                        filterSectionStage2Expanded = false
+                    )
                 )
             }
 
@@ -1078,17 +1116,88 @@ class SessionsViewModel(
 
             _sessionsUiState.update { currentState ->
                 currentState.copy(
-                    filterSectionExpanded = false
+                    filterState = currentState.filterState.copy(
+                        filterSectionExpanded = false
+                    )
                 )
             }
         }
     }
 
+    fun beginFilterCollectionJob() {
+        val startDate: String? = _sessionsUiState.value.startDate
+        val endDate: String? = _sessionsUiState.value.endDate
+        val sessionNameFetchLimit = _sessionsUiState.value.filterState.sessionNameFetchLimit
+
+        filterCollectionJob = viewModelScope.launch {
+            // collect all unique session names sorted in descending order of frequency
+            launch {
+                combine(
+                    sessionRepository.getUniqueSessionNamesAndFrequenciesStream(
+                        fetchLimit = sessionNameFetchLimit,
+                        startDate = startDate,
+                        endDate = endDate
+                    ),
+                    sessionRepository.getNumSessionsStreamForTimeFrame(
+                        startDate = startDate,
+                        endDate = endDate
+                    )
+                ) { sessionNamesAndFrequencies, anyCount ->
+                    listOf(Pair("Any ", anyCount)) + sessionNamesAndFrequencies.map { sessionNameAndFrequency ->
+                        Pair(
+                            first = sessionNameAndFrequency.sessionName,
+                            second = sessionNameAndFrequency.sessionFrequency
+                        )
+                    }
+                }.collect { sessionNameList ->
+                    _sessionsUiState.update { currentState ->
+                        currentState.copy(
+                            filterState = currentState.filterState.copy(
+                                sessionNameList = sessionNameList,
+                                selectedSessionName =
+                                    if (currentState.filterState.selectedSessionName.first == "Any " ||
+                                        currentState.filterState.selectedSessionName.first == "") {
+                                        sessionNameList[0]
+                                    } else {
+                                        currentState.filterState.selectedSessionName
+                                    }
+                            )
+                        )
+                    }
+                }
+            }
+
+            // collect the total number of unique session names
+            launch {
+                sessionRepository.getUniqueSessionNamesAndFrequenciesStream(
+                    fetchLimit = -1,
+                    startDate = startDate,
+                    endDate = endDate
+                ).collect { sessionNamesAndFrequencies ->
+                    _sessionsUiState.update { currentState ->
+                        currentState.copy(
+                            filterState = currentState.filterState.copy(
+                                totalNumberOfSessionNames = sessionNamesAndFrequencies.size
+                            )
+                        )
+                    }
+                }
+            }
+        }
+    }
+
     fun openFilterSection() {
+        // begin collecting all unique session names if not already done
+        if (filterCollectionJob == null) {
+            beginFilterCollectionJob()
+        }
+
         viewModelScope.launch {
             _sessionsUiState.update { currentState ->
                 currentState.copy(
-                    filterSectionExpanded = true
+                    filterState = currentState.filterState.copy(
+                        filterSectionExpanded = true
+                    )
                 )
             }
 
@@ -1096,21 +1205,102 @@ class SessionsViewModel(
 
             _sessionsUiState.update { currentState ->
                 currentState.copy(
-                    filterSectionStage2Expanded = true
+                    filterState = currentState.filterState.copy(
+                        filterSectionStage2Expanded = true
+                    )
                 )
             }
         }
     }
 
     fun filterButtonClicked() {
-        val filterCurrentlyOpen = _sessionsUiState.value.filterSectionExpanded ||
-                _sessionsUiState.value.filterSectionStage2Expanded
+        val filterCurrentlyOpen = _sessionsUiState.value.filterState.filterSectionExpanded ||
+                _sessionsUiState.value.filterState.filterSectionStage2Expanded
 
         if (filterCurrentlyOpen) {
             closeFilterSection()
         } else {
             openFilterSection()
         }
+    }
+
+    fun sessionNameDropdownClicked() {
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                filterState = currentState.filterState.copy(
+                    sessionNameDropdownExpanded = true
+                )
+            )
+        }
+    }
+
+    fun dismissSessionNameDropdown() {
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                filterState = currentState.filterState.copy(
+                    sessionNameDropdownExpanded = false
+                )
+            )
+        }
+    }
+
+    fun sessionNameDropdownItemClicked(sessionNameItem: Pair<String, Int>) {
+        // update the selected session name
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                filterState = currentState.filterState.copy(
+                    selectedSessionName = sessionNameItem
+                )
+            )
+        }
+
+        // update the filter label
+        updateFilterLabel()
+
+        // dismiss dropdown
+        dismissSessionNameDropdown()
+
+        // refresh everything
+        refresh(refreshEverything = true)
+    }
+
+    fun updateFilterLabel() {
+        val numFiltersApplied: Int = listOf(
+            (_sessionsUiState.value.filterState.selectedSessionName.first != "Any ")
+        ).filter { it }.size
+
+        if (numFiltersApplied != 0) {
+            _sessionsUiState.update { currentState ->
+                currentState.copy(
+                    filterState = currentState.filterState.copy(
+                        filterText = "Filter (${numFiltersApplied})"
+                    )
+                )
+            }
+        } else {
+            _sessionsUiState.update { currentState ->
+                currentState.copy(
+                    filterState = currentState.filterState.copy(
+                        filterText = "Filter"
+                    )
+                )
+            }
+        }
+    }
+
+    fun loadMoreSessionNamesClicked() {
+        // update fetch limit
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                filterState = currentState.filterState.copy(
+                    sessionNameFetchLimit = currentState.filterState.sessionNameFetchLimit + 10
+                )
+            )
+        }
+
+        // refresh the filter state
+        filterCollectionJob?.cancel()
+        beginFilterCollectionJob()
     }
 }
 
@@ -1124,6 +1314,7 @@ data class SessionsUiState(
     val endDate: String? = null,
     val fetchLimit: Int = 10,
     val numSessionsInTimeFrame: Int = 0,
+    val numSessionsInFilteredTimeFrame: Int = 0,
     val timeFrameDropdownExpanded: Boolean = false,
     // list of LiftSetCountPerMuscleGroup objects to create the donut chart at the top.
     // this includes ALL data in the selected timeframe, not affected by fetchLimit
@@ -1167,7 +1358,16 @@ data class SessionsUiState(
     val deleteSetDialogVisible: Boolean = false,
     val liftSetIdToDelete: Int? = null,
     // properties for filtering
+    val filterState: FilterState = FilterState(),
+)
+
+data class FilterState(
     val filterText: String = "Filter",
     val filterSectionExpanded: Boolean = false,
     val filterSectionStage2Expanded: Boolean = false,
+    val selectedSessionName: Pair<String, Int> = Pair("", 0),
+    val sessionNameList: List<Pair<String, Int>> = emptyList(),
+    val sessionNameDropdownExpanded: Boolean = false,
+    val sessionNameFetchLimit: Int = 10,
+    val totalNumberOfSessionNames: Int = 0
 )

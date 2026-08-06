@@ -3,6 +3,7 @@ package github.tom2433.lifttracker.data.session
 import github.tom2433.lifttracker.data.structures.DisplaySessionLiftSetRow
 import github.tom2433.lifttracker.data.structures.LiftSetCountPerMuscleGroup
 import github.tom2433.lifttracker.data.structures.SessionDetail
+import github.tom2433.lifttracker.data.structures.SessionNameAndFrequency
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -59,11 +60,11 @@ interface SessionRepository {
     fun getMuscleGroupFrequencyListStream(
         activeProfileId: Int,
         startDate: String?,
-        endDate: String?
+        endDate: String?,
+        sessionName: String?
     ): Flow<List<LiftSetCountPerMuscleGroup>>
 
     fun getNumSessionsStreamForTimeFrame(
-        activeProfileId: Int,
         startDate: String?,
         endDate: String?
     ): Flow<Int>
@@ -72,7 +73,8 @@ interface SessionRepository {
         activeProfileId: Int,
         startDate: String?,
         endDate: String?,
-        fetchLimit: Int
+        fetchLimit: Int,
+        sessionName: String?
     ): Flow<List<SessionDetail>>
 
     suspend fun sessionIsInProgress(): Boolean
@@ -90,4 +92,16 @@ interface SessionRepository {
     fun getDisplaySessionLiftSetRowsStream(id: Int): Flow<List<DisplaySessionLiftSetRow>>
 
     suspend fun moveLiftSet(liftSetId: Int, down: Boolean = false)
+
+    fun getUniqueSessionNamesAndFrequenciesStream(
+        fetchLimit: Int,
+        startDate: String?,
+        endDate: String?
+    ): Flow<List<SessionNameAndFrequency>>
+
+    fun getNumSessionsStreamForFilteredTimeFrame(
+        startDate: String?,
+        endDate: String?,
+        sessionName: String?
+    ): Flow<Int>
 }

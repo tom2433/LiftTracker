@@ -4,10 +4,14 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -31,6 +35,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ViewList
 import androidx.compose.material.icons.automirrored.outlined.ViewList
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Edit
@@ -40,6 +45,10 @@ import androidx.compose.material.icons.filled.Numbers
 import androidx.compose.material.icons.filled.Scale
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -55,7 +64,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -1218,6 +1226,200 @@ fun LiftSetLabels(
                 contentColor = contentColor,
                 boldSetNumber = boldSetNumbers
             )
+        }
+    }
+}
+
+@Composable
+fun SlideAndExpandSection(
+    borderColor: Color,
+    cardContentColor: Color,
+    cardContainerColor: Color,
+    stage1Visible: Boolean,
+    stage2Visible: Boolean,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    // column to hold all contents
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.Top,
+        horizontalAlignment = Alignment.End
+    ) {
+        // animated visibility for top divider
+        AnimatedVisibility(
+            visible = stage1Visible,
+            enter = expandHorizontally(
+                expandFrom = Alignment.End,
+                animationSpec = tween(150)
+            ),
+            exit = shrinkHorizontally(
+                shrinkTowards = Alignment.End,
+                animationSpec = tween(150)
+            )
+        ) {
+            HorizontalDivider(
+                modifier = Modifier.fillMaxWidth(),
+                color = borderColor
+            )
+        }
+
+        // animated visibility for the interior content
+        AnimatedVisibility(
+            visible = stage2Visible,
+            enter = expandVertically(
+                expandFrom = Alignment.Top,
+                animationSpec = tween(300)
+            ) + fadeIn(tween(300)),
+            exit = shrinkVertically(
+                shrinkTowards = Alignment.Top,
+                animationSpec = tween(300)
+            ) + fadeOut(tween(300))
+        ) {
+            // card to hold interior content
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors().copy(
+                    contentColor = cardContentColor,
+                    containerColor = cardContainerColor
+                ),
+                shape = RoundedCornerShape(0.dp)
+            ) {
+                // column to hold card content
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.Top,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    content()
+                }
+            }
+        }
+
+        // animated visibility for the bottom divider
+        AnimatedVisibility(
+            visible = stage2Visible,
+            enter = slideInVertically(
+                initialOffsetY = { -it },
+                animationSpec = tween(300)
+            ),
+            exit = slideOutVertically(
+                targetOffsetY = { -it },
+                animationSpec = tween(300)
+            )
+        ) {
+            HorizontalDivider(
+                modifier = Modifier.fillMaxWidth(),
+                color = borderColor
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LabelAndDropdownRow(
+    labelText: String,
+    borderColor: Color,
+    selectedItem: Pair<String, Int>,
+    itemList: List<Pair<String, Int>>,
+    showLoadMoreItem: Boolean,
+    dropdownExpanded: Boolean,
+    onClickDropdownItem: (Pair<String, Int>) -> Unit,
+    onClickLoadMoreItem: () -> Unit,
+    onClickDropdown: () -> Unit,
+    dismissDropdown: () -> Unit,
+) {
+    // row to hold session name and its dropdown options
+    Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        // dropdown label
+        Text(
+            text = labelText,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(end = 16.dp)
+        )
+        // dropdown menu
+        ExposedDropdownMenuBox(
+            expanded = dropdownExpanded,
+            onExpandedChange = {},
+            modifier = Modifier.weight(1f)
+        ) {
+            // row to hold selector
+            Row(
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .clickable(
+                        onClick = onClickDropdown
+                    )
+                    .menuAnchor(
+                        type = ExposedDropdownMenuAnchorType.PrimaryNotEditable
+                    )
+                    .border(
+                        width = 1.dp,
+                        color = borderColor,
+                        shape = RoundedCornerShape(4.dp)
+                    )
+            ) {
+                // label
+                Text(
+                    text = "${selectedItem.first} (${selectedItem.second})",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier
+                        .padding(
+                            top = 8.dp,
+                            bottom = 8.dp,
+                            start = 12.dp,
+                            end = 4.dp
+                        )
+                        .weight(1f)
+                )
+                // dropdown icon
+                Icon(
+                    imageVector = Icons.Filled.ArrowDropDown,
+                    contentDescription = "Select 'Has session name:'",
+                    tint = borderColor,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+            }
+
+            // dropdown menu
+            ExposedDropdownMenu(
+                expanded = dropdownExpanded,
+                onDismissRequest = dismissDropdown
+            ) {
+                itemList.forEach { itemNameAndNumber ->
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                text = "${itemNameAndNumber.first} (${itemNameAndNumber.second})",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        },
+                        onClick = { onClickDropdownItem(itemNameAndNumber) }
+                    )
+                }
+
+                if (showLoadMoreItem) {
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                text = "Load More",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        },
+                        onClick = { onClickLoadMoreItem() }
+                    )
+                }
+            }
         }
     }
 }
