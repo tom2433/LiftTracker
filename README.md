@@ -665,3 +665,7 @@ filter options:
 
 <ins>**Critical:**</ins>
 when a session note is too long, the three dot menu disappears from the historical session card
+
+## 08/06
+
+volume line graph on the muscle groups and lift screen, intensity line graphs on the sessions screen.
