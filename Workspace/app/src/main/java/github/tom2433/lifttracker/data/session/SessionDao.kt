@@ -10,11 +10,13 @@ import androidx.room.Update
 import github.tom2433.lifttracker.data.liftset.LiftSet
 import github.tom2433.lifttracker.data.structures.DisplaySessionLiftSetRow
 import github.tom2433.lifttracker.data.structures.LiftSetCountPerMuscleGroup
+import github.tom2433.lifttracker.data.structures.MuscleGroupNameAndFrequency
 import github.tom2433.lifttracker.data.structures.SessionDetail
 import github.tom2433.lifttracker.data.structures.SessionDetailData
 import github.tom2433.lifttracker.data.structures.SessionMuscleGroupCountData
 import github.tom2433.lifttracker.data.structures.SessionNameAndFrequency
 import github.tom2433.lifttracker.data.utils.DateTimeCalculator
+import github.tom2433.lifttracker.ui.screens.TimeFrameOption
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 
@@ -141,14 +143,22 @@ interface SessionDao {
         INNER JOIN muscle_groups AS mg
             ON mg.id = ls.muscle_group_id
         WHERE ls.session_id IN (
-            SELECT s.id
+            SELECT DISTINCT s.id
             FROM sessions AS s
+            INNER JOIN lift_sets AS ls
+                ON ls.session_id = s.id
+            INNER JOIN muscle_groups AS mg
+                ON mg.id = ls.muscle_group_id
             WHERE s.date <= :endDate
                 AND s.date >= :startDate
                 AND s.profile_id = :activeProfileId
                 AND CASE
                     WHEN :sessionName = '' THEN 1
                     ELSE TRIM(s.session_label) = TRIM(:sessionName)
+                END
+                AND CASE
+                    WHEN :muscleGroupName = '' THEN 1
+                    ELSE TRIM(mg.name) = TRIM(:muscleGroupName)
                 END
         )
         GROUP BY mg.id, mg.name
@@ -158,26 +168,30 @@ interface SessionDao {
         activeProfileId: Int,
         startDate: String,
         endDate: String,
-        sessionName: String
+        sessionName: String,
+        muscleGroupName: String
     ): Flow<List<LiftSetCountPerMuscleGroup>>
 
     fun getMuscleGroupFrequencyList(
         activeProfileId: Int,
         startDate: String?,
         endDate: String?,
-        sessionName: String?
+        sessionName: String?,
+        muscleGroupName: String?
     ): Flow<List<LiftSetCountPerMuscleGroup>> {
         val datePair: Pair<String, String> = DateTimeCalculator.getStartAndEndDatesFromNullable(
             startDate = startDate,
             endDate = endDate
         )
         val realSessionName: String = sessionName ?: ""
+        val realMuscleGroupName: String = muscleGroupName ?: ""
 
         return getMuscleGroupFrequencyListFromStartEndDates(
             activeProfileId = activeProfileId,
             startDate = datePair.first,
             endDate = datePair.second,
-            sessionName = realSessionName
+            sessionName = realSessionName,
+            muscleGroupName = realMuscleGroupName
         )
     }
     @Query("""
@@ -195,10 +209,14 @@ interface SessionDao {
     ): Flow<Int>
 
     @Query("""
-        SELECT COUNT(s.id)
+        SELECT COUNT(DISTINCT s.id)
         FROM sessions AS s
         INNER JOIN profiles AS p
             ON p.id = s.profile_id
+        INNER JOIN lift_sets AS ls
+            ON ls.session_id = s.id
+        INNER JOIN muscle_groups AS mg
+            ON mg.id = ls.muscle_group_id
         WHERE p.active = 1
             AND s.date <= :endDate
             AND s.date >= :startDate
@@ -206,11 +224,16 @@ interface SessionDao {
                 WHEN :sessionName = '' THEN 1
                 ELSE TRIM(s.session_label) = TRIM(:sessionName)
             END
+            AND CASE
+                WHEN :muscleGroupName = '' THEN 1
+                ELSE TRIM(mg.name) = TRIM(:muscleGroupName)
+            END
     """)
     fun getNumSessionsForFilteredTimeFrameFromStartEndDates(
         startDate: String,
         endDate: String,
-        sessionName: String
+        sessionName: String,
+        muscleGroupName: String
     ): Flow<Int>
 
     fun getNumSessionsFromTimeFrame(
@@ -231,18 +254,21 @@ interface SessionDao {
     fun getNumSessionsForFilteredTimeFrame(
         startDate: String?,
         endDate: String?,
-        sessionName: String?
+        sessionName: String?,
+        muscleGroupName: String?
     ): Flow<Int> {
         val datePair: Pair<String, String> = DateTimeCalculator.getStartAndEndDatesFromNullable(
             startDate = startDate,
             endDate = endDate
         )
         val realSessionName: String = sessionName ?: ""
+        val realMuscleGroupName: String = muscleGroupName ?: ""
 
         return getNumSessionsForFilteredTimeFrameFromStartEndDates(
             startDate = datePair.first,
             endDate = datePair.second,
-            sessionName = realSessionName
+            sessionName = realSessionName,
+            muscleGroupName = realMuscleGroupName
         )
     }
 
@@ -261,6 +287,17 @@ interface SessionDao {
                 WHEN :sessionName = '' THEN 1
                 ELSE TRIM(s.session_label) = TRIM(:sessionName)
             END
+            AND CASE
+                WHEN :muscleGroupName = '' THEN 1
+                ELSE EXISTS(
+                    SELECT 1
+                    FROM lift_sets AS ls
+                    INNER JOIN muscle_groups AS mg
+                        ON mg.id = ls.muscle_group_id
+                    WHERE ls.session_id = s.id
+                        AND TRIM(mg.name) = TRIM(:muscleGroupName)
+                )
+            END
         ORDER BY s.date DESC, s.id DESC
         LIMIT :fetchLimit
     """)
@@ -269,7 +306,8 @@ interface SessionDao {
         startDate: String,
         endDate: String,
         fetchLimit: Int,
-        sessionName: String
+        sessionName: String,
+        muscleGroupName: String
     ): Flow<List<SessionDetailData>>
 
     @Query("""
@@ -281,14 +319,22 @@ interface SessionDao {
         INNER JOIN muscle_groups AS mg
             ON mg.id = ls.muscle_group_id
         WHERE ls.session_id IN (
-            SELECT s.id
+            SELECT DISTINCT s.id
             FROM sessions AS s
+            INNER JOIN lift_sets AS ls
+                ON ls.session_id = s.id
+            INNER JOIN muscle_groups AS mg
+                ON mg.id = ls.muscle_group_id
             WHERE s.profile_id = :activeProfileId
                 AND s.date >= :startDate
                 AND s.date <= :endDate
                 AND CASE
                     WHEN :sessionName = '' THEN 1
                     ELSE TRIM(s.session_label) = TRIM(:sessionName)
+                END
+                AND CASE
+                    WHEN :muscleGroupName = '' THEN 1
+                    ELSE TRIM(mg.name) = TRIM(:muscleGroupName)
                 END
             ORDER BY s.date DESC, s.id DESC
             LIMIT :fetchLimit
@@ -301,7 +347,8 @@ interface SessionDao {
         startDate: String,
         endDate: String,
         fetchLimit: Int,
-        sessionName: String
+        sessionName: String,
+        muscleGroupName: String
     ): Flow<List<SessionMuscleGroupCountData>>
 
     fun getSessionDetailsForSessionScreen(
@@ -309,20 +356,23 @@ interface SessionDao {
         startDate: String?,
         endDate: String?,
         fetchLimit: Int,
-        sessionName: String?
+        sessionName: String?,
+        muscleGroupName: String?
     ): Flow<List<SessionDetail>> {
         val datePair: Pair<String, String> = DateTimeCalculator.getStartAndEndDatesFromNullable(
             startDate = startDate,
             endDate = endDate
         )
         val realSessionName: String = sessionName ?: ""
+        val realMuscleGroupName: String = muscleGroupName ?: ""
 
         val sessionDetailDataListFlow: Flow<List<SessionDetailData>> = getSessionDetailDataListFromStartEndDates(
             activeProfileId = activeProfileId,
             startDate = datePair.first,
             endDate = datePair.second,
             fetchLimit = fetchLimit,
-            sessionName = realSessionName
+            sessionName = realSessionName,
+            muscleGroupName = realMuscleGroupName
         )
 
         val muscleGroupCountDataListFlow: Flow<List<SessionMuscleGroupCountData>> = getSessionMuscleGroupCountDataListFromStartEndDates(
@@ -330,7 +380,8 @@ interface SessionDao {
             startDate = datePair.first,
             endDate = datePair.second,
             fetchLimit = fetchLimit,
-            sessionName = realSessionName
+            sessionName = realSessionName,
+            muscleGroupName = realMuscleGroupName
         )
 
         return combine(
@@ -829,6 +880,135 @@ interface SessionDao {
         )
 
         return getNumberOfUniqueSessionNamesAndFrequenciesFromStartAndEndDate(
+            startDate = datePair.first,
+            endDate = datePair.second
+        )
+    }
+
+    @Query("""
+        SELECT 
+            TRIM(mg.name) AS muscleGroupName,
+            COUNT(DISTINCT s.id) AS muscleGroupFrequency
+        FROM sessions AS s
+        INNER JOIN lift_sets AS ls
+            ON ls.session_id = s.id
+        INNER JOIN muscle_groups AS mg
+            ON mg.id = ls.muscle_group_id
+        INNER JOIN profiles AS p
+            ON p.id = s.profile_id
+        WHERE p.active = 1
+            AND s.date >= :startDate
+            AND s.date <= :endDate
+            AND CASE
+                WHEN :sessionName = '' THEN 1
+                ELSE TRIM(s.session_label) = TRIM(:sessionName)
+            END
+        GROUP BY TRIM(mg.name)
+        ORDER BY muscleGroupFrequency DESC
+        LIMIT :fetchLimit
+    """)
+    fun getUniqueMuscleGroupNamesAndFrequenciesFromStartEndDate(
+        sessionName: String,
+        fetchLimit: Int,
+        startDate: String,
+        endDate: String
+    ): Flow<List<MuscleGroupNameAndFrequency>>
+
+    fun getUniqueMuscleGroupNamesAndFrequencies(
+        sessionName: String?,
+        fetchLimit: Int,
+        startDate: String?,
+        endDate: String?
+    ): Flow<List<MuscleGroupNameAndFrequency>> {
+        val realSessionName: String = sessionName ?: ""
+        val datePair = DateTimeCalculator.getStartAndEndDatesFromNullable(
+            startDate = startDate,
+            endDate = endDate
+        )
+
+        return getUniqueMuscleGroupNamesAndFrequenciesFromStartEndDate(
+            sessionName = realSessionName,
+            fetchLimit = fetchLimit,
+            startDate = datePair.first,
+            endDate = datePair.second
+        )
+    }
+
+    @Query("""
+        SELECT
+            COUNT(DISTINCT TRIM(mg.name))
+        FROM sessions AS s
+        INNER JOIN lift_sets AS ls
+            ON ls.session_id = s.id
+        INNER JOIN muscle_groups AS mg
+            ON mg.id = ls.muscle_group_id
+        INNER JOIN profiles AS p
+            ON p.id = s.profile_id
+        WHERE p.active = 1
+            AND s.date >= :startDate
+            AND s.date <= :endDate
+            AND CASE
+                WHEN :sessionName = '' THEN 1
+                ELSE TRIM(s.session_label) = TRIM(:sessionName)
+            END
+    """)
+    fun getNumberOfUniqueMuscleGroupNamesAndFrequenciesFromStartEndDate(
+        sessionName: String,
+        startDate: String,
+        endDate: String
+    ): Flow<Int>
+
+    fun getNumberOfUniqueMuscleGroupNamesAndFrequencies(
+        sessionName: String?,
+        startDate: String?,
+        endDate: String?
+    ): Flow<Int> {
+        val realSessionName: String = sessionName ?: ""
+        val datePair = DateTimeCalculator.getStartAndEndDatesFromNullable(
+            startDate = startDate,
+            endDate = endDate
+        )
+
+        return getNumberOfUniqueMuscleGroupNamesAndFrequenciesFromStartEndDate(
+            sessionName = realSessionName,
+            startDate = datePair.first,
+            endDate = datePair.second
+        )
+    }
+
+    @Query("""
+        SELECT
+            COUNT(s.id)
+        FROM sessions AS s
+        INNER JOIN profiles AS p
+            ON p.id = s.profile_id
+        WHERE p.active = 1
+            AND s.date >= :startDate
+            AND s.date <= :endDate
+            AND CASE
+                WHEN :sessionName = "" THEN 1
+                ELSE s.session_label = :sessionName
+            END
+    """)
+    fun getNumSessionsAfterNameFilterFromStartEndDate(
+        sessionName: String,
+        startDate: String,
+        endDate: String
+    ): Flow<Int>
+
+    fun getNumSessionsAfterNameFilter(
+        sessionName: String?,
+        startDate: String?,
+        endDate: String?
+    ): Flow<Int> {
+        val realSessionName: String = sessionName ?: ""
+        val datePair = DateTimeCalculator.getStartAndEndDatesFromNullable(
+            startDate = startDate,
+            endDate = endDate
+        )
+
+        return getNumSessionsAfterNameFilterFromStartEndDate(
+            sessionName = realSessionName,
             startDate = datePair.first,
             endDate = datePair.second
         )

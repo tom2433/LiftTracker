@@ -111,7 +111,9 @@ class SessionsViewModel(
                             startDate = startDate,
                             endDate = endDate,
                             sessionName =
-                                _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName
+                                _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
+                            muscleGroupName =
+                                _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName
                         )
                     }
                 }.collect { numSessions ->
@@ -134,7 +136,9 @@ class SessionsViewModel(
                             startDate = _sessionsUiState.value.startDate,
                             endDate = _sessionsUiState.value.endDate,
                             sessionName =
-                                _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName
+                                _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
+                            muscleGroupName =
+                                _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName
                         )
                     } else {
                         flowOf(emptyList())
@@ -162,7 +166,9 @@ class SessionsViewModel(
                             endDate = _sessionsUiState.value.endDate,
                             fetchLimit = _sessionsUiState.value.fetchLimit,
                             sessionName =
-                                _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName
+                                _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
+                            muscleGroupName =
+                                _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName
                         )
                     }
                 }.collect { sessionDetails ->
@@ -1144,6 +1150,55 @@ class SessionsViewModel(
                     }
                 }
             }
+
+            // collect all unique muscle group names sorted in descending order of frequency
+            launch {
+                combine(
+                    sessionRepository.getUniqueMuscleGroupNamesAndFrequenciesStream(
+                        sessionName = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
+                        fetchLimit = _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.fetchLimit ?: 10,
+                        startDate = _sessionsUiState.value.startDate,
+                        endDate = _sessionsUiState.value.endDate
+                    ),
+                    sessionRepository.getNumSessionsStreamAfterNameFilter(
+                        sessionName = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
+                        startDate = _sessionsUiState.value.startDate,
+                        endDate = _sessionsUiState.value.endDate
+                    ),
+                    sessionRepository.getNumberOfUniqueMuscleGroupNamesAndFrequenciesStream(
+                        sessionName = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
+                        startDate = _sessionsUiState.value.startDate,
+                        endDate = _sessionsUiState.value.endDate
+                    )
+                ) { muscleGroupNamesAndFrequencies, anyCount, totalCount ->
+                    Triple(
+                        first = muscleGroupNamesAndFrequencies.map { muscleGroupNameAndFrequency ->
+                            Pair(
+                                first = muscleGroupNameAndFrequency.muscleGroupName,
+                                second = muscleGroupNameAndFrequency.muscleGroupFrequency
+                            )
+                        },
+                        second = anyCount,
+                        third = totalCount
+                    )
+                }.collect { dataTriple ->
+                    _sessionsUiState.update { currentState ->
+                        currentState.copy(
+                            filterStatesMap = currentState.filterStatesMap.mapValues { (thisFilterType, thisFilterState) ->
+                                if (thisFilterType == FilterType.MUSCLE_GROUP) {
+                                    thisFilterState.copy(
+                                        elementList = dataTriple.first,
+                                        anyCount = dataTriple.second,
+                                        totalNumberOfElements = dataTriple.third
+                                    )
+                                } else {
+                                    thisFilterState
+                                }
+                            }
+                        )
+                    }
+                }
+            }
         }
     }
 
@@ -1237,6 +1292,8 @@ class SessionsViewModel(
 
         // refresh everything
         refresh(refreshEverything = true)
+        filterCollectionJob?.cancel()
+        beginFilterCollectionJob()
     }
 
     fun filterApplied(filterType: FilterType, element: Pair<String, Int>) {
@@ -1263,6 +1320,8 @@ class SessionsViewModel(
 
         // refresh everything
         refresh(refreshEverything = true)
+        filterCollectionJob?.cancel()
+        beginFilterCollectionJob()
     }
 
     fun updateFilterLabel() {
@@ -1364,7 +1423,8 @@ data class SessionsUiState(
     val liftSetIdToDelete: Int? = null,
     // properties for filtering
     val filterStatesMap: Map<FilterType, FilterState> = mapOf(
-        FilterType.SESSION_NAME to FilterState()
+        FilterType.SESSION_NAME to FilterState(),
+        FilterType.MUSCLE_GROUP to FilterState()
     ),
     val filterText: String = "Filter",
     val filterSectionStage1Expanded: Boolean = false,
@@ -1386,6 +1446,10 @@ enum class FilterType(
 ) {
     SESSION_NAME(
         label = "Session name:",
+        defaultElementLabel = "Any"
+    ),
+    MUSCLE_GROUP(
+        label = "Muscle group:",
         defaultElementLabel = "Any"
     )
 }

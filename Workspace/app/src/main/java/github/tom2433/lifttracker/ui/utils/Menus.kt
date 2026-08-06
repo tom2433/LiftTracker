@@ -2,6 +2,7 @@ package github.tom2433.lifttracker.ui.utils
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
@@ -14,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import github.tom2433.lifttracker.ui.viewModels.FilterState
 import github.tom2433.lifttracker.ui.viewModels.FilterType
 
@@ -123,7 +125,8 @@ fun FilterMenu(
                 filterRemoved = { filterRemoved(filterType) },
                 loadMore = { loadMoreFilterElements(filterType) },
                 onClickDropdown = { onClickFilterDropdown(filterType) },
-                dismissDropdown = { dismissFilterDropdown(filterType) }
+                dismissDropdown = { dismissFilterDropdown(filterType) },
+                modifier = Modifier.padding(bottom = 8.dp)
             )
         }
     }

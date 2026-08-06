@@ -3,6 +3,7 @@ package github.tom2433.lifttracker.data.session
 import github.tom2433.lifttracker.data.profile.Profile
 import github.tom2433.lifttracker.data.structures.DisplaySessionLiftSetRow
 import github.tom2433.lifttracker.data.structures.LiftSetCountPerMuscleGroup
+import github.tom2433.lifttracker.data.structures.MuscleGroupNameAndFrequency
 import github.tom2433.lifttracker.data.structures.SessionDetail
 import github.tom2433.lifttracker.data.structures.SessionNameAndFrequency
 import kotlinx.coroutines.flow.Flow
@@ -34,12 +35,14 @@ class OfflineSessionRepository(private val sessionDao: SessionDao) : SessionRepo
         activeProfileId: Int,
         startDate: String?,
         endDate: String?,
-        sessionName: String?
+        sessionName: String?,
+        muscleGroupName: String?
     ): Flow<List<LiftSetCountPerMuscleGroup>> = sessionDao.getMuscleGroupFrequencyList(
         activeProfileId = activeProfileId,
         startDate = startDate,
         endDate = endDate,
-        sessionName = sessionName
+        sessionName = sessionName,
+        muscleGroupName = muscleGroupName
     )
 
     override fun getNumSessionsStreamForTimeFrame(
@@ -55,13 +58,15 @@ class OfflineSessionRepository(private val sessionDao: SessionDao) : SessionRepo
         startDate: String?,
         endDate: String?,
         fetchLimit: Int,
-        sessionName: String?
+        sessionName: String?,
+        muscleGroupName: String?
     ): Flow<List<SessionDetail>> = sessionDao.getSessionDetailsForSessionScreen(
         activeProfileId = activeProfileId,
         startDate = startDate,
         endDate = endDate,
         fetchLimit = fetchLimit,
-        sessionName = sessionName
+        sessionName = sessionName,
+        muscleGroupName = muscleGroupName
     )
 
     override suspend fun sessionIsInProgress(): Boolean = sessionDao.sessionIsInProgress()
@@ -101,10 +106,44 @@ class OfflineSessionRepository(private val sessionDao: SessionDao) : SessionRepo
     override fun getNumSessionsStreamForFilteredTimeFrame(
         startDate: String?,
         endDate: String?,
-        sessionName: String?
+        sessionName: String?,
+        muscleGroupName: String?
     ): Flow<Int> = sessionDao.getNumSessionsForFilteredTimeFrame(
         startDate = startDate,
         endDate = endDate,
-        sessionName = sessionName
+        sessionName = sessionName,
+        muscleGroupName = muscleGroupName
+    )
+
+    override fun getUniqueMuscleGroupNamesAndFrequenciesStream(
+        sessionName: String?,
+        fetchLimit: Int,
+        startDate: String?,
+        endDate: String?
+    ): Flow<List<MuscleGroupNameAndFrequency>> = sessionDao.getUniqueMuscleGroupNamesAndFrequencies(
+        sessionName = sessionName,
+        fetchLimit = fetchLimit,
+        startDate = startDate,
+        endDate = endDate
+    )
+
+    override fun getNumSessionsStreamAfterNameFilter(
+        sessionName: String?,
+        startDate: String?,
+        endDate: String?
+    ): Flow<Int> = sessionDao.getNumSessionsAfterNameFilter(
+        sessionName = sessionName,
+        startDate = startDate,
+        endDate = endDate
+    )
+
+    override fun getNumberOfUniqueMuscleGroupNamesAndFrequenciesStream(
+        sessionName: String?,
+        startDate: String?,
+        endDate: String?
+    ): Flow<Int> = sessionDao.getNumberOfUniqueMuscleGroupNamesAndFrequencies(
+        sessionName = sessionName,
+        startDate = startDate,
+        endDate = endDate
     )
 }

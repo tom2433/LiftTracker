@@ -30,3 +30,8 @@ data class SessionNameAndFrequency(
     val sessionName: String,
     val sessionFrequency: Int
 )
+
+data class MuscleGroupNameAndFrequency(
+    val muscleGroupName: String,
+    val muscleGroupFrequency: Int
+)
