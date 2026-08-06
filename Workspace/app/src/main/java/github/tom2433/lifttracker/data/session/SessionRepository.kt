@@ -1,6 +1,7 @@
 package github.tom2433.lifttracker.data.session
 
 import github.tom2433.lifttracker.data.structures.DisplaySessionLiftSetRow
+import github.tom2433.lifttracker.data.structures.LiftNameAndFrequency
 import github.tom2433.lifttracker.data.structures.LiftSetCountPerMuscleGroup
 import github.tom2433.lifttracker.data.structures.MuscleGroupNameAndFrequency
 import github.tom2433.lifttracker.data.structures.SessionDetail
@@ -63,7 +64,8 @@ interface SessionRepository {
         startDate: String?,
         endDate: String?,
         sessionName: String?,
-        muscleGroupName: String?
+        muscleGroupName: String?,
+        liftName: String?
     ): Flow<List<LiftSetCountPerMuscleGroup>>
 
     fun getNumSessionsStreamForTimeFrame(
@@ -77,7 +79,8 @@ interface SessionRepository {
         endDate: String?,
         fetchLimit: Int,
         sessionName: String?,
-        muscleGroupName: String?
+        muscleGroupName: String?,
+        liftName: String?
     ): Flow<List<SessionDetail>>
 
     suspend fun sessionIsInProgress(): Boolean
@@ -111,7 +114,8 @@ interface SessionRepository {
         startDate: String?,
         endDate: String?,
         sessionName: String?,
-        muscleGroupName: String?
+        muscleGroupName: String?,
+        liftName: String?
     ): Flow<Int>
 
     fun getUniqueMuscleGroupNamesAndFrequenciesStream(
@@ -121,14 +125,36 @@ interface SessionRepository {
         endDate: String?
     ): Flow<List<MuscleGroupNameAndFrequency>>
 
+    fun getUniqueLiftNamesAndFrequenciesStream(
+        sessionName: String?,
+        muscleGroupName: String?,
+        fetchLimit: Int,
+        startDate: String?,
+        endDate: String?
+    ): Flow<List<LiftNameAndFrequency>>
+
     fun getNumSessionsStreamAfterNameFilter(
         sessionName: String?,
         startDate: String?,
         endDate: String?
     ): Flow<Int>
 
+    fun getNumSessionsStreamAfterMuscleGroupFilter(
+        sessionName: String?,
+        muscleGroupName: String?,
+        startDate: String?,
+        endDate: String?
+    ): Flow<Int>
+
     fun getNumberOfUniqueMuscleGroupNamesAndFrequenciesStream(
         sessionName: String?,
+        startDate: String?,
+        endDate: String?
+    ): Flow<Int>
+
+    fun getNumberOfUniqueLiftNamesAndFrequenciesStream(
+        sessionName: String?,
+        muscleGroupName: String?,
         startDate: String?,
         endDate: String?
     ): Flow<Int>

@@ -35,3 +35,8 @@ data class MuscleGroupNameAndFrequency(
     val muscleGroupName: String,
     val muscleGroupFrequency: Int
 )
+
+data class LiftNameAndFrequency(
+    val liftName: String,
+    val liftFrequency: Int
+)

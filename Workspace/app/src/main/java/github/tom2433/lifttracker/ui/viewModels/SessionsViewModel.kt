@@ -113,7 +113,9 @@ class SessionsViewModel(
                             sessionName =
                                 _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
                             muscleGroupName =
-                                _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName
+                                _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName,
+                            liftName =
+                                _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName
                         )
                     }
                 }.collect { numSessions ->
@@ -138,7 +140,9 @@ class SessionsViewModel(
                             sessionName =
                                 _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
                             muscleGroupName =
-                                _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName
+                                _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName,
+                            liftName =
+                                _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName
                         )
                     } else {
                         flowOf(emptyList())
@@ -168,7 +172,9 @@ class SessionsViewModel(
                             sessionName =
                                 _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
                             muscleGroupName =
-                                _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName
+                                _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName,
+                            liftName =
+                                _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName
                         )
                     }
                 }.collect { sessionDetails ->
@@ -1199,6 +1205,58 @@ class SessionsViewModel(
                     }
                 }
             }
+
+            // collect all unique lift names sorted in descending order of frequency
+            launch {
+                combine(
+                    sessionRepository.getUniqueLiftNamesAndFrequenciesStream(
+                        sessionName = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
+                        muscleGroupName = _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName,
+                        fetchLimit = _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.fetchLimit ?: 10,
+                        startDate = _sessionsUiState.value.startDate,
+                        endDate = _sessionsUiState.value.endDate
+                    ),
+                    sessionRepository.getNumSessionsStreamAfterMuscleGroupFilter(
+                        sessionName = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
+                        muscleGroupName = _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName,
+                        startDate = _sessionsUiState.value.startDate,
+                        endDate = _sessionsUiState.value.endDate
+                    ),
+                    sessionRepository.getNumberOfUniqueLiftNamesAndFrequenciesStream(
+                        sessionName = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
+                        muscleGroupName = _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName,
+                        startDate = _sessionsUiState.value.startDate,
+                        endDate = _sessionsUiState.value.endDate
+                    )
+                ) { liftNamesAndFrequencies, anyCount, totalCount ->
+                    Triple(
+                        first = liftNamesAndFrequencies.map { liftNameAndFrequency ->
+                            Pair(
+                                first = liftNameAndFrequency.liftName,
+                                second = liftNameAndFrequency.liftFrequency
+                            )
+                        },
+                        second = anyCount,
+                        third = totalCount
+                    )
+                }.collect { dataTriple ->
+                    _sessionsUiState.update { currentState ->
+                        currentState.copy(
+                            filterStatesMap = currentState.filterStatesMap.mapValues { (thisFilterType, thisFilterState) ->
+                                if (thisFilterType == FilterType.LIFT_NAME) {
+                                    thisFilterState.copy(
+                                        elementList = dataTriple.first,
+                                        anyCount = dataTriple.second,
+                                        totalNumberOfElements = dataTriple.third
+                                    )
+                                } else {
+                                    thisFilterState
+                                }
+                            }
+                        )
+                    }
+                }
+            }
         }
     }
 
@@ -1424,7 +1482,8 @@ data class SessionsUiState(
     // properties for filtering
     val filterStatesMap: Map<FilterType, FilterState> = mapOf(
         FilterType.SESSION_NAME to FilterState(),
-        FilterType.MUSCLE_GROUP to FilterState()
+        FilterType.MUSCLE_GROUP to FilterState(),
+        FilterType.LIFT_NAME to FilterState()
     ),
     val filterText: String = "Filter",
     val filterSectionStage1Expanded: Boolean = false,
@@ -1450,6 +1509,10 @@ enum class FilterType(
     ),
     MUSCLE_GROUP(
         label = "Muscle group:",
+        defaultElementLabel = "Any"
+    ),
+    LIFT_NAME(
+        label = "Lift name:",
         defaultElementLabel = "Any"
     )
 }
