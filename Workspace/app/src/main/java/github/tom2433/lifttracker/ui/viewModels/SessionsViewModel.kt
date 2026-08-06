@@ -3,7 +3,6 @@ package github.tom2433.lifttracker.ui.viewModels
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
-import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import github.tom2433.lifttracker.data.lift.LiftRepository
@@ -85,17 +84,6 @@ class SessionsViewModel(
     private fun refresh(refreshEverything: Boolean = false) {
         refreshJob?.cancel()
 
-        val sessionNameList: List<Pair<String, Int>> = _sessionsUiState.value.filterState.sessionNameList
-        val selectedSessionName: Pair<String, Int> = _sessionsUiState.value.filterState.selectedSessionName
-        val sessionNameFilter: String? = if (sessionNameList.isEmpty()) {
-            null
-        } else {
-            if (selectedSessionName.first == "Any ") {
-                null
-            } else {
-                selectedSessionName.first
-            }
-        }
         val startDate: String? = _sessionsUiState.value.startDate
         val endDate: String? = _sessionsUiState.value.endDate
 
@@ -112,21 +100,6 @@ class SessionsViewModel(
                 }
             }
 
-            // constant collection to keep numSessionsInTimeFrame up to date; this is used to
-            // determine how many sessions can be displayed via the filter menu
-            launch {
-                sessionRepository.getNumSessionsStreamForTimeFrame(
-                    startDate = startDate,
-                    endDate = endDate
-                ).collect { numSessions ->
-                    _sessionsUiState.update { currentState ->
-                        currentState.copy(
-                            numSessionsInTimeFrame = numSessions
-                        )
-                    }
-                }
-            }
-
             // constant collection to keep numSessionsInFilteredTimeFrame up to date; this informs
             // the user how many sessions are available to display
             launch {
@@ -137,7 +110,8 @@ class SessionsViewModel(
                         sessionRepository.getNumSessionsStreamForFilteredTimeFrame(
                             startDate = startDate,
                             endDate = endDate,
-                            sessionName = sessionNameFilter
+                            sessionName =
+                                _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName
                         )
                     }
                 }.collect { numSessions ->
@@ -159,7 +133,8 @@ class SessionsViewModel(
                             activeProfileId = activeProfile.id,
                             startDate = _sessionsUiState.value.startDate,
                             endDate = _sessionsUiState.value.endDate,
-                            sessionName = sessionNameFilter
+                            sessionName =
+                                _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName
                         )
                     } else {
                         flowOf(emptyList())
@@ -186,7 +161,8 @@ class SessionsViewModel(
                             startDate = _sessionsUiState.value.startDate,
                             endDate = _sessionsUiState.value.endDate,
                             fetchLimit = _sessionsUiState.value.fetchLimit,
-                            sessionName = sessionNameFilter
+                            sessionName =
+                                _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName
                         )
                     }
                 }.collect { sessionDetails ->
@@ -1106,9 +1082,7 @@ class SessionsViewModel(
         viewModelScope.launch {
             _sessionsUiState.update { currentState ->
                 currentState.copy(
-                    filterState = currentState.filterState.copy(
-                        filterSectionStage2Expanded = false
-                    )
+                    filterSectionStage2Expanded = false
                 )
             }
 
@@ -1116,69 +1090,56 @@ class SessionsViewModel(
 
             _sessionsUiState.update { currentState ->
                 currentState.copy(
-                    filterState = currentState.filterState.copy(
-                        filterSectionExpanded = false
-                    )
+                    filterSectionStage1Expanded = false
                 )
             }
         }
     }
 
     fun beginFilterCollectionJob() {
-        val startDate: String? = _sessionsUiState.value.startDate
-        val endDate: String? = _sessionsUiState.value.endDate
-        val sessionNameFetchLimit = _sessionsUiState.value.filterState.sessionNameFetchLimit
-
         filterCollectionJob = viewModelScope.launch {
             // collect all unique session names sorted in descending order of frequency
             launch {
                 combine(
                     sessionRepository.getUniqueSessionNamesAndFrequenciesStream(
-                        fetchLimit = sessionNameFetchLimit,
-                        startDate = startDate,
-                        endDate = endDate
+                        fetchLimit = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.fetchLimit
+                            ?: 10,
+                        startDate = _sessionsUiState.value.startDate,
+                        endDate = _sessionsUiState.value.endDate
                     ),
                     sessionRepository.getNumSessionsStreamForTimeFrame(
-                        startDate = startDate,
-                        endDate = endDate
+                        startDate = _sessionsUiState.value.startDate,
+                        endDate = _sessionsUiState.value.endDate
+                    ),
+                    sessionRepository.getNumberOfUniqueSessionNamesAndFrequenciesStream(
+                        startDate = _sessionsUiState.value.startDate,
+                        endDate = _sessionsUiState.value.endDate
                     )
-                ) { sessionNamesAndFrequencies, anyCount ->
-                    listOf(Pair("Any ", anyCount)) + sessionNamesAndFrequencies.map { sessionNameAndFrequency ->
-                        Pair(
-                            first = sessionNameAndFrequency.sessionName,
-                            second = sessionNameAndFrequency.sessionFrequency
-                        )
-                    }
-                }.collect { sessionNameList ->
+                ) { sessionNamesAndFrequencies, anyCount, totalCount ->
+                    Triple(
+                        first = sessionNamesAndFrequencies.map { sessionNameAndFrequency ->
+                            Pair(
+                                first = sessionNameAndFrequency.sessionName,
+                                second = sessionNameAndFrequency.sessionFrequency
+                            )
+                        },
+                        second = anyCount,
+                        third = totalCount
+                    )
+                }.collect { dataTriple ->
                     _sessionsUiState.update { currentState ->
                         currentState.copy(
-                            filterState = currentState.filterState.copy(
-                                sessionNameList = sessionNameList,
-                                selectedSessionName =
-                                    if (currentState.filterState.selectedSessionName.first == "Any " ||
-                                        currentState.filterState.selectedSessionName.first == "") {
-                                        sessionNameList[0]
-                                    } else {
-                                        currentState.filterState.selectedSessionName
-                                    }
-                            )
-                        )
-                    }
-                }
-            }
-
-            // collect the total number of unique session names
-            launch {
-                sessionRepository.getUniqueSessionNamesAndFrequenciesStream(
-                    fetchLimit = -1,
-                    startDate = startDate,
-                    endDate = endDate
-                ).collect { sessionNamesAndFrequencies ->
-                    _sessionsUiState.update { currentState ->
-                        currentState.copy(
-                            filterState = currentState.filterState.copy(
-                                totalNumberOfSessionNames = sessionNamesAndFrequencies.size
-                            )
+                            filterStatesMap = currentState.filterStatesMap.mapValues { (filterType, filterState) ->
+                                if (filterType == FilterType.SESSION_NAME) {
+                                    filterState.copy(
+                                        elementList = dataTriple.first,
+                                        anyCount = dataTriple.second,
+                                        totalNumberOfElements = dataTriple.third
+                                    )
+                                } else {
+                                    filterState
+                                }
+                            }
                         )
                     }
                 }
@@ -1195,9 +1156,7 @@ class SessionsViewModel(
         viewModelScope.launch {
             _sessionsUiState.update { currentState ->
                 currentState.copy(
-                    filterState = currentState.filterState.copy(
-                        filterSectionExpanded = true
-                    )
+                    filterSectionStage1Expanded = true
                 )
             }
 
@@ -1205,17 +1164,15 @@ class SessionsViewModel(
 
             _sessionsUiState.update { currentState ->
                 currentState.copy(
-                    filterState = currentState.filterState.copy(
-                        filterSectionStage2Expanded = true
-                    )
+                    filterSectionStage2Expanded = true
                 )
             }
         }
     }
 
     fun filterButtonClicked() {
-        val filterCurrentlyOpen = _sessionsUiState.value.filterState.filterSectionExpanded ||
-                _sessionsUiState.value.filterState.filterSectionStage2Expanded
+        val filterCurrentlyOpen = _sessionsUiState.value.filterSectionStage1Expanded &&
+                _sessionsUiState.value.filterSectionStage2Expanded
 
         if (filterCurrentlyOpen) {
             closeFilterSection()
@@ -1224,33 +1181,51 @@ class SessionsViewModel(
         }
     }
 
-    fun sessionNameDropdownClicked() {
+    fun filterDropdownClicked(filterType: FilterType) {
         _sessionsUiState.update { currentState ->
             currentState.copy(
-                filterState = currentState.filterState.copy(
-                    sessionNameDropdownExpanded = true
-                )
+                filterStatesMap = currentState.filterStatesMap.mapValues { (thisFilterType, thisFilterState) ->
+                    if (thisFilterType == filterType) {
+                        thisFilterState.copy(
+                            dropdownExpanded = true
+                        )
+                    } else {
+                        thisFilterState
+                    }
+                }
             )
         }
     }
 
-    fun dismissSessionNameDropdown() {
+    fun dismissFilterDropdown(filterType: FilterType) {
         _sessionsUiState.update { currentState ->
             currentState.copy(
-                filterState = currentState.filterState.copy(
-                    sessionNameDropdownExpanded = false
-                )
+                filterStatesMap = currentState.filterStatesMap.mapValues { (thisFilterType, thisFilterState) ->
+                    if (thisFilterType == filterType) {
+                        thisFilterState.copy(
+                            dropdownExpanded = false
+                        )
+                    } else {
+                        thisFilterState
+                    }
+                }
             )
         }
     }
 
-    fun sessionNameDropdownItemClicked(sessionNameItem: Pair<String, Int>) {
-        // update the selected session name
+    fun filterRemoved(filterType: FilterType) {
+        // update the selected element for the given filterType to be null
         _sessionsUiState.update { currentState ->
             currentState.copy(
-                filterState = currentState.filterState.copy(
-                    selectedSessionName = sessionNameItem
-                )
+                filterStatesMap = currentState.filterStatesMap.mapValues { (thisFilterType, thisFilterState) ->
+                    if (thisFilterType == filterType) {
+                        thisFilterState.copy(
+                            selectedElementName = null
+                        )
+                    } else {
+                        thisFilterState
+                    }
+                }
             )
         }
 
@@ -1258,43 +1233,74 @@ class SessionsViewModel(
         updateFilterLabel()
 
         // dismiss dropdown
-        dismissSessionNameDropdown()
+        dismissFilterDropdown(filterType)
+
+        // refresh everything
+        refresh(refreshEverything = true)
+    }
+
+    fun filterApplied(filterType: FilterType, element: Pair<String, Int>) {
+        // update the selected element for the given filtertype
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                filterStatesMap = currentState.filterStatesMap.mapValues { (thisFilterType, thisFilterState) ->
+                    if (thisFilterType == filterType) {
+                        thisFilterState.copy(
+                            selectedElementName = element.first
+                        )
+                    } else {
+                        thisFilterState
+                    }
+                }
+            )
+        }
+
+        // update the filter label
+        updateFilterLabel()
+
+        // dismiss dropdown
+        dismissFilterDropdown(filterType)
 
         // refresh everything
         refresh(refreshEverything = true)
     }
 
     fun updateFilterLabel() {
-        val numFiltersApplied: Int = listOf(
-            (_sessionsUiState.value.filterState.selectedSessionName.first != "Any ")
-        ).filter { it }.size
+        var numFiltersApplied = 0
+        for (filterState in _sessionsUiState.value.filterStatesMap.values) {
+            if (filterState.selectedElementName != null) {
+                numFiltersApplied++
+            }
+        }
 
         if (numFiltersApplied != 0) {
             _sessionsUiState.update { currentState ->
                 currentState.copy(
-                    filterState = currentState.filterState.copy(
-                        filterText = "Filter (${numFiltersApplied})"
-                    )
+                    filterText = "Filter (${numFiltersApplied})"
                 )
             }
         } else {
             _sessionsUiState.update { currentState ->
                 currentState.copy(
-                    filterState = currentState.filterState.copy(
-                        filterText = "Filter"
-                    )
+                    filterText = "Filter"
                 )
             }
         }
     }
 
-    fun loadMoreSessionNamesClicked() {
-        // update fetch limit
+    fun loadMoreFilterElements(filterType: FilterType) {
+        // update the fetch limit +10 for this filter state
         _sessionsUiState.update { currentState ->
             currentState.copy(
-                filterState = currentState.filterState.copy(
-                    sessionNameFetchLimit = currentState.filterState.sessionNameFetchLimit + 10
-                )
+                filterStatesMap = currentState.filterStatesMap.mapValues { (thisFilterType, thisFilterState) ->
+                    if (thisFilterType == filterType) {
+                        thisFilterState.copy(
+                            fetchLimit = thisFilterState.fetchLimit + 10
+                        )
+                    } else {
+                        thisFilterState
+                    }
+                }
             )
         }
 
@@ -1313,7 +1319,6 @@ data class SessionsUiState(
     val timeFrameLabel: String = TimeFrameOption.ALL_TIME,
     val endDate: String? = null,
     val fetchLimit: Int = 10,
-    val numSessionsInTimeFrame: Int = 0,
     val numSessionsInFilteredTimeFrame: Int = 0,
     val timeFrameDropdownExpanded: Boolean = false,
     // list of LiftSetCountPerMuscleGroup objects to create the donut chart at the top.
@@ -1358,16 +1363,29 @@ data class SessionsUiState(
     val deleteSetDialogVisible: Boolean = false,
     val liftSetIdToDelete: Int? = null,
     // properties for filtering
-    val filterState: FilterState = FilterState(),
+    val filterStatesMap: Map<FilterType, FilterState> = mapOf(
+        FilterType.SESSION_NAME to FilterState()
+    ),
+    val filterText: String = "Filter",
+    val filterSectionStage1Expanded: Boolean = false,
+    val filterSectionStage2Expanded: Boolean = false,
 )
 
 data class FilterState(
-    val filterText: String = "Filter",
-    val filterSectionExpanded: Boolean = false,
-    val filterSectionStage2Expanded: Boolean = false,
-    val selectedSessionName: Pair<String, Int> = Pair("", 0),
-    val sessionNameList: List<Pair<String, Int>> = emptyList(),
-    val sessionNameDropdownExpanded: Boolean = false,
-    val sessionNameFetchLimit: Int = 10,
-    val totalNumberOfSessionNames: Int = 0
+    val selectedElementName: String? = null,
+    val elementList: List<Pair<String, Int>> = emptyList(),
+    val dropdownExpanded: Boolean = false,
+    val fetchLimit: Int = 10,
+    val anyCount: Int = 0,
+    val totalNumberOfElements: Int = 0
 )
+
+enum class FilterType(
+    val label: String,
+    val defaultElementLabel: String
+) {
+    SESSION_NAME(
+        label = "Session name:",
+        defaultElementLabel = "Any"
+    )
+}

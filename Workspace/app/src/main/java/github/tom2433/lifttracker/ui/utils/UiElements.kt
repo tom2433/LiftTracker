@@ -1327,8 +1327,11 @@ fun LabelAndDropdownRow(
     itemList: List<Pair<String, Int>>,
     showLoadMoreItem: Boolean,
     dropdownExpanded: Boolean,
-    onClickDropdownItem: (Pair<String, Int>) -> Unit,
-    onClickLoadMoreItem: () -> Unit,
+    defaultElementLabel: String,
+    anyCount: Int,
+    filterApplied: (Pair<String, Int>) -> Unit,
+    filterRemoved: () -> Unit,
+    loadMore: () -> Unit,
     onClickDropdown: () -> Unit,
     dismissDropdown: () -> Unit,
 ) {
@@ -1394,6 +1397,19 @@ fun LabelAndDropdownRow(
                 expanded = dropdownExpanded,
                 onDismissRequest = dismissDropdown
             ) {
+                // show default option
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = "$defaultElementLabel (${anyCount})",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    },
+                    onClick = { filterRemoved() }
+                )
+
                 itemList.forEach { itemNameAndNumber ->
                     DropdownMenuItem(
                         text = {
@@ -1402,7 +1418,7 @@ fun LabelAndDropdownRow(
                                 style = MaterialTheme.typography.bodyMedium
                             )
                         },
-                        onClick = { onClickDropdownItem(itemNameAndNumber) }
+                        onClick = { filterApplied(itemNameAndNumber) }
                     )
                 }
 
@@ -1416,7 +1432,7 @@ fun LabelAndDropdownRow(
                                 color = MaterialTheme.colorScheme.primary
                             )
                         },
-                        onClick = { onClickLoadMoreItem() }
+                        onClick = { loadMore() }
                     )
                 }
             }

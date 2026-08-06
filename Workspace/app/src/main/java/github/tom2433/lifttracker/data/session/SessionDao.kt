@@ -167,14 +167,16 @@ interface SessionDao {
         endDate: String?,
         sessionName: String?
     ): Flow<List<LiftSetCountPerMuscleGroup>> {
-        val realStartDate: String = startDate ?: "2025-07-03"
-        val realEndDate: String = endDate ?: DateTimeCalculator.getCurrentIsoDate()
+        val datePair: Pair<String, String> = DateTimeCalculator.getStartAndEndDatesFromNullable(
+            startDate = startDate,
+            endDate = endDate
+        )
         val realSessionName: String = sessionName ?: ""
 
         return getMuscleGroupFrequencyListFromStartEndDates(
             activeProfileId = activeProfileId,
-            startDate = realStartDate,
-            endDate = realEndDate,
+            startDate = datePair.first,
+            endDate = datePair.second,
             sessionName = realSessionName
         )
     }
@@ -215,12 +217,14 @@ interface SessionDao {
         startDate: String?,
         endDate: String?
     ): Flow<Int> {
-        val realStartDate: String = startDate ?: "2025-07-03"
-        val realEndDate: String = endDate ?: DateTimeCalculator.getCurrentIsoDate()
+        val datePair: Pair<String, String> = DateTimeCalculator.getStartAndEndDatesFromNullable(
+            startDate = startDate,
+            endDate = endDate
+        )
 
         return getNumSessionsFromStartEndDates(
-            startDate = realStartDate,
-            endDate = realEndDate
+            startDate = datePair.first,
+            endDate = datePair.second
         )
     }
 
@@ -229,13 +233,15 @@ interface SessionDao {
         endDate: String?,
         sessionName: String?
     ): Flow<Int> {
-        val realStartDate: String = startDate ?: "2025-07-03"
-        val realEndDate: String = endDate ?: DateTimeCalculator.getCurrentIsoDate()
+        val datePair: Pair<String, String> = DateTimeCalculator.getStartAndEndDatesFromNullable(
+            startDate = startDate,
+            endDate = endDate
+        )
         val realSessionName: String = sessionName ?: ""
 
         return getNumSessionsForFilteredTimeFrameFromStartEndDates(
-            startDate = realStartDate,
-            endDate = realEndDate,
+            startDate = datePair.first,
+            endDate = datePair.second,
             sessionName = realSessionName
         )
     }
@@ -305,22 +311,24 @@ interface SessionDao {
         fetchLimit: Int,
         sessionName: String?
     ): Flow<List<SessionDetail>> {
-        val realStartDate: String = startDate ?: "2025-07-03"
-        val realEndDate: String = endDate ?: DateTimeCalculator.getCurrentIsoDate()
+        val datePair: Pair<String, String> = DateTimeCalculator.getStartAndEndDatesFromNullable(
+            startDate = startDate,
+            endDate = endDate
+        )
         val realSessionName: String = sessionName ?: ""
 
         val sessionDetailDataListFlow: Flow<List<SessionDetailData>> = getSessionDetailDataListFromStartEndDates(
             activeProfileId = activeProfileId,
-            startDate = realStartDate,
-            endDate = realEndDate,
+            startDate = datePair.first,
+            endDate = datePair.second,
             fetchLimit = fetchLimit,
             sessionName = realSessionName
         )
 
         val muscleGroupCountDataListFlow: Flow<List<SessionMuscleGroupCountData>> = getSessionMuscleGroupCountDataListFromStartEndDates(
             activeProfileId = activeProfileId,
-            startDate = realStartDate,
-            endDate = realEndDate,
+            startDate = datePair.first,
+            endDate = datePair.second,
             fetchLimit = fetchLimit,
             sessionName = realSessionName
         )
@@ -779,18 +787,50 @@ interface SessionDao {
         endDate: String
     ): Flow<List<SessionNameAndFrequency>>
 
+    @Query("""
+        SELECT
+            COUNT(DISTINCT TRIM(s.session_label))
+        FROM sessions AS s
+        INNER JOIN profiles AS p
+            ON p.id = s.profile_id
+        WHERE p.active = 1
+            AND s.date >= :startDate
+            AND s.date <= :endDate
+    """)
+    fun getNumberOfUniqueSessionNamesAndFrequenciesFromStartAndEndDate(
+        startDate: String,
+        endDate: String
+    ): Flow<Int>
+
     fun getUniqueSessionNamesAndFrequencies(
         fetchLimit: Int,
         startDate: String?,
         endDate: String?
     ): Flow<List<SessionNameAndFrequency>> {
-        val realStartDate: String = startDate ?: "2025-07-03"
-        val realEndDate: String = endDate ?: DateTimeCalculator.getCurrentIsoDate()
+        val datePair: Pair<String, String> = DateTimeCalculator.getStartAndEndDatesFromNullable(
+            startDate = startDate,
+            endDate = endDate
+        )
 
         return getUniqueSessionNamesAndFrequenciesFromStartAndEndDate(
             fetchLimit = fetchLimit,
-            startDate = realStartDate,
-            endDate = realEndDate
+            startDate = datePair.first,
+            endDate = datePair.second
+        )
+    }
+
+    fun getNumberOfUniqueSessionNamesAndFrequencies(
+        startDate: String?,
+        endDate: String?
+    ): Flow<Int> {
+        val datePair: Pair<String, String> = DateTimeCalculator.getStartAndEndDatesFromNullable(
+            startDate = startDate,
+            endDate = endDate
+        )
+
+        return getNumberOfUniqueSessionNamesAndFrequenciesFromStartAndEndDate(
+            startDate = datePair.first,
+            endDate = datePair.second
         )
     }
 }

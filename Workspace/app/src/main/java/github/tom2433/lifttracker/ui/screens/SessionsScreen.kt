@@ -192,9 +192,9 @@ fun SessionsScreen(
             }
             // card to represent filter button
             FilterButton(
-                filterText = sessionsUiState.filterState.filterText,
-                filterSectionExpanded = sessionsUiState.filterState.filterSectionExpanded &&
-                        sessionsUiState.filterState.filterSectionStage2Expanded,
+                filterText = sessionsUiState.filterText,
+                filterSectionExpanded = sessionsUiState.filterSectionStage1Expanded &&
+                        sessionsUiState.filterSectionStage2Expanded,
                 onClickFilter = { viewModel.filterButtonClicked() }
             )
         }
@@ -203,12 +203,17 @@ fun SessionsScreen(
             borderColor = MaterialTheme.colorScheme.secondaryContainer,
             cardContentColor = MaterialTheme.colorScheme.onBackground,
             cardContainerColor = MaterialTheme.colorScheme.background,
-            filterState = sessionsUiState.filterState,
-            onClickSessionNameDropdown = { viewModel.sessionNameDropdownClicked() },
-            dismissSessionNameDropdown = { viewModel.dismissSessionNameDropdown() },
-            onClickSessionNameDropdownItem = { viewModel.sessionNameDropdownItemClicked(it) },
-            onClickLoadMoreSessionNames = { viewModel.loadMoreSessionNamesClicked() },
-            modifier = Modifier.padding(bottom = 16.dp),
+            stage1Visible = sessionsUiState.filterSectionStage1Expanded,
+            stage2Visible = sessionsUiState.filterSectionStage2Expanded,
+            filterStatesMap = sessionsUiState.filterStatesMap,
+            onClickFilterDropdown = { viewModel.filterDropdownClicked(it) },
+            dismissFilterDropdown = { viewModel.dismissFilterDropdown(it) },
+            filterApplied = { filterType, element ->
+                viewModel.filterApplied(filterType, element)
+            },
+            filterRemoved = { viewModel.filterRemoved(it) },
+            loadMoreFilterElements = { viewModel.loadMoreFilterElements(it) },
+            modifier = Modifier.padding(bottom = 16.dp)
         )
 
         MuscleGroupDonutChart(

@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.Color
 import github.tom2433.lifttracker.ui.viewModels.FilterState
+import github.tom2433.lifttracker.ui.viewModels.FilterType
 
 @Composable
 fun ThreeDotMenu(
@@ -78,37 +79,52 @@ fun FilterMenu(
     borderColor: Color,
     cardContentColor: Color,
     cardContainerColor: Color,
-    filterState: FilterState,
-    onClickSessionNameDropdown: () -> Unit,
-    dismissSessionNameDropdown: () -> Unit,
-    onClickSessionNameDropdownItem: (Pair<String, Int>) -> Unit,
-    onClickLoadMoreSessionNames: () -> Unit,
+    stage1Visible: Boolean,
+    stage2Visible: Boolean,
+    filterStatesMap: Map<FilterType, FilterState>,
+    onClickFilterDropdown: (FilterType) -> Unit,
+    dismissFilterDropdown: (FilterType) -> Unit,
+    filterApplied: (FilterType, Pair<String, Int>) -> Unit,
+    filterRemoved: (FilterType) -> Unit,
+    loadMoreFilterElements: (FilterType) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val showLoadMoreSessionNames =
-        (filterState.totalNumberOfSessionNames > (filterState.sessionNameList.size - 1)) &&
-                filterState.sessionNameList.isNotEmpty()
-
     SlideAndExpandSection(
         borderColor = borderColor,
         cardContentColor = cardContentColor,
         cardContainerColor = cardContainerColor,
-        stage1Visible = filterState.filterSectionExpanded,
-        stage2Visible = filterState.filterSectionStage2Expanded,
+        stage1Visible = stage1Visible,
+        stage2Visible = stage2Visible,
         modifier = modifier
     ) {
-        // row to hold 'has session name' label and dropdown
-        LabelAndDropdownRow(
-            labelText = "Has session name:",
-            borderColor = borderColor,
-            selectedItem = filterState.selectedSessionName,
-            itemList = filterState.sessionNameList,
-            showLoadMoreItem = showLoadMoreSessionNames,
-            dropdownExpanded = filterState.sessionNameDropdownExpanded,
-            onClickDropdownItem = { onClickSessionNameDropdownItem(it) },
-            onClickLoadMoreItem = onClickLoadMoreSessionNames,
-            onClickDropdown = onClickSessionNameDropdown,
-            dismissDropdown = dismissSessionNameDropdown
-        )
+        for ((filterType, filterState) in filterStatesMap) {
+            // determine what to display for the selected item
+            val selectedItem: Pair<String, Int> =
+                if (filterState.selectedElementName == null) {
+                    Pair("Any", filterState.anyCount)
+                } else {
+                    filterState.elementList.firstOrNull { it.first == filterState.selectedElementName }
+                        ?: Pair(filterState.selectedElementName, 0)
+                }
+
+            // row to hold filter label and dropdown
+            LabelAndDropdownRow(
+                labelText = filterType.label,
+                borderColor = borderColor,
+                selectedItem = selectedItem,
+                itemList = filterState.elementList,
+                showLoadMoreItem =
+                    ((filterState.totalNumberOfElements > (filterState.elementList.size)) &&
+                    filterState.elementList.isNotEmpty()),
+                dropdownExpanded = filterState.dropdownExpanded,
+                defaultElementLabel = filterType.defaultElementLabel,
+                anyCount = filterState.anyCount,
+                filterApplied = { filterApplied(filterType, it) },
+                filterRemoved = { filterRemoved(filterType) },
+                loadMore = { loadMoreFilterElements(filterType) },
+                onClickDropdown = { onClickFilterDropdown(filterType) },
+                dismissDropdown = { dismissFilterDropdown(filterType) }
+            )
+        }
     }
 }

@@ -194,4 +194,14 @@ object DateTimeCalculator {
 
         return "$beginString - $endString"
     }
+
+    fun getStartAndEndDatesFromNullable(
+        startDate: String?,
+        endDate: String?
+    ): Pair<String, String> {
+        return Pair(
+            first = startDate ?: "2025-07-03",
+            second = endDate ?: getCurrentIsoDate()
+        )
+    }
 }

@@ -90,6 +90,14 @@ class OfflineSessionRepository(private val sessionDao: SessionDao) : SessionRepo
         endDate = endDate
     )
 
+    override fun getNumberOfUniqueSessionNamesAndFrequenciesStream(
+        startDate: String?,
+        endDate: String?
+    ): Flow<Int> = sessionDao.getNumberOfUniqueSessionNamesAndFrequencies(
+        startDate = startDate,
+        endDate = endDate
+    )
+
     override fun getNumSessionsStreamForFilteredTimeFrame(
         startDate: String?,
         endDate: String?,

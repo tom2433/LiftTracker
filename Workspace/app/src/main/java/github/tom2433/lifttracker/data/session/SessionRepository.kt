@@ -99,6 +99,11 @@ interface SessionRepository {
         endDate: String?
     ): Flow<List<SessionNameAndFrequency>>
 
+    fun getNumberOfUniqueSessionNamesAndFrequenciesStream(
+        startDate: String?,
+        endDate: String?
+    ): Flow<Int>
+
     fun getNumSessionsStreamForFilteredTimeFrame(
         startDate: String?,
         endDate: String?,
