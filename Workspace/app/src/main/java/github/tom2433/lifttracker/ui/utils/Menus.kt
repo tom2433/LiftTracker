@@ -1,8 +1,13 @@
 package github.tom2433.lifttracker.ui.utils
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
@@ -10,11 +15,17 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import github.tom2433.lifttracker.ui.viewModels.FilterState
 import github.tom2433.lifttracker.ui.viewModels.FilterType
@@ -89,8 +100,14 @@ fun FilterMenu(
     filterApplied: (FilterType, Pair<String, Int>) -> Unit,
     filterRemoved: (FilterType) -> Unit,
     loadMoreFilterElements: (FilterType) -> Unit,
+    currentNoteText: String,
+    onNoteChanged: (String) -> Unit,
+    onDoneNote: () -> Unit,
+    anyCountForNote: Int,
     modifier: Modifier = Modifier
 ) {
+    val focusManager = LocalFocusManager.current
+
     SlideAndExpandSection(
         borderColor = borderColor,
         cardContentColor = cardContentColor,
@@ -127,6 +144,57 @@ fun FilterMenu(
                 onClickDropdown = { onClickFilterDropdown(filterType) },
                 dismissDropdown = { dismissFilterDropdown(filterType) },
                 modifier = Modifier.padding(bottom = 8.dp)
+            )
+        }
+
+        // row to hold note filter label and textfield
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = modifier.fillMaxWidth()
+        ) {
+            // note filter label
+            Text(
+                text = "Contains note with text:",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier
+                    .padding(
+                        top = 8.dp,
+                        end = 16.dp
+                    )
+            )
+
+            // textfield for search text
+            OutlinedTextField(
+                value = currentNoteText,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = cardContentColor,
+                    unfocusedTextColor = cardContentColor,
+                    focusedLabelColor = cardContentColor,
+                    unfocusedLabelColor = cardContentColor,
+                    focusedBorderColor = borderColor,
+                    unfocusedBorderColor = borderColor,
+                    cursorColor = cardContentColor,
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent
+                ),
+                onValueChange = onNoteChanged,
+                label = {
+                    Text(
+                        text = "Note text (${anyCountForNote})",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                },
+                keyboardOptions = KeyboardOptions.Default.copy(
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        focusManager.clearFocus()
+                        onDoneNote()
+                    }
+                ),
+                modifier = Modifier.weight(1f)
             )
         }
     }

@@ -65,12 +65,14 @@ interface SessionRepository {
         endDate: String?,
         sessionName: String?,
         muscleGroupName: String?,
-        liftName: String?
+        liftName: String?,
+        sessionNote: String
     ): Flow<List<LiftSetCountPerMuscleGroup>>
 
     fun getNumSessionsStreamForTimeFrame(
         muscleGroupName: String?,
         liftName: String?,
+        sessionNote: String,
         startDate: String?,
         endDate: String?
     ): Flow<Int>
@@ -82,7 +84,8 @@ interface SessionRepository {
         fetchLimit: Int,
         sessionName: String?,
         muscleGroupName: String?,
-        liftName: String?
+        liftName: String?,
+        sessionNote: String
     ): Flow<List<SessionDetail>>
 
     suspend fun sessionIsInProgress(): Boolean
@@ -104,6 +107,7 @@ interface SessionRepository {
     fun getUniqueSessionNamesAndFrequenciesStream(
         muscleGroupName: String?,
         liftName: String?,
+        sessionNote: String,
         fetchLimit: Int,
         startDate: String?,
         endDate: String?
@@ -112,6 +116,7 @@ interface SessionRepository {
     fun getNumberOfUniqueSessionNamesAndFrequenciesStream(
         muscleGroupName: String?,
         liftName: String?,
+        sessionNote: String,
         startDate: String?,
         endDate: String?
     ): Flow<Int>
@@ -121,12 +126,14 @@ interface SessionRepository {
         endDate: String?,
         sessionName: String?,
         muscleGroupName: String?,
-        liftName: String?
+        liftName: String?,
+        sessionNote: String
     ): Flow<Int>
 
     fun getUniqueMuscleGroupNamesAndFrequenciesStream(
         sessionName: String?,
         liftName: String?,
+        sessionNote: String,
         fetchLimit: Int,
         startDate: String?,
         endDate: String?
@@ -135,6 +142,7 @@ interface SessionRepository {
     fun getUniqueLiftNamesAndFrequenciesStream(
         sessionName: String?,
         muscleGroupName: String?,
+        sessionNote: String,
         fetchLimit: Int,
         startDate: String?,
         endDate: String?
@@ -143,6 +151,7 @@ interface SessionRepository {
     fun getNumSessionsStreamAfterNameFilter(
         sessionName: String?,
         liftName: String?,
+        sessionNote: String,
         startDate: String?,
         endDate: String?
     ): Flow<Int>
@@ -150,6 +159,16 @@ interface SessionRepository {
     fun getNumSessionsStreamAfterMuscleGroupFilter(
         sessionName: String?,
         muscleGroupName: String?,
+        sessionNote: String,
+        startDate: String?,
+        endDate: String?
+    ): Flow<Int>
+
+    fun getNumSessionsStreamForNote(
+        sessionName: String?,
+        muscleGroupName: String?,
+        liftName: String?,
+        sessionNote: String,
         startDate: String?,
         endDate: String?
     ): Flow<Int>
@@ -157,6 +176,7 @@ interface SessionRepository {
     fun getNumberOfUniqueMuscleGroupNamesAndFrequenciesStream(
         sessionName: String?,
         liftName: String?,
+        sessionNote: String,
         startDate: String?,
         endDate: String?
     ): Flow<Int>
@@ -164,6 +184,7 @@ interface SessionRepository {
     fun getNumberOfUniqueLiftNamesAndFrequenciesStream(
         sessionName: String?,
         muscleGroupName: String?,
+        sessionNote: String,
         startDate: String?,
         endDate: String?
     ): Flow<Int>

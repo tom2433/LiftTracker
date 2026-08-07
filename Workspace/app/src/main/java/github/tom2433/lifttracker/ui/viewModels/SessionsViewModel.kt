@@ -115,7 +115,9 @@ class SessionsViewModel(
                             muscleGroupName =
                                 _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName,
                             liftName =
-                                _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName
+                                _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName,
+                            sessionNote =
+                                _sessionsUiState.value.filterNoteText
                         )
                     }
                 }.collect { numSessions ->
@@ -142,7 +144,9 @@ class SessionsViewModel(
                             muscleGroupName =
                                 _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName,
                             liftName =
-                                _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName
+                                _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName,
+                            sessionNote =
+                                _sessionsUiState.value.filterNoteText
                         )
                     } else {
                         flowOf(emptyList())
@@ -174,7 +178,9 @@ class SessionsViewModel(
                             muscleGroupName =
                                 _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName,
                             liftName =
-                                _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName
+                                _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName,
+                            sessionNote =
+                                _sessionsUiState.value.filterNoteText
                         )
                     }
                 }.collect { sessionDetails ->
@@ -1108,7 +1114,9 @@ class SessionsViewModel(
                         FilterType.SESSION_NAME to FilterState(),
                         FilterType.MUSCLE_GROUP to FilterState(),
                         FilterType.LIFT_NAME to FilterState()
-                    )
+                    ),
+                    filterNoteText = "",
+                    countForNote = 0
                 )
             }
 
@@ -1134,6 +1142,7 @@ class SessionsViewModel(
                     sessionRepository.getUniqueSessionNamesAndFrequenciesStream(
                         muscleGroupName = _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName,
                         liftName = _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName,
+                        sessionNote = _sessionsUiState.value.filterNoteText,
                         fetchLimit = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.fetchLimit ?: 10,
                         startDate = _sessionsUiState.value.startDate,
                         endDate = _sessionsUiState.value.endDate
@@ -1141,12 +1150,14 @@ class SessionsViewModel(
                     sessionRepository.getNumSessionsStreamForTimeFrame(
                         muscleGroupName = _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName,
                         liftName = _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName,
+                        sessionNote = _sessionsUiState.value.filterNoteText,
                         startDate = _sessionsUiState.value.startDate,
                         endDate = _sessionsUiState.value.endDate
                     ),
                     sessionRepository.getNumberOfUniqueSessionNamesAndFrequenciesStream(
                         muscleGroupName = _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName,
                         liftName = _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName,
+                        sessionNote = _sessionsUiState.value.filterNoteText,
                         startDate = _sessionsUiState.value.startDate,
                         endDate = _sessionsUiState.value.endDate
                     )
@@ -1186,6 +1197,7 @@ class SessionsViewModel(
                     sessionRepository.getUniqueMuscleGroupNamesAndFrequenciesStream(
                         sessionName = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
                         liftName = _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName,
+                        sessionNote = _sessionsUiState.value.filterNoteText,
                         fetchLimit = _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.fetchLimit ?: 10,
                         startDate = _sessionsUiState.value.startDate,
                         endDate = _sessionsUiState.value.endDate
@@ -1193,12 +1205,14 @@ class SessionsViewModel(
                     sessionRepository.getNumSessionsStreamAfterNameFilter(
                         sessionName = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
                         liftName = _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName,
+                        sessionNote = _sessionsUiState.value.filterNoteText,
                         startDate = _sessionsUiState.value.startDate,
                         endDate = _sessionsUiState.value.endDate
                     ),
                     sessionRepository.getNumberOfUniqueMuscleGroupNamesAndFrequenciesStream(
                         sessionName = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
                         liftName = _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName,
+                        sessionNote = _sessionsUiState.value.filterNoteText,
                         startDate = _sessionsUiState.value.startDate,
                         endDate = _sessionsUiState.value.endDate
                     )
@@ -1238,6 +1252,7 @@ class SessionsViewModel(
                     sessionRepository.getUniqueLiftNamesAndFrequenciesStream(
                         sessionName = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
                         muscleGroupName = _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName,
+                        sessionNote = _sessionsUiState.value.filterNoteText,
                         fetchLimit = _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.fetchLimit ?: 10,
                         startDate = _sessionsUiState.value.startDate,
                         endDate = _sessionsUiState.value.endDate
@@ -1245,12 +1260,14 @@ class SessionsViewModel(
                     sessionRepository.getNumSessionsStreamAfterMuscleGroupFilter(
                         sessionName = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
                         muscleGroupName = _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName,
+                        sessionNote = _sessionsUiState.value.filterNoteText,
                         startDate = _sessionsUiState.value.startDate,
                         endDate = _sessionsUiState.value.endDate
                     ),
                     sessionRepository.getNumberOfUniqueLiftNamesAndFrequenciesStream(
                         sessionName = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
                         muscleGroupName = _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName,
+                        sessionNote = _sessionsUiState.value.filterNoteText,
                         startDate = _sessionsUiState.value.startDate,
                         endDate = _sessionsUiState.value.endDate
                     )
@@ -1279,6 +1296,24 @@ class SessionsViewModel(
                                     thisFilterState
                                 }
                             }
+                        )
+                    }
+                }
+            }
+
+            // collect the anyCount for note
+            launch {
+                sessionRepository.getNumSessionsStreamForNote(
+                    sessionName = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
+                    muscleGroupName = _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName,
+                    liftName = _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName,
+                    sessionNote = _sessionsUiState.value.filterNoteText,
+                    startDate = _sessionsUiState.value.startDate,
+                    endDate = _sessionsUiState.value.endDate
+                ).collect { anyCountForNote ->
+                    _sessionsUiState.update { currentState ->
+                        currentState.copy(
+                            countForNote = anyCountForNote
                         )
                     }
                 }
@@ -1408,12 +1443,56 @@ class SessionsViewModel(
         beginFilterCollectionJob()
     }
 
+    fun filterNoteChanged(newFilterNote: String) {
+        // update the ui state
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                filterNoteText = newFilterNote
+            )
+        }
+
+        if (newFilterNote.trim() == "") {
+            _sessionsUiState.update { currentState ->
+                currentState.copy(
+                    noteFilterApplied = false
+                )
+            }
+        }
+
+        // update the filter label
+        updateFilterLabel()
+
+        // restart the filter collection
+        filterCollectionJob?.cancel()
+        beginFilterCollectionJob()
+
+        if (newFilterNote.trim() == "") {
+            refresh(true)
+        }
+    }
+
+    fun filterNoteDone() {
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                noteFilterApplied = currentState.filterNoteText.trim() != ""
+            )
+        }
+
+        updateFilterLabel()
+
+        refresh(true)
+    }
+
     fun updateFilterLabel() {
         var numFiltersApplied = 0
         for (filterState in _sessionsUiState.value.filterStatesMap.values) {
             if (filterState.selectedElementName != null) {
                 numFiltersApplied++
             }
+        }
+
+        if (_sessionsUiState.value.noteFilterApplied) {
+            numFiltersApplied++
         }
 
         if (numFiltersApplied != 0) {
@@ -1514,6 +1593,9 @@ data class SessionsUiState(
     val filterText: String = "Filter",
     val filterSectionStage1Expanded: Boolean = false,
     val filterSectionStage2Expanded: Boolean = false,
+    val filterNoteText: String = "",
+    val countForNote: Int = 0,
+    val noteFilterApplied: Boolean = false
 )
 
 data class FilterState(
