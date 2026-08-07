@@ -69,6 +69,8 @@ interface SessionRepository {
     ): Flow<List<LiftSetCountPerMuscleGroup>>
 
     fun getNumSessionsStreamForTimeFrame(
+        muscleGroupName: String?,
+        liftName: String?,
         startDate: String?,
         endDate: String?
     ): Flow<Int>
@@ -100,12 +102,16 @@ interface SessionRepository {
     suspend fun moveLiftSet(liftSetId: Int, down: Boolean = false)
 
     fun getUniqueSessionNamesAndFrequenciesStream(
+        muscleGroupName: String?,
+        liftName: String?,
         fetchLimit: Int,
         startDate: String?,
         endDate: String?
     ): Flow<List<SessionNameAndFrequency>>
 
     fun getNumberOfUniqueSessionNamesAndFrequenciesStream(
+        muscleGroupName: String?,
+        liftName: String?,
         startDate: String?,
         endDate: String?
     ): Flow<Int>
@@ -120,6 +126,7 @@ interface SessionRepository {
 
     fun getUniqueMuscleGroupNamesAndFrequenciesStream(
         sessionName: String?,
+        liftName: String?,
         fetchLimit: Int,
         startDate: String?,
         endDate: String?
@@ -135,6 +142,7 @@ interface SessionRepository {
 
     fun getNumSessionsStreamAfterNameFilter(
         sessionName: String?,
+        liftName: String?,
         startDate: String?,
         endDate: String?
     ): Flow<Int>
@@ -148,6 +156,7 @@ interface SessionRepository {
 
     fun getNumberOfUniqueMuscleGroupNamesAndFrequenciesStream(
         sessionName: String?,
+        liftName: String?,
         startDate: String?,
         endDate: String?
     ): Flow<Int>

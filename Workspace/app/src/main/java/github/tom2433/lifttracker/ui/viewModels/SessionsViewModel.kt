@@ -1132,16 +1132,21 @@ class SessionsViewModel(
             launch {
                 combine(
                     sessionRepository.getUniqueSessionNamesAndFrequenciesStream(
-                        fetchLimit = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.fetchLimit
-                            ?: 10,
+                        muscleGroupName = _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName,
+                        liftName = _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName,
+                        fetchLimit = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.fetchLimit ?: 10,
                         startDate = _sessionsUiState.value.startDate,
                         endDate = _sessionsUiState.value.endDate
                     ),
                     sessionRepository.getNumSessionsStreamForTimeFrame(
+                        muscleGroupName = _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName,
+                        liftName = _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName,
                         startDate = _sessionsUiState.value.startDate,
                         endDate = _sessionsUiState.value.endDate
                     ),
                     sessionRepository.getNumberOfUniqueSessionNamesAndFrequenciesStream(
+                        muscleGroupName = _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName,
+                        liftName = _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName,
                         startDate = _sessionsUiState.value.startDate,
                         endDate = _sessionsUiState.value.endDate
                     )
@@ -1180,17 +1185,20 @@ class SessionsViewModel(
                 combine(
                     sessionRepository.getUniqueMuscleGroupNamesAndFrequenciesStream(
                         sessionName = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
+                        liftName = _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName,
                         fetchLimit = _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.fetchLimit ?: 10,
                         startDate = _sessionsUiState.value.startDate,
                         endDate = _sessionsUiState.value.endDate
                     ),
                     sessionRepository.getNumSessionsStreamAfterNameFilter(
                         sessionName = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
+                        liftName = _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName,
                         startDate = _sessionsUiState.value.startDate,
                         endDate = _sessionsUiState.value.endDate
                     ),
                     sessionRepository.getNumberOfUniqueMuscleGroupNamesAndFrequenciesStream(
                         sessionName = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
+                        liftName = _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName,
                         startDate = _sessionsUiState.value.startDate,
                         endDate = _sessionsUiState.value.endDate
                     )
@@ -1526,11 +1534,11 @@ enum class FilterType(
         defaultElementLabel = "Any"
     ),
     MUSCLE_GROUP(
-        label = "Muscle group:",
+        label = "Contains Muscle group:",
         defaultElementLabel = "Any"
     ),
     LIFT_NAME(
-        label = "Lift name:",
+        label = "Contains lift:",
         defaultElementLabel = "Any"
     )
 }
