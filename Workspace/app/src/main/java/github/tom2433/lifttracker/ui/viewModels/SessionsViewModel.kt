@@ -1116,6 +1116,7 @@ class SessionsViewModel(
                         FilterType.LIFT_NAME to FilterState()
                     ),
                     filterNoteText = "",
+                    noteFilterApplied = false,
                     countForNote = 0
                 )
             }
