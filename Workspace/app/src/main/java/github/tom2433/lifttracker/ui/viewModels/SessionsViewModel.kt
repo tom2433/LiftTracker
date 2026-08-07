@@ -1100,11 +1100,29 @@ class SessionsViewModel(
 
             delay(300)
 
+            // finish animation and reset all filter states
             _sessionsUiState.update { currentState ->
                 currentState.copy(
-                    filterSectionStage1Expanded = false
+                    filterSectionStage1Expanded = false,
+                    filterStatesMap = mapOf(
+                        FilterType.SESSION_NAME to FilterState(),
+                        FilterType.MUSCLE_GROUP to FilterState(),
+                        FilterType.LIFT_NAME to FilterState()
+                    )
                 )
             }
+
+            // cancel filter collection job
+            filterCollectionJob?.cancel()
+            filterCollectionJob = null
+
+            // refresh screen only if the user has applied filters
+            if (_sessionsUiState.value.filterText != "Filter") {
+                refresh(refreshEverything = true)
+            }
+
+            // reset filter label
+            updateFilterLabel()
         }
     }
 

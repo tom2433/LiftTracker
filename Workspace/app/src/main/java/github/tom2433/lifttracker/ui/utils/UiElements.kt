@@ -2,6 +2,7 @@ package github.tom2433.lifttracker.ui.utils
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandHorizontally
@@ -20,8 +21,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -58,6 +61,7 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -1242,9 +1246,11 @@ fun SlideAndExpandSection(
 ) {
     // column to hold all contents
     Column(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .animateContentSize(),
         verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.End
+        horizontalAlignment = Alignment.End,
     ) {
         // animated visibility for top divider
         AnimatedVisibility(
@@ -1264,54 +1270,101 @@ fun SlideAndExpandSection(
             )
         }
 
-        // animated visibility for the interior content
-        AnimatedVisibility(
-            visible = stage2Visible,
-            enter = expandVertically(
-                expandFrom = Alignment.Top,
-                animationSpec = tween(300)
-            ) + fadeIn(tween(300)),
-            exit = shrinkVertically(
-                shrinkTowards = Alignment.Top,
-                animationSpec = tween(300)
-            ) + fadeOut(tween(300))
+        // row to hold vertical dividers and interior content
+        Row(
+            horizontalArrangement = Arrangement.Start,
+            verticalAlignment = Alignment.Top,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Min)
         ) {
-            // card to hold interior content
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors().copy(
-                    contentColor = cardContentColor,
-                    containerColor = cardContainerColor
+            // animated visibility for the left vertical divider
+            AnimatedVisibility(
+                visible = stage2Visible,
+                enter = expandVertically(
+                    expandFrom = Alignment.Top,
+                    animationSpec = tween(300)
                 ),
-                shape = RoundedCornerShape(0.dp)
+                exit = shrinkVertically(
+                    shrinkTowards = Alignment.Top,
+                    animationSpec = tween(300)
+                )
             ) {
-                // column to hold card content
-                Column(
+                VerticalDivider(
+                    modifier = Modifier.fillMaxHeight(),
+                    color = borderColor
+                )
+            }
+
+            // animated visibility for the interior content
+            AnimatedVisibility(
+                visible = stage2Visible,
+                enter = expandVertically(
+                    expandFrom = Alignment.Top,
+                    animationSpec = tween(300)
+                ) + fadeIn(tween(300)),
+                exit = shrinkVertically(
+                    shrinkTowards = Alignment.Top,
+                    animationSpec = tween(300)
+                ) + fadeOut(tween(300)),
+                modifier = Modifier.weight(1f)
+            ) {
+                // card to hold interior content
+                Card(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(
-                            top = 16.dp,
-                            start = 16.dp,
-                            end = 16.dp,
-                            bottom = 8.dp
-                        ),
-                    verticalArrangement = Arrangement.Top,
-                    horizontalAlignment = Alignment.CenterHorizontally,
+                        .fillMaxWidth(),
+                    colors = CardDefaults.cardColors().copy(
+                        contentColor = cardContentColor,
+                        containerColor = cardContainerColor
+                    ),
+                    shape = RoundedCornerShape(0.dp)
                 ) {
-                    content()
+                    // column to hold card content
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(
+                                top = 16.dp,
+                                start = 16.dp,
+                                end = 16.dp,
+                                bottom = 8.dp
+                            ),
+                        verticalArrangement = Arrangement.Top,
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        content()
+                    }
                 }
+            }
+
+            // animatedVisibility for the right vertical divider
+            AnimatedVisibility(
+                visible = stage2Visible,
+                enter = expandVertically(
+                    expandFrom = Alignment.Top,
+                    animationSpec = tween(300)
+                ),
+                exit = shrinkVertically(
+                    shrinkTowards = Alignment.Top,
+                    animationSpec = tween(300)
+                )
+            ) {
+                VerticalDivider(
+                    modifier = Modifier.fillMaxHeight(),
+                    color = borderColor
+                )
             }
         }
 
         // animated visibility for the bottom divider
         AnimatedVisibility(
             visible = stage2Visible,
-            enter = slideInVertically(
-                initialOffsetY = { -it },
+            enter = expandHorizontally(
+                expandFrom = Alignment.End,
                 animationSpec = tween(300)
             ),
-            exit = slideOutVertically(
-                targetOffsetY = { -it },
+            exit = shrinkHorizontally(
+                shrinkTowards = Alignment.End,
                 animationSpec = tween(300)
             )
         ) {
