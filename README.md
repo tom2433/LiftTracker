@@ -100,13 +100,16 @@ https://github.com/patrykandpatrick/vico
         - list of lift sets and their set metric values in the order of which they were trained. If two sets of the same lift were trained at different parts of the session, they will appear as such.
         - If a set of a new lift is present, a new lift header will pop up to group those sets together. lift groups should be able to be expanded and collapsed.
         - user shall be able to long-tap a particular set, where an edit button will pop up. If the user clicks it, a dialog will prompt the user to edit all of the fields associated with a set, including the set name and note, the weight metric note, and the second metric note. User can also reorder this set via up/down buttons, or delete it via the delete button, all of which are in this expandable section.
+    - User can filter the sessions displayed by session name, muscle group trained, lift trained, and by a string contained in a note.
     - <ins>**Everything beyond this point has not been implemented yet**</ins>
-    - allow user to filter the sessions screen by session name or session tag. (elements of a note separated by semicolons).
-        - potentially add a "sort" functionality as well.
     - user shall view all set sections in all historical lift cards by pressing the "expand all" button at the top of the DisplayAllSetDataForSession.
     - An expandable/collapsible analytics section to display analytics data in each expanded session section (determine what to put here). some ideas:
         - line graph showing deviation from the average (+, -) for each lift or for each set, take into account the session set number if possible.
-        - line graph showing the progression of the currently selected lift. This could be average weight, average reps, or a ratio of weight to reps (user should be able to switch between these). If no lifts are selected, it should take into account every lift for the session.
+            - This should contain three options for metric: weight, reps or time, and weight per rep or weight per minute.
+            - Should contain more options for time frame: past month, past two months, past year, all time
+            - The x axis should represent the session set number. For session set numbers where the user has not trained the particular lift, the line should be broken or dotted.
+        - line graph showing the progression of all sessions that have the name of the given session, if and only if there are at least three other sessions with the same name.
+            - should also contain three options for metric: weight, reps or time, and weight per rep or weight per minute.
 - [ ] F9-1: Allow user to filter by session name, session note, session name and note, muscle groups trained, lifts trained on sessions screen
 - [ ] F6-2: Implement the most recent lift sets at the bottom of LiftScreen (use the same function as used for F8-1?)
 
