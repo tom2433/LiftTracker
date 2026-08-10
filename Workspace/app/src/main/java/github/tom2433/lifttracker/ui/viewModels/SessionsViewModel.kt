@@ -1117,7 +1117,7 @@ class SessionsViewModel(
                     ),
                     filterNoteText = "",
                     noteFilterApplied = false,
-                    countForNote = 0
+                    anyCountForFilter = 0
                 )
             }
 
@@ -1148,13 +1148,6 @@ class SessionsViewModel(
                         startDate = _sessionsUiState.value.startDate,
                         endDate = _sessionsUiState.value.endDate
                     ),
-                    sessionRepository.getNumSessionsStreamForTimeFrame(
-                        muscleGroupName = _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName,
-                        liftName = _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName,
-                        sessionNote = _sessionsUiState.value.filterNoteText,
-                        startDate = _sessionsUiState.value.startDate,
-                        endDate = _sessionsUiState.value.endDate
-                    ),
                     sessionRepository.getNumberOfUniqueSessionNamesAndFrequenciesStream(
                         muscleGroupName = _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName,
                         liftName = _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName,
@@ -1162,26 +1155,24 @@ class SessionsViewModel(
                         startDate = _sessionsUiState.value.startDate,
                         endDate = _sessionsUiState.value.endDate
                     )
-                ) { sessionNamesAndFrequencies, anyCount, totalCount ->
-                    Triple(
+                ) { sessionNamesAndFrequencies, totalCount ->
+                    Pair(
                         first = sessionNamesAndFrequencies.map { sessionNameAndFrequency ->
                             Pair(
                                 first = sessionNameAndFrequency.sessionName,
                                 second = sessionNameAndFrequency.sessionFrequency
                             )
                         },
-                        second = anyCount,
-                        third = totalCount
+                        second = totalCount
                     )
-                }.collect { dataTriple ->
+                }.collect { dataPair ->
                     _sessionsUiState.update { currentState ->
                         currentState.copy(
                             filterStatesMap = currentState.filterStatesMap.mapValues { (filterType, filterState) ->
                                 if (filterType == FilterType.SESSION_NAME) {
                                     filterState.copy(
-                                        elementList = dataTriple.first,
-                                        anyCount = dataTriple.second,
-                                        totalNumberOfElements = dataTriple.third
+                                        elementList = dataPair.first,
+                                        totalNumberOfElements = dataPair.second
                                     )
                                 } else {
                                     filterState
@@ -1203,13 +1194,6 @@ class SessionsViewModel(
                         startDate = _sessionsUiState.value.startDate,
                         endDate = _sessionsUiState.value.endDate
                     ),
-                    sessionRepository.getNumSessionsStreamAfterNameFilter(
-                        sessionName = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
-                        liftName = _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName,
-                        sessionNote = _sessionsUiState.value.filterNoteText,
-                        startDate = _sessionsUiState.value.startDate,
-                        endDate = _sessionsUiState.value.endDate
-                    ),
                     sessionRepository.getNumberOfUniqueMuscleGroupNamesAndFrequenciesStream(
                         sessionName = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
                         liftName = _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName,
@@ -1217,26 +1201,24 @@ class SessionsViewModel(
                         startDate = _sessionsUiState.value.startDate,
                         endDate = _sessionsUiState.value.endDate
                     )
-                ) { muscleGroupNamesAndFrequencies, anyCount, totalCount ->
-                    Triple(
+                ) { muscleGroupNamesAndFrequencies, totalCount ->
+                    Pair(
                         first = muscleGroupNamesAndFrequencies.map { muscleGroupNameAndFrequency ->
                             Pair(
                                 first = muscleGroupNameAndFrequency.muscleGroupName,
                                 second = muscleGroupNameAndFrequency.muscleGroupFrequency
                             )
                         },
-                        second = anyCount,
-                        third = totalCount
+                        second = totalCount
                     )
-                }.collect { dataTriple ->
+                }.collect { dataPair ->
                     _sessionsUiState.update { currentState ->
                         currentState.copy(
                             filterStatesMap = currentState.filterStatesMap.mapValues { (thisFilterType, thisFilterState) ->
                                 if (thisFilterType == FilterType.MUSCLE_GROUP) {
                                     thisFilterState.copy(
-                                        elementList = dataTriple.first,
-                                        anyCount = dataTriple.second,
-                                        totalNumberOfElements = dataTriple.third
+                                        elementList = dataPair.first,
+                                        totalNumberOfElements = dataPair.second
                                     )
                                 } else {
                                     thisFilterState
@@ -1258,13 +1240,6 @@ class SessionsViewModel(
                         startDate = _sessionsUiState.value.startDate,
                         endDate = _sessionsUiState.value.endDate
                     ),
-                    sessionRepository.getNumSessionsStreamAfterMuscleGroupFilter(
-                        sessionName = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
-                        muscleGroupName = _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName,
-                        sessionNote = _sessionsUiState.value.filterNoteText,
-                        startDate = _sessionsUiState.value.startDate,
-                        endDate = _sessionsUiState.value.endDate
-                    ),
                     sessionRepository.getNumberOfUniqueLiftNamesAndFrequenciesStream(
                         sessionName = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
                         muscleGroupName = _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName,
@@ -1272,26 +1247,24 @@ class SessionsViewModel(
                         startDate = _sessionsUiState.value.startDate,
                         endDate = _sessionsUiState.value.endDate
                     )
-                ) { liftNamesAndFrequencies, anyCount, totalCount ->
-                    Triple(
+                ) { liftNamesAndFrequencies, totalCount ->
+                    Pair(
                         first = liftNamesAndFrequencies.map { liftNameAndFrequency ->
                             Pair(
                                 first = liftNameAndFrequency.liftName,
                                 second = liftNameAndFrequency.liftFrequency
                             )
                         },
-                        second = anyCount,
-                        third = totalCount
+                        second = totalCount
                     )
-                }.collect { dataTriple ->
+                }.collect { dataPair ->
                     _sessionsUiState.update { currentState ->
                         currentState.copy(
                             filterStatesMap = currentState.filterStatesMap.mapValues { (thisFilterType, thisFilterState) ->
                                 if (thisFilterType == FilterType.LIFT_NAME) {
                                     thisFilterState.copy(
-                                        elementList = dataTriple.first,
-                                        anyCount = dataTriple.second,
-                                        totalNumberOfElements = dataTriple.third
+                                        elementList = dataPair.first,
+                                        totalNumberOfElements = dataPair.second
                                     )
                                 } else {
                                     thisFilterState
@@ -1302,19 +1275,19 @@ class SessionsViewModel(
                 }
             }
 
-            // collect the anyCount for note
+            // collect the anyCount for all filters
             launch {
-                sessionRepository.getNumSessionsStreamForNote(
+                sessionRepository.getNumSessionsStreamForFilteredTimeFrame(
+                    startDate = _sessionsUiState.value.startDate,
+                    endDate = _sessionsUiState.value.endDate,
                     sessionName = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
                     muscleGroupName = _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName,
                     liftName = _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName,
-                    sessionNote = _sessionsUiState.value.filterNoteText,
-                    startDate = _sessionsUiState.value.startDate,
-                    endDate = _sessionsUiState.value.endDate
-                ).collect { anyCountForNote ->
+                    sessionNote = _sessionsUiState.value.filterNoteText
+                ).collect { anyCountForAll ->
                     _sessionsUiState.update { currentState ->
                         currentState.copy(
-                            countForNote = anyCountForNote
+                            anyCountForFilter = anyCountForAll
                         )
                     }
                 }
@@ -1595,8 +1568,8 @@ data class SessionsUiState(
     val filterSectionStage1Expanded: Boolean = false,
     val filterSectionStage2Expanded: Boolean = false,
     val filterNoteText: String = "",
-    val countForNote: Int = 0,
-    val noteFilterApplied: Boolean = false
+    val noteFilterApplied: Boolean = false,
+    val anyCountForFilter: Int = 0
 )
 
 data class FilterState(
@@ -1604,7 +1577,6 @@ data class FilterState(
     val elementList: List<Pair<String, Int>> = emptyList(),
     val dropdownExpanded: Boolean = false,
     val fetchLimit: Int = 10,
-    val anyCount: Int = 0,
     val totalNumberOfElements: Int = 0
 )
 

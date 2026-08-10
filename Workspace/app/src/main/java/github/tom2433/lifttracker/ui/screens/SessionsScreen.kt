@@ -216,7 +216,7 @@ fun SessionsScreen(
             currentNoteText = sessionsUiState.filterNoteText,
             onNoteChanged = { viewModel.filterNoteChanged(it) },
             onDoneNote = { viewModel.filterNoteDone() },
-            anyCountForNote = sessionsUiState.countForNote,
+            anyCountForAll = sessionsUiState.anyCountForFilter,
             modifier = Modifier.padding(bottom = 16.dp)
         )
 

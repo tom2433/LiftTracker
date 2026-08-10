@@ -103,7 +103,7 @@ fun FilterMenu(
     currentNoteText: String,
     onNoteChanged: (String) -> Unit,
     onDoneNote: () -> Unit,
-    anyCountForNote: Int,
+    anyCountForAll: Int,
     modifier: Modifier = Modifier
 ) {
     val focusManager = LocalFocusManager.current
@@ -120,7 +120,7 @@ fun FilterMenu(
             // determine what to display for the selected item
             val selectedItem: Pair<String, Int> =
                 if (filterState.selectedElementName == null) {
-                    Pair("Any", filterState.anyCount)
+                    Pair("Any", anyCountForAll)
                 } else {
                     filterState.elementList.firstOrNull { it.first == filterState.selectedElementName }
                         ?: Pair(filterState.selectedElementName, 0)
@@ -137,7 +137,7 @@ fun FilterMenu(
                     filterState.elementList.isNotEmpty()),
                 dropdownExpanded = filterState.dropdownExpanded,
                 defaultElementLabel = filterType.defaultElementLabel,
-                anyCount = filterState.anyCount,
+                anyCount = anyCountForAll,
                 filterApplied = { filterApplied(filterType, it) },
                 filterRemoved = { filterRemoved(filterType) },
                 loadMore = { loadMoreFilterElements(filterType) },
@@ -181,7 +181,7 @@ fun FilterMenu(
                 onValueChange = onNoteChanged,
                 label = {
                     Text(
-                        text = "Note text (${anyCountForNote})",
+                        text = "Note text (${anyCountForAll})",
                         style = MaterialTheme.typography.bodyMedium
                     )
                 },

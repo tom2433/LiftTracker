@@ -148,31 +148,6 @@ interface SessionRepository {
         endDate: String?
     ): Flow<List<LiftNameAndFrequency>>
 
-    fun getNumSessionsStreamAfterNameFilter(
-        sessionName: String?,
-        liftName: String?,
-        sessionNote: String,
-        startDate: String?,
-        endDate: String?
-    ): Flow<Int>
-
-    fun getNumSessionsStreamAfterMuscleGroupFilter(
-        sessionName: String?,
-        muscleGroupName: String?,
-        sessionNote: String,
-        startDate: String?,
-        endDate: String?
-    ): Flow<Int>
-
-    fun getNumSessionsStreamForNote(
-        sessionName: String?,
-        muscleGroupName: String?,
-        liftName: String?,
-        sessionNote: String,
-        startDate: String?,
-        endDate: String?
-    ): Flow<Int>
-
     fun getNumberOfUniqueMuscleGroupNamesAndFrequenciesStream(
         sessionName: String?,
         liftName: String?,
