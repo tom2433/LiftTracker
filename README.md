@@ -65,11 +65,6 @@ https://github.com/patrykandpatrick/vico
             - % of set volume for the muscle group
             - Avg. weight
             - Avg. # of reps per set \~or\~ Avg. time per set
-- [ ] F7: Implement Minimal Line Graphs for Muscle Group Cards and Lift Cards.
-    - user must be able to change timeframe in preferences
-    - show color representing status of improving, maintaining, or declining.
-- [ ] F6-1: Implement a [date range picker](https://developer.android.com/develop/ui/compose/components/datepickers#range) so the user can specify a custom range to view the lift statistics on the lift screen
-- [ ] F6-3: Replace the "% of overall set volume" and "% of set volume for {muscleGroup}" with pie charts
 - [x] F8: Implement the Record Session screen
     - Clicking the Begin session nav drawer element will bring the user to the Record Session screen, which contains one large central button containing the Play Arrow icon.
     - Clicking this play arrow icon will create a new lift_day in the database, with the in_progress column set to true
@@ -78,13 +73,7 @@ https://github.com/patrykandpatrick/vico
         - this header row contains a pencil icon on the left with the lift session's name and note directly beside it to the right, as well as today's date.
         - All the way on the right is the Finish button, which will delete the lift_day if the user has not recorded any lifts for it, or it will change the in_progress column of the current lift_day to false (current functionality).
     - Clicking the header row section with the pencil icon and lift_day name and note will popup an element entry dialog allowing the user to edit the name and note of the current session.
-- [ ] F8-1: (in progress) Implement the viewing of historical data for each lift in progress. Button to animate the visibility of this data should be above the top lift set in progress card, and it should bring down an outlined section showing the sets of the most recent session of which this lift was trained.
-    - The name of the session, the date, and the note for the session should be viewable, along with the muscle groups trained during.
-    - Optional ability to view the second most recent session as well as the third, fourth, etc.
-- [ ] F8-2: Implement Session labels:
-    - Sessions will eventually be able to be categorized based on their name as well as their note.
-    - This functionality will be mostly utilized in the analytics screen, but as for the session in progress screen, the user should be able to expand a section for quick-add buttons for both the session name as well as the note.
-- [ ] F9: Implement the Sessions Screen
+- [ ] F9: (In progress) Implement the Sessions Screen
     - interactable list of sessions that the user has logged
     - should stay relatively simple while maximizing functionality
     - user can customize time frame from which sessions are fetched, only displaying 10 at a time with an option to load more at the bottom. By default, the sessions screen uses the "All time" timeframe while only displaying the 10 most recent sessions. Other timeframe options include:
@@ -110,23 +99,40 @@ https://github.com/patrykandpatrick/vico
             - The x axis should represent the session set number. For session set numbers where the user has not trained the particular lift, the line should be broken or dotted.
         - line graph showing the progression of all sessions that have the name of the given session, if and only if there are at least three other sessions with the same name.
             - should also contain three options for metric: weight, reps or time, and weight per rep or weight per minute.
-- [ ] F9-1: Allow user to filter by session name, session note, session name and note, muscle groups trained, lifts trained on sessions screen
-- [ ] F6-2: Implement the most recent lift sets at the bottom of LiftScreen (use the same function as used for F8-1?)
+- [ ] F10: Revamp the muscle groups screen
+    - add a "sort by" functionality
+    - lift cards should be displayed differently to allow for easier visibility in a smaller area; currently they take up too much room. (fill max width, thinner with potentially alternating colors)
+    - raw data on the muscle group cards should not load in until after the user has clicked it, with the exception of name, note, and last date trained
+        - raw data to load in should include:
+            - a pie chart showing the lift distribution of the muscle group (how much of each lift is trained) with customizable timeframe.
+    - Implement Minimal Line Graphs for Muscle Group Cards and Lift screens.
+        - user must be able to change timeframe in preferences
+        - show color representing status of improving, maintaining, or declining.
+    - revamp the lift screen
+        - add a custom date range picker to customize which timeframe the lift statistics apply to
+        - remove the % of overall set volume, it doesn't make sense
+        - simplify the lift statistics so that they are easier to read.
+        - implement most recent lift sets (historical lift set cards)
+        - implement average line graph distribution for weight, reps/time, and weight per rep or weight per minute. Account for times when the lift usually only has one set.
+- [ ] F11: revamp the record session screen
+    - experiment with colors; maybe change the solid colored cards to cards with borders only.
+    - the search functionality for the existing lift entry card should also search muscle groups in addition to lift names.
+    - Implement the viewing of historical data for each lift in progress. Button to animate the visibility of this data should be above the top lift set in progress card, and it should bring down an outlined section showing the sets of the most recent session of which this lift was trained.
+        - The name of the session, the date, and the note for the session should be viewable, along with the muscle groups trained during.
+        - Optional ability to view the second most recent session as well as the third, fourth, etc.
+    - potentially expandible/collapsable analytics section to display the average distribution of weight, reps/time, weight per rep, or weight per minute in relation to the current session's distribution. Include time frame tags as well. Try to also include labels for data points.
+- [ ] F12: Implement the settings screen
+    - add a setting for managing units
+- [ ] F13: Code cleanup and refinement
+    - documentation everywhere
+    - experiment with lazy columns vs. keyed columns.
+
 
 ### Misc. things to do:
 
 - [x] edit the profile note color on the switch profile nav drawer dropdown element to improve readability issues due to contrast.
 - [x] change the name of the ```units``` table to ```lift_units``` to avoid confusion with Kotlin's ```Unit``` type.
 - [x] move the scrollable columns on the dialogs so the user can see the buttons the entire time
-- [ ] add a setting for managing units
-- [ ] raw data on the muscle group cards should not load until after the user has clicked it.
-- [ ] % of overall set volume on lift screen literally does not make any sense; remove it
-- [ ] also include the muscle groups in the search suggestions on the existing lift entry card.
-- [ ] put a "usual pattern" line graph of average distribution between weight values per set in the session in progress screen underneath a lift in progress. put time-frame tags on the line graph for past month and all time.
-- [ ] on lift screen, show most recent sets as bar graph. potentially put a pie chart of lift distribution on expanded muscle group card.
-- [ ] need on lift set in progress card for session in progress screen: average weight/reps for this lift given it's lift set number, muscle group set number, and session set number.
-- [ ] add a "sort by" on the muscle groups screen.
-- [ ] put the edit note button on the right side of the weight and rep/time entry textfields. try to mirror this UI in the set entry dialogs.
 
 # Data Structure
 
