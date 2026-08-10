@@ -672,3 +672,7 @@ when a session note is too long, the three dot menu disappears from the historic
 ## 08/06
 
 volume line graph on the muscle groups and lift screen, intensity line graphs on the sessions screen.
+
+## 08/09
+
+make it so that lift cards display differently depending on how many lift cards need to be displayed (how many lift IDs exist for that muscle group) on the muscle groups screen. (fill max width, thinner with potentially alternating colors)
