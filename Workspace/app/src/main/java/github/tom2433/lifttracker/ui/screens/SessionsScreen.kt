@@ -375,6 +375,9 @@ fun SessionsScreen(
                                         },
                                         onClickDeleteHistoricalSet = {
                                             viewModel.showDeleteHistoricalSetDialog(it)
+                                        },
+                                        onClickExpandAllHistoricalLiftCards = {
+                                            viewModel.expandAllHistoricalLiftCards()
                                         }
                                     )
                                 }
@@ -584,6 +587,7 @@ fun SessionCard(
     onClickMoveHistoricalSetUp: (Int) -> Unit,
     onClickMoveHistoricalSetDown: (Int) -> Unit,
     onClickDeleteHistoricalSet: (Int) -> Unit,
+    onClickExpandAllHistoricalLiftCards: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     // opaque text color for notes/dates
@@ -777,6 +781,7 @@ fun SessionCard(
                     onClickMoveHistoricalSetDown = { onClickMoveHistoricalSetDown(it) },
                     onClickMoveHistoricalSetUp = { onClickMoveHistoricalSetUp(it) },
                     onClickDeleteHistoricalSet = { onClickDeleteHistoricalSet(it) },
+                    onClickExpandAll = onClickExpandAllHistoricalLiftCards,
                     modifier = Modifier.padding(top = 8.dp)
                 )
             }

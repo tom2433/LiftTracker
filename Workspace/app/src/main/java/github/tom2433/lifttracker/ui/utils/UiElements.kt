@@ -572,11 +572,32 @@ fun DisplayAllSetDataForSession(
     onClickMoveHistoricalSetUp: (Int) -> Unit,
     onClickMoveHistoricalSetDown: (Int) -> Unit,
     onClickDeleteHistoricalSet: (Int) -> Unit,
+    onClickExpandAll: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column (
         modifier = modifier.fillMaxWidth()
     ) {
+        // row to hold expand all button (expands all historical lift sections)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp),
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = "Expand all",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.ExtraBold,
+                modifier = Modifier
+                    .clickable(
+                        onClick = onClickExpandAll
+                    )
+            )
+        }
+
         // loop thru each pair<Lift id, list of LiftSet ids>
         for ((index, liftAndSetsPair) in displaySetList.withIndex()) {
             // retrieve the LiftSearchDetail object from liftDetailMap

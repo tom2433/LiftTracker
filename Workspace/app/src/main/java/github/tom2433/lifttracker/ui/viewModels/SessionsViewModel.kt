@@ -1504,6 +1504,18 @@ class SessionsViewModel(
         filterCollectionJob?.cancel()
         beginFilterCollectionJob()
     }
+
+    fun expandAllHistoricalLiftCards() {
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                currentSessionLiftDetailMap = currentState.currentSessionLiftDetailMap.mapValues { (_, liftSearchDetail) ->
+                    liftSearchDetail.copy(
+                        selected = true
+                    )
+                }
+            )
+        }
+    }
 }
 
 /**
