@@ -58,6 +58,7 @@ class SessionsViewModel(
     private var refreshJob: Job? = null
     private var setCollectionJob: Job? = null
     private var filterCollectionJob: Job? = null
+    private var liftSummaryJob: Job? = null
     val sessionsUiState: StateFlow<SessionsUiState> = _sessionsUiState.asStateFlow()
     val toastEvents: SharedFlow<String> = _toastEvents.asSharedFlow()
 
@@ -673,6 +674,25 @@ class SessionsViewModel(
                 )
             )
         }
+        resetLiftSummary()
+    }
+
+    fun getStartDateForSessionAnalytics(endDate: String): String {
+        return when (_sessionsUiState.value.sessionStatDisplayFilterMap.filter { it.value }.firstNotNullOf { it.key }) {
+            SessionDataTimeFrameOption.ALL_TIME -> DateTimeCalculator.START_DATE
+            SessionDataTimeFrameOption.PAST_MONTH -> DateTimeCalculator.calculateStartDate(
+                today = endDate,
+                daysBeforeToday = DateTimeCalculator.DAYS_PER_MONTH
+            )
+            SessionDataTimeFrameOption.PAST_TWO_MONTHS -> DateTimeCalculator.calculateStartDate(
+                today = endDate,
+                daysBeforeToday = DateTimeCalculator.DAYS_PER_MONTH * 2
+            )
+            SessionDataTimeFrameOption.PAST_YEAR -> DateTimeCalculator.calculateStartDate(
+                today = endDate,
+                daysBeforeToday = DateTimeCalculator.DAYS_PER_YEAR
+            )
+        }
     }
 
     fun beginSetCollectionJob(sessionDetail: SessionDetail) {
@@ -680,22 +700,7 @@ class SessionsViewModel(
 
         setCollectionJob = viewModelScope.launch {
             val endDate = sessionDetail.sessionDateIso
-            val startDate: String =
-                when (_sessionsUiState.value.sessionStatDisplayFilterMap.filter { it.value }.firstNotNullOf { it.key }) {
-                    SessionDataTimeFrameOption.ALL_TIME -> DateTimeCalculator.START_DATE
-                    SessionDataTimeFrameOption.PAST_MONTH -> DateTimeCalculator.calculateStartDate(
-                        today = endDate,
-                        daysBeforeToday = DateTimeCalculator.DAYS_PER_MONTH
-                    )
-                    SessionDataTimeFrameOption.PAST_TWO_MONTHS -> DateTimeCalculator.calculateStartDate(
-                        today = endDate,
-                        daysBeforeToday = DateTimeCalculator.DAYS_PER_MONTH * 2
-                    )
-                    SessionDataTimeFrameOption.PAST_YEAR -> DateTimeCalculator.calculateStartDate(
-                        today = endDate,
-                        daysBeforeToday = DateTimeCalculator.DAYS_PER_YEAR
-                    )
-                }
+            val startDate: String = getStartDateForSessionAnalytics(endDate)
 
             combine(
                 sessionRepository.getDisplaySessionLiftSetRowsStream(sessionDetail.sessionId),
@@ -743,6 +748,8 @@ class SessionsViewModel(
                     )
                 }
 
+                updateLiftSummary()
+
                 Log.d(TAG, "Data loaded for session id ${sessionDetail.sessionId}")
             }
         }
@@ -760,24 +767,6 @@ class SessionsViewModel(
             viewModelScope.launch {
                 // close all cards, cancel the setCollectionJob and reset session display data
                 resetSessionData()
-
-                val endDate = sessionDetail.sessionDateIso
-                val startDate: String =
-                    when (_sessionsUiState.value.sessionStatDisplayFilterMap.filter { it.value }.firstNotNullOf { it.key }) {
-                        SessionDataTimeFrameOption.ALL_TIME -> DateTimeCalculator.START_DATE
-                        SessionDataTimeFrameOption.PAST_MONTH -> DateTimeCalculator.calculateStartDate(
-                            today = endDate,
-                            daysBeforeToday = DateTimeCalculator.DAYS_PER_MONTH
-                        )
-                        SessionDataTimeFrameOption.PAST_TWO_MONTHS -> DateTimeCalculator.calculateStartDate(
-                            today = endDate,
-                            daysBeforeToday = DateTimeCalculator.DAYS_PER_MONTH * 2
-                        )
-                        SessionDataTimeFrameOption.PAST_YEAR -> DateTimeCalculator.calculateStartDate(
-                            today = endDate,
-                            daysBeforeToday = DateTimeCalculator.DAYS_PER_YEAR
-                        )
-                    }
 
                 beginSetCollectionJob(sessionDetail)
             }
@@ -805,6 +794,8 @@ class SessionsViewModel(
                 }
             )
         }
+
+        updateLiftSummary()
     }
 
     fun historicalSetSectionLongClicked(liftSetId: Int) {
@@ -1571,6 +1562,7 @@ class SessionsViewModel(
                 }
             )
         }
+        updateLiftSummary()
     }
 
     fun sessionDataFilterChipClicked(
@@ -1592,6 +1584,53 @@ class SessionsViewModel(
 
         setCollectionJob?.cancel()
         beginSetCollectionJob(sessionDetail)
+    }
+
+    private fun resetLiftSummary() {
+        liftSummaryJob?.cancel()
+        liftSummaryJob = null
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                currentSessionLiftSummaryTitle = "Lift Summary",
+                currentSessionLiftSummaryBody = "Select a lift below to view its summary."
+            )
+        }
+    }
+
+    private fun updateLiftSummary() {
+        val liftSelectionValid: Boolean =
+            _sessionsUiState.value.currentSessionLiftDetailMap.filter { it.value.selected }.size == 1
+
+        if (liftSelectionValid) {
+            val liftDetail: LiftSearchDetail =
+                _sessionsUiState.value.currentSessionLiftDetailMap
+                    .filter { it.value.selected }
+                    .firstNotNullOfOrNull { it }?.value ?: return resetLiftSummary()
+            val sessionDetail: SessionDetail =
+                _sessionsUiState.value.sessionDetailMap
+                    .filter { it.value.selected }
+                    .firstNotNullOfOrNull { it }?.value ?: return resetLiftSummary()
+
+
+            liftSummaryJob?.cancel()
+            liftSummaryJob = viewModelScope.launch {
+                val liftSummaryTitle: String = "${liftDetail.liftObj.name.trim()} Summary"
+                val liftSummaryBody: String = sessionRepository.getLiftSummaryForLiftAndSession(
+                    sessionId = sessionDetail.sessionId,
+                    liftId = liftDetail.liftObj.id,
+                    startDate = getStartDateForSessionAnalytics(sessionDetail.sessionDateIso)
+                )
+
+                _sessionsUiState.update { currentState ->
+                    currentState.copy(
+                        currentSessionLiftSummaryTitle = liftSummaryTitle,
+                        currentSessionLiftSummaryBody = liftSummaryBody
+                    )
+                }
+            }
+        } else {
+            resetLiftSummary()
+        }
     }
 }
 
@@ -1628,6 +1667,8 @@ data class SessionsUiState(
     //      second element: list of LiftSet ids maintaining order
     val currentSessionDisplaySetList: List<Pair<Int, List<Int>>> = emptyList(),
     val currentSessionSummary: Triple<String, String, String> = Triple("", "", ""),
+    val currentSessionLiftSummaryTitle: String = "Lift Summary",
+    val currentSessionLiftSummaryBody: String = "Select a lift below to view its summary.",
     val sessionStatDisplayFilterMap: Map<SessionDataTimeFrameOption, Boolean> = mapOf(
         SessionDataTimeFrameOption.ALL_TIME to true,
         SessionDataTimeFrameOption.PAST_MONTH to false,

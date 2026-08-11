@@ -1541,6 +1541,8 @@ fun LabelAndDropdownRow(
 @Composable
 fun DisplaySessionAnalytics(
     summaryTriple: Triple<String, String, String>,
+    liftSummaryTitle: String,
+    liftSummaryBody: String,
     statDisplayFilterMap: Map<SessionDataTimeFrameOption, Boolean>,
     filterChipClicked: (SessionDataTimeFrameOption) -> Unit,
     modifier: Modifier = Modifier
@@ -1657,7 +1659,7 @@ fun DisplaySessionAnalytics(
                     ) {
                         // summary title
                         Text(
-                            text = "Summary",
+                            text = "Session Summary",
                             style = MaterialTheme.typography.titleLarge,
                         )
                         // info button
@@ -1733,6 +1735,25 @@ fun DisplaySessionAnalytics(
                                 .fillMaxWidth()
                         )
                     }
+
+                    HorizontalDivider(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp),
+                        color = MaterialTheme.colorScheme.onBackground.copy(0.3f)
+                    )
+
+                    // lift summary title
+                    Text(
+                        text = liftSummaryTitle,
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    // lift summary body
+                    Text(
+                        text = liftSummaryBody,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
                 }
             }
         }

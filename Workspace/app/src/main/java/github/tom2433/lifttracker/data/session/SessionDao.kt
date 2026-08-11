@@ -1749,4 +1749,440 @@ interface SessionDao {
 
         return Triple(untimedLiftSummary, timedLiftSummary, explanation)
     }
+
+    @Query("""
+        SELECT COUNT(ls.id)
+        FROM lift_sets AS ls
+        INNER JOIN set_metrics AS weight
+            ON weight.set_id = ls.id
+            AND weight.metric_position = 1
+        INNER JOIN set_metrics AS second
+            ON second.set_id = ls.id
+            AND second.metric_position = 2
+        INNER JOIN sessions AS s
+            ON s.id = ls.session_id
+        WHERE s.id = :sessionId
+            AND ls.lift_id = :liftId
+            AND weight.value != -1.0
+            AND second.value > 0.0
+    """)
+    suspend fun getNumberOfSetsForLiftInSession(
+        liftId: Int,
+        sessionId: Int
+    ): Int
+
+    @Query("""
+        SELECT AVG(session_avg_weight)
+        FROM (
+            SELECT
+                AVG(weight.value) AS session_avg_weight
+                FROM lift_sets AS ls
+                INNER JOIN lifts AS l
+                    ON l.id = ls.lift_id
+                INNER JOIN sessions AS s
+                    ON s.id = ls.session_id
+                INNER JOIN sessions AS target
+                    ON target.id = :sessionId
+                INNER JOIN set_metrics AS weight
+                    ON weight.set_id = ls.id
+                    AND weight.metric_position = 1
+                INNER JOIN set_metrics AS second
+                    ON second.set_id = ls.id
+                    AND second.metric_position = 2
+                WHERE l.id = :liftId
+                    AND s.date >= :startDate
+                    AND s.profile_id = target.profile_id
+                    AND TRIM(s.session_label) = TRIM(target.session_label)
+                    AND s.session_number < target.session_number
+                    AND weight.value != -1.0
+                    AND second.value > 0.0
+                GROUP BY s.id
+        )
+    """)
+    suspend fun getAvgHistoricalWeightForLiftAndSessionName(
+        liftId: Int,
+        sessionId: Int,
+        startDate: String
+    ): Double?
+
+    @Query("""
+        SELECT AVG(session_avg_reps)
+        FROM (
+            SELECT
+                AVG(second.value) AS session_avg_reps
+                FROM lift_sets AS ls
+                INNER JOIN lifts AS l
+                    ON l.id = ls.lift_id
+                INNER JOIN sessions AS s
+                    ON s.id = ls.session_id
+                INNER JOIN sessions AS target
+                    ON target.id = :sessionId
+                INNER JOIN set_metrics AS weight
+                    ON weight.set_id = ls.id
+                    AND weight.metric_position = 1
+                INNER JOIN set_metrics AS second
+                    ON second.set_id = ls.id
+                    AND second.metric_position = 2
+                WHERE l.id = :liftId
+                    AND s.date >= :startDate
+                    AND s.profile_id = target.profile_id
+                    AND TRIM(s.session_label) = TRIM(target.session_label)
+                    AND s.session_number < target.session_number
+                    AND weight.value != -1.0
+                    AND second.value > 0.0
+                GROUP BY s.id
+        )
+    """)
+    suspend fun getAvgHistoricalRepsOrTimeForLiftAndSessionName(
+        liftId: Int,
+        sessionId: Int,
+        startDate: String
+    ): Double?
+
+    @Query("""
+        SELECT AVG(session_avg_intensity)
+        FROM (
+            SELECT AVG(weight.value / second.value) AS session_avg_intensity
+            FROM lift_sets AS ls
+            INNER JOIN lifts AS l
+                ON l.id = ls.lift_id
+            INNER JOIN sessions AS s
+                ON s.id = ls.session_id
+            INNER JOIN sessions AS target
+                ON target.id = :sessionId
+            INNER JOIN set_metrics AS weight
+                ON weight.set_id = ls.id
+                AND weight.metric_position = 1
+            INNER JOIN set_metrics AS second
+                ON second.set_id = ls.id
+                AND second.metric_position = 2
+            WHERE l.id = :liftId
+                AND s.date >= :startDate
+                AND s.profile_id = target.profile_id
+                AND TRIM(s.session_label) = TRIM(target.session_label)
+                AND s.session_number < target.session_number
+                AND weight.value != -1.0
+                AND second.value > 0.0
+            GROUP BY s.id
+        )
+    """)
+    suspend fun getAvgHistoricalIntensityForLiftAndSessionName(
+        liftId: Int,
+        sessionId: Int,
+        startDate: String
+    ): Double?
+
+    @Query("""
+        SELECT AVG(session_set_count)
+        FROM (
+            SELECT COUNT(ls.id) AS session_set_count
+            FROM lift_sets AS ls
+            INNER JOIN lifts AS l
+                ON l.id = ls.lift_id
+            INNER JOIN sessions AS s
+                ON s.id = ls.session_id
+            INNER JOIN sessions AS target
+                ON target.id = :sessionId
+            INNER JOIN set_metrics AS weight
+                ON weight.set_id = ls.id
+                AND weight.metric_position = 1
+            INNER JOIN set_metrics AS second
+                ON second.set_id = ls.id
+                AND second.metric_position = 2
+            WHERE l.id = :liftId
+                AND s.date >= :startDate
+                AND s.profile_id = target.profile_id
+                AND TRIM(s.session_label) = TRIM(target.session_label)
+                AND s.session_number < target.session_number
+                AND weight.value != -1.0
+                AND second.value > 0.0
+            GROUP BY s.id
+        )
+    """)
+    suspend fun getTypicalNumberOfSetsForLiftWithSessionName(
+        liftId: Int,
+        sessionId: Int,
+        startDate: String
+    ): Double?
+
+    @Query("""
+        SELECT AVG(weight.value)
+        FROM lift_sets AS ls
+        INNER JOIN lifts AS l
+            ON l.id = ls.lift_id
+        INNER JOIN sessions AS s
+            ON ls.session_id = s.id
+        INNER JOIN set_metrics AS weight
+            ON weight.set_id = ls.id
+            AND weight.metric_position = 1
+        INNER JOIN set_metrics AS second
+            ON second.set_id = ls.id
+            AND second.metric_position = 2
+        WHERE l.id = :liftId
+            AND s.id = :sessionId
+            AND weight.value != -1.0
+            AND second.value > 0.0
+    """)
+    suspend fun getAvgWeightForLiftForSession(
+        liftId: Int,
+        sessionId: Int
+    ): Double?
+
+    @Query("""
+        SELECT AVG(second.value)
+        FROM lift_sets AS ls
+        INNER JOIN lifts AS l
+            ON l.id = ls.lift_id
+        INNER JOIN sessions AS s
+            ON ls.session_id = s.id
+        INNER JOIN set_metrics AS weight
+            ON weight.set_id = ls.id
+            AND weight.metric_position = 1
+        INNER JOIN set_metrics AS second
+            ON second.set_id = ls.id
+            AND second.metric_position = 2
+        WHERE l.id = :liftId
+            AND s.id = :sessionId
+            AND weight.value != -1.0
+            AND second.value > 0.0
+    """)
+    suspend fun getAvgRepsOrTimeForLiftForSession(
+        liftId: Int,
+        sessionId: Int
+    ): Double?
+
+    @Query("""
+        SELECT AVG(intensity)
+        FROM (
+            SELECT weight.value / second.value AS intensity
+            FROM lift_sets AS ls
+            INNER JOIN lifts AS l
+                ON l.id = ls.lift_id
+            INNER JOIN sessions AS s
+                ON ls.session_id = s.id
+            INNER JOIN set_metrics AS weight
+                ON weight.set_id = ls.id
+                AND weight.metric_position = 1
+            INNER JOIN set_metrics AS second
+                ON second.set_id = ls.id
+                AND second.metric_position = 2
+            WHERE l.id = :liftId
+                AND s.id = :sessionId
+                AND weight.value != -1.0
+                AND second.value > 0.0
+        )
+    """)
+    suspend fun getAvgIntensityForLiftForSession(
+        liftId: Int,
+        sessionId: Int
+    ): Double?
+
+    @Query("""
+        SELECT TRIM(lu.name)
+        FROM lift_units AS lu
+        INNER JOIN lifts AS l
+            ON l.unit_id = lu.id
+        WHERE l.id = :liftId
+        LIMIT 1
+    """)
+    suspend fun getTrimmedUnitNameFromLiftId(liftId: Int): String?
+
+    @Query("""
+        SELECT CASE WHEN l.metric_type = 2 THEN 1 ELSE 0 END
+        FROM lifts AS l
+        WHERE l.id = :liftId
+        LIMIT 1
+    """)
+    suspend fun liftIsTimed(liftId: Int): Boolean?
+
+    @Query("""
+        SELECT TRIM(l.name)
+        FROM lifts AS l
+        WHERE l.id = :liftId
+    """)
+    suspend fun getTrimmedLiftNameFromId(liftId: Int): String?
+
+    suspend fun getLiftSummaryForSessionIdAndLiftId(
+        sessionId: Int,
+        liftId: Int,
+        startDate: String
+    ): String {
+        val trimmedSessionLabel: String = getTrimmedSessionNameFromId(sessionId)
+            ?: return "Something went wrong."
+        val trimmedLiftName: String = getTrimmedLiftNameFromId(liftId)
+            ?: return "Something went wrong."
+        val trimmedUnitName: String = getTrimmedUnitNameFromLiftId(liftId)
+            ?: return "Something went wrong."
+        val liftIsTimed: Boolean = liftIsTimed(liftId)
+            ?: return "Something went wrong."
+        var displaySummary: String = ""
+
+        val numberOfSetsForThisSession: Int = getNumberOfSetsForLiftInSession(
+            liftId = liftId,
+            sessionId = sessionId
+        )
+
+        val typicalNumberOfSets: Double? = getTypicalNumberOfSetsForLiftWithSessionName(
+            liftId = liftId,
+            sessionId = sessionId,
+            startDate = startDate
+        )
+
+        displaySummary += if (typicalNumberOfSets == null) {
+            "You have not trained this lift before during a $trimmedSessionLabel workout, but " +
+                    "today, you logged $numberOfSetsForThisSession sets. "
+        } else {
+            "Today, you trained $trimmedLiftName for $numberOfSetsForThisSession sets, and " +
+                    "you usually train about ${"%.2f".format(typicalNumberOfSets)} sets. "
+        }
+
+        val averageWeightForSession: Double? = getAvgWeightForLiftForSession(
+            liftId = liftId,
+            sessionId = sessionId,
+        )
+
+        if (averageWeightForSession == null) {
+            displaySummary +=
+                "You haven't logged any full, valid sets yet for this lift in this session"
+            if (typicalNumberOfSets == null) {
+                displaySummary += ". "
+            } else {
+                displaySummary += ", but your historical average weight is "
+            }
+        } else {
+            displaySummary +=
+                "Your average weight was ${"%.2f".format(averageWeightForSession)} " +
+                trimmedUnitName
+            if (typicalNumberOfSets == null) {
+                displaySummary += ". "
+            } else {
+                displaySummary += ", when you typically log about "
+            }
+        }
+
+        val averageHistoricalWeight: Double? = getAvgHistoricalWeightForLiftAndSessionName(
+            liftId = liftId,
+            sessionId = sessionId,
+            startDate = startDate
+        )
+
+        if (averageHistoricalWeight != null) {
+            displaySummary += "${"%.2f".format(averageHistoricalWeight)} ${trimmedUnitName}. "
+        }
+
+        val averageRepsOrTimeForSession: Double? = getAvgRepsOrTimeForLiftForSession(
+            liftId = liftId,
+            sessionId = sessionId
+        )
+
+        val averageHistoricalRepsOrTime: Double? = getAvgHistoricalRepsOrTimeForLiftAndSessionName(
+            liftId = liftId,
+            sessionId = sessionId,
+            startDate = startDate
+        )
+
+        if (averageRepsOrTimeForSession == null) {
+            if (liftIsTimed) {
+                displaySummary += "You haven't logged any time for this lift yet"
+                if (averageHistoricalRepsOrTime == null) {
+                    displaySummary += ". "
+                } else {
+                    displaySummary +=
+                        ", but your historical average is " +
+                        "${DateTimeCalculator.convertMinutesDoubleToSummaryDetail(averageHistoricalRepsOrTime)}. "
+                }
+            } else {
+                displaySummary += "You haven't logged any reps for this lift yet"
+                if (averageHistoricalRepsOrTime == null) {
+                    displaySummary += ". "
+                } else {
+                    displaySummary +=
+                        ", but your historical average is " +
+                        "${"%.2f".format(averageHistoricalRepsOrTime)}. "
+                }
+            }
+        } else {
+            if (liftIsTimed) {
+                displaySummary +=
+                    "Your average time logged for this session was " +
+                    DateTimeCalculator.convertMinutesDoubleToSummaryDetail(averageRepsOrTimeForSession)
+                if (averageHistoricalRepsOrTime == null) {
+                    displaySummary += "."
+                } else {
+                    displaySummary +=
+                        ", and your historical average is " +
+                        "${DateTimeCalculator.convertMinutesDoubleToSummaryDetail(averageHistoricalRepsOrTime)}. "
+                }
+            } else {
+                displaySummary +=
+                    "Your average reps value for this session was " +
+                    "%.2f".format(averageRepsOrTimeForSession)
+                if (averageHistoricalRepsOrTime == null) {
+                    displaySummary += ". "
+                } else {
+                    displaySummary +=
+                        ", and your historical average is ${"%.2f".format(averageHistoricalRepsOrTime)}. "
+                }
+            }
+        }
+
+        val averageIntensityForSession: Double? = getAvgIntensityForLiftForSession(
+            liftId = liftId,
+            sessionId = sessionId
+        )
+
+        val averageHistoricalIntensity: Double? = getAvgHistoricalIntensityForLiftAndSessionName(
+            liftId = liftId,
+            sessionId = sessionId,
+            startDate = startDate
+        )
+
+        if (averageIntensityForSession == null) {
+            if (liftIsTimed) {
+                displaySummary += "Your $trimmedUnitName per minute also cannot be calculated"
+                if (averageHistoricalIntensity == null) {
+                    displaySummary += ". "
+                } else {
+                    displaySummary +=
+                        ", but your historical average is " +
+                        "${"%.2f".format(averageHistoricalIntensity)}. "
+                }
+            } else {
+                displaySummary += "Your $trimmedUnitName per rep also cannot be calculated"
+                if (averageHistoricalIntensity == null) {
+                    displaySummary += ". "
+                } else {
+                    displaySummary +=
+                        ", but your historical average is " +
+                        "${"%.2f".format(averageHistoricalIntensity)}. "
+                }
+            }
+        } else {
+            if (liftIsTimed) {
+                displaySummary +=
+                    "Your average $trimmedUnitName per minute was " +
+                    "%.2f".format(averageIntensityForSession)
+                if (averageHistoricalIntensity == null) {
+                    displaySummary += ". "
+                } else {
+                    displaySummary +=
+                        ", and your historical average is " +
+                        "${"%.2f".format(averageHistoricalIntensity)}. "
+                }
+            } else {
+                displaySummary +=
+                    "Your average $trimmedUnitName per rep was " +
+                    "%.2f".format(averageIntensityForSession)
+                if (averageHistoricalIntensity == null) {
+                    displaySummary += ". "
+                } else {
+                    displaySummary +=
+                        ", and your historical average is " +
+                        "${"%.2f".format(averageHistoricalIntensity)}. "
+                }
+            }
+        }
+
+        return displaySummary
+    }
 }

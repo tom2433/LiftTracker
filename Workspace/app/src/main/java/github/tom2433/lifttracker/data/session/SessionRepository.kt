@@ -168,4 +168,10 @@ interface SessionRepository {
         id: Int,
         startDate: String
     ): Triple<String, String, String>
+
+    suspend fun getLiftSummaryForLiftAndSession(
+        sessionId: Int,
+        liftId: Int,
+        startDate: String
+    ): String
 }

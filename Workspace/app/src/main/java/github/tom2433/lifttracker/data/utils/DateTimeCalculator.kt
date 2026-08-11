@@ -205,4 +205,29 @@ object DateTimeCalculator {
             second = endDate ?: getCurrentIsoDate()
         )
     }
+
+    fun convertMinutesDoubleToSummaryDetail(minutesDouble: Double): String {
+        val timeTriple: Triple<Int, Int, Double> = convertDoubleTimeToTripleTime(minutesDouble)
+        var timeString: String = ""
+        if (timeTriple.first != 0) {
+            timeString += if (timeTriple.first == 1) {
+                "1 hour, "
+            } else {
+                "${timeTriple.first} hours, "
+            }
+        }
+        if (timeTriple.second != 0) {
+            timeString += if (timeTriple.second == 1) {
+                "1 minute "
+            } else {
+                "${timeTriple.second} minutes "
+            }
+        }
+        if (timeTriple.first != 0 || timeTriple.second != 0) {
+            timeString += "and "
+        }
+        timeString += "${"%.2f".format(timeTriple.third)} seconds"
+
+        return timeString
+    }
 }

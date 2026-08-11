@@ -213,4 +213,14 @@ class OfflineSessionRepository(private val sessionDao: SessionDao) : SessionRepo
         id = id,
         startDate = startDate
     )
+
+    override suspend fun getLiftSummaryForLiftAndSession(
+        sessionId: Int,
+        liftId: Int,
+        startDate: String
+    ): String = sessionDao.getLiftSummaryForSessionIdAndLiftId(
+        sessionId = sessionId,
+        liftId = liftId,
+        startDate = startDate
+    )
 }

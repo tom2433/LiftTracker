@@ -335,6 +335,8 @@ fun SessionsScreen(
                                         currentSessionLiftDetailMap = sessionsUiState.currentSessionLiftDetailMap,
                                         currentSessionLiftSetMap = sessionsUiState.currentSessionLiftSetMap,
                                         currentSessionSummaryTriple = sessionsUiState.currentSessionSummary,
+                                        currentSessionLiftSummaryTitle = sessionsUiState.currentSessionLiftSummaryTitle,
+                                        currentSessionLiftSummaryBody = sessionsUiState.currentSessionLiftSummaryBody,
                                         sessionStatDisplayFilterMap = sessionsUiState.sessionStatDisplayFilterMap,
                                         filterChipClicked = {
                                             viewModel.sessionDataFilterChipClicked(
@@ -586,6 +588,8 @@ fun SessionCard(
     currentSessionLiftDetailMap: Map<Int, LiftSearchDetail>,
     currentSessionLiftSetMap: Map<Int, SetCardData>,
     currentSessionSummaryTriple: Triple<String, String, String>,
+    currentSessionLiftSummaryTitle: String,
+    currentSessionLiftSummaryBody: String,
     sessionStatDisplayFilterMap: Map<SessionDataTimeFrameOption, Boolean>,
     filterChipClicked: (SessionDataTimeFrameOption) -> Unit,
     onClickThreeDotMenu: () -> Unit,
@@ -820,6 +824,8 @@ fun SessionCard(
                 // display session summary
                 DisplaySessionAnalytics(
                     summaryTriple = currentSessionSummaryTriple,
+                    liftSummaryTitle = currentSessionLiftSummaryTitle,
+                    liftSummaryBody = currentSessionLiftSummaryBody,
                     statDisplayFilterMap = sessionStatDisplayFilterMap,
                     filterChipClicked = { filterChipClicked(it) },
                     modifier = Modifier.padding(top = 16.dp)
