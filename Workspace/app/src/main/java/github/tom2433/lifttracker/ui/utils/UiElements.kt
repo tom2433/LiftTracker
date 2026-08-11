@@ -615,7 +615,7 @@ fun DisplayAllSetDataForSession(
             // retrieve the LiftSearchDetail object from liftDetailMap
             val liftDetail: LiftSearchDetail = liftDetailMap[liftAndSetsPair.first] ?: continue
             val liftSetIds: List<Int> = liftAndSetsPair.second
-            key(liftDetail.liftObj.id) {
+            key(liftDetail.liftObj.id, liftSetIds.firstOrNull()) {
                 HistoricalLiftCard(
                     liftDetail = liftDetail,
                     noteColor = noteColor,
@@ -777,41 +777,47 @@ fun HistoricalLiftCard(
             Column {
                 // loop thru each set and display its section
                 for ((index, liftSetId) in liftSetIds.withIndex()) {
-                    HistoricalSetSection(
-                        liftSet = liftSetMap[liftSetId]?.liftSet ?: continue,
-                        weightMetric = liftSetMap[liftSetId]?.weightMetric ?: continue,
-                        secondMetric = liftSetMap[liftSetId]?.secondMetric ?: continue,
-                        muscleGroupName = liftDetail.muscleGroupName,
-                        unitName = liftDetail.unitName,
-                        metricType = liftDetail.metricType,
-                        selected = liftSetMap[liftSetId]?.selected ?: continue,
-                        onLongClickHistoricalSetSection = { onLongClickHistoricalSetSection(liftSetId) },
-                        onClickHistoricalSetSection = { onClickHistoricalSetSection(liftSetId) },
-                        onClickEditHistoricalSet = { onClickEditHistoricalSet(liftSetId) },
-                        onClickMoveHistoricalSetUp = {
-                            onClickMoveHistoricalSetUp(liftSetId)
-                        },
-                        onClickMoveHistoricalSetDown = {
-                            onClickMoveHistoricalSetDown(liftSetId)
-                        },
-                        onClickDeleteHistoricalSet = {
-                            onClickDeleteHistoricalSet(liftSetId)
-                        },
-                        modifier = Modifier.padding(
-                            top = 8.dp,
-                            bottom = 8.dp,
-                            start = 16.dp,
-                            end = 16.dp
-                        )
-                    )
-                    if (index != liftSetIds.size - 1) {
-                        HorizontalDivider(
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            color = MaterialTheme.colorScheme.onBackground.copy(
-                                alpha = 0.4f
+                    key(liftSetId) {
+                        HistoricalSetSection(
+                            liftSet = liftSetMap[liftSetId]?.liftSet ?: continue,
+                            weightMetric = liftSetMap[liftSetId]?.weightMetric ?: continue,
+                            secondMetric = liftSetMap[liftSetId]?.secondMetric ?: continue,
+                            muscleGroupName = liftDetail.muscleGroupName,
+                            unitName = liftDetail.unitName,
+                            metricType = liftDetail.metricType,
+                            selected = liftSetMap[liftSetId]?.selected ?: continue,
+                            onLongClickHistoricalSetSection = {
+                                onLongClickHistoricalSetSection(
+                                    liftSetId
+                                )
+                            },
+                            onClickHistoricalSetSection = { onClickHistoricalSetSection(liftSetId) },
+                            onClickEditHistoricalSet = { onClickEditHistoricalSet(liftSetId) },
+                            onClickMoveHistoricalSetUp = {
+                                onClickMoveHistoricalSetUp(liftSetId)
+                            },
+                            onClickMoveHistoricalSetDown = {
+                                onClickMoveHistoricalSetDown(liftSetId)
+                            },
+                            onClickDeleteHistoricalSet = {
+                                onClickDeleteHistoricalSet(liftSetId)
+                            },
+                            modifier = Modifier.padding(
+                                top = 8.dp,
+                                bottom = 8.dp,
+                                start = 16.dp,
+                                end = 16.dp
                             )
                         )
+                        if (index != liftSetIds.size - 1) {
+                            HorizontalDivider(
+                                modifier = Modifier
+                                    .fillMaxWidth(),
+                                color = MaterialTheme.colorScheme.onBackground.copy(
+                                    alpha = 0.4f
+                                )
+                            )
+                        }
                     }
                 }
             }

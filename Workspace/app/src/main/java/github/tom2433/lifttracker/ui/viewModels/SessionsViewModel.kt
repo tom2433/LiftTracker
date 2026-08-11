@@ -676,7 +676,9 @@ class SessionsViewModel(
     }
 
     fun beginSetCollectionJob(sessionDetail: SessionDetail) {
-        viewModelScope.launch {
+        setCollectionJob?.cancel()
+
+        setCollectionJob = viewModelScope.launch {
             val endDate = sessionDetail.sessionDateIso
             val startDate: String =
                 when (_sessionsUiState.value.sessionStatDisplayFilterMap.filter { it.value }.firstNotNullOf { it.key }) {
@@ -778,56 +780,6 @@ class SessionsViewModel(
                     }
 
                 beginSetCollectionJob(sessionDetail)
-
-                setCollectionJob = launch {
-                    combine(
-                        sessionRepository.getDisplaySessionLiftSetRowsStream(sessionDetail.sessionId),
-                        liftRepository.getLiftSearchDetailsForSessionIdStream(sessionDetail.sessionId)
-                    ) { displaySessionLiftSetRows, liftSearchDetails ->
-                        displaySessionLiftSetRows to liftSearchDetails
-                    }.collect { (displaySessionLiftSetRows, liftSearchDetails) ->
-                        val currentSessionSummary = sessionRepository.getSessionSummaryFromId(
-                            id = sessionDetail.sessionId,
-                            startDate = startDate
-                        )
-
-                        _sessionsUiState.update { currentState ->
-                            currentState.copy(
-                                currentSessionLiftSetMap = displaySessionLiftSetRows.associate { displaySessionLiftSetRow ->
-                                    displaySessionLiftSetRow.liftSet.id to SetCardData(
-                                        liftSet = displaySessionLiftSetRow.liftSet,
-                                        weightMetric = displaySessionLiftSetRow.weightMetric,
-                                        secondMetric = displaySessionLiftSetRow.secondMetric,
-                                        selected = currentState.currentSessionLiftSetMap[displaySessionLiftSetRow.liftSet.id]?.selected ?: false
-                                    )
-                                },
-                                currentSessionDisplaySetList = convertLiftSetRowsToSetList(
-                                    displaySessionLiftSetRows = displaySessionLiftSetRows
-                                ),
-                                currentSessionLiftDetailMap = liftSearchDetails.associate { liftSearchDetail ->
-                                    liftSearchDetail.liftObj.id to liftSearchDetail.copy(
-                                        selected = currentState.currentSessionLiftDetailMap[liftSearchDetail.liftObj.id]?.selected
-                                            ?: false
-                                    )
-                                },
-                                sessionDetailMap = currentState.sessionDetailMap.mapValues { (thisSessionId, thisSessionDetail) ->
-                                    if (thisSessionId == sessionCardId) {
-                                        thisSessionDetail.copy(
-                                            selected = true
-                                        )
-                                    } else {
-                                        thisSessionDetail.copy(
-                                            selected = false
-                                        )
-                                    }
-                                },
-                                currentSessionSummary = currentSessionSummary
-                            )
-                        }
-
-                        Log.d(TAG, "Data loaded for session id $sessionCardId")
-                    }
-                }
             }
         } else {
             viewModelScope.launch {
