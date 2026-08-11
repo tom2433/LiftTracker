@@ -35,6 +35,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -160,7 +161,7 @@ fun ShowElementEntryDialog(
                     )
 
                     // note input
-                    TextField(
+                    OutlinedTextField(
                         value = newElementNote,
                         onValueChange = onElementNoteValueChanged,
                         label = {
@@ -172,7 +173,7 @@ fun ShowElementEntryDialog(
                                 contentDescription = elementNoteInputLabel
                             )
                         },
-                        singleLine = true,
+                        singleLine = false,
                         keyboardOptions = KeyboardOptions.Default.copy(
                             capitalization = KeyboardCapitalization.Sentences,
                             imeAction = ImeAction.Done
@@ -345,7 +346,7 @@ fun ShowHistoricalSetEditDialog(
                     )
 
                     // text field for set note
-                    TextField(
+                    OutlinedTextField(
                         value = newSetNote,
                         onValueChange = onSetNoteValueChanged,
                         label = {
@@ -357,7 +358,7 @@ fun ShowHistoricalSetEditDialog(
                                 contentDescription = stringResource(R.string.set_note_input)
                             )
                         },
-                        singleLine = true,
+                        singleLine = false,
                         keyboardOptions = KeyboardOptions.Default.copy(
                             capitalization = KeyboardCapitalization.Sentences,
                             imeAction = ImeAction.Next
@@ -410,7 +411,7 @@ fun ShowHistoricalSetEditDialog(
                     )
 
                     // text field for weight note
-                    TextField(
+                    OutlinedTextField(
                         value = newSetWeightNote,
                         onValueChange = onSetWeightNoteValueChanged,
                         label = {
@@ -422,7 +423,7 @@ fun ShowHistoricalSetEditDialog(
                                 contentDescription = "$unitName note input"
                             )
                         },
-                        singleLine = true,
+                        singleLine = false,
                         keyboardOptions = KeyboardOptions.Default.copy(
                             capitalization = KeyboardCapitalization.Sentences,
                             imeAction = ImeAction.Next
@@ -564,7 +565,7 @@ fun ShowHistoricalSetEditDialog(
                     }
 
                     // textfield for second metric note
-                    TextField(
+                    OutlinedTextField(
                         value = newSetSecondMetricNote,
                         onValueChange = onSetSecondMetricNoteValueChanged,
                         label = {
@@ -576,7 +577,7 @@ fun ShowHistoricalSetEditDialog(
                                 contentDescription = "$metricType note input"
                             )
                         },
-                        singleLine = true,
+                        singleLine = false,
                         keyboardOptions = KeyboardOptions.Default.copy(
                             capitalization = KeyboardCapitalization.Sentences,
                             imeAction = ImeAction.Done
@@ -682,7 +683,7 @@ fun ShowMetricEntryDialog(
                     HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
 
                     // metric input
-                    TextField(
+                    OutlinedTextField(
                         value = newMetric,
                         onValueChange = onMetricValueChanged,
                         label = {
@@ -694,7 +695,7 @@ fun ShowMetricEntryDialog(
                                 contentDescription = metricInputLabel
                             )
                         },
-                        singleLine = true,
+                        singleLine = false,
                         keyboardOptions = KeyboardOptions.Default.copy(
                             capitalization = KeyboardCapitalization.Sentences,
                             imeAction = ImeAction.Done
@@ -1044,7 +1045,7 @@ fun ShowLiftEntryDialog(
                     )
 
                     // note input
-                    TextField(
+                    OutlinedTextField(
                         value = newLiftNote,
                         onValueChange = onLiftNoteValueChanged,
                         label = {
@@ -1056,7 +1057,7 @@ fun ShowLiftEntryDialog(
                                 contentDescription = stringResource(R.string.lift_note_optional)
                             )
                         },
-                        singleLine = true,
+                        singleLine = false,
                         keyboardOptions = KeyboardOptions.Default.copy(
                             capitalization = KeyboardCapitalization.Sentences,
                             imeAction = ImeAction.Done

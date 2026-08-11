@@ -1651,13 +1651,14 @@ fun DisplaySessionAnalytics(
                     Row(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp)
                     ) {
                         // summary title
                         Text(
                             text = "Summary",
                             style = MaterialTheme.typography.titleLarge,
-                            modifier = Modifier.padding(bottom = 8.dp)
                         )
                         // info button
                         InfoButton {
@@ -1667,11 +1668,47 @@ fun DisplaySessionAnalytics(
                                 style = MaterialTheme.typography.titleLarge,
                                 modifier = Modifier.padding(bottom = 8.dp)
                             )
+                            HorizontalDivider(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 8.dp)
+                            )
+                            Text(
+                                text =
+                                    "Full lift summaries consist of three values, all of which are " +
+                                    "calculated as average deviations from the mean. This means " +
+                                    "that the summary is comparing this session's data to the " +
+                                    "average data for previous sessions with the same name within " +
+                                    "the selected timeframe.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+                            Text(
+                                text =
+                                    "First, three deviations are calculated for each valid lift. " +
+                                    "A valid lift is one that has been trained before for this " +
+                                    "session name. The deviations include the lift's average " +
+                                    "weight, average reps/minutes, and average weight per " +
+                                    "rep/minute, so the data are not skewed as a result of " +
+                                    "more/less sets trained.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+                            Text(
+                                text =
+                                    "These three deviations are then averaged across all valid " +
+                                    "lifts to result in the values that you see in the summary. " +
+                                    "Thus, any unusual lifts for this session name will not be " +
+                                    "accounted for, and they will not skew your data.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
                             // explanation
                             Text(
                                 text = summaryTriple.third,
                                 style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.padding(bottom = 8.dp)
+                                modifier = Modifier.padding(bottom = 8.dp),
+                                fontWeight = FontWeight.Bold
                             )
                         }
                     }

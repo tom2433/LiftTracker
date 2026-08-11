@@ -52,6 +52,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -703,18 +705,52 @@ fun SessionCard(
                                 text = sessionDetail.sessionNote,
                                 color = noteColor,
                                 style = MaterialTheme.typography.bodySmall,
-                                fontSize = 13.sp
+                                fontSize = 13.sp,
+                                maxLines = if (sessionDetail.selected) {
+                                    Int.MAX_VALUE
+                                } else {
+                                    1
+                                },
+                                overflow = if (sessionDetail.selected) {
+                                    TextOverflow.Clip
+                                } else {
+                                    TextOverflow.Ellipsis
+                                }
                             )
                         }
                         // session date (readable format)
-                        Text(
-                            text = DateTimeCalculator.convertIsoDateToReadableFormat(
-                                isoDate = sessionDetail.sessionDateIso
-                            ),
-                            color = noteColor,
-                            style = MaterialTheme.typography.bodySmall,
-                            fontSize = 13.sp
-                        )
+                        Row(
+                            horizontalArrangement = Arrangement.Start,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = DateTimeCalculator.convertIsoDateToReadableFormat(
+                                    isoDate = sessionDetail.sessionDateIso
+                                ),
+                                color = noteColor,
+                                style = MaterialTheme.typography.bodySmall,
+                                fontSize = 13.sp,
+                                modifier = Modifier.padding(end = 4.dp)
+                            )
+                            Text(
+                                text = "•",
+                                color = noteColor,
+                                style = MaterialTheme.typography.bodySmall,
+                                fontSize = 13.sp,
+                                modifier = Modifier.padding(end = 4.dp),
+                                fontWeight = FontWeight.Black
+                            )
+                            Text(
+                                text = DateTimeCalculator.formatLastDateTrained(
+                                    lastDateTrained = sessionDetail.sessionDateIso,
+                                    today = DateTimeCalculator.getCurrentIsoDate()
+                                ),
+                                color = noteColor,
+                                style = MaterialTheme.typography.bodySmall,
+                                fontSize = 13.sp,
+                                modifier = Modifier.padding(end = 4.dp)
+                            )
+                        }
                     }
                     // three dot menu to set lift to "in progress" or delete
                     ThreeDotMenu(

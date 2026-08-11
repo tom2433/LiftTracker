@@ -1524,6 +1524,7 @@ interface SessionDao {
             // retrieve list of LiftDataVis objects (avg weight, reps, and weight per rep)
             // one for each untimed lift for this session
             val liftAvgsForSession: List<LiftDataVis> = getLiftDataVisObjectsFromSessionId(id, untimed = true)
+            val onlyOneLift: Boolean = liftAvgsForSession.size == 1
 
             // retrieve list of historical LiftDataVis objects
             // one for each untimed lift for this session; averages only the lifts which occurred in
@@ -1565,28 +1566,38 @@ interface SessionDao {
                 val avgWeightPerRepDeviation =
                     deviationsList.map { it.weightPerRepOrMin }.average()
 
-                untimedLiftSummary += "For this session, your lifts "
+                untimedLiftSummary += "For this session, your lift"
+                if (onlyOneLift) {
+                    untimedLiftSummary += " "
+                } else {
+                    untimedLiftSummary += "s "
+                }
                 if (sessionHasTimedLifts) {
                     untimedLiftSummary += "with a metric type of 'reps' "
                 }
-                untimedLiftSummary += "were ${"%.2f".format(abs(avgWeightDeviation))} $untimedUnits "
-                untimedLiftSummary += if (avgWeightDeviation < 0.0) {
-                    "lower "
+                if (onlyOneLift) {
+                    untimedLiftSummary += "was "
                 } else {
-                    "higher "
+                    untimedLiftSummary += "were "
+                }
+                untimedLiftSummary += "${"%.2f".format(abs(avgWeightDeviation))} $untimedUnits "
+                untimedLiftSummary += if (avgWeightDeviation < 0.0) {
+                    "lighter "
+                } else {
+                    "heavier "
                 }
                 untimedLiftSummary += "than previous $trimmedSessionName sessions, your intensity was " +
-                        "${"%.2f".format(abs(avgWeightPerRepDeviation))} $untimedUnits per rep "
+                        "${"%.2f".format(abs(avgWeightPerRepDeviation))} $untimedUnits "
                 untimedLiftSummary += if (avgWeightPerRepDeviation < 0.0) {
-                    "lower, "
+                    "lighter "
                 } else {
-                    "higher, "
+                    "heavier "
                 }
-                untimedLiftSummary += "and you performed ${"%.2f".format(abs(avgRepsDeviation))} reps "
+                untimedLiftSummary += "per rep, and you performed ${"%.2f".format(abs(avgRepsDeviation))} reps "
                 untimedLiftSummary += if (avgRepsDeviation < 0.0) {
-                    "less than usual."
+                    "less per set than usual."
                 } else {
-                    "more than usual."
+                    "more per set than usual."
                 }
             }
         }
@@ -1596,6 +1607,7 @@ interface SessionDao {
             // same logic as above but with timed lifts
             val timedUnits = getUnitsFromSessionId(id, untimed = false)
             val liftAvgsForSession: List<LiftDataVis> = getLiftDataVisObjectsFromSessionId(id, untimed = false)
+            val onlyOneLift: Boolean = liftAvgsForSession.size == 1
 
             val previousLiftAvgs: List<LiftDataVis> = getLiftDataVisObjectsBeforeSessionNumber(
                 id = id,
@@ -1631,11 +1643,21 @@ interface SessionDao {
                 val avgTimeDeviationTriple: Triple<Int, Int, Double> = DateTimeCalculator
                     .convertDoubleTimeToTripleTime(abs(avgMinsDeviation))
 
-                timedLiftSummary += "For this session, your lifts "
+                timedLiftSummary += "For this session, your lift"
+                if (onlyOneLift) {
+                    timedLiftSummary += " "
+                } else {
+                    timedLiftSummary += "s "
+                }
                 if (sessionHasUntimedLifts) {
                     timedLiftSummary += "with a metric type of 'time' "
                 }
-                timedLiftSummary += "were ${"%.2f".format(abs(avgWeightDeviation))} $timedUnits "
+                if (onlyOneLift) {
+                    timedLiftSummary += "was "
+                } else {
+                    timedLiftSummary += "were "
+                }
+                timedLiftSummary += "${"%.2f".format(abs(avgWeightDeviation))} $timedUnits "
                 timedLiftSummary += if (avgWeightDeviation < 0.0) {
                     "lower "
                 } else {
@@ -1648,7 +1670,12 @@ interface SessionDao {
                 } else {
                     "higher, "
                 }
-                timedLiftSummary += "and your lifts were "
+                timedLiftSummary += "and your lift"
+                if (onlyOneLift) {
+                    timedLiftSummary += " was "
+                } else {
+                    timedLiftSummary += "s were "
+                }
                 if (avgTimeDeviationTriple.first != 0) {
                     timedLiftSummary += if (avgTimeDeviationTriple.first == 1) {
                         "1 hour, "
