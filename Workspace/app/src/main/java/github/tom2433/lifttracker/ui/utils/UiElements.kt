@@ -3,7 +3,9 @@ package github.tom2433.lifttracker.ui.utils
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.expandVertically
@@ -49,6 +51,7 @@ import androidx.compose.material.icons.filled.Scale
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -59,6 +62,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
@@ -66,6 +70,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -84,6 +92,8 @@ import github.tom2433.lifttracker.data.structures.LiftSetCountPerMuscleGroup
 import github.tom2433.lifttracker.data.structures.SetCardData
 import github.tom2433.lifttracker.data.utils.DateTimeCalculator
 import github.tom2433.lifttracker.ui.viewModels.SessionDataTimeFrameOption
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun StatRow(
@@ -1529,6 +1539,28 @@ fun DisplaySessionAnalytics(
     filterChipClicked: (SessionDataTimeFrameOption) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var analyticsVisible by remember { mutableStateOf(false) }
+    val borderColor = animateColorAsState(
+        targetValue = if (analyticsVisible) {
+            MaterialTheme.colorScheme.onBackground.copy(0.3f)
+        } else {
+            Color.Transparent
+        },
+        animationSpec = spring(
+            stiffness = Spring.StiffnessMediumLow
+        )
+    )
+    val colPadding = animateDpAsState(
+        targetValue = if (analyticsVisible) {
+            12.dp
+        } else {
+            0.dp
+        },
+        animationSpec = spring(
+            stiffness = Spring.StiffnessMediumLow
+        )
+    )
+
     // card to hold full analytics section
     Card(
         colors = CardDefaults.cardColors().copy(
@@ -1537,9 +1569,9 @@ fun DisplaySessionAnalytics(
         ),
         border = BorderStroke(
             width = 1.dp,
-            color = MaterialTheme.colorScheme.onBackground.copy(0.3f)
+            color = borderColor.value
         ),
-        shape = RoundedCornerShape(4.dp),
+        shape = RoundedCornerShape(16.dp),
         modifier = modifier.fillMaxWidth()
     ) {
         // column to hold card contents
@@ -1548,75 +1580,117 @@ fun DisplaySessionAnalytics(
             horizontalAlignment = Alignment.Start,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(colPadding.value)
         ) {
-            // filter chips for timeframe
-            FlowRow(
-                horizontalArrangement = Arrangement.Start,
-                verticalArrangement = Arrangement.Top,
-                modifier = Modifier.fillMaxWidth()
+            OutlinedButton(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                onClick = {
+                    analyticsVisible = !analyticsVisible
+                },
+                shape = RoundedCornerShape(16.dp)
             ) {
-                for ((sessionDataTimeFrameOption, selected) in statDisplayFilterMap) {
-                    CustomFilterChip(
-                        label = sessionDataTimeFrameOption.label,
-                        onClick = { filterChipClicked(sessionDataTimeFrameOption) },
-                        selected = selected,
-                        modifier = Modifier
-                            .padding(
-                                end = 8.dp
+                Text(
+                    text = if (analyticsVisible) {
+                        "Hide Analysis"
+                    } else {
+                        "Analysis"
+                    }
+                )
+            }
+
+            // animate the visible state of the entire analytics section (controlled by button above)
+            AnimatedVisibility(
+                visible = analyticsVisible,
+                enter = expandVertically(
+                    expandFrom = Alignment.Top,
+                    animationSpec = spring(
+                        stiffness = Spring.StiffnessMediumLow
+                    )
+                ) + fadeIn(tween(300)),
+                exit = shrinkVertically(
+                    shrinkTowards = Alignment.Top,
+                    animationSpec = spring(
+                        stiffness = Spring.StiffnessMediumLow
+                    )
+                ) + fadeOut(tween(300))
+            ) {
+                Column(
+                    verticalArrangement = Arrangement.Top,
+                    horizontalAlignment = Alignment.Start,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp)
+                ) {
+                    // filter chips for timeframe
+                    FlowRow(
+                        horizontalArrangement = Arrangement.Start,
+                        verticalArrangement = Arrangement.Top,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        for ((sessionDataTimeFrameOption, selected) in statDisplayFilterMap) {
+                            CustomFilterChip(
+                                label = sessionDataTimeFrameOption.label,
+                                onClick = { filterChipClicked(sessionDataTimeFrameOption) },
+                                selected = selected,
+                                modifier = Modifier
+                                    .padding(
+                                        end = 8.dp
+                                    )
                             )
-                    )
-                }
-            }
+                        }
+                    }
 
-            // row to hold summary title and info button
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                // summary title
-                Text(
-                    text = "Summary",
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-                // info button
-                InfoButton {
-                    // explanation title
-                    Text(
-                        text = "How are session summaries generated?",
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                    // explanation
-                    Text(
-                        text = summaryTriple.third,
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                }
-            }
+                    // row to hold summary title and info button
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        // summary title
+                        Text(
+                            text = "Summary",
+                            style = MaterialTheme.typography.titleLarge,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        // info button
+                        InfoButton {
+                            // explanation title
+                            Text(
+                                text = "How are session summaries generated?",
+                                style = MaterialTheme.typography.titleLarge,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+                            // explanation
+                            Text(
+                                text = summaryTriple.third,
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+                        }
+                    }
 
-            // first paragraph of summary
-            if (summaryTriple.first.isNotBlank()) {
-                Text(
-                    text = summaryTriple.first,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier
-                        .padding(bottom = 8.dp)
-                        .fillMaxWidth()
-                )
-            }
-            // second paragraph of summary
-            if (summaryTriple.second.isNotBlank()) {
-                Text(
-                    text = summaryTriple.second,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier
-                        .padding(bottom = 8.dp)
-                        .fillMaxWidth()
-                )
+                    // first paragraph of summary
+                    if (summaryTriple.first.isNotBlank()) {
+                        Text(
+                            text = summaryTriple.first,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier
+                                .padding(bottom = 8.dp)
+                                .fillMaxWidth()
+                        )
+                    }
+                    // second paragraph of summary
+                    if (summaryTriple.second.isNotBlank()) {
+                        Text(
+                            text = summaryTriple.second,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier
+                                .padding(bottom = 8.dp)
+                                .fillMaxWidth()
+                        )
+                    }
+                }
             }
         }
     }

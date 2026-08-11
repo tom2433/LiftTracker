@@ -1663,8 +1663,7 @@ data class SessionsUiState(
     // sessionDetailMap: session ids pointing to SessionDetail objects; affected by fetchLimit
     val sessionDetailMap: Map<Int, SessionDetail> = emptyMap(),
     // properties for displaying data for a selected session ---------------------------------------
-    // weekStringPairList: list of pairs with first element as a formatted week string,
-    // second element as a list of session ids
+    // (formatted week string -> list of session ids)
     val weekStringPairList: List<Pair<String, List<Int>>> = emptyList(),
     // currentSessionLiftSetMap: Map of LiftSet ids pointing to SetCardData containing a lift set
     // object,  both of its SetMetric objects, and its selected state
