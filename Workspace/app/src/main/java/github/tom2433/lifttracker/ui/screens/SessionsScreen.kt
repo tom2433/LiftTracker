@@ -64,6 +64,7 @@ import github.tom2433.lifttracker.ui.AppViewModelProvider
 import github.tom2433.lifttracker.ui.navigation.NavigationDestination
 import github.tom2433.lifttracker.ui.utils.DateRangePickerModal
 import github.tom2433.lifttracker.ui.utils.DisplayAllSetDataForSession
+import github.tom2433.lifttracker.ui.utils.DisplaySessionAnalytics
 import github.tom2433.lifttracker.ui.utils.DisplaySetCountPerMuscleGroup
 import github.tom2433.lifttracker.ui.utils.FilterMenu
 import github.tom2433.lifttracker.ui.utils.LabelHeader
@@ -74,6 +75,7 @@ import github.tom2433.lifttracker.ui.utils.ShowElementDeleteDialog
 import github.tom2433.lifttracker.ui.utils.ShowElementEntryDialog
 import github.tom2433.lifttracker.ui.utils.ShowHistoricalSetEditDialog
 import github.tom2433.lifttracker.ui.utils.ThreeDotMenu
+import github.tom2433.lifttracker.ui.viewModels.SessionDataTimeFrameOption
 import github.tom2433.lifttracker.ui.viewModels.SessionsViewModel
 
 object SessionsDestination : NavigationDestination {
@@ -330,6 +332,14 @@ fun SessionsScreen(
                                         currentSessionDisplaySetList = sessionsUiState.currentSessionDisplaySetList,
                                         currentSessionLiftDetailMap = sessionsUiState.currentSessionLiftDetailMap,
                                         currentSessionLiftSetMap = sessionsUiState.currentSessionLiftSetMap,
+                                        currentSessionSummaryTriple = sessionsUiState.currentSessionSummary,
+                                        sessionStatDisplayFilterMap = sessionsUiState.sessionStatDisplayFilterMap,
+                                        filterChipClicked = {
+                                            viewModel.sessionDataFilterChipClicked(
+                                                sessionDataTimeFrameOption = it,
+                                                sessionCardId = sessionId
+                                            )
+                                        },
                                         onClickThreeDotMenu = {
                                             viewModel.threeDotMenuClicked(
                                                 sessionCardId = sessionDetail.sessionId
@@ -573,6 +583,9 @@ fun SessionCard(
     currentSessionDisplaySetList: List<Pair<Int, List<Int>>>,
     currentSessionLiftDetailMap: Map<Int, LiftSearchDetail>,
     currentSessionLiftSetMap: Map<Int, SetCardData>,
+    currentSessionSummaryTriple: Triple<String, String, String>,
+    sessionStatDisplayFilterMap: Map<SessionDataTimeFrameOption, Boolean>,
+    filterChipClicked: (SessionDataTimeFrameOption) -> Unit,
     onClickThreeDotMenu: () -> Unit,
     onDismissThreeDotMenu: () -> Unit,
     onClickSwitchToInProgress: () -> Unit,
@@ -744,7 +757,7 @@ fun SessionCard(
         }
 
         // animated visibility for if this card is selected: display the quantitative muscle
-        // group frequency and all set data
+        // group frequency, all set data, and all analysis related composables
         AnimatedVisibility(
             visible = sessionDetail.selected,
             enter = expandVertically(
@@ -756,7 +769,7 @@ fun SessionCard(
                 animationSpec = tween(300)
             ) + fadeOut(tween(300))
         ) {
-            // column to hold quantitative muscle group frequency and all set data
+            // column to hold quantitative muscle group frequency, session summary, and all set data
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -766,6 +779,14 @@ fun SessionCard(
                 DisplaySetCountPerMuscleGroup(
                     setCountPerMuscleGroupList = sessionDetail.liftSetCountPerMuscleGroupList,
                     showTotalSets = false
+                )
+
+                // display session summary
+                DisplaySessionAnalytics(
+                    summaryTriple = currentSessionSummaryTriple,
+                    statDisplayFilterMap = sessionStatDisplayFilterMap,
+                    filterChipClicked = { filterChipClicked(it) },
+                    modifier = Modifier.padding(top = 16.dp)
                 )
 
                 // display all set data

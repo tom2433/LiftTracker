@@ -990,7 +990,8 @@ class RecordSessionViewModel(
         if (hoursToLog != null && hoursToLog >= 0.0 &&
             minutesToLog != null && minutesToLog >= 0.0 &&
             secondsToLog != null && secondsToLog >= 0.0 &&
-            !(hoursInput.isBlank() && minutesInput.isBlank() && secondsInput.isBlank())) {
+            !(hoursInput.isBlank() && minutesInput.isBlank() && secondsInput.isBlank()) &&
+            (hoursToLog.toDouble() + minutesToLog.toDouble() + secondsToLog > 0.0)) {
             viewModelScope.launch {
                 // log the valid time input in the database
                 setMetricRepository.updateSetMetric(
@@ -1053,7 +1054,7 @@ class RecordSessionViewModel(
         val valueToLog: Double? = newValue.trim().toDoubleOrNull()
 
         // if inputted value is valid, update the database
-        if (valueToLog != null && valueToLog >= 0.0) {
+        if (valueToLog != null && (setMetric.metric_position != 2 || valueToLog > 0.0) && valueToLog >= 0.0) {
             viewModelScope.launch {
                 setMetricRepository.updateSetMetric(
                     setMetric = setMetric.copy(

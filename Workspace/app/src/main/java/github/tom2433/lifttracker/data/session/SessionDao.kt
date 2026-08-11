@@ -9,6 +9,7 @@ import androidx.room.Transaction
 import androidx.room.Update
 import github.tom2433.lifttracker.data.liftset.LiftSet
 import github.tom2433.lifttracker.data.structures.DisplaySessionLiftSetRow
+import github.tom2433.lifttracker.data.structures.LiftDataVis
 import github.tom2433.lifttracker.data.structures.LiftNameAndFrequency
 import github.tom2433.lifttracker.data.structures.LiftSetCountPerMuscleGroup
 import github.tom2433.lifttracker.data.structures.MuscleGroupNameAndFrequency
@@ -17,9 +18,10 @@ import github.tom2433.lifttracker.data.structures.SessionDetailData
 import github.tom2433.lifttracker.data.structures.SessionMuscleGroupCountData
 import github.tom2433.lifttracker.data.structures.SessionNameAndFrequency
 import github.tom2433.lifttracker.data.utils.DateTimeCalculator
-import github.tom2433.lifttracker.ui.screens.TimeFrameOption
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlin.math.abs
+import kotlin.math.round
 
 @Dao
 interface SessionDao {
@@ -1360,5 +1362,364 @@ interface SessionDao {
             startDate = datePair.first,
             endDate = datePair.second
         )
+    }
+
+    @Query("""
+        SELECT EXISTS(
+            SELECT 1
+            FROM lift_sets AS ls
+            INNER JOIN lifts AS l
+                ON l.id = ls.lift_id
+            WHERE ls.session_id = :id
+                AND l.metric_type = 1
+        )
+    """)
+    suspend fun sessionHasUntimedLifts(id: Int): Boolean
+
+    @Query("""
+        SELECT EXISTS(
+            SELECT 1
+            FROM lift_sets AS ls
+            INNER JOIN lifts AS l
+                ON l.id = ls.lift_id
+            WHERE ls.session_id = :id
+                AND l.metric_type = 2
+        )
+    """)
+    suspend fun sessionHasTimedLifts(id: Int): Boolean
+
+    @Query("""
+        SELECT TRIM(s.session_label)
+        FROM sessions AS s
+            WHERE s.id = :id
+        LIMIT 1
+    """)
+    suspend fun getTrimmedSessionNameFromId(id: Int): String?
+
+    @Query("""
+        SELECT CASE 
+            WHEN (
+                SELECT COUNT(DISTINCT l.unit_id)
+                FROM lifts AS l
+                INNER JOIN lift_sets AS ls
+                    ON ls.lift_id = l.id
+                WHERE ls.session_id = :id
+                    AND l.metric_type = CASE WHEN :untimed = 1 THEN 1 ELSE 2 END
+            ) > 1 THEN 'units' 
+            ELSE (
+                SELECT lu.name
+                FROM lift_units AS lu
+                INNER JOIN lifts AS l
+                    ON l.unit_id = lu.id
+                INNER JOIN lift_sets AS ls
+                    ON ls.lift_id = l.id
+                WHERE ls.session_id = :id
+                    AND l.metric_type = CASE WHEN :untimed = 1 THEN 1 ELSE 2 END
+                LIMIT 1
+            )
+            END
+    """)
+    suspend fun getUnitsFromSessionId(id: Int, untimed: Boolean): String
+
+    @Query("""
+        SELECT
+            l.id AS liftId,
+            AVG(weight.value) AS weight,
+            AVG(second.value) AS repsOrMins,
+            AVG(weight.value / second.value) AS weightPerRepOrMin
+        FROM lift_sets AS ls
+        INNER JOIN lifts AS l
+            ON l.id = ls.lift_id
+        INNER JOIN set_metrics AS weight
+            ON weight.set_id = ls.id
+        INNER JOIN set_metrics AS second
+            ON second.set_id = ls.id
+        WHERE weight.metric_position = 1
+            AND second.metric_position = 2
+            AND ls.session_id = :id
+            AND l.metric_type = CASE WHEN :untimed = 1 THEN 1 ELSE 2 END
+        GROUP BY l.id
+    """)
+    suspend fun getLiftDataVisObjectsFromSessionId(id: Int, untimed: Boolean): List<LiftDataVis>
+
+    @Query("""
+        SELECT
+            previous_session_lift_avgs.liftId AS liftId,
+            AVG(previous_session_lift_avgs.weight) AS weight,
+            AVG(previous_session_lift_avgs.repsOrMins) AS repsOrMins,
+            AVG(previous_session_lift_avgs.weightPerRepOrMin) AS weightPerRepOrMin
+        FROM (
+            SELECT
+                l.id AS liftId,
+                s.id AS sessionId,
+                AVG(weight.value) AS weight,
+                AVG(second.value) AS repsOrMins,
+                AVG(weight.value / second.value) AS weightPerRepOrMin
+            FROM sessions AS target
+            INNER JOIN sessions AS s
+                ON s.profile_id = target.profile_id
+                AND s.session_number < target.session_number
+                AND s.date >= :startDate
+                AND TRIM(s.session_label) = TRIM(target.session_label)
+            INNER JOIN lift_sets AS ls
+                ON ls.session_id = s.id
+            INNER JOIN lifts AS l
+                ON l.id = ls.lift_id
+            INNER JOIN set_metrics AS weight
+                ON weight.set_id = ls.id
+                AND weight.metric_position = 1
+            INNER JOIN set_metrics AS second
+                ON second.set_id = ls.id
+                AND second.metric_position = 2
+            WHERE target.id = :id
+                AND l.id IN(:liftIds)
+                AND l.metric_type = CASE WHEN :untimed = 1 THEN 1 ELSE 2 END
+                AND second.value > 0.0
+            GROUP BY s.id, l.id
+        ) AS previous_session_lift_avgs
+        GROUP BY previous_session_lift_avgs.liftId
+    """)
+    suspend fun getLiftDataVisObjectsBeforeSessionNumber(
+        id: Int,
+        liftIds: List<Int>,
+        startDate: String,
+        untimed: Boolean,
+    ): List<LiftDataVis>
+
+    @Query("""
+        SELECT l.name
+        FROM lifts AS l
+        WHERE l.id IN (:liftIds)
+    """)
+    suspend fun getLiftNamesFromLiftIds(
+        liftIds: List<Int>
+    ): List<String?>
+
+    suspend fun getSessionSummaryForSessionId(
+        id: Int,
+        startDate: String
+    ): Triple<String, String, String> {
+        val sessionHasUntimedLifts: Boolean = sessionHasUntimedLifts(id)
+        val sessionHasTimedLifts: Boolean = sessionHasTimedLifts(id)
+        val trimmedSessionName: String = getTrimmedSessionNameFromId(id) ?: return Triple("Something went wrong.", "", "")
+        val liftIdsList: MutableList<Int> = mutableListOf()
+
+        var untimedLiftSummary: String = ""
+        var timedLiftSummary: String = ""
+        var explanation: String = ""
+
+        if (!sessionHasUntimedLifts && !sessionHasTimedLifts) {
+            return Triple(
+                first = "This session does not have any set data yet.",
+                second = "",
+                third = "Try recording some sets for this session to view its summary."
+            )
+        }
+
+        // if session has at least one lift with reps, fill the untimedLiftSummary
+        if (sessionHasUntimedLifts) {
+            // retrieve its units (if there are lifts with different units, this is just "units")
+            val untimedUnits = getUnitsFromSessionId(id, untimed = true)
+
+            // retrieve list of LiftDataVis objects (avg weight, reps, and weight per rep)
+            // one for each untimed lift for this session
+            val liftAvgsForSession: List<LiftDataVis> = getLiftDataVisObjectsFromSessionId(id, untimed = true)
+
+            // retrieve list of historical LiftDataVis objects
+            // one for each untimed lift for this session; averages only the lifts which occurred in
+            // sessions of the same name with lower session number, after and including startDate
+            val previousLiftAvgs: List<LiftDataVis> = getLiftDataVisObjectsBeforeSessionNumber(
+                id = id,
+                liftIds = liftAvgsForSession.map { it.liftId },
+                startDate = startDate,
+                untimed = true
+            )
+
+            val previousLiftAvgsMap: Map<Int, LiftDataVis> =
+                previousLiftAvgs.associateBy { it.liftId }
+
+            // calculate the deviations from the mean for each lift. If the user has not recorded
+            // a particular lift before for this session name, it will not be included in this list.
+            val deviationsList: List<LiftDataVis> = liftAvgsForSession.mapNotNull { current ->
+                val previous: LiftDataVis = previousLiftAvgsMap[current.liftId] ?:
+                    return@mapNotNull null
+
+                liftIdsList.add(current.liftId)
+
+                LiftDataVis(
+                    liftId = current.liftId,
+                    weight = current.weight - previous.weight,
+                    repsOrMins = current.repsOrMins - previous.repsOrMins,
+                    weightPerRepOrMin = current.weightPerRepOrMin - previous.weightPerRepOrMin
+                )
+            }
+
+            // don't fill the untimedLiftSummary if the user has NOT recorded any untimed lifts for
+            // previous sessions of the same name
+            if (deviationsList.isEmpty()) {
+                untimedLiftSummary = ""
+            } else {
+                // otherwise fill the untimedLiftSummary
+                val avgWeightDeviation = deviationsList.map { it.weight }.average()
+                val avgRepsDeviation = deviationsList.map { it.repsOrMins }.average()
+                val avgWeightPerRepDeviation =
+                    deviationsList.map { it.weightPerRepOrMin }.average()
+
+                untimedLiftSummary += "For this session, your lifts "
+                if (sessionHasTimedLifts) {
+                    untimedLiftSummary += "with a metric type of 'reps' "
+                }
+                untimedLiftSummary += "were ${"%.2f".format(abs(avgWeightDeviation))} $untimedUnits "
+                untimedLiftSummary += if (avgWeightDeviation < 0.0) {
+                    "lower "
+                } else {
+                    "higher "
+                }
+                untimedLiftSummary += "than previous $trimmedSessionName sessions, your intensity was " +
+                        "${"%.2f".format(abs(avgWeightPerRepDeviation))} $untimedUnits per rep "
+                untimedLiftSummary += if (avgWeightPerRepDeviation < 0.0) {
+                    "lower, "
+                } else {
+                    "higher, "
+                }
+                untimedLiftSummary += "and you performed ${"%.2f".format(abs(avgRepsDeviation))} reps "
+                untimedLiftSummary += if (avgRepsDeviation < 0.0) {
+                    "less than usual."
+                } else {
+                    "more than usual."
+                }
+            }
+        }
+
+        // if session has at least one lift with reps, fill the timedLiftSummary
+        if (sessionHasTimedLifts) {
+            // same logic as above but with timed lifts
+            val timedUnits = getUnitsFromSessionId(id, untimed = false)
+            val liftAvgsForSession: List<LiftDataVis> = getLiftDataVisObjectsFromSessionId(id, untimed = false)
+
+            val previousLiftAvgs: List<LiftDataVis> = getLiftDataVisObjectsBeforeSessionNumber(
+                id = id,
+                liftIds = liftAvgsForSession.map { it.liftId },
+                startDate = startDate,
+                untimed = false
+            )
+
+            val previousLiftAvgsMap: Map<Int, LiftDataVis> =
+                previousLiftAvgs.associateBy { it.liftId }
+
+            val deviationsList: List<LiftDataVis> = liftAvgsForSession.mapNotNull { current ->
+                val previous: LiftDataVis = previousLiftAvgsMap[current.liftId] ?:
+                    return@mapNotNull null
+
+                liftIdsList.add(current.liftId)
+
+                LiftDataVis(
+                    liftId = current.liftId,
+                    weight = current.weight - previous.weight,
+                    repsOrMins = current.repsOrMins - previous.repsOrMins,
+                    weightPerRepOrMin = current.weightPerRepOrMin - previous.weightPerRepOrMin
+                )
+            }
+
+            if (deviationsList.isEmpty()) {
+                timedLiftSummary = ""
+            } else {
+                val avgWeightDeviation = deviationsList.map { it.weight }.average()
+                val avgMinsDeviation = deviationsList.map { it.repsOrMins }.average()
+                val avgWeightPerMinDeviation =
+                    deviationsList.map { it.weightPerRepOrMin }.average()
+                val avgTimeDeviationTriple: Triple<Int, Int, Double> = DateTimeCalculator
+                    .convertDoubleTimeToTripleTime(abs(avgMinsDeviation))
+
+                timedLiftSummary += "For this session, your lifts "
+                if (sessionHasUntimedLifts) {
+                    timedLiftSummary += "with a metric type of 'time' "
+                }
+                timedLiftSummary += "were ${"%.2f".format(abs(avgWeightDeviation))} $timedUnits "
+                timedLiftSummary += if (avgWeightDeviation < 0.0) {
+                    "lower "
+                } else {
+                    "higher "
+                }
+                timedLiftSummary += "than previous $trimmedSessionName sessions, your intensity was " +
+                        "${"%.2f".format(abs(avgWeightPerMinDeviation))} $timedUnits per minute "
+                timedLiftSummary += if (avgWeightPerMinDeviation < 0.0) {
+                    "lower, "
+                } else {
+                    "higher, "
+                }
+                timedLiftSummary += "and your lifts were "
+                if (avgTimeDeviationTriple.first != 0) {
+                    timedLiftSummary += if (avgTimeDeviationTriple.first == 1) {
+                        "1 hour, "
+                    } else {
+                        "${avgTimeDeviationTriple.first} hours, "
+                    }
+                }
+                if (avgTimeDeviationTriple.second != 0) {
+                    timedLiftSummary += if (avgTimeDeviationTriple.second == 1) {
+                        "1 minute "
+                    } else {
+                        "${avgTimeDeviationTriple.second} minutes "
+                    }
+                }
+                if (avgTimeDeviationTriple.first != 0 || avgTimeDeviationTriple.second != 0) {
+                    timedLiftSummary += "and "
+                }
+                timedLiftSummary += "${"%.2f".format(avgTimeDeviationTriple.third)} seconds "
+                timedLiftSummary += if (avgMinsDeviation < 0.0) {
+                    "shorter "
+                } else {
+                    "longer "
+                }
+                timedLiftSummary += "than usual."
+            }
+        }
+
+        // if session has a summary, add an explanation which includes all lifts that were factored
+        // into the generation of the summary.
+        if (liftIdsList.isNotEmpty()) {
+            val liftNameList: List<String> = getLiftNamesFromLiftIds(liftIdsList).mapNotNull { it }
+            if (liftNameList.isNotEmpty()) {
+                explanation += "This summary was generated only using the lift"
+                explanation += if (liftNameList.size == 1) {
+                    " "
+                } else {
+                    "s "
+                }
+                for ((index, liftName) in liftNameList.withIndex()) {
+                    explanation += "${liftName}, "
+                    if (index == liftNameList.size - 2) {
+                        explanation += "and "
+                    }
+                }
+                explanation += if (liftNameList.size == 1) {
+                    "since it is the only lift that has been trained before for " +
+                            "this session name."
+                } else {
+                    "since they are the only lifts that have been trained before for " +
+                            "this session name."
+                }
+            }
+        }
+
+        if (untimedLiftSummary.isBlank() && timedLiftSummary.isBlank()) {
+            if (startDate == DateTimeCalculator.START_DATE) {
+                untimedLiftSummary =
+                    "This was your first ever $trimmedSessionName workout with this " +
+                            "routine!"
+            } else {
+                untimedLiftSummary =
+                    "This is your first $trimmedSessionName workout with this routine in the " +
+                            "selected timeframe."
+            }
+            timedLiftSummary = "For your next $trimmedSessionName workout, You'll see a more " +
+                    "detailed summary if you train some of the same lifts."
+            explanation =  "Since you have not recorded any of this session's lifts before in a " +
+                    "session with the same name, no summary can be generated. Try using this " +
+                    "routine again in in a session with the same name for best results."
+        }
+
+        return Triple(untimedLiftSummary, timedLiftSummary, explanation)
     }
 }

@@ -205,4 +205,12 @@ class OfflineSessionRepository(private val sessionDao: SessionDao) : SessionRepo
         startDate = startDate,
         endDate = endDate
     )
+
+    override suspend fun getSessionSummaryFromId(
+        id: Int,
+        startDate: String
+    ): Triple<String, String, String> = sessionDao.getSessionSummaryForSessionId(
+        id = id,
+        startDate = startDate
+    )
 }

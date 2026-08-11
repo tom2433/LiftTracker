@@ -77,11 +77,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import github.tom2433.lifttracker.R
 import github.tom2433.lifttracker.data.liftset.LiftSet
+import github.tom2433.lifttracker.data.session.Session
 import github.tom2433.lifttracker.data.setmetric.SetMetric
 import github.tom2433.lifttracker.data.structures.LiftSearchDetail
 import github.tom2433.lifttracker.data.structures.LiftSetCountPerMuscleGroup
 import github.tom2433.lifttracker.data.structures.SetCardData
 import github.tom2433.lifttracker.data.utils.DateTimeCalculator
+import github.tom2433.lifttracker.ui.viewModels.SessionDataTimeFrameOption
 
 @Composable
 fun StatRow(
@@ -1515,6 +1517,106 @@ fun LabelAndDropdownRow(
                         onClick = { loadMore() }
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun DisplaySessionAnalytics(
+    summaryTriple: Triple<String, String, String>,
+    statDisplayFilterMap: Map<SessionDataTimeFrameOption, Boolean>,
+    filterChipClicked: (SessionDataTimeFrameOption) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    // card to hold full analytics section
+    Card(
+        colors = CardDefaults.cardColors().copy(
+            contentColor = MaterialTheme.colorScheme.onBackground,
+            containerColor = MaterialTheme.colorScheme.background
+        ),
+        border = BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.onBackground.copy(0.3f)
+        ),
+        shape = RoundedCornerShape(4.dp),
+        modifier = modifier.fillMaxWidth()
+    ) {
+        // column to hold card contents
+        Column(
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.Start,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            // filter chips for timeframe
+            FlowRow(
+                horizontalArrangement = Arrangement.Start,
+                verticalArrangement = Arrangement.Top,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                for ((sessionDataTimeFrameOption, selected) in statDisplayFilterMap) {
+                    CustomFilterChip(
+                        label = sessionDataTimeFrameOption.label,
+                        onClick = { filterChipClicked(sessionDataTimeFrameOption) },
+                        selected = selected,
+                        modifier = Modifier
+                            .padding(
+                                end = 8.dp
+                            )
+                    )
+                }
+            }
+
+            // row to hold summary title and info button
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // summary title
+                Text(
+                    text = "Summary",
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                // info button
+                InfoButton {
+                    // explanation title
+                    Text(
+                        text = "How are session summaries generated?",
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    // explanation
+                    Text(
+                        text = summaryTriple.third,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                }
+            }
+
+            // first paragraph of summary
+            if (summaryTriple.first.isNotBlank()) {
+                Text(
+                    text = summaryTriple.first,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier
+                        .padding(bottom = 8.dp)
+                        .fillMaxWidth()
+                )
+            }
+            // second paragraph of summary
+            if (summaryTriple.second.isNotBlank()) {
+                Text(
+                    text = summaryTriple.second,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier
+                        .padding(bottom = 8.dp)
+                        .fillMaxWidth()
+                )
             }
         }
     }

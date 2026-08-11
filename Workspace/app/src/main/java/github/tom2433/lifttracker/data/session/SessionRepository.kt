@@ -163,4 +163,9 @@ interface SessionRepository {
         startDate: String?,
         endDate: String?
     ): Flow<Int>
+
+    suspend fun getSessionSummaryFromId(
+        id: Int,
+        startDate: String
+    ): Triple<String, String, String>
 }

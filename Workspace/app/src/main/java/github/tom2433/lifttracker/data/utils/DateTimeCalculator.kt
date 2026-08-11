@@ -17,6 +17,7 @@ object DateTimeCalculator {
     const val DAYS_PER_WEEK = 7L
     const val DAYS_PER_MONTH = 28L
     const val DAYS_PER_YEAR = 12L * DAYS_PER_MONTH
+    const val START_DATE = "2025-07-03"
 
     // This produces today's local calendar date in the same ISO-8601 format used by sessions.date. - Codex
     fun getCurrentIsoDate(): String {
@@ -200,7 +201,7 @@ object DateTimeCalculator {
         endDate: String?
     ): Pair<String, String> {
         return Pair(
-            first = startDate ?: "2025-07-03",
+            first = startDate ?: START_DATE,
             second = endDate ?: getCurrentIsoDate()
         )
     }

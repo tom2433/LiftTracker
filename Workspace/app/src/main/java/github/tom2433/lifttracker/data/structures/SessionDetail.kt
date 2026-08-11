@@ -40,3 +40,10 @@ data class LiftNameAndFrequency(
     val liftName: String,
     val liftFrequency: Int
 )
+
+data class LiftDataVis(
+    val liftId: Int,
+    val weight: Double,
+    val repsOrMins: Double,
+    val weightPerRepOrMin: Double
+)

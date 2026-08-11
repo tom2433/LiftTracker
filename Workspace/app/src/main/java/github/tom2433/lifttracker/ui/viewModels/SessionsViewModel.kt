@@ -663,8 +663,86 @@ class SessionsViewModel(
             currentState.copy(
                 currentSessionLiftSetMap = emptyMap(),
                 currentSessionLiftDetailMap = emptyMap(),
-                currentSessionDisplaySetList = emptyList()
+                currentSessionDisplaySetList = emptyList(),
+                currentSessionSummary = Triple("", "", ""),
+                sessionStatDisplayFilterMap = mapOf(
+                    SessionDataTimeFrameOption.ALL_TIME to true,
+                    SessionDataTimeFrameOption.PAST_MONTH to false,
+                    SessionDataTimeFrameOption.PAST_TWO_MONTHS to false,
+                    SessionDataTimeFrameOption.PAST_YEAR to false
+                )
             )
+        }
+    }
+
+    fun beginSetCollectionJob(sessionDetail: SessionDetail) {
+        viewModelScope.launch {
+            val endDate = sessionDetail.sessionDateIso
+            val startDate: String =
+                when (_sessionsUiState.value.sessionStatDisplayFilterMap.filter { it.value }.firstNotNullOf { it.key }) {
+                    SessionDataTimeFrameOption.ALL_TIME -> DateTimeCalculator.START_DATE
+                    SessionDataTimeFrameOption.PAST_MONTH -> DateTimeCalculator.calculateStartDate(
+                        today = endDate,
+                        daysBeforeToday = DateTimeCalculator.DAYS_PER_MONTH
+                    )
+                    SessionDataTimeFrameOption.PAST_TWO_MONTHS -> DateTimeCalculator.calculateStartDate(
+                        today = endDate,
+                        daysBeforeToday = DateTimeCalculator.DAYS_PER_MONTH * 2
+                    )
+                    SessionDataTimeFrameOption.PAST_YEAR -> DateTimeCalculator.calculateStartDate(
+                        today = endDate,
+                        daysBeforeToday = DateTimeCalculator.DAYS_PER_YEAR
+                    )
+                }
+
+            combine(
+                sessionRepository.getDisplaySessionLiftSetRowsStream(sessionDetail.sessionId),
+                liftRepository.getLiftSearchDetailsForSessionIdStream(sessionDetail.sessionId)
+            ) { displaySessionLiftSetRows, liftSearchDetails ->
+                displaySessionLiftSetRows to liftSearchDetails
+            }.collect { (displaySessionLiftSetRows, liftSearchDetails) ->
+                val currentSessionSummary = sessionRepository.getSessionSummaryFromId(
+                    id = sessionDetail.sessionId,
+                    startDate = startDate
+                )
+
+                _sessionsUiState.update { currentState ->
+                    currentState.copy(
+                        currentSessionLiftSetMap = displaySessionLiftSetRows.associate { displaySessionLiftSetRow ->
+                            displaySessionLiftSetRow.liftSet.id to SetCardData(
+                                liftSet = displaySessionLiftSetRow.liftSet,
+                                weightMetric = displaySessionLiftSetRow.weightMetric,
+                                secondMetric = displaySessionLiftSetRow.secondMetric,
+                                selected = currentState.currentSessionLiftSetMap[displaySessionLiftSetRow.liftSet.id]?.selected
+                                    ?: false
+                            )
+                        },
+                        currentSessionDisplaySetList = convertLiftSetRowsToSetList(
+                            displaySessionLiftSetRows = displaySessionLiftSetRows
+                        ),
+                        currentSessionLiftDetailMap = liftSearchDetails.associate { liftSearchDetail ->
+                            liftSearchDetail.liftObj.id to liftSearchDetail.copy(
+                                selected = currentState.currentSessionLiftDetailMap[liftSearchDetail.liftObj.id]?.selected
+                                    ?: false
+                            )
+                        },
+                        sessionDetailMap = currentState.sessionDetailMap.mapValues { (thisSessionId, thisSessionDetail) ->
+                            if (thisSessionId == sessionDetail.sessionId) {
+                                thisSessionDetail.copy(
+                                    selected = true
+                                )
+                            } else {
+                                thisSessionDetail.copy(
+                                    selected = false
+                                )
+                            }
+                        },
+                        currentSessionSummary = currentSessionSummary
+                    )
+                }
+
+                Log.d(TAG, "Data loaded for session id ${sessionDetail.sessionId}")
+            }
         }
     }
 
@@ -681,6 +759,26 @@ class SessionsViewModel(
                 // close all cards, cancel the setCollectionJob and reset session display data
                 resetSessionData()
 
+                val endDate = sessionDetail.sessionDateIso
+                val startDate: String =
+                    when (_sessionsUiState.value.sessionStatDisplayFilterMap.filter { it.value }.firstNotNullOf { it.key }) {
+                        SessionDataTimeFrameOption.ALL_TIME -> DateTimeCalculator.START_DATE
+                        SessionDataTimeFrameOption.PAST_MONTH -> DateTimeCalculator.calculateStartDate(
+                            today = endDate,
+                            daysBeforeToday = DateTimeCalculator.DAYS_PER_MONTH
+                        )
+                        SessionDataTimeFrameOption.PAST_TWO_MONTHS -> DateTimeCalculator.calculateStartDate(
+                            today = endDate,
+                            daysBeforeToday = DateTimeCalculator.DAYS_PER_MONTH * 2
+                        )
+                        SessionDataTimeFrameOption.PAST_YEAR -> DateTimeCalculator.calculateStartDate(
+                            today = endDate,
+                            daysBeforeToday = DateTimeCalculator.DAYS_PER_YEAR
+                        )
+                    }
+
+                beginSetCollectionJob(sessionDetail)
+
                 setCollectionJob = launch {
                     combine(
                         sessionRepository.getDisplaySessionLiftSetRowsStream(sessionDetail.sessionId),
@@ -688,6 +786,11 @@ class SessionsViewModel(
                     ) { displaySessionLiftSetRows, liftSearchDetails ->
                         displaySessionLiftSetRows to liftSearchDetails
                     }.collect { (displaySessionLiftSetRows, liftSearchDetails) ->
+                        val currentSessionSummary = sessionRepository.getSessionSummaryFromId(
+                            id = sessionDetail.sessionId,
+                            startDate = startDate
+                        )
+
                         _sessionsUiState.update { currentState ->
                             currentState.copy(
                                 currentSessionLiftSetMap = displaySessionLiftSetRows.associate { displaySessionLiftSetRow ->
@@ -717,7 +820,8 @@ class SessionsViewModel(
                                             selected = false
                                         )
                                     }
-                                }
+                                },
+                                currentSessionSummary = currentSessionSummary
                             )
                         }
 
@@ -866,7 +970,7 @@ class SessionsViewModel(
 
         // check reps metric if applicable
         if (metricType == "reps") {
-            if ((_sessionsUiState.value.newRepsValue.toDoubleOrNull() ?: -1.0) < 0.0) {
+            if ((_sessionsUiState.value.newRepsValue.toDoubleOrNull() ?: -1.0) <= 0.0) {
                 return false
             }
         } else {
@@ -1516,12 +1620,36 @@ class SessionsViewModel(
             )
         }
     }
+
+    fun sessionDataFilterChipClicked(
+        sessionDataTimeFrameOption: SessionDataTimeFrameOption,
+        sessionCardId: Int
+    ) {
+        val sessionDetail: SessionDetail =
+            _sessionsUiState.value.sessionDetailMap[sessionCardId] ?: return
+
+        // first update the time frame option, then refresh the session collection
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                sessionStatDisplayFilterMap =
+                    currentState.sessionStatDisplayFilterMap.mapValues { (thisSessionDataTimeFrameOption, _) ->
+                        thisSessionDataTimeFrameOption == sessionDataTimeFrameOption
+                    }
+            )
+        }
+
+        setCollectionJob?.cancel()
+        beginSetCollectionJob(sessionDetail)
+    }
 }
 
 /**
  * Ui State for SessionsScreen
  */
 data class SessionsUiState(
+    // properties for determining how to display which sessions ------------------------------------
+    val donutChartsVisible: Boolean = false,
+    val dateRangePickerVisible: Boolean = false,
     val activeProfile: Profile? = null,
     val startDate: String? = null,
     val timeFrameLabel: String = TimeFrameOption.ALL_TIME,
@@ -1534,6 +1662,7 @@ data class SessionsUiState(
     val muscleGroupFrequencyList: List<LiftSetCountPerMuscleGroup> = emptyList(),
     // sessionDetailMap: session ids pointing to SessionDetail objects; affected by fetchLimit
     val sessionDetailMap: Map<Int, SessionDetail> = emptyMap(),
+    // properties for displaying data for a selected session ---------------------------------------
     // weekStringPairList: list of pairs with first element as a formatted week string,
     // second element as a list of session ids
     val weekStringPairList: List<Pair<String, List<Int>>> = emptyList(),
@@ -1547,15 +1676,21 @@ data class SessionsUiState(
     //      first element: Lift id
     //      second element: list of LiftSet ids maintaining order
     val currentSessionDisplaySetList: List<Pair<Int, List<Int>>> = emptyList(),
-    val dateRangePickerVisible: Boolean = false,
+    val currentSessionSummary: Triple<String, String, String> = Triple("", "", ""),
+    val sessionStatDisplayFilterMap: Map<SessionDataTimeFrameOption, Boolean> = mapOf(
+        SessionDataTimeFrameOption.ALL_TIME to true,
+        SessionDataTimeFrameOption.PAST_MONTH to false,
+        SessionDataTimeFrameOption.PAST_TWO_MONTHS to false,
+        SessionDataTimeFrameOption.PAST_YEAR to false
+    ),
+    // properties for editing/deleting a session ---------------------------------------------------
     val deleteSessionDialogVisible: Boolean = false,
     val editSessionDialogVisible: Boolean = false,
     val sessionToDelete: Session? = null,
     val sessionToEdit: Session? = null,
     val newSessionName: String = "",
     val newSessionNote: String = "",
-    val donutChartsVisible: Boolean = false,
-    // fields for editing a set
+    // properties for editing a set ----------------------------------------------------------------
     val editSetDialogVisible: Boolean = false,
     val liftSetIdToEdit: Int? = null,
     val newSetName: String = "",
@@ -1567,10 +1702,10 @@ data class SessionsUiState(
     val newMinutesValue: String = "",
     val newSecondsValue: String = "",
     val newSecondMetricNote: String = "",
-    // fields for deleting a set
+    // properties for deleting a set ---------------------------------------------------------------
     val deleteSetDialogVisible: Boolean = false,
     val liftSetIdToDelete: Int? = null,
-    // properties for filtering
+    // properties for filtering --------------------------------------------------------------------
     val filterStatesMap: Map<FilterType, FilterState> = mapOf(
         FilterType.SESSION_NAME to FilterState(),
         FilterType.MUSCLE_GROUP to FilterState(),
@@ -1608,4 +1743,13 @@ enum class FilterType(
         label = "Contains lift:",
         defaultElementLabel = "Any"
     )
+}
+
+enum class SessionDataTimeFrameOption(
+    val label: String
+) {
+    ALL_TIME("All time"),
+    PAST_MONTH("Past month"),
+    PAST_TWO_MONTHS("Past 2 months"),
+    PAST_YEAR("Past year")
 }
