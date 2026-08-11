@@ -9,7 +9,8 @@ import androidx.room.Transaction
 import androidx.room.Update
 import github.tom2433.lifttracker.data.liftset.LiftSet
 import github.tom2433.lifttracker.data.structures.DisplaySessionLiftSetRow
-import github.tom2433.lifttracker.data.structures.LiftDataVis
+import github.tom2433.lifttracker.data.structures.LiftDataVisTimed
+import github.tom2433.lifttracker.data.structures.LiftDataVisUntimed
 import github.tom2433.lifttracker.data.structures.LiftNameAndFrequency
 import github.tom2433.lifttracker.data.structures.LiftSetCountPerMuscleGroup
 import github.tom2433.lifttracker.data.structures.MuscleGroupNameAndFrequency
@@ -21,7 +22,6 @@ import github.tom2433.lifttracker.data.utils.DateTimeCalculator
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlin.math.abs
-import kotlin.math.round
 
 @Dao
 interface SessionDao {
@@ -1368,10 +1368,18 @@ interface SessionDao {
         SELECT EXISTS(
             SELECT 1
             FROM lift_sets AS ls
+            INNER JOIN set_metrics AS weight
+                ON weight.set_id = ls.id
+                AND weight.metric_position = 1
+            INNER JOIN set_metrics AS mins
+                ON mins.set_id = ls.id
+                AND mins.metric_position = 2
             INNER JOIN lifts AS l
                 ON l.id = ls.lift_id
             WHERE ls.session_id = :id
                 AND l.metric_type = 1
+                AND weight.value != -1.0
+                AND mins.value > 0.0
         )
     """)
     suspend fun sessionHasUntimedLifts(id: Int): Boolean
@@ -1380,10 +1388,18 @@ interface SessionDao {
         SELECT EXISTS(
             SELECT 1
             FROM lift_sets AS ls
+            INNER JOIN set_metrics AS weight
+                ON weight.set_id = ls.id
+                AND weight.metric_position = 1
+            INNER JOIN set_metrics AS reps
+                ON reps.set_id = ls.id
+                AND reps.metric_position = 1
             INNER JOIN lifts AS l
                 ON l.id = ls.lift_id
             WHERE ls.session_id = :id
                 AND l.metric_type = 2
+                AND weight.value != -1.0
+                AND reps.value > 0.0
         )
     """)
     suspend fun sessionHasTimedLifts(id: Int): Boolean
@@ -1425,36 +1441,61 @@ interface SessionDao {
         SELECT
             l.id AS liftId,
             AVG(weight.value) AS weight,
-            AVG(second.value) AS repsOrMins,
-            AVG(weight.value / second.value) AS weightPerRepOrMin
+            AVG(mins.value) AS mins,
+            AVG(weight.value / mins.value) AS weightPerMin
         FROM lift_sets AS ls
         INNER JOIN lifts AS l
             ON l.id = ls.lift_id
         INNER JOIN set_metrics AS weight
             ON weight.set_id = ls.id
-        INNER JOIN set_metrics AS second
-            ON second.set_id = ls.id
-        WHERE weight.metric_position = 1
-            AND second.metric_position = 2
-            AND ls.session_id = :id
-            AND l.metric_type = CASE WHEN :untimed = 1 THEN 1 ELSE 2 END
+            AND weight.metric_position = 1
+        INNER JOIN set_metrics AS mins
+            ON mins.set_id = ls.id
+            AND mins.metric_position = 2
+        WHERE ls.session_id = :id
+            AND l.metric_type = 2
+            AND weight.value != -1.0
+            AND mins.value > 0.0
         GROUP BY l.id
     """)
-    suspend fun getLiftDataVisObjectsFromSessionId(id: Int, untimed: Boolean): List<LiftDataVis>
+    suspend fun getLiftDataVisObjectsTimedFromSessionId(id: Int): List<LiftDataVisTimed>
+
+    @Query("""
+        SELECT
+            l.id AS liftId,
+            AVG(weight.value) AS weight,
+            AVG(reps.value) AS reps,
+            AVG(weight.value * reps.value) AS volumePerSet
+        FROM lift_sets AS ls
+        INNER JOIN lifts AS l
+            ON l.id = ls.lift_id
+        INNER JOIN set_metrics AS weight
+            ON weight.set_id = ls.id
+            AND weight.metric_position = 1
+        INNER JOIN set_metrics AS reps
+            ON reps.set_id = ls.id
+            AND reps.metric_position = 2
+        WHERE ls.session_id = :id
+            AND l.metric_type = 1
+            AND weight.value != -1.0
+            AND reps.value > 0.0
+        GROUP BY l.id
+    """)
+    suspend fun getLiftDataVisObjectsUntimedFromSessionId(id: Int): List<LiftDataVisUntimed>
 
     @Query("""
         SELECT
             previous_session_lift_avgs.liftId AS liftId,
             AVG(previous_session_lift_avgs.weight) AS weight,
-            AVG(previous_session_lift_avgs.repsOrMins) AS repsOrMins,
-            AVG(previous_session_lift_avgs.weightPerRepOrMin) AS weightPerRepOrMin
+            AVG(previous_session_lift_avgs.reps) AS reps,
+            AVG(previous_session_lift_avgs.volumePerSet) AS volumePerSet
         FROM (
             SELECT
                 l.id AS liftId,
                 s.id AS sessionId,
                 AVG(weight.value) AS weight,
-                AVG(second.value) AS repsOrMins,
-                AVG(weight.value / second.value) AS weightPerRepOrMin
+                AVG(reps.value) AS reps,
+                AVG(weight.value * reps.value) AS volumePerSet
             FROM sessions AS target
             INNER JOIN sessions AS s
                 ON s.profile_id = target.profile_id
@@ -1468,23 +1509,67 @@ interface SessionDao {
             INNER JOIN set_metrics AS weight
                 ON weight.set_id = ls.id
                 AND weight.metric_position = 1
-            INNER JOIN set_metrics AS second
-                ON second.set_id = ls.id
-                AND second.metric_position = 2
+            INNER JOIN set_metrics AS reps
+                ON reps.set_id = ls.id
+                AND reps.metric_position = 2
             WHERE target.id = :id
                 AND l.id IN(:liftIds)
-                AND l.metric_type = CASE WHEN :untimed = 1 THEN 1 ELSE 2 END
-                AND second.value > 0.0
+                AND l.metric_type = 1
+                AND weight.value != -1.0
+                AND reps.value > 0.0
             GROUP BY s.id, l.id
         ) AS previous_session_lift_avgs
         GROUP BY previous_session_lift_avgs.liftId
     """)
-    suspend fun getLiftDataVisObjectsBeforeSessionNumber(
+    suspend fun getLiftDataVisObjectsUntimedBeforeSessionNumber(
         id: Int,
         liftIds: List<Int>,
-        startDate: String,
-        untimed: Boolean,
-    ): List<LiftDataVis>
+        startDate: String
+    ): List<LiftDataVisUntimed>
+
+    @Query("""
+        SELECT
+            previous_session_lift_avgs.liftId AS liftId,
+            AVG(previous_session_lift_avgs.weight) AS weight,
+            AVG(previous_session_lift_avgs.mins) AS mins,
+            AVG(previous_session_lift_avgs.weightPerMin) AS weightPerMin
+        FROM (
+            SELECT
+                l.id AS liftId,
+                s.id AS sessionId,
+                AVG(weight.value) AS weight,
+                AVG(mins.value) AS mins,
+                AVG(weight.value / mins.value) AS weightPerMin
+            FROM sessions AS target
+            INNER JOIN sessions AS s
+                ON s.profile_id = target.profile_id
+                AND s.session_number < target.session_number
+                AND s.date >= :startDate
+                AND TRIM(s.session_label) = TRIM(target.session_label)
+            INNER JOIN lift_sets AS ls
+                ON ls.session_id = s.id
+            INNER JOIN lifts AS l
+                ON l.id = ls.lift_id
+            INNER JOIN set_metrics AS weight
+                ON weight.set_id = ls.id
+                AND weight.metric_position = 1
+            INNER JOIN set_metrics AS mins
+                ON mins.set_id = ls.id
+                AND mins.metric_position = 2
+            WHERE target.id = :id
+                AND l.id IN(:liftIds)
+                AND l.metric_type = 2
+                AND weight.value != -1.0
+                AND mins.value > 0.0
+            GROUP BY s.id, l.id
+        ) AS previous_session_lift_avgs
+        GROUP BY previous_session_lift_avgs.liftId
+    """)
+    suspend fun getLiftDataVisObjectsTimedBeforeSessionNumber(
+        id: Int,
+        liftIds: List<Int>,
+        startDate: String
+    ): List<LiftDataVisTimed>
 
     @Query("""
         SELECT l.name
@@ -1521,37 +1606,36 @@ interface SessionDao {
             // retrieve its units (if there are lifts with different units, this is just "units")
             val untimedUnits = getUnitsFromSessionId(id, untimed = true)
 
-            // retrieve list of LiftDataVis objects (avg weight, reps, and weight per rep)
+            // retrieve list of LiftDataVisUntimed objects (avg weight, reps, and volume per set)
             // one for each untimed lift for this session
-            val liftAvgsForSession: List<LiftDataVis> = getLiftDataVisObjectsFromSessionId(id, untimed = true)
+            val liftAvgsForSession: List<LiftDataVisUntimed> = getLiftDataVisObjectsUntimedFromSessionId(id)
             val onlyOneLift: Boolean = liftAvgsForSession.size == 1
 
-            // retrieve list of historical LiftDataVis objects
+            // retrieve list of historical LiftDataVisUntimed objects
             // one for each untimed lift for this session; averages only the lifts which occurred in
             // sessions of the same name with lower session number, after and including startDate
-            val previousLiftAvgs: List<LiftDataVis> = getLiftDataVisObjectsBeforeSessionNumber(
+            val previousLiftAvgs: List<LiftDataVisUntimed> = getLiftDataVisObjectsUntimedBeforeSessionNumber(
                 id = id,
                 liftIds = liftAvgsForSession.map { it.liftId },
-                startDate = startDate,
-                untimed = true
+                startDate = startDate
             )
 
-            val previousLiftAvgsMap: Map<Int, LiftDataVis> =
+            val previousLiftAvgsMap: Map<Int, LiftDataVisUntimed> =
                 previousLiftAvgs.associateBy { it.liftId }
 
             // calculate the deviations from the mean for each lift. If the user has not recorded
             // a particular lift before for this session name, it will not be included in this list.
-            val deviationsList: List<LiftDataVis> = liftAvgsForSession.mapNotNull { current ->
-                val previous: LiftDataVis = previousLiftAvgsMap[current.liftId] ?:
+            val deviationsList: List<LiftDataVisUntimed> = liftAvgsForSession.mapNotNull { current ->
+                val previous: LiftDataVisUntimed = previousLiftAvgsMap[current.liftId] ?:
                     return@mapNotNull null
 
                 liftIdsList.add(current.liftId)
 
-                LiftDataVis(
+                LiftDataVisUntimed(
                     liftId = current.liftId,
                     weight = current.weight - previous.weight,
-                    repsOrMins = current.repsOrMins - previous.repsOrMins,
-                    weightPerRepOrMin = current.weightPerRepOrMin - previous.weightPerRepOrMin
+                    reps = current.reps - previous.reps,
+                    volumePerSet = current.volumePerSet - previous.volumePerSet
                 )
             }
 
@@ -1562,9 +1646,9 @@ interface SessionDao {
             } else {
                 // otherwise fill the untimedLiftSummary
                 val avgWeightDeviation = deviationsList.map { it.weight }.average()
-                val avgRepsDeviation = deviationsList.map { it.repsOrMins }.average()
-                val avgWeightPerRepDeviation =
-                    deviationsList.map { it.weightPerRepOrMin }.average()
+                val avgRepsDeviation = deviationsList.map { it.reps }.average()
+                val avgVolumePerSetDeviation =
+                    deviationsList.map { it.volumePerSet }.average()
 
                 untimedLiftSummary += "For this session, your lift"
                 if (onlyOneLift) {
@@ -1586,50 +1670,50 @@ interface SessionDao {
                 } else {
                     "heavier "
                 }
-                untimedLiftSummary += "than previous $trimmedSessionName sessions, your intensity was " +
-                        "${"%.2f".format(abs(avgWeightPerRepDeviation))} $untimedUnits "
-                untimedLiftSummary += if (avgWeightPerRepDeviation < 0.0) {
+                untimedLiftSummary += "than previous $trimmedSessionName sessions, your volume was " +
+                        "${"%.2f".format(abs(avgVolumePerSetDeviation))} $untimedUnits "
+                untimedLiftSummary += if (avgVolumePerSetDeviation < 0.0) {
                     "lighter "
                 } else {
                     "heavier "
                 }
-                untimedLiftSummary += "per rep, and you performed ${"%.2f".format(abs(avgRepsDeviation))} reps "
+                untimedLiftSummary += "per set, and you performed ${"%.2f".format(abs(avgRepsDeviation))} reps "
                 untimedLiftSummary += if (avgRepsDeviation < 0.0) {
-                    "less per set than usual."
+                    "less per set than usual. "
                 } else {
-                    "more per set than usual."
+                    "more per set than usual. "
                 }
+                untimedLiftSummary += "Accounted for ${deviationsList.size}/${liftAvgsForSession.size} lifts."
             }
         }
 
-        // if session has at least one lift with reps, fill the timedLiftSummary
+        // if session has at least one lift with time, fill the timedLiftSummary
         if (sessionHasTimedLifts) {
             // same logic as above but with timed lifts
             val timedUnits = getUnitsFromSessionId(id, untimed = false)
-            val liftAvgsForSession: List<LiftDataVis> = getLiftDataVisObjectsFromSessionId(id, untimed = false)
+            val liftAvgsForSession: List<LiftDataVisTimed> = getLiftDataVisObjectsTimedFromSessionId(id)
             val onlyOneLift: Boolean = liftAvgsForSession.size == 1
 
-            val previousLiftAvgs: List<LiftDataVis> = getLiftDataVisObjectsBeforeSessionNumber(
+            val previousLiftAvgs: List<LiftDataVisTimed> = getLiftDataVisObjectsTimedBeforeSessionNumber(
                 id = id,
                 liftIds = liftAvgsForSession.map { it.liftId },
-                startDate = startDate,
-                untimed = false
+                startDate = startDate
             )
 
-            val previousLiftAvgsMap: Map<Int, LiftDataVis> =
+            val previousLiftAvgsMap: Map<Int, LiftDataVisTimed> =
                 previousLiftAvgs.associateBy { it.liftId }
 
-            val deviationsList: List<LiftDataVis> = liftAvgsForSession.mapNotNull { current ->
-                val previous: LiftDataVis = previousLiftAvgsMap[current.liftId] ?:
+            val deviationsList: List<LiftDataVisTimed> = liftAvgsForSession.mapNotNull { current ->
+                val previous: LiftDataVisTimed = previousLiftAvgsMap[current.liftId] ?:
                     return@mapNotNull null
 
                 liftIdsList.add(current.liftId)
 
-                LiftDataVis(
+                LiftDataVisTimed(
                     liftId = current.liftId,
                     weight = current.weight - previous.weight,
-                    repsOrMins = current.repsOrMins - previous.repsOrMins,
-                    weightPerRepOrMin = current.weightPerRepOrMin - previous.weightPerRepOrMin
+                    mins = current.mins - previous.mins,
+                    weightPerMin = current.weightPerMin - previous.weightPerMin
                 )
             }
 
@@ -1637,11 +1721,11 @@ interface SessionDao {
                 timedLiftSummary = ""
             } else {
                 val avgWeightDeviation = deviationsList.map { it.weight }.average()
-                val avgMinsDeviation = deviationsList.map { it.repsOrMins }.average()
+                val avgMinsDeviation = deviationsList.map { it.mins }.average()
                 val avgWeightPerMinDeviation =
-                    deviationsList.map { it.weightPerRepOrMin }.average()
-                val avgTimeDeviationTriple: Triple<Int, Int, Double> = DateTimeCalculator
-                    .convertDoubleTimeToTripleTime(abs(avgMinsDeviation))
+                    deviationsList.map { it.weightPerMin }.average()
+                val avgTimeDeviationString: String = DateTimeCalculator
+                    .convertMinutesDoubleToSummaryDetail(abs(avgMinsDeviation))
 
                 timedLiftSummary += "For this session, your lift"
                 if (onlyOneLift) {
@@ -1670,36 +1754,20 @@ interface SessionDao {
                 } else {
                     "higher, "
                 }
-                timedLiftSummary += "and your lift"
+                timedLiftSummary += "and "
                 if (onlyOneLift) {
-                    timedLiftSummary += " was "
+                    timedLiftSummary += "it took "
                 } else {
-                    timedLiftSummary += "s were "
+                    timedLiftSummary += "they took "
                 }
-                if (avgTimeDeviationTriple.first != 0) {
-                    timedLiftSummary += if (avgTimeDeviationTriple.first == 1) {
-                        "1 hour, "
-                    } else {
-                        "${avgTimeDeviationTriple.first} hours, "
-                    }
-                }
-                if (avgTimeDeviationTriple.second != 0) {
-                    timedLiftSummary += if (avgTimeDeviationTriple.second == 1) {
-                        "1 minute "
-                    } else {
-                        "${avgTimeDeviationTriple.second} minutes "
-                    }
-                }
-                if (avgTimeDeviationTriple.first != 0 || avgTimeDeviationTriple.second != 0) {
-                    timedLiftSummary += "and "
-                }
-                timedLiftSummary += "${"%.2f".format(avgTimeDeviationTriple.third)} seconds "
+                timedLiftSummary += "$avgTimeDeviationString "
                 timedLiftSummary += if (avgMinsDeviation < 0.0) {
                     "shorter "
                 } else {
                     "longer "
                 }
-                timedLiftSummary += "than usual."
+                timedLiftSummary += "than usual. "
+                timedLiftSummary += "Accounted for ${deviationsList.size}/${liftAvgsForSession.size} lifts."
             }
         }
 
@@ -1873,6 +1941,40 @@ interface SessionDao {
     ): Double?
 
     @Query("""
+        SELECT AVG(session_avg_volume_per_set)
+        FROM (
+            SELECT AVG(weight.value * reps.value) AS session_avg_volume_per_set
+            FROM lift_sets AS ls
+            INNER JOIN lifts AS l
+                ON l.id = ls.lift_id
+            INNER JOIN sessions AS s
+                ON s.id = ls.session_id
+            INNER JOIN sessions AS target
+                ON target.id = :sessionId
+            INNER JOIN set_metrics AS weight
+                ON weight.set_id = ls.id
+                AND weight.metric_position = 1
+            INNER JOIN set_metrics AS reps
+                ON reps.set_id = ls.id
+                AND reps.metric_position = 2
+            WHERE l.id = :liftId
+                AND s.date >= :startDate
+                AND s.profile_id = target.profile_id
+                AND TRIM(s.session_label) = TRIM(target.session_label)
+                AND s.session_number < target.session_number
+                AND l.metric_type = 1
+                AND weight.value != -1.0
+                AND reps.value > 0.0
+            GROUP BY s.id
+        )
+    """)
+    suspend fun getAvgHistoricalVolumePerSetForLiftAndSessionName(
+        liftId: Int,
+        sessionId: Int,
+        startDate: String
+    ): Double?
+
+    @Query("""
         SELECT AVG(session_set_count)
         FROM (
             SELECT COUNT(ls.id) AS session_set_count
@@ -1978,6 +2080,33 @@ interface SessionDao {
     ): Double?
 
     @Query("""
+        SELECT AVG(volume_per_set)
+        FROM (
+            SELECT weight.value * reps.value AS volume_per_set
+            FROM lift_sets AS ls
+            INNER JOIN lifts AS l
+                ON l.id = ls.lift_id
+            INNER JOIN sessions AS s
+                ON ls.session_id = s.id
+            INNER JOIN set_metrics AS weight
+                ON weight.set_id = ls.id
+                AND weight.metric_position = 1
+            INNER JOIN set_metrics AS reps
+                ON reps.set_id = ls.id
+                AND reps.metric_position = 2
+            WHERE l.id = :liftId
+                AND s.id = :sessionId
+                AND l.metric_type = 1
+                AND weight.value != -1.0
+                AND reps.value > 0.0
+        )
+    """)
+    suspend fun getAvgVolumePerSetForLiftForSession(
+        liftId: Int,
+        sessionId: Int
+    ): Double?
+
+    @Query("""
         SELECT TRIM(lu.name)
         FROM lift_units AS lu
         INNER JOIN lifts AS l
@@ -2047,7 +2176,7 @@ interface SessionDao {
             if (typicalNumberOfSets == null) {
                 displaySummary += ". "
             } else {
-                displaySummary += ", but your historical average weight is "
+                displaySummary += ", but it's usually "
             }
         } else {
             displaySummary +=
@@ -2088,7 +2217,7 @@ interface SessionDao {
                     displaySummary += ". "
                 } else {
                     displaySummary +=
-                        ", but your historical average is " +
+                        ", but it's usually " +
                         "${DateTimeCalculator.convertMinutesDoubleToSummaryDetail(averageHistoricalRepsOrTime)}. "
                 }
             } else {
@@ -2097,7 +2226,7 @@ interface SessionDao {
                     displaySummary += ". "
                 } else {
                     displaySummary +=
-                        ", but your historical average is " +
+                        ", but it's usually " +
                         "${"%.2f".format(averageHistoricalRepsOrTime)}. "
                 }
             }
@@ -2110,7 +2239,7 @@ interface SessionDao {
                     displaySummary += "."
                 } else {
                     displaySummary +=
-                        ", and your historical average is " +
+                        ", and it's usually " +
                         "${DateTimeCalculator.convertMinutesDoubleToSummaryDetail(averageHistoricalRepsOrTime)}. "
                 }
             } else {
@@ -2121,21 +2250,36 @@ interface SessionDao {
                     displaySummary += ". "
                 } else {
                     displaySummary +=
-                        ", and your historical average is ${"%.2f".format(averageHistoricalRepsOrTime)}. "
+                        ", and it's usually ${"%.2f".format(averageHistoricalRepsOrTime)}. "
                 }
             }
         }
 
-        val averageIntensityForSession: Double? = getAvgIntensityForLiftForSession(
-            liftId = liftId,
-            sessionId = sessionId
-        )
+        val averageIntensityForSession: Double? = if (liftIsTimed) {
+            getAvgIntensityForLiftForSession(
+                liftId = liftId,
+                sessionId = sessionId
+            )
+        } else {
+            getAvgVolumePerSetForLiftForSession(
+                liftId = liftId,
+                sessionId = sessionId
+            )
+        }
 
-        val averageHistoricalIntensity: Double? = getAvgHistoricalIntensityForLiftAndSessionName(
-            liftId = liftId,
-            sessionId = sessionId,
-            startDate = startDate
-        )
+        val averageHistoricalIntensity: Double? = if (liftIsTimed) {
+            getAvgHistoricalIntensityForLiftAndSessionName(
+                liftId = liftId,
+                sessionId = sessionId,
+                startDate = startDate
+            )
+        } else {
+            getAvgHistoricalVolumePerSetForLiftAndSessionName(
+                liftId = liftId,
+                sessionId = sessionId,
+                startDate = startDate
+            )
+        }
 
         if (averageIntensityForSession == null) {
             if (liftIsTimed) {
@@ -2144,17 +2288,17 @@ interface SessionDao {
                     displaySummary += ". "
                 } else {
                     displaySummary +=
-                        ", but your historical average is " +
+                        ", but it's usually " +
                         "${"%.2f".format(averageHistoricalIntensity)}. "
                 }
             } else {
-                displaySummary += "Your $trimmedUnitName per rep also cannot be calculated"
+                displaySummary += "Your volume per set also cannot be calculated"
                 if (averageHistoricalIntensity == null) {
                     displaySummary += ". "
                 } else {
                     displaySummary +=
-                        ", but your historical average is " +
-                        "${"%.2f".format(averageHistoricalIntensity)}. "
+                        ", but it's usually " +
+                        "${"%.2f".format(averageHistoricalIntensity)} $trimmedUnitName. "
                 }
             }
         } else {
@@ -2166,19 +2310,19 @@ interface SessionDao {
                     displaySummary += ". "
                 } else {
                     displaySummary +=
-                        ", and your historical average is " +
+                        ", and it's usually " +
                         "${"%.2f".format(averageHistoricalIntensity)}. "
                 }
             } else {
                 displaySummary +=
-                    "Your average $trimmedUnitName per rep was " +
-                    "%.2f".format(averageIntensityForSession)
+                    "Your average volume per set was " +
+                    "${"%.2f".format(averageIntensityForSession)} $trimmedUnitName"
                 if (averageHistoricalIntensity == null) {
                     displaySummary += ". "
                 } else {
                     displaySummary +=
-                        ", and your historical average is " +
-                        "${"%.2f".format(averageHistoricalIntensity)}. "
+                        ", and it's usually " +
+                        "${"%.2f".format(averageHistoricalIntensity)} $trimmedUnitName. "
                 }
             }
         }

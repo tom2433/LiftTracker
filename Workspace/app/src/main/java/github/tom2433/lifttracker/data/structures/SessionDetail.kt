@@ -47,3 +47,17 @@ data class LiftDataVis(
     val repsOrMins: Double,
     val weightPerRepOrMin: Double
 )
+
+data class LiftDataVisUntimed(
+    val liftId: Int,
+    val weight: Double,
+    val reps: Double,
+    val volumePerSet: Double // = avg (reps * weight)
+)
+
+data class LiftDataVisTimed(
+    val liftId: Int,
+    val weight: Double,
+    val mins: Double,
+    val weightPerMin: Double // avg (weight / mins)
+)

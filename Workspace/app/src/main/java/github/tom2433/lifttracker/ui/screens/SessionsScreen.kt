@@ -53,6 +53,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -127,7 +128,6 @@ fun SessionsScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp)
             .verticalScroll(rememberScrollState())
     ) {
         // row to hold dropdown menu box for timeframe selector, and filter button
@@ -136,7 +136,11 @@ fun SessionsScreen(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 8.dp)
+                .padding(
+                    start = 16.dp,
+                    end = 16.dp,
+                    bottom = 8.dp
+                )
         ) {
             ExposedDropdownMenuBox(
                 expanded = sessionsUiState.timeFrameDropdownExpanded,
@@ -221,12 +225,20 @@ fun SessionsScreen(
             onNoteChanged = { viewModel.filterNoteChanged(it) },
             onDoneNote = { viewModel.filterNoteDone() },
             anyCountForAll = sessionsUiState.anyCountForFilter,
-            modifier = Modifier.padding(bottom = 16.dp)
+            modifier = Modifier.padding(
+                start = 16.dp,
+                end = 16.dp,
+                bottom = 16.dp
+            )
         )
 
         MuscleGroupDonutChart(
             muscleGroupFrequencyList = sessionsUiState.muscleGroupFrequencyList,
-            modifier = Modifier.padding(bottom = 8.dp)
+            modifier = Modifier.padding(
+                bottom = 8.dp,
+                start = 16.dp,
+                end = 16.dp,
+            )
         )
 
         // text to inform user of current timeframe
@@ -236,9 +248,14 @@ fun SessionsScreen(
                 alpha = 0.75f
             ),
             style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(
-                top = 8.dp
-            )
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .padding(
+                    top = 8.dp,
+                    start = 16.dp,
+                    end = 16.dp,
+                )
+                .fillMaxWidth()
         )
 
         HorizontalDivider(
@@ -246,7 +263,9 @@ fun SessionsScreen(
                 .fillMaxWidth()
                 .padding(
                     top = 8.dp,
-                    bottom = 32.dp
+                    bottom = 32.dp,
+                    start = 16.dp,
+                    end = 16.dp,
                 ),
             color = MaterialTheme.colorScheme.onBackground.copy(
                 alpha = 0.5f
@@ -255,148 +274,154 @@ fun SessionsScreen(
 
         // list of session cards
         loop@ for ((index, weekPair) in sessionsUiState.weekStringPairList.withIndex()) {
-            // row to hold label for this week
-            Row(
-                horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
+            // column to hold sessions for this week
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
             ) {
-                // column to hold sessions for this week
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
+                // animated visibility for the week label and layout switcher if first index
+                AnimatedVisibility(
+                    visible = sessionsUiState.sessionDetailMap[weekPair.second[0]]?.visible ?: continue@loop,
+                    enter = fadeIn(tween(300)),
+                    exit = fadeOut(tween(300))
                 ) {
-                    // animated visibility for the week label and layout switcher if first index
-                    AnimatedVisibility(
-                        visible = sessionsUiState.sessionDetailMap[weekPair.second[0]]?.visible ?: continue@loop,
-                        enter = fadeIn(tween(300)),
-                        exit = fadeOut(tween(300))
-                    ) {
-                        // row to hold week label and layout switcher if first index
-                        Row(
-                            horizontalArrangement = if (index == 0) {
-                                Arrangement.SpaceBetween
-                            } else {
-                                Arrangement.Start
-                            },
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 16.dp)
-                        ) {
-                            Text(
-                                text = weekPair.first,
-                                color = MaterialTheme.colorScheme.onBackground.copy(
-                                    alpha = 0.75f
-                                ),
-                                style = MaterialTheme.typography.bodyLarge
+                    // row to hold week label and layout switcher if first index
+                    Row(
+                        horizontalArrangement = if (index == 0) {
+                            Arrangement.SpaceBetween
+                        } else {
+                            Arrangement.Start
+                        },
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(
+                                bottom = 16.dp,
+                                start = 16.dp,
+                                end = 16.dp,
                             )
-                            if (index == 0) {
-                                LayoutSwitcher(
-                                    onListLayoutClicked = { viewModel.toggleListLayout() },
-                                    listLayoutEnabled = !sessionsUiState.donutChartsVisible,
-                                )
-                            }
+                    ) {
+                        Text(
+                            text = weekPair.first,
+                            color = MaterialTheme.colorScheme.onBackground.copy(
+                                alpha = 0.75f
+                            ),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        if (index == 0) {
+                            LayoutSwitcher(
+                                onListLayoutClicked = { viewModel.toggleListLayout() },
+                                listLayoutEnabled = !sessionsUiState.donutChartsVisible,
+                            )
                         }
                     }
+                }
 
-                    // loop to display all session cards for this week
-                    id_loop@ for (sessionId in weekPair.second) {
-                        // key to differentiate session cards
-                        key(sessionId) {
-                            val sessionDetail: SessionDetail =
-                                sessionsUiState.sessionDetailMap[sessionId] ?: continue@id_loop
-
-                            // column to hold each session card's animated visibility and bottom
-                            // spacer
-                            Column(
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                // animated visibility for each session card
-                                AnimatedVisibility(
-                                    visible = sessionDetail.visible,
-                                    enter = slideInHorizontally(
-                                        initialOffsetX = { it },
-                                        animationSpec = tween(300)
-                                    ) + fadeIn(
-                                        animationSpec = tween(300)
-                                    ),
-                                    exit = slideOutHorizontally(
-                                        targetOffsetX = { -it },
-                                        animationSpec = tween(300)
-                                    ) + fadeOut(
-                                        animationSpec = tween(300)
-                                    )
-                                ) {
-                                    SessionCard(
-                                        sessionDetail = sessionDetail,
-                                        donutChartsVisible = sessionsUiState.donutChartsVisible,
-                                        currentSessionDisplaySetList = sessionsUiState.currentSessionDisplaySetList,
-                                        currentSessionLiftDetailMap = sessionsUiState.currentSessionLiftDetailMap,
-                                        currentSessionLiftSetMap = sessionsUiState.currentSessionLiftSetMap,
-                                        currentSessionSummaryTriple = sessionsUiState.currentSessionSummary,
-                                        currentSessionLiftSummaryTitle = sessionsUiState.currentSessionLiftSummaryTitle,
-                                        currentSessionLiftSummaryBody = sessionsUiState.currentSessionLiftSummaryBody,
-                                        sessionStatDisplayFilterMap = sessionsUiState.sessionStatDisplayFilterMap,
-                                        filterChipClicked = {
-                                            viewModel.sessionDataFilterChipClicked(
-                                                sessionDataTimeFrameOption = it,
-                                                sessionCardId = sessionId
-                                            )
-                                        },
-                                        onClickThreeDotMenu = {
-                                            viewModel.threeDotMenuClicked(
-                                                sessionCardId = sessionDetail.sessionId
-                                            )
-                                        },
-                                        onDismissThreeDotMenu = {
-                                            viewModel.dismissThreeDotMenus()
-                                        },
-                                        onClickSwitchToInProgress = {
-                                            viewModel.switchSessionToInProgress(
-                                                sessionCardId = sessionDetail.sessionId
-                                            )
-                                        },
-                                        onClickFinishSession = {
-                                            viewModel.finishSession(sessionDetail.sessionId)
-                                        },
-                                        onClickEditSession = {
-                                            viewModel.showEditSessionDialog(sessionDetail.sessionId)
-                                        },
-                                        onClickDeleteSession = {
-                                            viewModel.showDeleteSessionDialog(sessionDetail.sessionId)
-                                        },
-                                        onClickCard = {
-                                            viewModel.toggleCardSelected(sessionDetail.sessionId)
-                                        },
-                                        onClickLiftCard = {
-                                            viewModel.liftCardClicked(it)
-                                        },
-                                        onLongClickHistoricalSetSection = {
-                                            viewModel.historicalSetSectionLongClicked(it)
-                                        },
-                                        onClickHistoricalSetSection = {
-                                            viewModel.historicalSetSectionClicked(it)
-                                        },
-                                        onClickEditHistoricalSet = {
-                                            viewModel.editHistoricalSetSectionClicked(it)
-                                        },
-                                        onClickMoveHistoricalSetUp = {
-                                            viewModel.moveHistoricalSetUp(it)
-                                        },
-                                        onClickMoveHistoricalSetDown = {
-                                            viewModel.moveHistoricalSetDown(it)
-                                        },
-                                        onClickDeleteHistoricalSet = {
-                                            viewModel.showDeleteHistoricalSetDialog(it)
-                                        },
-                                        onClickExpandAllHistoricalLiftCards = {
-                                            viewModel.expandAllHistoricalLiftCards()
-                                        }
-                                    )
-                                }
-                                Spacer(modifier = Modifier.height(16.dp))
+                // loop to display all session cards for this week
+                id_loop@ for (sessionId in weekPair.second) {
+                    // key to differentiate session cards
+                    key(sessionId) {
+                        val sessionDetail: SessionDetail =
+                            sessionsUiState.sessionDetailMap[sessionId] ?: continue@id_loop
+                        val horizontalPadding by animateDpAsState(
+                            targetValue = if (sessionDetail.selected) {
+                                12.dp
+                            } else {
+                                16.dp
                             }
+                        )
+
+                        // column to hold each session card's animated visibility and bottom
+                        // spacer
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = horizontalPadding)
+                        ) {
+                            // animated visibility for each session card
+                            AnimatedVisibility(
+                                visible = sessionDetail.visible,
+                                enter = slideInHorizontally(
+                                    initialOffsetX = { it },
+                                    animationSpec = tween(300)
+                                ) + fadeIn(
+                                    animationSpec = tween(300)
+                                ),
+                                exit = slideOutHorizontally(
+                                    targetOffsetX = { -it },
+                                    animationSpec = tween(300)
+                                ) + fadeOut(
+                                    animationSpec = tween(300)
+                                )
+                            ) {
+                                SessionCard(
+                                    sessionDetail = sessionDetail,
+                                    donutChartsVisible = sessionsUiState.donutChartsVisible,
+                                    currentSessionDisplaySetList = sessionsUiState.currentSessionDisplaySetList,
+                                    currentSessionLiftDetailMap = sessionsUiState.currentSessionLiftDetailMap,
+                                    currentSessionLiftSetMap = sessionsUiState.currentSessionLiftSetMap,
+                                    currentSessionSummaryTriple = sessionsUiState.currentSessionSummary,
+                                    currentSessionLiftSummaryTitle = sessionsUiState.currentSessionLiftSummaryTitle,
+                                    currentSessionLiftSummaryBody = sessionsUiState.currentSessionLiftSummaryBody,
+                                    sessionStatDisplayFilterMap = sessionsUiState.sessionStatDisplayFilterMap,
+                                    filterChipClicked = {
+                                        viewModel.sessionDataFilterChipClicked(
+                                            sessionDataTimeFrameOption = it,
+                                            sessionCardId = sessionId
+                                        )
+                                    },
+                                    onClickThreeDotMenu = {
+                                        viewModel.threeDotMenuClicked(
+                                            sessionCardId = sessionDetail.sessionId
+                                        )
+                                    },
+                                    onDismissThreeDotMenu = {
+                                        viewModel.dismissThreeDotMenus()
+                                    },
+                                    onClickSwitchToInProgress = {
+                                        viewModel.switchSessionToInProgress(
+                                            sessionCardId = sessionDetail.sessionId
+                                        )
+                                    },
+                                    onClickFinishSession = {
+                                        viewModel.finishSession(sessionDetail.sessionId)
+                                    },
+                                    onClickEditSession = {
+                                        viewModel.showEditSessionDialog(sessionDetail.sessionId)
+                                    },
+                                    onClickDeleteSession = {
+                                        viewModel.showDeleteSessionDialog(sessionDetail.sessionId)
+                                    },
+                                    onClickCard = {
+                                        viewModel.toggleCardSelected(sessionDetail.sessionId)
+                                    },
+                                    onClickLiftCard = {
+                                        viewModel.liftCardClicked(it)
+                                    },
+                                    onLongClickHistoricalSetSection = {
+                                        viewModel.historicalSetSectionLongClicked(it)
+                                    },
+                                    onClickHistoricalSetSection = {
+                                        viewModel.historicalSetSectionClicked(it)
+                                    },
+                                    onClickEditHistoricalSet = {
+                                        viewModel.editHistoricalSetSectionClicked(it)
+                                    },
+                                    onClickMoveHistoricalSetUp = {
+                                        viewModel.moveHistoricalSetUp(it)
+                                    },
+                                    onClickMoveHistoricalSetDown = {
+                                        viewModel.moveHistoricalSetDown(it)
+                                    },
+                                    onClickDeleteHistoricalSet = {
+                                        viewModel.showDeleteHistoricalSetDialog(it)
+                                    },
+                                    onClickExpandAllHistoricalLiftCards = {
+                                        viewModel.expandAllHistoricalLiftCards()
+                                    }
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(16.dp))
                         }
                     }
                 }
