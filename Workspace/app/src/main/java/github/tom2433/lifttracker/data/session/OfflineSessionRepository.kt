@@ -4,6 +4,7 @@ import github.tom2433.lifttracker.data.profile.Profile
 import github.tom2433.lifttracker.data.structures.DisplaySessionLiftSetRow
 import github.tom2433.lifttracker.data.structures.LiftNameAndFrequency
 import github.tom2433.lifttracker.data.structures.LiftSetCountPerMuscleGroup
+import github.tom2433.lifttracker.data.structures.LiftSummary
 import github.tom2433.lifttracker.data.structures.MuscleGroupNameAndFrequency
 import github.tom2433.lifttracker.data.structures.SessionDetail
 import github.tom2433.lifttracker.data.structures.SessionNameAndFrequency
@@ -218,7 +219,7 @@ class OfflineSessionRepository(private val sessionDao: SessionDao) : SessionRepo
         sessionId: Int,
         liftId: Int,
         startDate: String
-    ): String = sessionDao.getLiftSummaryForSessionIdAndLiftId(
+    ): LiftSummary = sessionDao.getLiftSummaryForSessionIdAndLiftId(
         sessionId = sessionId,
         liftId = liftId,
         startDate = startDate

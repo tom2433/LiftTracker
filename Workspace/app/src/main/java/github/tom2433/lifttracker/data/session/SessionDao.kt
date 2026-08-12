@@ -13,6 +13,7 @@ import github.tom2433.lifttracker.data.structures.LiftDataVisTimed
 import github.tom2433.lifttracker.data.structures.LiftDataVisUntimed
 import github.tom2433.lifttracker.data.structures.LiftNameAndFrequency
 import github.tom2433.lifttracker.data.structures.LiftSetCountPerMuscleGroup
+import github.tom2433.lifttracker.data.structures.LiftSummary
 import github.tom2433.lifttracker.data.structures.MuscleGroupNameAndFrequency
 import github.tom2433.lifttracker.data.structures.SessionDetail
 import github.tom2433.lifttracker.data.structures.SessionDetailData
@@ -2135,126 +2136,88 @@ interface SessionDao {
         sessionId: Int,
         liftId: Int,
         startDate: String
-    ): String {
+    ): LiftSummary {
         val trimmedSessionLabel: String = getTrimmedSessionNameFromId(sessionId)
-            ?: return "Something went wrong."
+            ?: return LiftSummary(
+                liftName = "",
+                timed = false,
+                unitName = "units",
+                paragraph = "Something went wrong.",
+                avgWeight = null,
+                historicalAvgWeight = null,
+                avgRepsOrTime = null,
+                historicalAvgRepsOrTime = null,
+                avgIntensity = null,
+                historicalAvgIntensity = null
+            )
         val trimmedLiftName: String = getTrimmedLiftNameFromId(liftId)
-            ?: return "Something went wrong."
+            ?: return LiftSummary(
+                liftName = "",
+                timed = false,
+                unitName = "units",
+                paragraph = "Something went wrong.",
+                avgWeight = null,
+                historicalAvgWeight = null,
+                avgRepsOrTime = null,
+                historicalAvgRepsOrTime = null,
+                avgIntensity = null,
+                historicalAvgIntensity = null
+            )
         val trimmedUnitName: String = getTrimmedUnitNameFromLiftId(liftId)
-            ?: return "Something went wrong."
+            ?: return LiftSummary(
+                liftName = trimmedLiftName,
+                timed = false,
+                unitName = "units",
+                paragraph = "Something went wrong.",
+                avgWeight = null,
+                historicalAvgWeight = null,
+                avgRepsOrTime = null,
+                historicalAvgRepsOrTime = null,
+                avgIntensity = null,
+                historicalAvgIntensity = null
+            )
         val liftIsTimed: Boolean = liftIsTimed(liftId)
-            ?: return "Something went wrong."
-        var displaySummary: String = ""
+            ?: return LiftSummary(
+                liftName = trimmedLiftName,
+                timed = false,
+                unitName = "units",
+                paragraph = "Something went wrong.",
+                avgWeight = null,
+                historicalAvgWeight = null,
+                avgRepsOrTime = null,
+                historicalAvgRepsOrTime = null,
+                avgIntensity = null,
+                historicalAvgIntensity = null
+            )
+        var paragraph: String = ""
 
         val numberOfSetsForThisSession: Int = getNumberOfSetsForLiftInSession(
             liftId = liftId,
             sessionId = sessionId
         )
-
         val typicalNumberOfSets: Double? = getTypicalNumberOfSetsForLiftWithSessionName(
             liftId = liftId,
             sessionId = sessionId,
             startDate = startDate
         )
-
-        displaySummary += if (typicalNumberOfSets == null) {
-            "You have not trained this lift before during a $trimmedSessionLabel workout, but " +
-                    "today, you logged $numberOfSetsForThisSession sets. "
-        } else {
-            "Today, you trained $trimmedLiftName for $numberOfSetsForThisSession sets, and " +
-                    "you usually train about ${"%.2f".format(typicalNumberOfSets)} sets. "
-        }
-
         val averageWeightForSession: Double? = getAvgWeightForLiftForSession(
             liftId = liftId,
             sessionId = sessionId,
         )
-
-        if (averageWeightForSession == null) {
-            displaySummary +=
-                "You haven't logged any full, valid sets yet for this lift in this session"
-            if (typicalNumberOfSets == null) {
-                displaySummary += ". "
-            } else {
-                displaySummary += ", but it's usually "
-            }
-        } else {
-            displaySummary +=
-                "Your average weight was ${"%.2f".format(averageWeightForSession)} " +
-                trimmedUnitName
-            if (typicalNumberOfSets == null) {
-                displaySummary += ". "
-            } else {
-                displaySummary += ", when you typically log about "
-            }
-        }
-
         val averageHistoricalWeight: Double? = getAvgHistoricalWeightForLiftAndSessionName(
             liftId = liftId,
             sessionId = sessionId,
             startDate = startDate
         )
-
-        if (averageHistoricalWeight != null) {
-            displaySummary += "${"%.2f".format(averageHistoricalWeight)} ${trimmedUnitName}. "
-        }
-
         val averageRepsOrTimeForSession: Double? = getAvgRepsOrTimeForLiftForSession(
             liftId = liftId,
             sessionId = sessionId
         )
-
         val averageHistoricalRepsOrTime: Double? = getAvgHistoricalRepsOrTimeForLiftAndSessionName(
             liftId = liftId,
             sessionId = sessionId,
             startDate = startDate
         )
-
-        if (averageRepsOrTimeForSession == null) {
-            if (liftIsTimed) {
-                displaySummary += "You haven't logged any time for this lift yet"
-                if (averageHistoricalRepsOrTime == null) {
-                    displaySummary += ". "
-                } else {
-                    displaySummary +=
-                        ", but it's usually " +
-                        "${DateTimeCalculator.convertMinutesDoubleToSummaryDetail(averageHistoricalRepsOrTime)}. "
-                }
-            } else {
-                displaySummary += "You haven't logged any reps for this lift yet"
-                if (averageHistoricalRepsOrTime == null) {
-                    displaySummary += ". "
-                } else {
-                    displaySummary +=
-                        ", but it's usually " +
-                        "${"%.2f".format(averageHistoricalRepsOrTime)}. "
-                }
-            }
-        } else {
-            if (liftIsTimed) {
-                displaySummary +=
-                    "Your average time logged for this session was " +
-                    DateTimeCalculator.convertMinutesDoubleToSummaryDetail(averageRepsOrTimeForSession)
-                if (averageHistoricalRepsOrTime == null) {
-                    displaySummary += "."
-                } else {
-                    displaySummary +=
-                        ", and it's usually " +
-                        "${DateTimeCalculator.convertMinutesDoubleToSummaryDetail(averageHistoricalRepsOrTime)}. "
-                }
-            } else {
-                displaySummary +=
-                    "Your average reps value for this session was " +
-                    "%.2f".format(averageRepsOrTimeForSession)
-                if (averageHistoricalRepsOrTime == null) {
-                    displaySummary += ". "
-                } else {
-                    displaySummary +=
-                        ", and it's usually ${"%.2f".format(averageHistoricalRepsOrTime)}. "
-                }
-            }
-        }
-
         val averageIntensityForSession: Double? = if (liftIsTimed) {
             getAvgIntensityForLiftForSession(
                 liftId = liftId,
@@ -2266,7 +2229,6 @@ interface SessionDao {
                 sessionId = sessionId
             )
         }
-
         val averageHistoricalIntensity: Double? = if (liftIsTimed) {
             getAvgHistoricalIntensityForLiftAndSessionName(
                 liftId = liftId,
@@ -2281,52 +2243,201 @@ interface SessionDao {
             )
         }
 
-        if (averageIntensityForSession == null) {
-            if (liftIsTimed) {
-                displaySummary += "Your $trimmedUnitName per minute also cannot be calculated"
-                if (averageHistoricalIntensity == null) {
-                    displaySummary += ". "
-                } else {
-                    displaySummary +=
-                        ", but it's usually " +
-                        "${"%.2f".format(averageHistoricalIntensity)}. "
-                }
-            } else {
-                displaySummary += "Your volume per set also cannot be calculated"
-                if (averageHistoricalIntensity == null) {
-                    displaySummary += ". "
-                } else {
-                    displaySummary +=
-                        ", but it's usually " +
-                        "${"%.2f".format(averageHistoricalIntensity)} $trimmedUnitName. "
-                }
-            }
+        paragraph += if (typicalNumberOfSets == null) {
+            "You have not trained this lift before during a $trimmedSessionLabel workout, but " +
+                    "for this session, you logged $numberOfSetsForThisSession sets. "
         } else {
-            if (liftIsTimed) {
-                displaySummary +=
-                    "Your average $trimmedUnitName per minute was " +
-                    "%.2f".format(averageIntensityForSession)
-                if (averageHistoricalIntensity == null) {
-                    displaySummary += ". "
-                } else {
-                    displaySummary +=
-                        ", and it's usually " +
-                        "${"%.2f".format(averageHistoricalIntensity)}. "
-                }
+            "For this session, you trained $trimmedLiftName for $numberOfSetsForThisSession sets, and " +
+                    "you usually train about ${"%.2f".format(typicalNumberOfSets)} sets. "
+        }
+
+        if (averageHistoricalWeight == null) {
+            paragraph +=
+                "Try training this lift again in a session with the same name to see how your " +
+                "routines are progressing. "
+        }
+
+        if (averageWeightForSession == null) {
+            paragraph +=
+                "You haven't logged any valid sets for this lift in this session yet. "
+        }
+
+        if (averageWeightForSession != null && averageHistoricalWeight != null &&
+            averageRepsOrTimeForSession != null && averageHistoricalRepsOrTime != null &&
+            averageIntensityForSession != null && averageHistoricalIntensity != null &&
+            averageWeightForSession != 0.0 && averageHistoricalWeight != 0.0 &&
+            averageRepsOrTimeForSession != 0.0 && averageHistoricalRepsOrTime != 0.0 &&
+            averageIntensityForSession != 0.0 && averageHistoricalIntensity != 0.0) {
+            val difference = averageWeightForSession - averageHistoricalWeight
+
+            if (difference > 0) {
+                val percentage = ((averageWeightForSession / averageHistoricalWeight) - 1.0) * 100.0
+                paragraph += "You logged about ${"%.2f".format(percentage)}% more ${trimmedUnitName}, "
+            } else if (difference < 0) {
+                val percentage = ((averageHistoricalWeight / averageWeightForSession) - 1.0) * 100.0
+                paragraph += "You logged about ${"%.2f".format(percentage)}% less ${trimmedUnitName}, "
             } else {
-                displaySummary +=
-                    "Your average volume per set was " +
-                    "${"%.2f".format(averageIntensityForSession)} $trimmedUnitName"
-                if (averageHistoricalIntensity == null) {
-                    displaySummary += ". "
-                } else {
-                    displaySummary +=
-                        ", and it's usually " +
-                        "${"%.2f".format(averageHistoricalIntensity)} $trimmedUnitName. "
-                }
+                paragraph += "You logged about the same ${trimmedUnitName}, "
+            }
+
+            if (averageRepsOrTimeForSession > averageHistoricalRepsOrTime) {
+                val percentage = ((averageRepsOrTimeForSession / averageHistoricalRepsOrTime) - 1.0) * 100.0
+                paragraph += "${"%.2f".format(percentage)}% more "
+            } else if (averageHistoricalRepsOrTime > averageRepsOrTimeForSession) {
+                val percentage = ((averageHistoricalRepsOrTime / averageRepsOrTimeForSession) - 1.0) * 100.0
+                paragraph += "${"%.2f".format(percentage)}% less "
+            } else {
+                paragraph += "about the same "
+            }
+            paragraph += if (liftIsTimed) {
+                "minutes, "
+            } else {
+                "reps, "
+            }
+
+            if (averageIntensityForSession > averageHistoricalIntensity) {
+                val percentage = ((averageIntensityForSession / averageHistoricalIntensity) - 1.0) * 100.0
+                paragraph += "and ${"%.2f".format(percentage)}% more $trimmedUnitName per "
+            } else if (averageHistoricalIntensity > averageIntensityForSession ) {
+                val percentage = ((averageHistoricalIntensity / averageIntensityForSession) - 1.0) * 100.0
+                paragraph += "and ${"%.2f".format(percentage)}% less $trimmedUnitName per "
+            } else {
+                paragraph += "and about the same $trimmedUnitName per "
+            }
+            paragraph += if (liftIsTimed) {
+                "minute."
+            } else {
+                "set."
             }
         }
 
-        return displaySummary
+
+
+//        if (averageWeightForSession == null) {
+//            paragraph +=
+//                "You haven't logged any full, valid sets yet for this lift in this session"
+//            if (typicalNumberOfSets == null) {
+//                paragraph += ". "
+//            } else {
+//                paragraph += ", but it's usually "
+//            }
+//        } else {
+//            paragraph +=
+//                "Your average weight was ${"%.2f".format(averageWeightForSession)} " +
+//                trimmedUnitName
+//            if (typicalNumberOfSets == null) {
+//                paragraph += ". "
+//            } else {
+//                paragraph += ", when you typically log about "
+//            }
+//        }
+//
+//        if (averageHistoricalWeight != null) {
+//            paragraph += "${"%.2f".format(averageHistoricalWeight)} ${trimmedUnitName}. "
+//        }
+//
+//        if (averageRepsOrTimeForSession == null) {
+//            if (liftIsTimed) {
+//                paragraph += "You haven't logged any time for this lift yet"
+//                if (averageHistoricalRepsOrTime == null) {
+//                    paragraph += ". "
+//                } else {
+//                    paragraph +=
+//                        ", but it's usually " +
+//                        "${DateTimeCalculator.convertMinutesDoubleToSummaryDetail(averageHistoricalRepsOrTime)}. "
+//                }
+//            } else {
+//                paragraph += "You haven't logged any reps for this lift yet"
+//                if (averageHistoricalRepsOrTime == null) {
+//                    paragraph += ". "
+//                } else {
+//                    paragraph +=
+//                        ", but it's usually " +
+//                        "${"%.2f".format(averageHistoricalRepsOrTime)}. "
+//                }
+//            }
+//        } else {
+//            if (liftIsTimed) {
+//                paragraph +=
+//                    "Your average time logged for this session was " +
+//                    DateTimeCalculator.convertMinutesDoubleToSummaryDetail(averageRepsOrTimeForSession)
+//                if (averageHistoricalRepsOrTime == null) {
+//                    paragraph += "."
+//                } else {
+//                    paragraph +=
+//                        ", and it's usually " +
+//                        "${DateTimeCalculator.convertMinutesDoubleToSummaryDetail(averageHistoricalRepsOrTime)}. "
+//                }
+//            } else {
+//                paragraph +=
+//                    "Your average reps value for this session was " +
+//                    "%.2f".format(averageRepsOrTimeForSession)
+//                if (averageHistoricalRepsOrTime == null) {
+//                    paragraph += ". "
+//                } else {
+//                    paragraph +=
+//                        ", and it's usually ${"%.2f".format(averageHistoricalRepsOrTime)}. "
+//                }
+//            }
+//        }
+//
+//        if (averageIntensityForSession == null) {
+//            if (liftIsTimed) {
+//                paragraph += "Your $trimmedUnitName per minute also cannot be calculated"
+//                if (averageHistoricalIntensity == null) {
+//                    paragraph += ". "
+//                } else {
+//                    paragraph +=
+//                        ", but it's usually " +
+//                        "${"%.2f".format(averageHistoricalIntensity)}. "
+//                }
+//            } else {
+//                paragraph += "Your volume per set also cannot be calculated"
+//                if (averageHistoricalIntensity == null) {
+//                    paragraph += ". "
+//                } else {
+//                    paragraph +=
+//                        ", but it's usually " +
+//                        "${"%.2f".format(averageHistoricalIntensity)} $trimmedUnitName. "
+//                }
+//            }
+//        } else {
+//            if (liftIsTimed) {
+//                paragraph +=
+//                    "Your average $trimmedUnitName per minute was " +
+//                    "%.2f".format(averageIntensityForSession)
+//                if (averageHistoricalIntensity == null) {
+//                    paragraph += ". "
+//                } else {
+//                    paragraph +=
+//                        ", and it's usually " +
+//                        "${"%.2f".format(averageHistoricalIntensity)}. "
+//                }
+//            } else {
+//                paragraph +=
+//                    "Your average volume per set was " +
+//                    "${"%.2f".format(averageIntensityForSession)} $trimmedUnitName"
+//                if (averageHistoricalIntensity == null) {
+//                    paragraph += ". "
+//                } else {
+//                    paragraph +=
+//                        ", and it's usually " +
+//                        "${"%.2f".format(averageHistoricalIntensity)} $trimmedUnitName. "
+//                }
+//            }
+//        }
+
+        return LiftSummary(
+            liftName = trimmedLiftName,
+            timed = liftIsTimed,
+            unitName = trimmedUnitName,
+            paragraph = paragraph,
+            avgWeight = averageWeightForSession,
+            historicalAvgWeight = averageHistoricalWeight,
+            avgRepsOrTime = averageRepsOrTimeForSession,
+            historicalAvgRepsOrTime = averageHistoricalRepsOrTime,
+            avgIntensity = averageIntensityForSession,
+            historicalAvgIntensity = averageHistoricalIntensity
+        )
     }
 }

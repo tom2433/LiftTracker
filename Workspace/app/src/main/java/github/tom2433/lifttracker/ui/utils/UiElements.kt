@@ -5,6 +5,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandHorizontally
@@ -13,12 +14,11 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -51,7 +51,6 @@ import androidx.compose.material.icons.filled.Scale
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -72,28 +71,27 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import github.tom2433.lifttracker.R
 import github.tom2433.lifttracker.data.liftset.LiftSet
-import github.tom2433.lifttracker.data.session.Session
 import github.tom2433.lifttracker.data.setmetric.SetMetric
 import github.tom2433.lifttracker.data.structures.LiftSearchDetail
 import github.tom2433.lifttracker.data.structures.LiftSetCountPerMuscleGroup
+import github.tom2433.lifttracker.data.structures.LiftSummary
 import github.tom2433.lifttracker.data.structures.SetCardData
 import github.tom2433.lifttracker.data.utils.DateTimeCalculator
 import github.tom2433.lifttracker.ui.viewModels.SessionDataTimeFrameOption
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import java.util.Locale
 
 @Composable
 fun StatRow(
@@ -1541,8 +1539,7 @@ fun LabelAndDropdownRow(
 @Composable
 fun DisplaySessionAnalytics(
     summaryTriple: Triple<String, String, String>,
-    liftSummaryTitle: String,
-    liftSummaryBody: String,
+    liftSummary: LiftSummary?,
     statDisplayFilterMap: Map<SessionDataTimeFrameOption, Boolean>,
     filterChipClicked: (SessionDataTimeFrameOption) -> Unit,
     modifier: Modifier = Modifier
@@ -1743,17 +1740,535 @@ fun DisplaySessionAnalytics(
                         color = MaterialTheme.colorScheme.onBackground.copy(0.3f)
                     )
 
-                    // lift summary title
-                    Text(
-                        text = liftSummaryTitle,
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.padding(bottom = 8.dp)
+                    // lift summary
+                    DisplayLiftSummary(
+                        liftSummary = liftSummary
                     )
-                    // lift summary body
-                    Text(
-                        text = liftSummaryBody,
-                        style = MaterialTheme.typography.bodyMedium,
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DisplayLiftSummary(
+    liftSummary: LiftSummary?,
+    modifier: Modifier = Modifier
+) {
+    // column to hold full lift summary
+    Column(
+        verticalArrangement = Arrangement.Top,
+        horizontalAlignment = Alignment.Start,
+        modifier = modifier.fillMaxWidth()
+    ) {
+        // title
+        Text(
+            text = if (liftSummary == null) {
+                "Lift Summary"
+            } else {
+                "${liftSummary.liftName} Summary"
+            },
+            style = MaterialTheme.typography.titleLarge,
+            textAlign = TextAlign.Left,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp)
+        )
+
+        // animated visibility for when the lift summary is null (tell user to select lift)
+        AnimatedVisibility(
+            visible = liftSummary == null,
+            enter = expandVertically(
+                expandFrom = Alignment.Top,
+                animationSpec = spring(
+                    stiffness = Spring.StiffnessMediumLow
+                )
+            ) + fadeIn(spring(stiffness = Spring.StiffnessMediumLow)),
+            exit = shrinkVertically(
+                shrinkTowards = Alignment.Top,
+                animationSpec = spring(
+                    stiffness = Spring.StiffnessMediumLow
+                )
+            ) + fadeOut(spring(stiffness = Spring.StiffnessMediumLow))
+        ) {
+            // column to hold lift summary placeholder
+            Column(
+                verticalArrangement = Arrangement.Top,
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // body
+                Text(
+                    text = "Select a lift below to view its summary.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Left,
+                    modifier = Modifier
+                        .padding(bottom = 8.dp)
+                        .fillMaxWidth()
+                )
+            }
+        }
+
+        // animated visibility for when the lift summary is not null (display the actual summary)
+        AnimatedVisibility(
+            visible = liftSummary != null,
+            enter = expandVertically(
+                expandFrom = Alignment.Top,
+                animationSpec = spring(
+                    stiffness = Spring.StiffnessMediumLow
+                )
+            ) + fadeIn(spring(stiffness = Spring.StiffnessMediumLow)),
+            exit = shrinkVertically(
+                shrinkTowards = Alignment.Top,
+                animationSpec = spring(
+                    stiffness = Spring.StiffnessMediumLow
+                )
+            ) + fadeOut(spring(stiffness = Spring.StiffnessMediumLow))
+        ) {
+            var placeHolderString = ""
+            for (i in (1..200)) {
+                placeHolderString += "_"
+            }
+            // column to hold lift summary
+            Column(
+                verticalArrangement = Arrangement.Top,
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // paragraph
+                Text(
+                    text = liftSummary?.paragraph ?: placeHolderString,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Left,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp)
+                )
+
+                // show bar graphs
+                LiftSummaryBarGraphs(
+                    liftSummary = liftSummary,
+                    valueColor = MaterialTheme.colorScheme.primaryContainer,
+                    valueContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    historicalValueColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    historicalValueContentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun LiftSummaryBarGraphs(
+    liftSummary: LiftSummary?,
+    valueColor: Color,
+    valueContentColor: Color,
+    historicalValueColor: Color,
+    historicalValueContentColor: Color,
+    modifier: Modifier = Modifier
+) {
+    // column to hold bar graphs
+    Column(
+        verticalArrangement = Arrangement.Top,
+        horizontalAlignment = Alignment.Start,
+        modifier = modifier.fillMaxWidth()
+    ) {
+        // title for weight bar section
+        Text(
+            text = "Weight",
+            style = MaterialTheme.typography.titleMedium,
+            color = valueColor,
+            fontWeight = FontWeight.Black,
+            textAlign = TextAlign.Left,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp)
+        )
+        // comparison bars for avg weight and historical avg weight
+        ComparisonBars(
+            value = liftSummary?.avgWeight,
+            historicalValue = liftSummary?.historicalAvgWeight,
+            valueColor = valueColor,
+            valueContentColor = valueContentColor,
+            historicalValueColor = historicalValueColor,
+            historicalValueContentColor = historicalValueContentColor,
+            valueLabel =
+                if (liftSummary == null) {
+                    "0 units"
+                } else if (liftSummary.avgWeight == null) {
+                    "not calculated"
+                } else {
+                    "${"%.2f".format(liftSummary.avgWeight)} ${liftSummary.unitName}"
+                },
+            historicalValueLabel =
+                if (liftSummary == null) {
+                    "0 units"
+                } else if (liftSummary.historicalAvgWeight == null) {
+                    "not calculated"
+                } else {
+                    "${"%.2f".format(liftSummary.historicalAvgWeight)} ${liftSummary.unitName}"
+                },
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        // title for rep/time bar section
+        Text(
+            text = if (liftSummary == null) {
+                "Reps per set"
+            } else if (liftSummary.timed) {
+                "Time per set"
+            } else {
+                "Reps per set"
+            },
+            style = MaterialTheme.typography.titleMedium,
+            color = valueColor,
+            fontWeight = FontWeight.Black,
+            textAlign = TextAlign.Left,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp)
+        )
+        // comparisonbars for avg reps or time
+        var timeRepValueLabel: String = ""
+        var historicalTimeRepValueLabel: String = ""
+        if (liftSummary != null) {
+            if (liftSummary.avgRepsOrTime != null) {
+                if (liftSummary.timed) {
+                    val timeTriple: Triple<Int, Int, Double> =
+                        DateTimeCalculator.convertDoubleTimeToTripleTime(
+                            minutes = liftSummary.avgRepsOrTime
+                        )
+                    timeRepValueLabel =
+                        "${"%02d".format(timeTriple.first)}:" +
+                                "${"%02d".format(timeTriple.second)}:" +
+                                "%05.2f".format(timeTriple.third)
+                } else {
+                    timeRepValueLabel =
+                        "${"%.2f".format(liftSummary.avgRepsOrTime)} reps"
+                }
+            } else {
+                timeRepValueLabel = "not calculated"
+            }
+            if (liftSummary.historicalAvgRepsOrTime != null) {
+                if (liftSummary.timed) {
+                    val timeTriple = DateTimeCalculator.convertDoubleTimeToTripleTime(
+                        minutes = liftSummary.historicalAvgRepsOrTime
                     )
+                    historicalTimeRepValueLabel =
+                        "${"%02d".format(timeTriple.first)}:" +
+                                "${"%02d".format(timeTriple.second)}:" +
+                                "%05.2f".format(timeTriple.third)
+                } else {
+                    historicalTimeRepValueLabel =
+                        "${"%.2f".format(liftSummary.historicalAvgRepsOrTime)} reps"
+                }
+            } else {
+                historicalTimeRepValueLabel = "not calculated"
+            }
+        } else {
+            timeRepValueLabel = "0 reps"
+            historicalTimeRepValueLabel = "0 reps"
+        }
+        ComparisonBars(
+            value = liftSummary?.avgRepsOrTime,
+            historicalValue = liftSummary?.historicalAvgRepsOrTime,
+            valueColor = valueColor,
+            valueContentColor = valueContentColor,
+            historicalValueColor = historicalValueColor,
+            historicalValueContentColor = historicalValueContentColor,
+            valueLabel = timeRepValueLabel,
+            historicalValueLabel = historicalTimeRepValueLabel,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        // title for volume/intensity bar section
+        Text(
+            text = if (liftSummary == null) {
+                "Volume per set"
+            } else if (liftSummary.timed) {
+                "${
+                    liftSummary.unitName.replaceFirstChar {
+                        if (it.isLowerCase()) it.titlecase(
+                            Locale.ROOT
+                        ) else it.toString()
+                    }
+                } per minute"
+            } else {
+                "Volume per set"
+            },
+            style = MaterialTheme.typography.titleMedium,
+            color = valueColor,
+            fontWeight = FontWeight.Black,
+            textAlign = TextAlign.Left,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp)
+        )
+        ComparisonBars(
+            value = liftSummary?.avgIntensity,
+            historicalValue = liftSummary?.historicalAvgIntensity,
+            valueColor = valueColor,
+            valueContentColor = valueContentColor,
+            historicalValueColor = historicalValueColor,
+            historicalValueContentColor = historicalValueContentColor,
+            valueLabel =
+                if (liftSummary == null) {
+                    "0 units per set"
+                } else {
+                    if (liftSummary.avgIntensity == null) {
+                        "not calculated"
+                    } else {
+                        "${"%.2f".format(liftSummary.avgIntensity)} " +
+                                "${liftSummary.unitName} " + if (liftSummary.timed) {
+                            "per minute"
+                        } else {
+                            "per set"
+                        }
+                    }
+                },
+            historicalValueLabel =
+                if (liftSummary == null) {
+                    "0 units per set"
+                } else {
+                    if (liftSummary.historicalAvgIntensity == null) {
+                        "not calculated"
+                    } else {
+                        "${"%.2f".format(liftSummary.historicalAvgIntensity)} " +
+                                "${liftSummary.unitName} " + if (liftSummary.timed) {
+                            "per minute"
+                        } else {
+                            "per set"
+                        }
+                    }
+                },
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+    }
+}
+
+@Composable
+fun ComparisonBars(
+    value: Double?,
+    historicalValue: Double?,
+    valueColor: Color,
+    valueContentColor: Color,
+    historicalValueColor: Color,
+    historicalValueContentColor: Color,
+    valueLabel: String,
+    historicalValueLabel: String,
+    modifier: Modifier = Modifier
+) {
+    val maxVal: Double? =
+        if (value == null && historicalValue == null) {
+            null
+        } else if (value == null) {
+            historicalValue
+        } else if (historicalValue == null) {
+            value
+        } else if (value > historicalValue) {
+            value
+        } else {
+            historicalValue
+        }
+    val valueWidth by animateFloatAsState(
+        targetValue = if (maxVal == null) {
+            0.001f
+        } else if (value == null) {
+            0.001f
+        } else {
+            if (maxVal == 0.0) {
+                0.001f
+            } else {
+                (value / maxVal).toFloat()
+            }
+        },
+        animationSpec = spring(
+            stiffness = Spring.StiffnessMediumLow
+        )
+    )
+    val historicalValueWidth by animateFloatAsState(
+        targetValue = if (maxVal == null) {
+            0.001f
+        } else if (historicalValue == null) {
+            0.001f
+        } else {
+            if (maxVal == 0.0) {
+                0.001f
+            } else {
+                (historicalValue / maxVal).toFloat()
+            }
+        },
+        animationSpec = spring(
+            stiffness = Spring.StiffnessMediumLow
+        )
+    )
+
+    // row to hold axis labels on left, horizontal bars on right
+    Row(
+        horizontalArrangement = Arrangement.Start,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+            .fillMaxWidth()
+            .height(75.dp)
+    ) {
+        // column to hold axis labels
+        Column(
+            verticalArrangement = Arrangement.SpaceAround,
+            horizontalAlignment = Alignment.Start,
+            modifier = Modifier
+                .fillMaxHeight()
+                .weight(0.4f)
+        ) {
+            // value axis label
+            Text(
+                text = "this session",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onBackground.copy(0.75f),
+                textAlign = TextAlign.Left,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(4.dp)
+            )
+            // avg value axis label
+            Text(
+                text = "historical avg.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onBackground.copy(0.75f),
+                textAlign = TextAlign.Left,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(4.dp)
+            )
+        }
+
+        // column to hold horizontal bars
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxSize()
+        ) {
+            // row to hold value bar
+            Row(
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxSize()
+            ) {
+                // surface with valueWidth
+                Surface(
+                    modifier = Modifier
+                        .weight(valueWidth)
+                        .fillMaxHeight(),
+                    color = valueColor,
+                    shape = RoundedCornerShape(
+                        topStart = 0.dp,
+                        bottomStart = 0.dp,
+                        topEnd = 4.dp,
+                        bottomEnd = 4.dp
+                    )
+                ) {
+                    // box to hold label
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        // show label if this surface is bigger
+                        if (valueWidth >= 0.5f) {
+                            Text(
+                                text = valueLabel,
+                                color = valueContentColor,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
+                }
+                // surface to fill the remaining area
+                Surface(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .weight(
+                            if (1f - valueWidth == 0f) {
+                                0.001f
+                            } else {
+                                1f - valueWidth
+                            }
+                        ),
+                    color = Color.Transparent
+                ) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        // show label if this surface is bigger
+                        if (valueWidth < 0.5f) {
+                            Text(
+                                text = valueLabel,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
+                }
+            }
+            // row to hold historicalValue bar
+            Row(
+                horizontalArrangement = Arrangement.Start,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxSize()
+            ) {
+                // surface with historicalValue weight
+                Surface(
+                    modifier = Modifier
+                        .weight(historicalValueWidth)
+                        .fillMaxHeight(),
+                    color = historicalValueColor,
+                    shape = RoundedCornerShape(
+                        topStart = 0.dp,
+                        bottomStart = 0.dp,
+                        topEnd = 4.dp,
+                        bottomEnd = 4.dp
+                    )
+                ) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        // show label if this surface is bigger
+                        if (historicalValueWidth >= 0.5f) {
+                            Text(
+                                text = historicalValueLabel,
+                                color = historicalValueContentColor,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
+                }
+                // surface with historicalValueSpacer weight
+                Surface(
+                    modifier = Modifier
+                        .weight(
+                            if (1f - historicalValueWidth == 0f) {
+                                0.001f
+                            } else {
+                                1f - historicalValueWidth
+                            }
+                        )
+                        .fillMaxHeight(),
+                    color = Color.Transparent
+                ) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (historicalValueWidth < 0.5f) {
+                            Text(
+                                text = historicalValueLabel,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
                 }
             }
         }

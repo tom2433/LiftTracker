@@ -17,6 +17,7 @@ import github.tom2433.lifttracker.data.setmetric.SetMetricRepository
 import github.tom2433.lifttracker.data.structures.DisplaySessionLiftSetRow
 import github.tom2433.lifttracker.data.structures.LiftSearchDetail
 import github.tom2433.lifttracker.data.structures.LiftSetCountPerMuscleGroup
+import github.tom2433.lifttracker.data.structures.LiftSummary
 import github.tom2433.lifttracker.data.structures.SessionDetail
 import github.tom2433.lifttracker.data.structures.SetCardData
 import github.tom2433.lifttracker.data.utils.DateTimeCalculator
@@ -1591,8 +1592,7 @@ class SessionsViewModel(
         liftSummaryJob = null
         _sessionsUiState.update { currentState ->
             currentState.copy(
-                currentSessionLiftSummaryTitle = "Lift Summary",
-                currentSessionLiftSummaryBody = "Select a lift below to view its summary."
+                currentSessionLiftSummary = null
             )
         }
     }
@@ -1614,8 +1614,7 @@ class SessionsViewModel(
 
             liftSummaryJob?.cancel()
             liftSummaryJob = viewModelScope.launch {
-                val liftSummaryTitle: String = "${liftDetail.liftObj.name.trim()} Summary"
-                val liftSummaryBody: String = sessionRepository.getLiftSummaryForLiftAndSession(
+                val liftSummary: LiftSummary = sessionRepository.getLiftSummaryForLiftAndSession(
                     sessionId = sessionDetail.sessionId,
                     liftId = liftDetail.liftObj.id,
                     startDate = getStartDateForSessionAnalytics(sessionDetail.sessionDateIso)
@@ -1623,8 +1622,7 @@ class SessionsViewModel(
 
                 _sessionsUiState.update { currentState ->
                     currentState.copy(
-                        currentSessionLiftSummaryTitle = liftSummaryTitle,
-                        currentSessionLiftSummaryBody = liftSummaryBody
+                        currentSessionLiftSummary = liftSummary
                     )
                 }
             }
@@ -1667,8 +1665,7 @@ data class SessionsUiState(
     //      second element: list of LiftSet ids maintaining order
     val currentSessionDisplaySetList: List<Pair<Int, List<Int>>> = emptyList(),
     val currentSessionSummary: Triple<String, String, String> = Triple("", "", ""),
-    val currentSessionLiftSummaryTitle: String = "Lift Summary",
-    val currentSessionLiftSummaryBody: String = "Select a lift below to view its summary.",
+    val currentSessionLiftSummary: LiftSummary? = null,
     val sessionStatDisplayFilterMap: Map<SessionDataTimeFrameOption, Boolean> = mapOf(
         SessionDataTimeFrameOption.ALL_TIME to true,
         SessionDataTimeFrameOption.PAST_MONTH to false,

@@ -3,6 +3,7 @@ package github.tom2433.lifttracker.data.session
 import github.tom2433.lifttracker.data.structures.DisplaySessionLiftSetRow
 import github.tom2433.lifttracker.data.structures.LiftNameAndFrequency
 import github.tom2433.lifttracker.data.structures.LiftSetCountPerMuscleGroup
+import github.tom2433.lifttracker.data.structures.LiftSummary
 import github.tom2433.lifttracker.data.structures.MuscleGroupNameAndFrequency
 import github.tom2433.lifttracker.data.structures.SessionDetail
 import github.tom2433.lifttracker.data.structures.SessionNameAndFrequency
@@ -173,5 +174,5 @@ interface SessionRepository {
         sessionId: Int,
         liftId: Int,
         startDate: String
-    ): String
+    ): LiftSummary
 }

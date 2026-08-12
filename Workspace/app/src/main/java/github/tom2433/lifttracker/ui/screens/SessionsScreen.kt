@@ -5,7 +5,9 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -60,6 +62,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import github.tom2433.lifttracker.R
 import github.tom2433.lifttracker.data.structures.LiftSearchDetail
+import github.tom2433.lifttracker.data.structures.LiftSummary
 import github.tom2433.lifttracker.data.structures.SessionDetail
 import github.tom2433.lifttracker.data.structures.SetCardData
 import github.tom2433.lifttracker.data.utils.DateTimeCalculator
@@ -361,8 +364,7 @@ fun SessionsScreen(
                                     currentSessionLiftDetailMap = sessionsUiState.currentSessionLiftDetailMap,
                                     currentSessionLiftSetMap = sessionsUiState.currentSessionLiftSetMap,
                                     currentSessionSummaryTriple = sessionsUiState.currentSessionSummary,
-                                    currentSessionLiftSummaryTitle = sessionsUiState.currentSessionLiftSummaryTitle,
-                                    currentSessionLiftSummaryBody = sessionsUiState.currentSessionLiftSummaryBody,
+                                    currentSessionLiftSummary = sessionsUiState.currentSessionLiftSummary,
                                     sessionStatDisplayFilterMap = sessionsUiState.sessionStatDisplayFilterMap,
                                     filterChipClicked = {
                                         viewModel.sessionDataFilterChipClicked(
@@ -613,8 +615,7 @@ fun SessionCard(
     currentSessionLiftDetailMap: Map<Int, LiftSearchDetail>,
     currentSessionLiftSetMap: Map<Int, SetCardData>,
     currentSessionSummaryTriple: Triple<String, String, String>,
-    currentSessionLiftSummaryTitle: String,
-    currentSessionLiftSummaryBody: String,
+    currentSessionLiftSummary: LiftSummary?,
     sessionStatDisplayFilterMap: Map<SessionDataTimeFrameOption, Boolean>,
     filterChipClicked: (SessionDataTimeFrameOption) -> Unit,
     onClickThreeDotMenu: () -> Unit,
@@ -652,7 +653,11 @@ fun SessionCard(
             0.dp
         } else {
             16.dp
-        }
+        },
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessMediumLow
+        )
     )
 
     // Column to hold session's card and animated content below it
@@ -849,8 +854,7 @@ fun SessionCard(
                 // display session summary
                 DisplaySessionAnalytics(
                     summaryTriple = currentSessionSummaryTriple,
-                    liftSummaryTitle = currentSessionLiftSummaryTitle,
-                    liftSummaryBody = currentSessionLiftSummaryBody,
+                    liftSummary = currentSessionLiftSummary,
                     statDisplayFilterMap = sessionStatDisplayFilterMap,
                     filterChipClicked = { filterChipClicked(it) },
                     modifier = Modifier.padding(top = 16.dp)

@@ -61,3 +61,16 @@ data class LiftDataVisTimed(
     val mins: Double,
     val weightPerMin: Double // avg (weight / mins)
 )
+
+data class LiftSummary(
+    val liftName: String,
+    val timed: Boolean,
+    val unitName: String,
+    val paragraph: String,
+    val avgWeight: Double?,
+    val historicalAvgWeight: Double?,
+    val avgRepsOrTime: Double?,
+    val historicalAvgRepsOrTime: Double?,
+    val avgIntensity: Double?,
+    val historicalAvgIntensity: Double?
+)
