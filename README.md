@@ -682,3 +682,11 @@ volume line graph on the muscle groups and lift screen, intensity line graphs on
 ## 08/09
 
 make it so that lift cards display differently depending on how many lift cards need to be displayed (how many lift IDs exist for that muscle group) on the muscle groups screen. (fill max width, thinner with potentially alternating colors)
+
+## 08/12
+
+move number of sets for historical lift card to the right of the name
+
+summaries should not refer to the selected session as "today"
+
+move the lift summary to near the historical lift card it is describing. maybe put the lift summary above the lift card and trigger its open state via a long press or a button on the card? idk
