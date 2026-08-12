@@ -692,3 +692,5 @@ summaries should not refer to the selected session as "today"
 move the lift summary to near the historical lift card it is describing. maybe put the lift summary above the lift card and trigger its open state via a long press or a button on the card? idk
 
 add "last session only" tag to session analysis
+
+add "Compare to:" label before tags, or "compare Today's Shoulders and arms to other Shoulders And Arms workouts:" or something like that
