@@ -853,6 +853,7 @@ fun SessionCard(
 
                 // display session summary
                 DisplaySessionAnalytics(
+                    trimmedSessionName = sessionDetail.sessionName.trim(),
                     summaryTriple = currentSessionSummaryTriple,
                     liftSummary = currentSessionLiftSummary,
                     statDisplayFilterMap = sessionStatDisplayFilterMap,

@@ -1538,6 +1538,7 @@ fun LabelAndDropdownRow(
 
 @Composable
 fun DisplaySessionAnalytics(
+    trimmedSessionName: String,
     summaryTriple: Triple<String, String, String>,
     liftSummary: LiftSummary?,
     statDisplayFilterMap: Map<SessionDataTimeFrameOption, Boolean>,
@@ -1627,6 +1628,13 @@ fun DisplaySessionAnalytics(
                         .fillMaxWidth()
                         .padding(top = 16.dp)
                 ) {
+                    // label before filter chips
+                    Text(
+                        text = "Compare this session to other $trimmedSessionName workouts from:",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onBackground.copy(0.75f),
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
                     // filter chips for timeframe
                     FlowRow(
                         horizontalArrangement = Arrangement.Start,

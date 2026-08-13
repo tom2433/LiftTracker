@@ -209,19 +209,23 @@ class OfflineSessionRepository(private val sessionDao: SessionDao) : SessionRepo
 
     override suspend fun getSessionSummaryFromId(
         id: Int,
-        startDate: String
+        startDate: String?,
+        numSessionsToFetch: Int?
     ): Triple<String, String, String> = sessionDao.getSessionSummaryForSessionId(
         id = id,
-        startDate = startDate
+        startDate = startDate,
+        numSessionsToFetch = numSessionsToFetch
     )
 
     override suspend fun getLiftSummaryForLiftAndSession(
         sessionId: Int,
         liftId: Int,
-        startDate: String
+        startDate: String?,
+        numSessionsToFetch: Int?
     ): LiftSummary = sessionDao.getLiftSummaryForSessionIdAndLiftId(
         sessionId = sessionId,
         liftId = liftId,
-        startDate = startDate
+        startDate = startDate,
+        numSessionsToFetch = numSessionsToFetch
     )
 }
