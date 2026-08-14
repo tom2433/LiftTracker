@@ -1687,24 +1687,38 @@ interface SessionDao {
                 } else {
                     untimedLiftSummary += "were "
                 }
-                untimedLiftSummary += "${"%.2f".format(abs(avgWeightDeviation))} $untimedUnits "
-                untimedLiftSummary += if (avgWeightDeviation < 0.0) {
-                    "lighter "
+                if (avgWeightDeviation < 0.0) {
+                    untimedLiftSummary += "${"%.2f".format(abs(avgWeightDeviation))} $untimedUnits lighter than "
+                } else if (avgWeightDeviation > 0.0) {
+                    untimedLiftSummary += "${"%.2f".format(abs(avgWeightDeviation))} $untimedUnits heavier than "
                 } else {
-                    "heavier "
+                    untimedLiftSummary += "about the same as "
                 }
-                untimedLiftSummary += "than previous $trimmedSessionName sessions, your volume was " +
-                        "${"%.2f".format(abs(avgVolumePerSetDeviation))} $untimedUnits "
+                if (startDate == null && numSessionsToFetch != null) {
+                    untimedLiftSummary += "your last "
+                    untimedLiftSummary += if (numSessionsToFetch > 1 ) {
+                        "$numSessionsToFetch $trimmedSessionName sessions, "
+                    } else {
+                        "$trimmedSessionName session, "
+                    }
+                } else {
+                    untimedLiftSummary += "previous $trimmedSessionName sessions, "
+                }
+                untimedLiftSummary += "your volume was "
                 untimedLiftSummary += if (avgVolumePerSetDeviation < 0.0) {
-                    "lighter "
+                    "${"%.2f".format(abs(avgVolumePerSetDeviation))} $untimedUnits lighter "
+                } else if (avgVolumePerSetDeviation > 0.0) {
+                    "${"%.2f".format(abs(avgVolumePerSetDeviation))} $untimedUnits heavier "
                 } else {
-                    "heavier "
+                    "about the same "
                 }
-                untimedLiftSummary += "per set, and you performed ${"%.2f".format(abs(avgRepsDeviation))} reps "
+                untimedLiftSummary += "per set, and you performed "
                 untimedLiftSummary += if (avgRepsDeviation < 0.0) {
-                    "less per set than usual. "
+                    "${"%.2f".format(abs(avgRepsDeviation))} reps less per set than usual. "
+                } else if (avgRepsDeviation > 0.0) {
+                    "${"%.2f".format(abs(avgRepsDeviation))} reps more per set than usual. "
                 } else {
-                    "more per set than usual. "
+                    "about the same number of reps per set. "
                 }
                 untimedLiftSummary += "Accounted for ${deviationsList.size}/${liftAvgsForSession.size} lifts."
             }
@@ -1765,18 +1779,29 @@ interface SessionDao {
                 } else {
                     timedLiftSummary += "were "
                 }
-                timedLiftSummary += "${"%.2f".format(abs(avgWeightDeviation))} $timedUnits "
                 timedLiftSummary += if (avgWeightDeviation < 0.0) {
-                    "lower "
+                    "${"%.2f".format(abs(avgWeightDeviation))} $timedUnits lower than "
+                } else if (avgWeightDeviation > 0.0) {
+                    "${"%.2f".format(abs(avgWeightDeviation))} $timedUnits higher than "
                 } else {
-                    "higher "
+                    "about the same as "
                 }
-                timedLiftSummary += "than previous $trimmedSessionName sessions, your intensity was " +
-                        "${"%.2f".format(abs(avgWeightPerMinDeviation))} $timedUnits per minute "
-                timedLiftSummary += if (avgWeightPerMinDeviation < 0.0) {
-                    "lower, "
+                if (startDate == null && numSessionsToFetch != null) {
+                    if (numSessionsToFetch == 1) {
+                        timedLiftSummary += "your last $trimmedSessionName session"
+                    } else {
+                        timedLiftSummary += "your last $numSessionsToFetch $trimmedSessionName sessions"
+                    }
                 } else {
-                    "higher, "
+                    timedLiftSummary += "your previous $trimmedSessionName sessions"
+                }
+                timedLiftSummary += ", your intensity was "
+                timedLiftSummary += if (avgWeightPerMinDeviation < 0.0) {
+                    "${"%.2f".format(abs(avgWeightPerMinDeviation))} $timedUnits per minute lower, "
+                } else if (avgWeightPerMinDeviation > 0.0) {
+                    "${"%.2f".format(abs(avgWeightPerMinDeviation))} $timedUnits per minute higher, "
+                } else {
+                    "about the same, "
                 }
                 timedLiftSummary += "and "
                 if (onlyOneLift) {
@@ -1784,13 +1809,22 @@ interface SessionDao {
                 } else {
                     timedLiftSummary += "they took "
                 }
-                timedLiftSummary += "$avgTimeDeviationString "
                 timedLiftSummary += if (avgMinsDeviation < 0.0) {
-                    "shorter "
+                    "$avgTimeDeviationString shorter than "
+                } else if (avgMinsDeviation > 0.0) {
+                    "$avgTimeDeviationString longer than "
                 } else {
-                    "longer "
+                    "about the same amount of time as "
                 }
-                timedLiftSummary += "than usual. "
+                if (startDate == null && numSessionsToFetch != null) {
+                    if (numSessionsToFetch == 1) {
+                        timedLiftSummary += "your last $trimmedSessionName session."
+                    } else {
+                        timedLiftSummary += "your last $numSessionsToFetch $trimmedSessionName sessions."
+                    }
+                } else {
+                    timedLiftSummary += " usual. "
+                }
                 timedLiftSummary += "Accounted for ${deviationsList.size}/${liftAvgsForSession.size} lifts."
             }
         }
@@ -2311,12 +2345,24 @@ interface SessionDao {
             )
         }
 
-        paragraph += if (typicalNumberOfSets == null) {
-            "You have not trained this lift before during a $trimmedSessionLabel workout, but " +
-                    "for this session, you logged $numberOfSetsForThisSession sets. "
+        if (typicalNumberOfSets == null) {
+            paragraph += "You have not trained this lift before during a $trimmedSessionLabel workout, but " +
+                    "for this session, you logged $numberOfSetsForThisSession set"
+            if (numberOfSetsForThisSession == 1) {
+                paragraph += ". "
+            } else {
+                paragraph += "s. "
+            }
         } else {
-            "For this session, you trained $trimmedLiftName for $numberOfSetsForThisSession sets, and " +
-                    "you usually train about ${"%.2f".format(typicalNumberOfSets)} sets. "
+            paragraph += "For this session, you trained $trimmedLiftName for $numberOfSetsForThisSession set"
+            if (numberOfSetsForThisSession != 1) {
+                paragraph += "s"
+            }
+            paragraph += if (numberOfSetsForThisSession.toDouble() == typicalNumberOfSets) {
+                " as usual. "
+            } else {
+                ", but you usually train about ${"%.2f".format(typicalNumberOfSets)}. "
+            }
         }
 
         if (averageHistoricalWeight == null) {

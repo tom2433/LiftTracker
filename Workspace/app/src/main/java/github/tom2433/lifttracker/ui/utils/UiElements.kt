@@ -18,7 +18,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -77,7 +76,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -92,6 +90,9 @@ import github.tom2433.lifttracker.data.structures.SetCardData
 import github.tom2433.lifttracker.data.utils.DateTimeCalculator
 import github.tom2433.lifttracker.ui.viewModels.SessionDataTimeFrameOption
 import java.util.Locale
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.iterator
 
 @Composable
 fun StatRow(
@@ -1875,15 +1876,172 @@ fun LiftSummaryBarGraphs(
     historicalValueContentColor: Color,
     modifier: Modifier = Modifier
 ) {
+    var weightSelected by remember { mutableStateOf(true) }
+    var repsOrTimeSelected by remember { mutableStateOf(false) }
+    var intensitySelected by remember { mutableStateOf(false) }
+    val weightLabel: String = "Weight"
+    val repsOrTimeLabel: String = if (liftSummary == null) {
+        "Reps per set"
+    } else if (liftSummary.timed) {
+        "Time per set"
+    } else {
+        "Reps per set"
+    }
+    val intensityLabel: String = if (liftSummary == null) {
+        "Volume per set"
+    } else if (liftSummary.timed) {
+        "${
+            liftSummary.unitName.replaceFirstChar {
+                if (it.isLowerCase()) it.titlecase(
+                    Locale.ROOT
+                ) else it.toString()
+            }
+        } per minute"
+    } else {
+        "Volume per set"
+    }
+    val weightValueLabel: String = if (liftSummary == null) {
+        "0 units"
+    } else if (liftSummary.avgWeight == null) {
+        "not calculated"
+    } else {
+        "${"%.2f".format(liftSummary.avgWeight)} ${liftSummary.unitName}"
+    }
+    var repsOrTimeValueLabel: String = ""
+    var historicalRepsOrTimeValueLabel: String = ""
+    if (liftSummary != null) {
+        if (liftSummary.avgRepsOrTime != null) {
+            if (liftSummary.timed) {
+                val timeTriple: Triple<Int, Int, Double> =
+                    DateTimeCalculator.convertDoubleTimeToTripleTime(
+                        minutes = liftSummary.avgRepsOrTime
+                    )
+                repsOrTimeValueLabel =
+                    "${"%02d".format(timeTriple.first)}:" +
+                            "${"%02d".format(timeTriple.second)}:" +
+                            "%05.2f".format(timeTriple.third)
+            } else {
+                repsOrTimeValueLabel =
+                    "${"%.2f".format(liftSummary.avgRepsOrTime)} reps"
+            }
+        } else {
+            repsOrTimeValueLabel = "not calculated"
+        }
+        if (liftSummary.historicalAvgRepsOrTime != null) {
+            if (liftSummary.timed) {
+                val timeTriple = DateTimeCalculator.convertDoubleTimeToTripleTime(
+                    minutes = liftSummary.historicalAvgRepsOrTime
+                )
+                historicalRepsOrTimeValueLabel =
+                    "${"%02d".format(timeTriple.first)}:" +
+                            "${"%02d".format(timeTriple.second)}:" +
+                            "%05.2f".format(timeTriple.third)
+            } else {
+                historicalRepsOrTimeValueLabel =
+                    "${"%.2f".format(liftSummary.historicalAvgRepsOrTime)} reps"
+            }
+        } else {
+            historicalRepsOrTimeValueLabel = "not calculated"
+        }
+    } else {
+        repsOrTimeValueLabel = "0 reps"
+        historicalRepsOrTimeValueLabel = "0 reps"
+    }
+    val intensityValueLabel: String =
+        if (liftSummary == null) {
+            "0 units per set"
+        } else {
+            if (liftSummary.avgIntensity == null) {
+                "not calculated"
+            } else {
+                "${"%.2f".format(liftSummary.avgIntensity)} " +
+                        "${liftSummary.unitName} " + if (liftSummary.timed) {
+                    "per minute"
+                } else {
+                    "per set"
+                }
+            }
+        }
+    val historicalWeightValueLabel: String =
+        if (liftSummary == null) {
+            "0 units"
+        } else if (liftSummary.historicalAvgWeight == null) {
+            "not calculated"
+        } else {
+            "${"%.2f".format(liftSummary.historicalAvgWeight)} ${liftSummary.unitName}"
+        }
+    val historicalIntensityValueLabel: String =
+        if (liftSummary == null) {
+            "0 units per set"
+        } else {
+            if (liftSummary.historicalAvgIntensity == null) {
+                "not calculated"
+            } else {
+                "${"%.2f".format(liftSummary.historicalAvgIntensity)} " +
+                        "${liftSummary.unitName} " + if (liftSummary.timed) {
+                    "per minute"
+                } else {
+                    "per set"
+                }
+            }
+        }
+
+
     // column to hold bar graphs
     Column(
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.Start,
         modifier = modifier.fillMaxWidth()
     ) {
+        FlowRow(
+            horizontalArrangement = Arrangement.Start,
+            verticalArrangement = Arrangement.Top,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp)
+        ) {
+            CustomFilterChip(
+                label = weightLabel,
+                onClick = {
+                    weightSelected = true
+                    repsOrTimeSelected = false
+                    intensitySelected = false
+                },
+                selected = weightSelected,
+                modifier = Modifier.padding(end = 8.dp)
+            )
+            CustomFilterChip(
+                label = repsOrTimeLabel,
+                onClick = {
+                    weightSelected = false
+                    repsOrTimeSelected = true
+                    intensitySelected = false
+                },
+                selected = repsOrTimeSelected,
+                modifier = Modifier.padding(end = 8.dp)
+            )
+            CustomFilterChip(
+                label = intensityLabel,
+                onClick = {
+                    weightSelected = false
+                    repsOrTimeSelected = false
+                    intensitySelected = true
+                },
+                selected = intensitySelected,
+                modifier = Modifier.padding(end = 8.dp)
+            )
+        }
+
         // title for weight bar section
         Text(
-            text = "Weight",
+            text =
+                if (weightSelected) {
+                    weightLabel
+                } else if (repsOrTimeSelected) {
+                    repsOrTimeLabel
+                } else {
+                    intensityLabel
+                },
             style = MaterialTheme.typography.titleMedium,
             color = valueColor,
             fontWeight = FontWeight.Black,
@@ -1892,162 +2050,44 @@ fun LiftSummaryBarGraphs(
                 .fillMaxWidth()
                 .padding(bottom = 8.dp)
         )
-        // comparison bars for avg weight and historical avg weight
+
+        // ComparisonBars to hold any graph
         ComparisonBars(
-            value = liftSummary?.avgWeight,
-            historicalValue = liftSummary?.historicalAvgWeight,
+            value =
+                if (weightSelected) {
+                    liftSummary?.avgWeight
+                } else if (repsOrTimeSelected) {
+                    liftSummary?.avgRepsOrTime
+                } else {
+                    liftSummary?.avgIntensity
+                },
+            historicalValue =
+                if (weightSelected) {
+                    liftSummary?.historicalAvgWeight
+                } else if (repsOrTimeSelected) {
+                    liftSummary?.historicalAvgRepsOrTime
+                } else {
+                    liftSummary?.historicalAvgIntensity
+                },
             valueColor = valueColor,
             valueContentColor = valueContentColor,
             historicalValueColor = historicalValueColor,
             historicalValueContentColor = historicalValueContentColor,
             valueLabel =
-                if (liftSummary == null) {
-                    "0 units"
-                } else if (liftSummary.avgWeight == null) {
-                    "not calculated"
+                if (weightSelected) {
+                    weightValueLabel
+                } else if (repsOrTimeSelected) {
+                    repsOrTimeValueLabel
                 } else {
-                    "${"%.2f".format(liftSummary.avgWeight)} ${liftSummary.unitName}"
+                    intensityValueLabel
                 },
             historicalValueLabel =
-                if (liftSummary == null) {
-                    "0 units"
-                } else if (liftSummary.historicalAvgWeight == null) {
-                    "not calculated"
+                if (weightSelected) {
+                    historicalWeightValueLabel
+                } else if (repsOrTimeSelected) {
+                    historicalRepsOrTimeValueLabel
                 } else {
-                    "${"%.2f".format(liftSummary.historicalAvgWeight)} ${liftSummary.unitName}"
-                },
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-
-        // title for rep/time bar section
-        Text(
-            text = if (liftSummary == null) {
-                "Reps per set"
-            } else if (liftSummary.timed) {
-                "Time per set"
-            } else {
-                "Reps per set"
-            },
-            style = MaterialTheme.typography.titleMedium,
-            color = valueColor,
-            fontWeight = FontWeight.Black,
-            textAlign = TextAlign.Left,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 8.dp)
-        )
-        // comparisonbars for avg reps or time
-        var timeRepValueLabel: String = ""
-        var historicalTimeRepValueLabel: String = ""
-        if (liftSummary != null) {
-            if (liftSummary.avgRepsOrTime != null) {
-                if (liftSummary.timed) {
-                    val timeTriple: Triple<Int, Int, Double> =
-                        DateTimeCalculator.convertDoubleTimeToTripleTime(
-                            minutes = liftSummary.avgRepsOrTime
-                        )
-                    timeRepValueLabel =
-                        "${"%02d".format(timeTriple.first)}:" +
-                                "${"%02d".format(timeTriple.second)}:" +
-                                "%05.2f".format(timeTriple.third)
-                } else {
-                    timeRepValueLabel =
-                        "${"%.2f".format(liftSummary.avgRepsOrTime)} reps"
-                }
-            } else {
-                timeRepValueLabel = "not calculated"
-            }
-            if (liftSummary.historicalAvgRepsOrTime != null) {
-                if (liftSummary.timed) {
-                    val timeTriple = DateTimeCalculator.convertDoubleTimeToTripleTime(
-                        minutes = liftSummary.historicalAvgRepsOrTime
-                    )
-                    historicalTimeRepValueLabel =
-                        "${"%02d".format(timeTriple.first)}:" +
-                                "${"%02d".format(timeTriple.second)}:" +
-                                "%05.2f".format(timeTriple.third)
-                } else {
-                    historicalTimeRepValueLabel =
-                        "${"%.2f".format(liftSummary.historicalAvgRepsOrTime)} reps"
-                }
-            } else {
-                historicalTimeRepValueLabel = "not calculated"
-            }
-        } else {
-            timeRepValueLabel = "0 reps"
-            historicalTimeRepValueLabel = "0 reps"
-        }
-        ComparisonBars(
-            value = liftSummary?.avgRepsOrTime,
-            historicalValue = liftSummary?.historicalAvgRepsOrTime,
-            valueColor = valueColor,
-            valueContentColor = valueContentColor,
-            historicalValueColor = historicalValueColor,
-            historicalValueContentColor = historicalValueContentColor,
-            valueLabel = timeRepValueLabel,
-            historicalValueLabel = historicalTimeRepValueLabel,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-
-        // title for volume/intensity bar section
-        Text(
-            text = if (liftSummary == null) {
-                "Volume per set"
-            } else if (liftSummary.timed) {
-                "${
-                    liftSummary.unitName.replaceFirstChar {
-                        if (it.isLowerCase()) it.titlecase(
-                            Locale.ROOT
-                        ) else it.toString()
-                    }
-                } per minute"
-            } else {
-                "Volume per set"
-            },
-            style = MaterialTheme.typography.titleMedium,
-            color = valueColor,
-            fontWeight = FontWeight.Black,
-            textAlign = TextAlign.Left,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 8.dp)
-        )
-        ComparisonBars(
-            value = liftSummary?.avgIntensity,
-            historicalValue = liftSummary?.historicalAvgIntensity,
-            valueColor = valueColor,
-            valueContentColor = valueContentColor,
-            historicalValueColor = historicalValueColor,
-            historicalValueContentColor = historicalValueContentColor,
-            valueLabel =
-                if (liftSummary == null) {
-                    "0 units per set"
-                } else {
-                    if (liftSummary.avgIntensity == null) {
-                        "not calculated"
-                    } else {
-                        "${"%.2f".format(liftSummary.avgIntensity)} " +
-                                "${liftSummary.unitName} " + if (liftSummary.timed) {
-                            "per minute"
-                        } else {
-                            "per set"
-                        }
-                    }
-                },
-            historicalValueLabel =
-                if (liftSummary == null) {
-                    "0 units per set"
-                } else {
-                    if (liftSummary.historicalAvgIntensity == null) {
-                        "not calculated"
-                    } else {
-                        "${"%.2f".format(liftSummary.historicalAvgIntensity)} " +
-                                "${liftSummary.unitName} " + if (liftSummary.timed) {
-                            "per minute"
-                        } else {
-                            "per set"
-                        }
-                    }
+                    historicalIntensityValueLabel
                 },
             modifier = Modifier.padding(bottom = 8.dp)
         )
