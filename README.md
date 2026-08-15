@@ -694,3 +694,8 @@ move the lift summary to near the historical lift card it is describing. maybe p
 add "last session only" tag to session analysis
 
 add "Compare to:" label before tags, or "compare Today's Shoulders and arms to other Shoulders And Arms workouts:" or something like that
+
+# notes for Improvement 
+
+1. session card should eventually fill up the entire screen covering the navigation bar if the user long taps it.
+2. modify the session summary so that it doesn't say "for your last 2 sessions" if the user hasn't actually recorded 2 sessions. same applies to "last session"
