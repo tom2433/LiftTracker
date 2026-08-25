@@ -152,26 +152,24 @@ fun LiftSummaryBarGraphs(
     var weightSelected by remember { mutableStateOf(true) }
     var repsOrTimeSelected by remember { mutableStateOf(false) }
     var intensitySelected by remember { mutableStateOf(false) }
-    val weightLabel: String = "Weight"
-    val repsOrTimeLabel: String = if (liftSummary == null) {
-        "Reps per set"
-    } else if (liftSummary.timed) {
-        "Time per set"
+    val weightLabel: String = if (liftSummary == null) {
+        "Weight"
     } else {
-        "Reps per set"
+        "${liftSummary.unitName.capitalizeFirstChar()}"
+    }
+    val repsOrTimeLabel: String = if (liftSummary == null) {
+        "Reps Per Set"
+    } else if (liftSummary.timed) {
+        "Time Per Set"
+    } else {
+        "Reps Per Set"
     }
     val intensityLabel: String = if (liftSummary == null) {
-        "Volume per set"
+        "Volume Per Set"
     } else if (liftSummary.timed) {
-        "${
-            liftSummary.unitName.replaceFirstChar {
-                if (it.isLowerCase()) it.titlecase(
-                    Locale.ROOT
-                ) else it.toString()
-            }
-        } per minute"
+        "${liftSummary.unitName.capitalizeFirstChar()} Per Minute"
     } else {
-        "Volume per set"
+        "Volume Per Set"
     }
     val weightValueLabel: String = if (liftSummary == null) {
         "0 units"
@@ -309,11 +307,11 @@ fun LiftSummaryBarGraphs(
         Text(
             text =
                 if (weightSelected) {
-                    weightLabel
+                    "Avg. $weightLabel"
                 } else if (repsOrTimeSelected) {
-                    repsOrTimeLabel
+                    "Avg. $repsOrTimeLabel"
                 } else {
-                    intensityLabel
+                    "Avg. $intensityLabel"
                 },
             style = MaterialTheme.typography.titleMedium,
             color = valueColor,
@@ -728,6 +726,14 @@ private fun String.substringOrNull(
         substring(startIndex, endIndex)
     } else {
         null
+    }
+}
+
+fun String.capitalizeFirstChar(): String {
+    return replaceFirstChar {
+        if (it.isLowerCase()) it.titlecase(
+            Locale.ROOT
+        ) else it.toString()
     }
 }
 

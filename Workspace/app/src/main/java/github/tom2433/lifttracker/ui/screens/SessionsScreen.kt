@@ -329,7 +329,7 @@ fun SessionsScreen(
                             sessionsUiState.sessionDetailMap[sessionId] ?: continue@id_loop
                         val horizontalPadding by animateDpAsState(
                             targetValue = if (sessionDetail.selected) {
-                                12.dp
+                                8.dp
                             } else {
                                 16.dp
                             }
@@ -436,7 +436,8 @@ fun SessionsScreen(
             numDisplayed = sessionsUiState.sessionDetailMap.keys.size,
             numExisting = sessionsUiState.numSessionsInFilteredTimeFrame,
             elementNamePlural = "sessions",
-            onClickLoadMore = { viewModel.loadMoreSessions(it) }
+            onClickLoadMore = { viewModel.loadMoreSessions(it) },
+            modifier = Modifier.padding(horizontal = 16.dp)
         )
     }
 
@@ -720,7 +721,7 @@ fun SessionCard(
                 // row to hold session label info and three dot menu
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Top,
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
                 ) {

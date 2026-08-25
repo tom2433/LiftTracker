@@ -18,6 +18,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,6 +36,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ViewList
@@ -777,16 +779,16 @@ fun HistoricalLiftCard(
             // column to hold set sections
             Column {
                 // loop thru each set and display its section
-                for ((index, liftSetId) in liftSetIds.withIndex()) {
+                loop@ for ((index, liftSetId) in liftSetIds.withIndex()) {
                     key(liftSetId) {
                         HistoricalSetSection(
-                            liftSet = liftSetMap[liftSetId]?.liftSet ?: continue,
-                            weightMetric = liftSetMap[liftSetId]?.weightMetric ?: continue,
-                            secondMetric = liftSetMap[liftSetId]?.secondMetric ?: continue,
+                            liftSet = liftSetMap[liftSetId]?.liftSet ?: continue@loop,
+                            weightMetric = liftSetMap[liftSetId]?.weightMetric ?: continue@loop,
+                            secondMetric = liftSetMap[liftSetId]?.secondMetric ?: continue@loop,
                             muscleGroupName = liftDetail.muscleGroupName,
                             unitName = liftDetail.unitName,
                             metricType = liftDetail.metricType,
-                            selected = liftSetMap[liftSetId]?.selected ?: continue,
+                            selected = liftSetMap[liftSetId]?.selected ?: continue@loop,
                             onLongClickHistoricalSetSection = {
                                 onLongClickHistoricalSetSection(
                                     liftSetId
@@ -894,7 +896,8 @@ fun HistoricalSetSection(
                 // card to hold weight metric
                 MetricContainer(
                     value = weightMetric.value.toString(),
-                    label = unitName
+                    label = unitName,
+                    isWeight = true
                 )
                 // card to hold weight metric note if applicable
                 if (weightMetric.note.isNotBlank()) {
@@ -1087,7 +1090,8 @@ fun MetricContainer(
     value2: String? = null,
     label2: String? = null,
     value3: String? = null,
-    label3: String? = null
+    label3: String? = null,
+    isWeight: Boolean = false
 ) {
     Card(
         colors = CardDefaults.cardColors().copy(
@@ -1123,8 +1127,18 @@ fun MetricContainer(
                     text = value,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Black,
-                    fontSize = 20.sp,
-                    color = MaterialTheme.colorScheme.primary
+                    fontSize =
+                        if (isWeight) {
+                            24.sp
+                        } else {
+                            20.sp
+                        },
+                    color =
+                        if (isWeight) {
+                            MaterialTheme.colorScheme.primaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.tertiaryContainer
+                        }
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 // label
@@ -1149,7 +1163,7 @@ fun MetricContainer(
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Black,
                         fontSize = 20.sp,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.tertiaryContainer
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     // label 2
@@ -1171,7 +1185,7 @@ fun MetricContainer(
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Black,
                         fontSize = 20.sp,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.tertiaryContainer
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     // label 3
@@ -1639,10 +1653,12 @@ fun DisplaySessionAnalytics(
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                     // filter chips for timeframe
-                    FlowRow(
+                    Row(
                         horizontalArrangement = Arrangement.Start,
-                        verticalArrangement = Arrangement.Top,
-                        modifier = Modifier.fillMaxWidth()
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState())
                     ) {
                         for ((sessionDataTimeFrameOption, selected) in statDisplayFilterMap) {
                             CustomFilterChip(
@@ -1787,28 +1803,35 @@ fun SessionSummaryGraphsContainer(
         horizontalAlignment = Alignment.Start,
         modifier = modifier.fillMaxWidth()
     ) {
-        val weightLabel: String = "Weight"
+        val weightLabel: String =
+            if (timedDataPoints.isNotEmpty() && untimedDataPoints.isNotEmpty()) {
+                "Avg. ${untimedUnits.capitalizeFirstChar()} Deviation/Avg. ${timedUnits.capitalizeFirstChar()} Deviation"
+            } else if (timedDataPoints.isNotEmpty()) {
+                "Avg. ${timedUnits.capitalizeFirstChar()} Deviation"
+            } else if (untimedDataPoints.isNotEmpty()) {
+                "Avg. ${untimedUnits.capitalizeFirstChar()} Deviation"
+            } else {
+                return
+            }
         val repsOrTimeLabel: String =
             if (timedDataPoints.isNotEmpty() && untimedDataPoints.isNotEmpty()) {
-                "reps/minutes"
+                "Avg. Reps/Minutes Deviation"
             } else if (timedDataPoints.isNotEmpty()) {
-                "minutes"
+                "Avg. Minutes Deviation"
             } else if (untimedDataPoints.isNotEmpty()) {
-                "reps"
+                "Avg. Reps Deviation"
             } else {
                 return
             }
         val intensityLabel: String =
             if (timedDataPoints.isNotEmpty() && untimedDataPoints.isNotEmpty()) {
-                "$untimedUnits per set/$timedUnits per minute"
+                "Avg. Volume Per Set Deviation/Avg. ${timedUnits.capitalizeFirstChar()} Per Minute Deviation"
             } else if (timedDataPoints.isNotEmpty()) {
-                "$timedUnits per minute"
-            } else if (untimedDataPoints.isNotEmpty()) {
-                "$untimedUnits per set"
+                "Avg. ${timedUnits.capitalizeFirstChar()} Per Minute Deviation"
             } else {
-                return
+                "Avg. Volume Per Set Deviation"
             }
-        var weightSelected by remember { mutableStateOf(false) }
+        var weightSelected by remember { mutableStateOf(true) }
         var repsOrTimeSelected by remember { mutableStateOf(false) }
         var intensitySelected by remember { mutableStateOf(false) }
 
