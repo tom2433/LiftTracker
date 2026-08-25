@@ -8,6 +8,7 @@ import github.tom2433.lifttracker.data.structures.LiftSummary
 import github.tom2433.lifttracker.data.structures.MuscleGroupNameAndFrequency
 import github.tom2433.lifttracker.data.structures.SessionDetail
 import github.tom2433.lifttracker.data.structures.SessionNameAndFrequency
+import github.tom2433.lifttracker.data.structures.SessionSummary
 import kotlinx.coroutines.flow.Flow
 
 class OfflineSessionRepository(private val sessionDao: SessionDao) : SessionRepository {
@@ -211,7 +212,7 @@ class OfflineSessionRepository(private val sessionDao: SessionDao) : SessionRepo
         id: Int,
         startDate: String?,
         numSessionsToFetch: Int?
-    ): Triple<String, String, String> = sessionDao.getSessionSummaryForSessionId(
+    ): SessionSummary = sessionDao.getSessionSummaryForSessionId(
         id = id,
         startDate = startDate,
         numSessionsToFetch = numSessionsToFetch

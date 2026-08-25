@@ -41,13 +41,6 @@ data class LiftNameAndFrequency(
     val liftFrequency: Int
 )
 
-data class LiftDataVis(
-    val liftId: Int,
-    val weight: Double,
-    val repsOrMins: Double,
-    val weightPerRepOrMin: Double
-)
-
 data class LiftDataVisUntimed(
     val liftId: Int,
     val weight: Double,
@@ -73,4 +66,24 @@ data class LiftSummary(
     val historicalAvgRepsOrTime: Double?,
     val avgIntensity: Double?,
     val historicalAvgIntensity: Double?
+)
+
+data class SessionSummary(
+    val paragraph1: String = "",
+    val paragraph2: String = "",
+    val explanation: String = "",
+    val untimedDataPoints: List<SessionDataPoint> = listOf(),
+    val timedDataPoints: List<SessionDataPoint> = listOf(),
+    val untimedUnits: String = "units",
+    val timedUnits: String = "units"
+)
+
+data class SessionDataPoint(
+    val sessionId: Int,
+    val sessionNote: String,
+    val sessionDateIso: String,
+    val unitName: String,
+    val weightDeviation: Double,
+    val repsOrTimeDeviation: Double,
+    val intensityDeviation: Double
 )

@@ -19,6 +19,7 @@ import github.tom2433.lifttracker.data.structures.LiftSearchDetail
 import github.tom2433.lifttracker.data.structures.LiftSetCountPerMuscleGroup
 import github.tom2433.lifttracker.data.structures.LiftSummary
 import github.tom2433.lifttracker.data.structures.SessionDetail
+import github.tom2433.lifttracker.data.structures.SessionSummary
 import github.tom2433.lifttracker.data.structures.SetCardData
 import github.tom2433.lifttracker.data.utils.DateTimeCalculator
 import github.tom2433.lifttracker.ui.screens.TimeFrameOption
@@ -666,7 +667,7 @@ class SessionsViewModel(
                 currentSessionLiftSetMap = emptyMap(),
                 currentSessionLiftDetailMap = emptyMap(),
                 currentSessionDisplaySetList = emptyList(),
-                currentSessionSummary = Triple("", "", ""),
+                currentSessionSummary = SessionSummary(),
                 sessionStatDisplayFilterMap = SessionDataTimeFrameOption.getDefaultStatDisplayFilterMap()
             )
         }
@@ -1655,7 +1656,7 @@ data class SessionsUiState(
     //      first element: Lift id
     //      second element: list of LiftSet ids maintaining order
     val currentSessionDisplaySetList: List<Pair<Int, List<Int>>> = emptyList(),
-    val currentSessionSummary: Triple<String, String, String> = Triple("", "", ""),
+    val currentSessionSummary: SessionSummary = SessionSummary(),
     val currentSessionLiftSummary: LiftSummary? = null,
     val sessionStatDisplayFilterMap: Map<SessionDataTimeFrameOption, Boolean> =
         SessionDataTimeFrameOption.getDefaultStatDisplayFilterMap(),

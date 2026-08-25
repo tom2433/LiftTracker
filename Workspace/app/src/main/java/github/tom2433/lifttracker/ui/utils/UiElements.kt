@@ -86,6 +86,8 @@ import github.tom2433.lifttracker.data.setmetric.SetMetric
 import github.tom2433.lifttracker.data.structures.LiftSearchDetail
 import github.tom2433.lifttracker.data.structures.LiftSetCountPerMuscleGroup
 import github.tom2433.lifttracker.data.structures.LiftSummary
+import github.tom2433.lifttracker.data.structures.SessionDataPoint
+import github.tom2433.lifttracker.data.structures.SessionSummary
 import github.tom2433.lifttracker.data.structures.SetCardData
 import github.tom2433.lifttracker.data.utils.DateTimeCalculator
 import github.tom2433.lifttracker.ui.viewModels.SessionDataTimeFrameOption
@@ -1540,7 +1542,7 @@ fun LabelAndDropdownRow(
 @Composable
 fun DisplaySessionAnalytics(
     trimmedSessionName: String,
-    summaryTriple: Triple<String, String, String>,
+    sessionSummary: SessionSummary,
     liftSummary: LiftSummary?,
     statDisplayFilterMap: Map<SessionDataTimeFrameOption, Boolean>,
     filterChipClicked: (SessionDataTimeFrameOption) -> Unit,
@@ -1669,6 +1671,7 @@ fun DisplaySessionAnalytics(
                             style = MaterialTheme.typography.titleLarge,
                         )
                         // info button
+                        // TODO: edit this info button content
                         InfoButton {
                             // explanation title
                             Text(
@@ -1713,7 +1716,7 @@ fun DisplaySessionAnalytics(
                             )
                             // explanation
                             Text(
-                                text = summaryTriple.third,
+                                text = sessionSummary.explanation,
                                 style = MaterialTheme.typography.bodyMedium,
                                 modifier = Modifier.padding(bottom = 8.dp),
                                 fontWeight = FontWeight.Bold
@@ -1722,9 +1725,9 @@ fun DisplaySessionAnalytics(
                     }
 
                     // first paragraph of summary
-                    if (summaryTriple.first.isNotBlank()) {
+                    if (sessionSummary.paragraph1.isNotBlank()) {
                         Text(
-                            text = summaryTriple.first,
+                            text = sessionSummary.paragraph1,
                             style = MaterialTheme.typography.bodyMedium,
                             modifier = Modifier
                                 .padding(bottom = 8.dp)
@@ -1732,13 +1735,24 @@ fun DisplaySessionAnalytics(
                         )
                     }
                     // second paragraph of summary
-                    if (summaryTriple.second.isNotBlank()) {
+                    if (sessionSummary.paragraph2.isNotBlank()) {
                         Text(
-                            text = summaryTriple.second,
+                            text = sessionSummary.paragraph2,
                             style = MaterialTheme.typography.bodyMedium,
                             modifier = Modifier
                                 .padding(bottom = 8.dp)
                                 .fillMaxWidth()
+                        )
+                    }
+
+                    // only display the line graphs if they have data to begin with
+                    if (sessionSummary.timedDataPoints.isNotEmpty() ||
+                        sessionSummary.untimedDataPoints.isNotEmpty()) {
+                        SessionSummaryGraphsContainer(
+                            timedDataPoints = sessionSummary.timedDataPoints,
+                            untimedDataPoints = sessionSummary.untimedDataPoints,
+                            timedUnits = sessionSummary.timedUnits,
+                            untimedUnits = sessionSummary.untimedUnits
                         )
                     }
 
@@ -1755,6 +1769,142 @@ fun DisplaySessionAnalytics(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun SessionSummaryGraphsContainer(
+    timedDataPoints: List<SessionDataPoint>,
+    untimedDataPoints: List<SessionDataPoint>,
+    timedUnits: String,
+    untimedUnits: String,
+    modifier: Modifier = Modifier
+) {
+    // column to hold filter chips and line graphs
+    Column(
+        verticalArrangement = Arrangement.Top,
+        horizontalAlignment = Alignment.Start,
+        modifier = modifier.fillMaxWidth()
+    ) {
+        val weightLabel: String = "Weight"
+        val repsOrTimeLabel: String =
+            if (timedDataPoints.isNotEmpty() && untimedDataPoints.isNotEmpty()) {
+                "reps/minutes"
+            } else if (timedDataPoints.isNotEmpty()) {
+                "minutes"
+            } else if (untimedDataPoints.isNotEmpty()) {
+                "reps"
+            } else {
+                return
+            }
+        val intensityLabel: String =
+            if (timedDataPoints.isNotEmpty() && untimedDataPoints.isNotEmpty()) {
+                "$untimedUnits per set/$timedUnits per minute"
+            } else if (timedDataPoints.isNotEmpty()) {
+                "$timedUnits per minute"
+            } else if (untimedDataPoints.isNotEmpty()) {
+                "$untimedUnits per set"
+            } else {
+                return
+            }
+        var weightSelected by remember { mutableStateOf(false) }
+        var repsOrTimeSelected by remember { mutableStateOf(false) }
+        var intensitySelected by remember { mutableStateOf(false) }
+
+        // flow row for filter chips
+        FlowRow(
+            horizontalArrangement = Arrangement.Start,
+            verticalArrangement = Arrangement.Top,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp)
+        ) {
+            CustomFilterChip(
+                label = weightLabel,
+                onClick = {
+                    weightSelected = true
+                    repsOrTimeSelected = false
+                    intensitySelected = false
+                },
+                selected = weightSelected,
+                modifier = Modifier.padding(end = 8.dp)
+            )
+            CustomFilterChip(
+                label = repsOrTimeLabel,
+                onClick = {
+                    weightSelected = false
+                    repsOrTimeSelected = true
+                    intensitySelected = false
+                },
+                selected = repsOrTimeSelected,
+                modifier = Modifier.padding(end = 8.dp)
+            )
+            CustomFilterChip(
+                label = intensityLabel,
+                onClick = {
+                    weightSelected = false
+                    repsOrTimeSelected = false
+                    intensitySelected = true
+                },
+                selected = intensitySelected,
+                modifier = Modifier.padding(end = 8.dp)
+            )
+        }
+
+        // call SessionSummaryLineGraph for timedDataPoints with arguments varying depending on the
+        // user selected filter chip
+        if (timedDataPoints.isNotEmpty()) {
+            SessionSummaryLineGraph(
+                title =
+                    if (weightSelected) {
+                        weightLabel
+                    } else if (repsOrTimeSelected) {
+                        repsOrTimeLabel
+                    } else if (intensitySelected) {
+                        intensityLabel
+                    } else {
+                        "null"
+                    },
+                dataPoints = timedDataPoints,
+                selectedMetric =
+                    if (weightSelected) {
+                        SessionSummaryChartMetric.WEIGHT
+                    } else if (repsOrTimeSelected) {
+                        SessionSummaryChartMetric.REPS_OR_TIME
+                    } else if (intensitySelected) {
+                        SessionSummaryChartMetric.INTENSITY
+                    } else {
+                        SessionSummaryChartMetric.WEIGHT
+                    }
+            )
+        }
+
+        // same for untimedDataPoints
+        if (untimedDataPoints.isNotEmpty()) {
+            SessionSummaryLineGraph(
+                title =
+                    if (weightSelected) {
+                        weightLabel
+                    } else if (repsOrTimeSelected) {
+                        repsOrTimeLabel
+                    } else if (intensitySelected) {
+                        intensityLabel
+                    } else {
+                        "null"
+                    },
+                dataPoints = untimedDataPoints,
+                selectedMetric =
+                    if (weightSelected) {
+                        SessionSummaryChartMetric.WEIGHT
+                    } else if (repsOrTimeSelected) {
+                        SessionSummaryChartMetric.REPS_OR_TIME
+                    } else if (intensitySelected) {
+                        SessionSummaryChartMetric.INTENSITY
+                    } else {
+                        SessionSummaryChartMetric.WEIGHT
+                    }
+            )
         }
     }
 }
@@ -1862,462 +2012,6 @@ fun DisplayLiftSummary(
                     historicalValueColor = MaterialTheme.colorScheme.tertiaryContainer,
                     historicalValueContentColor = MaterialTheme.colorScheme.onTertiaryContainer
                 )
-            }
-        }
-    }
-}
-
-@Composable
-fun LiftSummaryBarGraphs(
-    liftSummary: LiftSummary?,
-    valueColor: Color,
-    valueContentColor: Color,
-    historicalValueColor: Color,
-    historicalValueContentColor: Color,
-    modifier: Modifier = Modifier
-) {
-    var weightSelected by remember { mutableStateOf(true) }
-    var repsOrTimeSelected by remember { mutableStateOf(false) }
-    var intensitySelected by remember { mutableStateOf(false) }
-    val weightLabel: String = "Weight"
-    val repsOrTimeLabel: String = if (liftSummary == null) {
-        "Reps per set"
-    } else if (liftSummary.timed) {
-        "Time per set"
-    } else {
-        "Reps per set"
-    }
-    val intensityLabel: String = if (liftSummary == null) {
-        "Volume per set"
-    } else if (liftSummary.timed) {
-        "${
-            liftSummary.unitName.replaceFirstChar {
-                if (it.isLowerCase()) it.titlecase(
-                    Locale.ROOT
-                ) else it.toString()
-            }
-        } per minute"
-    } else {
-        "Volume per set"
-    }
-    val weightValueLabel: String = if (liftSummary == null) {
-        "0 units"
-    } else if (liftSummary.avgWeight == null) {
-        "not calculated"
-    } else {
-        "${"%.2f".format(liftSummary.avgWeight)} ${liftSummary.unitName}"
-    }
-    var repsOrTimeValueLabel: String = ""
-    var historicalRepsOrTimeValueLabel: String = ""
-    if (liftSummary != null) {
-        if (liftSummary.avgRepsOrTime != null) {
-            if (liftSummary.timed) {
-                val timeTriple: Triple<Int, Int, Double> =
-                    DateTimeCalculator.convertDoubleTimeToTripleTime(
-                        minutes = liftSummary.avgRepsOrTime
-                    )
-                repsOrTimeValueLabel =
-                    "${"%02d".format(timeTriple.first)}:" +
-                            "${"%02d".format(timeTriple.second)}:" +
-                            "%05.2f".format(timeTriple.third)
-            } else {
-                repsOrTimeValueLabel =
-                    "${"%.2f".format(liftSummary.avgRepsOrTime)} reps"
-            }
-        } else {
-            repsOrTimeValueLabel = "not calculated"
-        }
-        if (liftSummary.historicalAvgRepsOrTime != null) {
-            if (liftSummary.timed) {
-                val timeTriple = DateTimeCalculator.convertDoubleTimeToTripleTime(
-                    minutes = liftSummary.historicalAvgRepsOrTime
-                )
-                historicalRepsOrTimeValueLabel =
-                    "${"%02d".format(timeTriple.first)}:" +
-                            "${"%02d".format(timeTriple.second)}:" +
-                            "%05.2f".format(timeTriple.third)
-            } else {
-                historicalRepsOrTimeValueLabel =
-                    "${"%.2f".format(liftSummary.historicalAvgRepsOrTime)} reps"
-            }
-        } else {
-            historicalRepsOrTimeValueLabel = "not calculated"
-        }
-    } else {
-        repsOrTimeValueLabel = "0 reps"
-        historicalRepsOrTimeValueLabel = "0 reps"
-    }
-    val intensityValueLabel: String =
-        if (liftSummary == null) {
-            "0 units per set"
-        } else {
-            if (liftSummary.avgIntensity == null) {
-                "not calculated"
-            } else {
-                "${"%.2f".format(liftSummary.avgIntensity)} " +
-                        "${liftSummary.unitName} " + if (liftSummary.timed) {
-                    "per minute"
-                } else {
-                    "per set"
-                }
-            }
-        }
-    val historicalWeightValueLabel: String =
-        if (liftSummary == null) {
-            "0 units"
-        } else if (liftSummary.historicalAvgWeight == null) {
-            "not calculated"
-        } else {
-            "${"%.2f".format(liftSummary.historicalAvgWeight)} ${liftSummary.unitName}"
-        }
-    val historicalIntensityValueLabel: String =
-        if (liftSummary == null) {
-            "0 units per set"
-        } else {
-            if (liftSummary.historicalAvgIntensity == null) {
-                "not calculated"
-            } else {
-                "${"%.2f".format(liftSummary.historicalAvgIntensity)} " +
-                        "${liftSummary.unitName} " + if (liftSummary.timed) {
-                    "per minute"
-                } else {
-                    "per set"
-                }
-            }
-        }
-
-
-    // column to hold bar graphs
-    Column(
-        verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.Start,
-        modifier = modifier.fillMaxWidth()
-    ) {
-        FlowRow(
-            horizontalArrangement = Arrangement.Start,
-            verticalArrangement = Arrangement.Top,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 8.dp)
-        ) {
-            CustomFilterChip(
-                label = weightLabel,
-                onClick = {
-                    weightSelected = true
-                    repsOrTimeSelected = false
-                    intensitySelected = false
-                },
-                selected = weightSelected,
-                modifier = Modifier.padding(end = 8.dp)
-            )
-            CustomFilterChip(
-                label = repsOrTimeLabel,
-                onClick = {
-                    weightSelected = false
-                    repsOrTimeSelected = true
-                    intensitySelected = false
-                },
-                selected = repsOrTimeSelected,
-                modifier = Modifier.padding(end = 8.dp)
-            )
-            CustomFilterChip(
-                label = intensityLabel,
-                onClick = {
-                    weightSelected = false
-                    repsOrTimeSelected = false
-                    intensitySelected = true
-                },
-                selected = intensitySelected,
-                modifier = Modifier.padding(end = 8.dp)
-            )
-        }
-
-        // title for weight bar section
-        Text(
-            text =
-                if (weightSelected) {
-                    weightLabel
-                } else if (repsOrTimeSelected) {
-                    repsOrTimeLabel
-                } else {
-                    intensityLabel
-                },
-            style = MaterialTheme.typography.titleMedium,
-            color = valueColor,
-            fontWeight = FontWeight.Black,
-            textAlign = TextAlign.Left,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 8.dp)
-        )
-
-        // ComparisonBars to hold any graph
-        ComparisonBars(
-            value =
-                if (weightSelected) {
-                    liftSummary?.avgWeight
-                } else if (repsOrTimeSelected) {
-                    liftSummary?.avgRepsOrTime
-                } else {
-                    liftSummary?.avgIntensity
-                },
-            historicalValue =
-                if (weightSelected) {
-                    liftSummary?.historicalAvgWeight
-                } else if (repsOrTimeSelected) {
-                    liftSummary?.historicalAvgRepsOrTime
-                } else {
-                    liftSummary?.historicalAvgIntensity
-                },
-            valueColor = valueColor,
-            valueContentColor = valueContentColor,
-            historicalValueColor = historicalValueColor,
-            historicalValueContentColor = historicalValueContentColor,
-            valueLabel =
-                if (weightSelected) {
-                    weightValueLabel
-                } else if (repsOrTimeSelected) {
-                    repsOrTimeValueLabel
-                } else {
-                    intensityValueLabel
-                },
-            historicalValueLabel =
-                if (weightSelected) {
-                    historicalWeightValueLabel
-                } else if (repsOrTimeSelected) {
-                    historicalRepsOrTimeValueLabel
-                } else {
-                    historicalIntensityValueLabel
-                },
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-    }
-}
-
-@Composable
-fun ComparisonBars(
-    value: Double?,
-    historicalValue: Double?,
-    valueColor: Color,
-    valueContentColor: Color,
-    historicalValueColor: Color,
-    historicalValueContentColor: Color,
-    valueLabel: String,
-    historicalValueLabel: String,
-    modifier: Modifier = Modifier
-) {
-    val maxVal: Double? =
-        if (value == null && historicalValue == null) {
-            null
-        } else if (value == null) {
-            historicalValue
-        } else if (historicalValue == null) {
-            value
-        } else if (value > historicalValue) {
-            value
-        } else {
-            historicalValue
-        }
-    val valueWidth by animateFloatAsState(
-        targetValue = if (maxVal == null) {
-            0.001f
-        } else if (value == null) {
-            0.001f
-        } else {
-            if (maxVal == 0.0) {
-                0.001f
-            } else {
-                (value / maxVal).toFloat()
-            }
-        },
-        animationSpec = spring(
-            stiffness = Spring.StiffnessMediumLow
-        )
-    )
-    val historicalValueWidth by animateFloatAsState(
-        targetValue = if (maxVal == null) {
-            0.001f
-        } else if (historicalValue == null) {
-            0.001f
-        } else {
-            if (maxVal == 0.0) {
-                0.001f
-            } else {
-                (historicalValue / maxVal).toFloat()
-            }
-        },
-        animationSpec = spring(
-            stiffness = Spring.StiffnessMediumLow
-        )
-    )
-
-    // row to hold axis labels on left, horizontal bars on right
-    Row(
-        horizontalArrangement = Arrangement.Start,
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier
-            .fillMaxWidth()
-            .height(75.dp)
-    ) {
-        // column to hold axis labels
-        Column(
-            verticalArrangement = Arrangement.SpaceAround,
-            horizontalAlignment = Alignment.Start,
-            modifier = Modifier
-                .fillMaxHeight()
-                .weight(0.4f)
-        ) {
-            // value axis label
-            Text(
-                text = "this session",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground.copy(0.75f),
-                textAlign = TextAlign.Left,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(4.dp)
-            )
-            // avg value axis label
-            Text(
-                text = "historical avg.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground.copy(0.75f),
-                textAlign = TextAlign.Left,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(4.dp)
-            )
-        }
-
-        // column to hold horizontal bars
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxSize()
-        ) {
-            // row to hold value bar
-            Row(
-                horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxSize()
-            ) {
-                // surface with valueWidth
-                Surface(
-                    modifier = Modifier
-                        .weight(valueWidth)
-                        .fillMaxHeight(),
-                    color = valueColor,
-                    shape = RoundedCornerShape(
-                        topStart = 0.dp,
-                        bottomStart = 0.dp,
-                        topEnd = 4.dp,
-                        bottomEnd = 4.dp
-                    )
-                ) {
-                    // box to hold label
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        // show label if this surface is bigger
-                        if (valueWidth >= 0.5f) {
-                            Text(
-                                text = valueLabel,
-                                color = valueContentColor,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
-                    }
-                }
-                // surface to fill the remaining area
-                Surface(
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .weight(
-                            if (1f - valueWidth == 0f) {
-                                0.001f
-                            } else {
-                                1f - valueWidth
-                            }
-                        ),
-                    color = Color.Transparent
-                ) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        // show label if this surface is bigger
-                        if (valueWidth < 0.5f) {
-                            Text(
-                                text = valueLabel,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
-                    }
-                }
-            }
-            // row to hold historicalValue bar
-            Row(
-                horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxSize()
-            ) {
-                // surface with historicalValue weight
-                Surface(
-                    modifier = Modifier
-                        .weight(historicalValueWidth)
-                        .fillMaxHeight(),
-                    color = historicalValueColor,
-                    shape = RoundedCornerShape(
-                        topStart = 0.dp,
-                        bottomStart = 0.dp,
-                        topEnd = 4.dp,
-                        bottomEnd = 4.dp
-                    )
-                ) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        // show label if this surface is bigger
-                        if (historicalValueWidth >= 0.5f) {
-                            Text(
-                                text = historicalValueLabel,
-                                color = historicalValueContentColor,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
-                    }
-                }
-                // surface with historicalValueSpacer weight
-                Surface(
-                    modifier = Modifier
-                        .weight(
-                            if (1f - historicalValueWidth == 0f) {
-                                0.001f
-                            } else {
-                                1f - historicalValueWidth
-                            }
-                        )
-                        .fillMaxHeight(),
-                    color = Color.Transparent
-                ) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (historicalValueWidth < 0.5f) {
-                            Text(
-                                text = historicalValueLabel,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
-                    }
-                }
             }
         }
     }

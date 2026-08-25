@@ -64,6 +64,7 @@ import github.tom2433.lifttracker.R
 import github.tom2433.lifttracker.data.structures.LiftSearchDetail
 import github.tom2433.lifttracker.data.structures.LiftSummary
 import github.tom2433.lifttracker.data.structures.SessionDetail
+import github.tom2433.lifttracker.data.structures.SessionSummary
 import github.tom2433.lifttracker.data.structures.SetCardData
 import github.tom2433.lifttracker.data.utils.DateTimeCalculator
 import github.tom2433.lifttracker.ui.AppViewModelProvider
@@ -363,7 +364,7 @@ fun SessionsScreen(
                                     currentSessionDisplaySetList = sessionsUiState.currentSessionDisplaySetList,
                                     currentSessionLiftDetailMap = sessionsUiState.currentSessionLiftDetailMap,
                                     currentSessionLiftSetMap = sessionsUiState.currentSessionLiftSetMap,
-                                    currentSessionSummaryTriple = sessionsUiState.currentSessionSummary,
+                                    currentSessionSummary = sessionsUiState.currentSessionSummary,
                                     currentSessionLiftSummary = sessionsUiState.currentSessionLiftSummary,
                                     sessionStatDisplayFilterMap = sessionsUiState.sessionStatDisplayFilterMap,
                                     filterChipClicked = {
@@ -614,7 +615,7 @@ fun SessionCard(
     currentSessionDisplaySetList: List<Pair<Int, List<Int>>>,
     currentSessionLiftDetailMap: Map<Int, LiftSearchDetail>,
     currentSessionLiftSetMap: Map<Int, SetCardData>,
-    currentSessionSummaryTriple: Triple<String, String, String>,
+    currentSessionSummary: SessionSummary,
     currentSessionLiftSummary: LiftSummary?,
     sessionStatDisplayFilterMap: Map<SessionDataTimeFrameOption, Boolean>,
     filterChipClicked: (SessionDataTimeFrameOption) -> Unit,
@@ -854,7 +855,7 @@ fun SessionCard(
                 // display session summary
                 DisplaySessionAnalytics(
                     trimmedSessionName = sessionDetail.sessionName.trim(),
-                    summaryTriple = currentSessionSummaryTriple,
+                    sessionSummary = currentSessionSummary,
                     liftSummary = currentSessionLiftSummary,
                     statDisplayFilterMap = sessionStatDisplayFilterMap,
                     filterChipClicked = { filterChipClicked(it) },

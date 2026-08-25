@@ -7,6 +7,7 @@ import github.tom2433.lifttracker.data.structures.LiftSummary
 import github.tom2433.lifttracker.data.structures.MuscleGroupNameAndFrequency
 import github.tom2433.lifttracker.data.structures.SessionDetail
 import github.tom2433.lifttracker.data.structures.SessionNameAndFrequency
+import github.tom2433.lifttracker.data.structures.SessionSummary
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -169,7 +170,7 @@ interface SessionRepository {
         id: Int,
         startDate: String?,
         numSessionsToFetch: Int?
-    ): Triple<String, String, String>
+    ): SessionSummary
 
     suspend fun getLiftSummaryForLiftAndSession(
         sessionId: Int,

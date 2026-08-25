@@ -15,10 +15,12 @@ import github.tom2433.lifttracker.data.structures.LiftNameAndFrequency
 import github.tom2433.lifttracker.data.structures.LiftSetCountPerMuscleGroup
 import github.tom2433.lifttracker.data.structures.LiftSummary
 import github.tom2433.lifttracker.data.structures.MuscleGroupNameAndFrequency
+import github.tom2433.lifttracker.data.structures.SessionDataPoint
 import github.tom2433.lifttracker.data.structures.SessionDetail
 import github.tom2433.lifttracker.data.structures.SessionDetailData
 import github.tom2433.lifttracker.data.structures.SessionMuscleGroupCountData
 import github.tom2433.lifttracker.data.structures.SessionNameAndFrequency
+import github.tom2433.lifttracker.data.structures.SessionSummary
 import github.tom2433.lifttracker.data.utils.DateTimeCalculator
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -1414,7 +1416,7 @@ interface SessionDao {
     suspend fun getTrimmedSessionNameFromId(id: Int): String?
 
     @Query("""
-        SELECT CASE 
+        SELECT COALESCE(CASE 
             WHEN (
                 SELECT COUNT(DISTINCT l.unit_id)
                 FROM lifts AS l
@@ -1434,7 +1436,7 @@ interface SessionDao {
                     AND l.metric_type = CASE WHEN :untimed = 1 THEN 1 ELSE 2 END
                 LIMIT 1
             )
-            END
+            END, 'units')
     """)
     suspend fun getUnitsFromSessionId(id: Int, untimed: Boolean): String
 
@@ -1601,33 +1603,103 @@ interface SessionDao {
         liftIds: List<Int>
     ): List<String?>
 
+    @Query("""
+        SELECT
+            s.id
+        FROM sessions AS s
+        INNER JOIN sessions AS target
+            ON target.id = :targetSessionId
+        WHERE s.session_number < target.session_number
+            AND TRIM(s.session_label) = TRIM(target.session_label)
+            AND CASE
+                WHEN :startDate = '' THEN 1 ELSE s.date >= :startDate
+            END
+            AND s.profile_id = target.profile_id
+            AND EXISTS (
+                SELECT 1
+                FROM lift_sets AS ls
+                INNER JOIN set_metrics AS weight
+                    ON weight.set_id = ls.id
+                    AND weight.metric_position = 1
+                INNER JOIN set_metrics AS second
+                    ON second.set_id = ls.id
+                    AND second.metric_position = 2
+                WHERE ls.session_id = s.id
+                    AND ls.lift_id IN (:liftIds)
+                    AND weight.value != -1.0
+                    AND second.value > 0.0
+            )
+        ORDER BY s.session_number DESC
+        LIMIT :numSessions
+    """)
+    suspend fun getApplicableSessionIdsForLineGraph(
+        liftIds: List<Int>,
+        targetSessionId: Int,
+        startDate: String,
+        numSessions: Int
+    ): List<Int>
+
+    @Query("""
+        SELECT s.note
+        FROM sessions AS s
+        WHERE s.id = :sessionId
+        LIMIT 1
+    """)
+    suspend fun getNoteFromSessionId(
+        sessionId: Int
+    ): String?
+
+    @Query("""
+        SELECT s.date
+        FROM sessions AS s
+        WHERE s.id = :sessionId
+        LIMIT 1
+    """)
+    suspend fun getDateFromSessionId(
+        sessionId: Int
+    ): String?
+
     suspend fun getSessionSummaryForSessionId(
         id: Int,
         startDate: String?,
         numSessionsToFetch: Int?
-    ): Triple<String, String, String> {
+    ): SessionSummary {
         val sessionHasUntimedLifts: Boolean = sessionHasUntimedLifts(id)
         val sessionHasTimedLifts: Boolean = sessionHasTimedLifts(id)
-        val trimmedSessionName: String = getTrimmedSessionNameFromId(id) ?: return Triple("Something went wrong.", "", "")
+        // retrieve its units (if there are lifts with different units, this is just "units")
+        val untimedUnits = getUnitsFromSessionId(id, untimed = true)
+        val timedUnits = getUnitsFromSessionId(id, untimed = false)
+        val trimmedSessionName: String = getTrimmedSessionNameFromId(id) ?: return SessionSummary(
+            paragraph1 = "Something went wrong.",
+            paragraph2 = "",
+            explanation = "Something went wrong.",
+            untimedDataPoints = listOf(),
+            timedDataPoints = listOf(),
+            timedUnits = timedUnits,
+            untimedUnits = untimedUnits
+        )
         val liftIdsList: MutableList<Int> = mutableListOf()
+        val untimedSessionDataPoints: MutableList<SessionDataPoint> = mutableListOf()
+        val timedSessionDataPoints: MutableList<SessionDataPoint> = mutableListOf()
 
         var untimedLiftSummary: String = ""
         var timedLiftSummary: String = ""
         var explanation: String = ""
 
         if (!sessionHasUntimedLifts && !sessionHasTimedLifts) {
-            return Triple(
-                first = "This session does not have any set data yet.",
-                second = "",
-                third = "Try recording some sets for this session to view its summary."
+            return SessionSummary(
+                paragraph1 = "This session does not have any set data yet.",
+                paragraph2 = "",
+                explanation = "Try recording some sets for this session to view its summary.",
+                untimedDataPoints = listOf(),
+                timedDataPoints = listOf(),
+                timedUnits = timedUnits,
+                untimedUnits = untimedUnits
             )
         }
 
         // if session has at least one lift with reps, fill the untimedLiftSummary
         if (sessionHasUntimedLifts) {
-            // retrieve its units (if there are lifts with different units, this is just "units")
-            val untimedUnits = getUnitsFromSessionId(id, untimed = true)
-
             // retrieve list of LiftDataVisUntimed objects (avg weight, reps, and volume per set)
             // one for each untimed lift for this session
             val liftAvgsForSession: List<LiftDataVisUntimed> = getLiftDataVisObjectsUntimedFromSessionId(id)
@@ -1667,7 +1739,60 @@ interface SessionDao {
             if (deviationsList.isEmpty()) {
                 untimedLiftSummary = ""
             } else {
-                // otherwise fill the untimedLiftSummary
+                // otherwise retrieve all data for the untimed line graph
+                // first retrieve all session ids which contain at least one lift from previousLiftAvgs
+                // target session's data point will be added at the end
+                val historicalSessionIdsList: List<Int> = getApplicableSessionIdsForLineGraph(
+                    liftIds = previousLiftAvgs.map { it.liftId },
+                    targetSessionId = id,
+                    startDate = startDate ?: "",
+                    numSessions = numSessionsToFetch ?: -1
+                )
+
+                // determine the average deviation for each session id
+                for (historicalSessionId in historicalSessionIdsList) {
+                    val liftAvgsForHistoricalSession: List<LiftDataVisUntimed> = getLiftDataVisObjectsUntimedFromSessionId(historicalSessionId)
+
+                    val historicalDeviations: List<LiftDataVisUntimed> = liftAvgsForHistoricalSession
+                        .mapNotNull { current ->
+                            val previous: LiftDataVisUntimed = previousLiftAvgsMap[current.liftId] ?:
+                                return@mapNotNull null
+
+                            LiftDataVisUntimed(
+                                liftId = current.liftId,
+                                weight = current.weight - previous.weight,
+                                reps = current.reps - previous.reps,
+                                volumePerSet = current.volumePerSet - previous.volumePerSet
+                            )
+                        }
+
+                    untimedSessionDataPoints.add(
+                        SessionDataPoint(
+                            sessionId = historicalSessionId,
+                            sessionNote = getNoteFromSessionId(historicalSessionId) ?: "",
+                            sessionDateIso = getDateFromSessionId(historicalSessionId) ?: "",
+                            unitName = getUnitsFromSessionId(historicalSessionId, true),
+                            weightDeviation = historicalDeviations.map { it.weight }.average(),
+                            repsOrTimeDeviation = historicalDeviations.map { it.reps }.average(),
+                            intensityDeviation = historicalDeviations.map { it.volumePerSet }.average()
+                        )
+                    )
+                }
+
+                // add this session's data point
+                untimedSessionDataPoints.add(
+                    SessionDataPoint(
+                        sessionId = id,
+                        sessionNote = getNoteFromSessionId(id) ?: "",
+                        sessionDateIso = getDateFromSessionId(id) ?: "",
+                        unitName = untimedUnits,
+                        weightDeviation = deviationsList.map { it.weight }.average(),
+                        repsOrTimeDeviation = deviationsList.map { it.reps }.average(),
+                        intensityDeviation = deviationsList.map { it.volumePerSet }.average()
+                    )
+                )
+
+                // and fill the untimedLiftSummary
                 val avgWeightDeviation = deviationsList.map { it.weight }.average()
                 val avgRepsDeviation = deviationsList.map { it.reps }.average()
                 val avgVolumePerSetDeviation =
@@ -1727,7 +1852,6 @@ interface SessionDao {
         // if session has at least one lift with time, fill the timedLiftSummary
         if (sessionHasTimedLifts) {
             // same logic as above but with timed lifts
-            val timedUnits = getUnitsFromSessionId(id, untimed = false)
             val liftAvgsForSession: List<LiftDataVisTimed> = getLiftDataVisObjectsTimedFromSessionId(id)
             val onlyOneLift: Boolean = liftAvgsForSession.size == 1
 
@@ -1758,6 +1882,60 @@ interface SessionDao {
             if (deviationsList.isEmpty()) {
                 timedLiftSummary = ""
             } else {
+                // otherwise retrieve all data for the timed line graph
+                // first retrieve all session ids which contain at least one lift from previousLiftAvgs
+                // target session's data point will be added at the end
+                val historicalSessionIdsList: List<Int> = getApplicableSessionIdsForLineGraph(
+                    liftIds = previousLiftAvgs.map { it.liftId },
+                    targetSessionId = id,
+                    startDate = startDate ?: "",
+                    numSessions = numSessionsToFetch ?: -1
+                )
+
+                // determine the average deviation for each session id
+                for (historicalSessionId in historicalSessionIdsList) {
+                    val liftAvgsForHistoricalSession: List<LiftDataVisTimed> =
+                        getLiftDataVisObjectsTimedFromSessionId(historicalSessionId)
+
+                    val historicalDeviations: List<LiftDataVisTimed> = liftAvgsForHistoricalSession
+                        .mapNotNull { current ->
+                            val previous: LiftDataVisTimed = previousLiftAvgsMap[current.liftId] ?:
+                                return@mapNotNull null
+
+                            LiftDataVisTimed(
+                                liftId = current.liftId,
+                                weight = current.weight - previous.weight,
+                                mins = current.mins - previous.mins,
+                                weightPerMin = current.weightPerMin - previous.weightPerMin
+                            )
+                        }
+
+                    timedSessionDataPoints.add(
+                        SessionDataPoint(
+                            sessionId = historicalSessionId,
+                            sessionNote = getNoteFromSessionId(historicalSessionId) ?: "",
+                            sessionDateIso = getDateFromSessionId(historicalSessionId) ?: "",
+                            unitName = getUnitsFromSessionId(historicalSessionId, false),
+                            weightDeviation = historicalDeviations.map { it.weight }.average(),
+                            repsOrTimeDeviation = historicalDeviations.map { it.mins }.average(),
+                            intensityDeviation = historicalDeviations.map { it.weightPerMin }.average()
+                        )
+                    )
+                }
+
+                // add this session's data point
+                timedSessionDataPoints.add(
+                    SessionDataPoint(
+                        sessionId = id,
+                        sessionNote = getNoteFromSessionId(id) ?: "",
+                        sessionDateIso = getDateFromSessionId(id) ?: "",
+                        unitName = timedUnits,
+                        weightDeviation = deviationsList.map { it.weight }.average(),
+                        repsOrTimeDeviation = deviationsList.map { it.mins }.average(),
+                        intensityDeviation = deviationsList.map { it.weightPerMin }.average()
+                    )
+                )
+
                 val avgWeightDeviation = deviationsList.map { it.weight }.average()
                 val avgMinsDeviation = deviationsList.map { it.mins }.average()
                 val avgWeightPerMinDeviation =
@@ -1873,7 +2051,15 @@ interface SessionDao {
                     "routine again in in a session with the same name for best results."
         }
 
-        return Triple(untimedLiftSummary, timedLiftSummary, explanation)
+        return SessionSummary(
+            paragraph1 = untimedLiftSummary,
+            paragraph2 = timedLiftSummary,
+            explanation = explanation,
+            untimedDataPoints = untimedSessionDataPoints,
+            timedDataPoints = timedSessionDataPoints,
+            timedUnits = timedUnits,
+            untimedUnits = untimedUnits
+        )
     }
 
     @Query("""
