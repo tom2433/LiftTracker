@@ -706,3 +706,5 @@ all chips with the label of "weight" should change to the unit of measurement fo
 
 "contains note with text" filter should update the whole screen after delaying 3 seconds every time the text updates from the user pressing the keyboard.
 
+make the font size of the weight value bigger than the rep value.
+
