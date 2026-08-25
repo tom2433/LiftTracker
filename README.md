@@ -699,3 +699,10 @@ add "Compare to:" label before tags, or "compare Today's Shoulders and arms to o
 
 1. session card should eventually fill up the entire screen covering the navigation bar if the user long taps it.
 2. modify the session summary so that it doesn't say "for your last 2 sessions" if the user hasn't actually recorded 2 sessions. same applies to "last session"
+
+session summary:
+
+all chips with the label of "weight" should change to the unit of measurement for the data recorded. also put "deviation" after, where applicable. put filter chips in a horizontal scroll. improve session summary info button content. graph title should not be "null" ever. add progress bars directly underneath the "Session Summary" title indicating the number of lifts accounted for and the number of sessions represented. put only one set of filter chips for weight/reps or time/intensity or volume. incorporate note labels on the data points. only show note labels on outliers?
+
+"contains note with text" filter should update the whole screen after delaying 3 seconds every time the text updates from the user pressing the keyboard.
+
