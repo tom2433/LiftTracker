@@ -706,3 +706,5 @@ improve session summary info button content. add progress bars directly undernea
 
 "contains note with text" filter should update the whole screen after delaying 3 seconds every time the text updates from the user pressing the keyboard.
 
+create the settings table so the user can save their more complex preferences across multiple states.
+
