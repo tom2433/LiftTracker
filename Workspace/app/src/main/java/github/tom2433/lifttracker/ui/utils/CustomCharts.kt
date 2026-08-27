@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -26,19 +27,27 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
+import com.patrykandpatrick.vico.compose.cartesian.Zoom
 import com.patrykandpatrick.vico.compose.cartesian.axis.HorizontalAxis
 import com.patrykandpatrick.vico.compose.cartesian.axis.VerticalAxis
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModelProducer
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianValueFormatter
 import com.patrykandpatrick.vico.compose.cartesian.data.lineModel
+import com.patrykandpatrick.vico.compose.cartesian.layer.LineCartesianLayer
+import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLine
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
 import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
+import com.patrykandpatrick.vico.compose.common.DashedShape
 import com.patrykandpatrick.vico.compose.common.Fill
+import com.patrykandpatrick.vico.compose.common.Position
+import com.patrykandpatrick.vico.compose.common.component.rememberLineComponent
 import com.patrykandpatrick.vico.compose.common.component.rememberTextComponent
 import com.patrykandpatrick.vico.compose.pie.PieChart
 import com.patrykandpatrick.vico.compose.pie.PieChartHost
@@ -53,6 +62,17 @@ import github.tom2433.lifttracker.data.structures.SessionSummary
 import github.tom2433.lifttracker.data.utils.DateTimeCalculator
 import java.util.Locale
 import kotlin.math.roundToInt
+import com.patrykandpatrick.vico.compose.cartesian.decoration.HorizontalLine
+import com.patrykandpatrick.vico.compose.cartesian.marker.DefaultCartesianMarker
+import com.patrykandpatrick.vico.compose.cartesian.marker.rememberDefaultCartesianMarker
+import com.patrykandpatrick.vico.compose.cartesian.rememberVicoZoomState
+import com.patrykandpatrick.vico.compose.common.Insets
+import com.patrykandpatrick.vico.compose.common.MarkerCornerBasedShape
+import com.patrykandpatrick.vico.compose.common.component.rememberLineComponent
+import com.patrykandpatrick.vico.compose.common.component.rememberShapeComponent
+import com.patrykandpatrick.vico.compose.common.component.ShapeComponent
+import com.patrykandpatrick.vico.compose.cartesian.marker.CartesianMarkerController
+import com.patrykandpatrick.vico.compose.cartesian.marker.LineCartesianLayerMarkerTarget
 
 @Composable
 fun MuscleGroupDonutChart(
@@ -674,8 +694,96 @@ fun SessionSummaryLineGraph(
             CartesianValueFormatter.decimal(decimalCount = 2)
         }
 
+        val line = LineCartesianLayer.rememberLine(
+            fill = LineCartesianLayer.LineFill.single(Fill(MaterialTheme.colorScheme.primaryContainer))
+        )
+
+        val averageLine = rememberLineComponent(
+            fill = Fill(MaterialTheme.colorScheme.tertiaryContainer),
+            thickness = 2.dp,
+            shape = DashedShape(
+                shape = RoundedCornerShape(percent = 50),
+                dashLength = 2.dp,
+                gapLength = 4.dp
+            )
+        )
+
+        val averageLabel = rememberTextComponent(
+            style = MaterialTheme.typography.bodyMedium.copy(
+                color = MaterialTheme.colorScheme.tertiaryContainer
+            )
+        )
+
+        val averageLineDecoration = remember(averageLine, averageLabel) {
+            HorizontalLine(
+                y = { 0.0 },
+                line = averageLine,
+                labelComponent = averageLabel,
+                label = { "Average" },
+                horizontalLabelPosition = Position.Horizontal.End,
+                verticalLabelPosition = Position.Vertical.Top
+            )
+        }
+
+        val markerLabelBackground = rememberShapeComponent(
+            fill = Fill(MaterialTheme.colorScheme.surfaceContainerHighest),
+            shape = MarkerCornerBasedShape(
+                base = RoundedCornerShape(6.dp)
+            )
+        )
+
+        val markerGuideline = rememberLineComponent(
+            fill = Fill(MaterialTheme.colorScheme.primaryContainer.copy(0.75f)),
+            thickness = 1.dp
+        )
+
+        // create marker label as the x's y value plus the corresponding session's note
+        val markerValueFormatter = remember(chartItems, selectedMetric) {
+            DefaultCartesianMarker.ValueFormatter { _, targets ->
+                val target = targets.firstOrNull() as? LineCartesianLayerMarkerTarget
+                val point = target?.points?.firstOrNull()
+                val index = point?.entry?.x?.roundToInt()
+                val dataPoint = index?.let { chartItems.getOrNull(it) }
+
+                val value = point?.entry?.y
+                val note = dataPoint?.sessionNote?.trim().orEmpty()
+
+                buildString {
+                    append(
+                        if (value != null && value > 0.0) {
+                            "+"
+                        } else {
+                            ""
+                        }
+                    )
+                    append(value?.let { "%.2f".format(it) } ?: "")
+                    if (note.isNotBlank()) {
+                        append("\n")
+                        append(note)
+                    }
+                }
+            }
+        }
+
+        val markerLabel = rememberTextComponent(
+            style = MaterialTheme.typography.bodyMedium.copy(
+                color = MaterialTheme.colorScheme.onSurface
+            ),
+            lineCount = 2,
+            overflow = TextOverflow.Ellipsis,
+            padding = Insets(
+                horizontal = 8.dp,
+                vertical = 4.dp
+            ),
+            background = markerLabelBackground
+        )
+
+        val indicatorStrokeColor = MaterialTheme.colorScheme.background
+
         val chart = rememberCartesianChart(
-            rememberLineCartesianLayer(),
+            rememberLineCartesianLayer(
+                lineProvider = LineCartesianLayer.LineProvider.series(line)
+            ),
             startAxis = VerticalAxis.rememberStart(
                 valueFormatter = yAxisValueFormatter
             ),
@@ -687,6 +795,25 @@ fun SessionSummaryLineGraph(
                         spacing = { xAxisSpacing }
                     )
                 }
+            ),
+            decorations = listOf(averageLineDecoration),
+            marker = rememberDefaultCartesianMarker(
+                label = markerLabel,
+                valueFormatter = markerValueFormatter,
+                labelPosition = DefaultCartesianMarker.LabelPosition.Top,
+                indicator = { color ->
+                    ShapeComponent(
+                        fill = Fill(color),
+                        shape = CircleShape,
+                        strokeFill = Fill(indicatorStrokeColor),
+                        strokeThickness = 2.dp
+                    )
+                },
+                indicatorSize = 10.dp,
+                guideline = markerGuideline
+            ),
+            markerController = CartesianMarkerController.rememberShowOnPress(
+                consumeMoveEvents = true
             )
         )
 
@@ -695,14 +822,17 @@ fun SessionSummaryLineGraph(
             modelProducer = modelProducer,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(220.dp),
+                .height(250.dp),
             placeholder = {
                 Text(
                     text = "Loading chart...",
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.align(Alignment.Center)
                 )
-            }
+            },
+            zoomState = rememberVicoZoomState(
+                initialZoom = Zoom.Content
+            )
         )
     }
 }
