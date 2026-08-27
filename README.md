@@ -702,7 +702,9 @@ add "Compare to:" label before tags, or "compare Today's Shoulders and arms to o
 
 session summary:
 
-improve session summary info button content. add progress bars directly underneath the "Session Summary" title indicating the number of lifts accounted for and the number of sessions represented. incorporate note labels on the data points (show for all, only when user clicks on them). change color of line on graph. filter chips should go: all time > past n years > past n months > past n weeks > last n sessions only. Scroll should ensure that the item that is clicked is kept at the same location on the screen.
+Show accuracy (lifts matched) on the indicator labels for the session summary line graph. Improve session summary info button content. add progress bars directly underneath the "Session Summary" title indicating the number of lifts accounted for and the number of sessions represented. change color of line on graph. filter chips should turn into a gear icon section which includes filter chips for all time, past # of weeks, past # of months, past # of years, last # of sessions; and include/exclude note keyword. The current text above the filter chips should say "Comparing this session to other Legs workouts." with the gear icon to the right of it. 
+
+Scroll should eventually ensure that the item that is clicked is kept at the same location on the screen.
 
 "contains note with text" filter should update the whole screen after delaying 3 seconds every time the text updates from the user pressing the keyboard.
 
