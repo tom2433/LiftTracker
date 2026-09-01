@@ -857,7 +857,6 @@ fun SessionCard(
                 DisplaySessionAnalytics(
                     trimmedSessionName = sessionDetail.sessionName.trim(),
                     sessionSummary = currentSessionSummary,
-                    liftSummary = currentSessionLiftSummary,
                     statDisplayFilterMap = sessionStatDisplayFilterMap,
                     filterChipClicked = { filterChipClicked(it) },
                     modifier = Modifier.padding(top = 16.dp)
@@ -865,6 +864,7 @@ fun SessionCard(
 
                 // display all set data
                 DisplayAllSetDataForSession(
+                    liftSummary = currentSessionLiftSummary,
                     displaySetList = currentSessionDisplaySetList,
                     liftDetailMap = currentSessionLiftDetailMap,
                     liftSetMap = currentSessionLiftSetMap,

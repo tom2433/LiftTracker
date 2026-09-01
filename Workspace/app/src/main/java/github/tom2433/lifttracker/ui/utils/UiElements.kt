@@ -5,7 +5,6 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandHorizontally
@@ -19,6 +18,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.InteractionSource
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -68,11 +69,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.StateObject
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -93,7 +96,6 @@ import github.tom2433.lifttracker.data.structures.SessionSummary
 import github.tom2433.lifttracker.data.structures.SetCardData
 import github.tom2433.lifttracker.data.utils.DateTimeCalculator
 import github.tom2433.lifttracker.ui.viewModels.SessionDataTimeFrameOption
-import java.util.Locale
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.iterator
@@ -576,6 +578,7 @@ fun LayoutSwitcher(
  */
 @Composable
 fun DisplayAllSetDataForSession(
+    liftSummary: LiftSummary?,
     displaySetList: List<Pair<Int, List<Int>>>,
     liftDetailMap: Map<Int, LiftSearchDetail>,
     liftSetMap: Map<Int, SetCardData>,
@@ -621,6 +624,7 @@ fun DisplayAllSetDataForSession(
             key(liftDetail.liftObj.id, liftSetIds.firstOrNull()) {
                 HistoricalLiftCard(
                     liftDetail = liftDetail,
+                    liftSummary = liftSummary,
                     noteColor = noteColor,
                     liftSetIds = liftSetIds,
                     liftSetMap = liftSetMap,
@@ -644,6 +648,7 @@ fun DisplayAllSetDataForSession(
 @Composable
 fun HistoricalLiftCard(
     liftDetail: LiftSearchDetail,
+    liftSummary: LiftSummary?,
     noteColor: Color,
     liftSetIds: List<Int>,
     liftSetMap: Map<Int, SetCardData>,
@@ -778,6 +783,11 @@ fun HistoricalLiftCard(
         ) {
             // column to hold set sections
             Column {
+                // display button to show/hide lift analysis
+                LiftAnalysisWindowButton(
+                    liftSummary = liftSummary
+                )
+
                 // loop thru each set and display its section
                 loop@ for ((index, liftSetId) in liftSetIds.withIndex()) {
                     key(liftSetId) {
@@ -823,6 +833,131 @@ fun HistoricalLiftCard(
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun LiftAnalysisWindowButton(
+    liftSummary: LiftSummary?,
+    modifier: Modifier = Modifier
+) {
+    var showLiftSummary by remember { mutableStateOf(false) }
+    val animatedPadding by animateDpAsState(
+        if (showLiftSummary) {
+            16.dp
+        } else {
+            0.dp
+        },
+        animationSpec = spring(
+            stiffness = Spring.StiffnessMediumLow
+        )
+    )
+    val animatedContainerColor by animateColorAsState(
+        targetValue =
+            if (showLiftSummary) {
+                MaterialTheme.colorScheme.surfaceContainerHigh
+            } else {
+                MaterialTheme.colorScheme.background
+            },
+        animationSpec = spring(
+            stiffness = Spring.StiffnessMediumLow
+        )
+    )
+    val animatedContentColor by animateColorAsState(
+        targetValue =
+            if (showLiftSummary) {
+                MaterialTheme.colorScheme.onSurface
+            } else {
+                MaterialTheme.colorScheme.onBackground
+            },
+        animationSpec = spring(
+            stiffness = Spring.StiffnessMediumLow
+        )
+    )
+    val animatedCardElevation by animateDpAsState(
+        targetValue =
+            if (showLiftSummary) {
+                12.dp
+            } else {
+                0.dp
+            },
+        animationSpec = spring(
+            stiffness = Spring.StiffnessMediumLow
+        )
+    )
+
+    // Card, start with invisible borders and zero padding,
+    // increase padding and show borders when button is clicked
+    Card(
+        modifier = modifier
+            .padding(16.dp)
+            .fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            contentColor = animatedContentColor,
+            containerColor = animatedContainerColor
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = animatedCardElevation,
+            pressedElevation = animatedCardElevation,
+            focusedElevation = animatedCardElevation,
+            hoveredElevation = animatedCardElevation,
+            draggedElevation = animatedCardElevation,
+            disabledElevation = animatedCardElevation
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(animatedPadding),
+        ) {
+            // outined button to press and view lift summary
+            OutlinedButton(
+                onClick = {
+                    showLiftSummary = !showLiftSummary
+                },
+                modifier = Modifier
+                    .fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+            ) {
+                Text(
+                    text =
+                        if (showLiftSummary) {
+                            "Hide Lift Analysis"
+                        } else {
+                            "Lift Analysis"
+                        }
+                )
+            }
+
+            // animated visibility to hold lift summary
+            AnimatedVisibility(
+                visible = showLiftSummary,
+                enter = expandVertically(
+                    expandFrom = Alignment.Top,
+                    animationSpec = spring(
+                        stiffness = Spring.StiffnessMediumLow
+                    )
+                ) + fadeIn(tween(300)),
+                exit = shrinkVertically(
+                    shrinkTowards = Alignment.Top,
+                    animationSpec = spring(
+                        stiffness = Spring.StiffnessMediumLow
+                    )
+                ) + fadeOut(tween(300))
+            ) {
+                DisplayLiftSummary(
+                    liftSummary = liftSummary,
+                    modifier = Modifier.padding(top =
+                        if (animatedPadding > 4.dp) {
+                            animatedPadding - 4.dp
+                        } else  {
+                            0.dp
+                        }
+                    )
+                )
             }
         }
     }
@@ -1557,7 +1692,6 @@ fun LabelAndDropdownRow(
 fun DisplaySessionAnalytics(
     trimmedSessionName: String,
     sessionSummary: SessionSummary,
-    liftSummary: LiftSummary?,
     statDisplayFilterMap: Map<SessionDataTimeFrameOption, Boolean>,
     filterChipClicked: (SessionDataTimeFrameOption) -> Unit,
     modifier: Modifier = Modifier
@@ -1778,11 +1912,6 @@ fun DisplaySessionAnalytics(
                             .padding(vertical = 16.dp),
                         color = MaterialTheme.colorScheme.onBackground.copy(0.3f)
                     )
-
-                    // lift summary
-                    DisplayLiftSummary(
-                        liftSummary = liftSummary
-                    )
                 }
             }
         }
@@ -1981,7 +2110,7 @@ fun DisplayLiftSummary(
             ) {
                 // body
                 Text(
-                    text = "Select a lift below to view its summary.",
+                    text = "Select a lift individually to view its summary.",
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Left,
                     modifier = Modifier

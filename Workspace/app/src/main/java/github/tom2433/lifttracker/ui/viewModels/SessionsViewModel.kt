@@ -760,14 +760,19 @@ class SessionsViewModel(
         }
     }
 
+    /**
+     * Lift card is clicked. Toggle its selected status to expand/collapse its set data.
+     */
     fun liftCardClicked(liftCardId: Int) {
         _sessionsUiState.update { currentState ->
             currentState.copy(
                 currentSessionLiftDetailMap = currentState.currentSessionLiftDetailMap.mapValues { (thisLiftId, thisLiftDetail) ->
+                    // toggle this lift card's expandable/collapsable section
                     if (thisLiftId == liftCardId) {
                         thisLiftDetail.copy(
                             selected = !thisLiftDetail.selected
                         )
+                    // for lift cards that were not tapped, close them
                     } else {
                         thisLiftDetail.copy(
                             selected = false
@@ -777,6 +782,7 @@ class SessionsViewModel(
             )
         }
 
+        // retrieve the lift summary for this selected lift now that the ui state knows that
         updateLiftSummary()
     }
 
@@ -1579,9 +1585,11 @@ class SessionsViewModel(
     }
 
     private fun updateLiftSummary() {
+        // check that the user has only selected 1 lift instead of clicking "Expand all"
         val liftSelectionValid: Boolean =
             _sessionsUiState.value.currentSessionLiftDetailMap.filter { it.value.selected }.size == 1
 
+        // if user intentionally selected a historical lift card, fetch the lift summary for that one
         if (liftSelectionValid) {
             val liftDetail: LiftSearchDetail =
                 _sessionsUiState.value.currentSessionLiftDetailMap
@@ -1612,6 +1620,7 @@ class SessionsViewModel(
                 }
             }
         } else {
+            // otherwise, the lift summary is null and the UI updates with default text as a result.
             resetLiftSummary()
         }
     }
