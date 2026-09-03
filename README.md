@@ -710,3 +710,5 @@ Scroll should eventually ensure that the item that is clicked is kept at the sam
 
 create the settings table so the user can save their more complex preferences across multiple states.
 
+when the user clicks the session analysis button, if there are no lifts currently selected, select the first one and show it's lift analysis. show the lift analysis whenever the session analysis button is clicked for the selected lift if there is one selected, and close the lift analysis section when the user clicks hide session analysis. show/hide lift analysis button will remain with its existing functionality.
+
