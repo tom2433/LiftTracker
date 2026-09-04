@@ -7,7 +7,6 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,7 +28,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -60,7 +58,6 @@ import com.patrykandpatrick.vico.compose.pie.rememberPieChart
 import github.tom2433.lifttracker.data.structures.LiftSetCountPerMuscleGroup
 import github.tom2433.lifttracker.data.structures.LiftSummary
 import github.tom2433.lifttracker.data.structures.SessionDataPoint
-import github.tom2433.lifttracker.data.structures.SessionSummary
 import github.tom2433.lifttracker.data.utils.DateTimeCalculator
 import java.util.Locale
 import kotlin.math.roundToInt
@@ -70,11 +67,12 @@ import com.patrykandpatrick.vico.compose.cartesian.marker.rememberDefaultCartesi
 import com.patrykandpatrick.vico.compose.cartesian.rememberVicoZoomState
 import com.patrykandpatrick.vico.compose.common.Insets
 import com.patrykandpatrick.vico.compose.common.MarkerCornerBasedShape
-import com.patrykandpatrick.vico.compose.common.component.rememberLineComponent
 import com.patrykandpatrick.vico.compose.common.component.rememberShapeComponent
 import com.patrykandpatrick.vico.compose.common.component.ShapeComponent
 import com.patrykandpatrick.vico.compose.cartesian.marker.CartesianMarkerController
 import com.patrykandpatrick.vico.compose.cartesian.marker.LineCartesianLayerMarkerTarget
+import github.tom2433.lifttracker.data.structures.SetDistributionPoint
+import kotlin.math.abs
 
 @Composable
 fun MuscleGroupDonutChart(
@@ -174,11 +172,7 @@ fun LiftSummaryBarGraphs(
     var weightSelected by remember { mutableStateOf(true) }
     var repsOrTimeSelected by remember { mutableStateOf(false) }
     var intensitySelected by remember { mutableStateOf(false) }
-    val weightLabel: String = if (liftSummary == null) {
-        "Weight"
-    } else {
-        "${liftSummary.unitName.capitalizeFirstChar()}"
-    }
+    val weightLabel: String = liftSummary?.unitName?.capitalizeFirstChar() ?: "Weight"
     val repsOrTimeLabel: String = if (liftSummary == null) {
         "Reps Per Set"
     } else if (liftSummary.timed) {
@@ -386,6 +380,30 @@ fun LiftSummaryBarGraphs(
                 },
             modifier = Modifier.padding(bottom = 8.dp)
         )
+
+        // line chart for set distribution
+        if (liftSummary != null) {
+            LiftSummaryDistributionLineGraph(
+                title =
+                    if (weightSelected) {
+                        "${weightLabel.capitalizeFirstChar()} distribution"
+                    } else if (repsOrTimeSelected) {
+                        "${repsOrTimeLabel.capitalizeFirstChar()} distribution"
+                    } else {
+                        "${intensityLabel.capitalizeFirstChar()} distribution"
+                    },
+                dataPoints = liftSummary.setDistributionPoints,
+                selectedMetric =
+                    if (weightSelected) {
+                        SummaryChartMetric.WEIGHT
+                    } else if (repsOrTimeSelected) {
+                        SummaryChartMetric.REPS_OR_TIME
+                    } else {
+                        SummaryChartMetric.INTENSITY
+                    },
+                timed = liftSummary.timed
+            )
+        }
     }
 }
 
@@ -619,12 +637,226 @@ fun ComparisonBars(
 }
 
 @Composable
+fun LiftSummaryDistributionLineGraph(
+    title: String,
+    dataPoints: List<SetDistributionPoint>,
+    selectedMetric: SummaryChartMetric,
+    timed: Boolean,
+    modifier: Modifier = Modifier
+) {
+    // define chart items
+    val chartItems = remember(dataPoints) {
+        dataPoints.sortedWith(
+            compareBy<SetDistributionPoint> { it.setNumber }
+        )
+    }
+
+    // column to hold chart
+    Column(
+        verticalArrangement = Arrangement.Top,
+        horizontalAlignment = Alignment.Start,
+        modifier = modifier.fillMaxWidth()
+    ) {
+        // chart title
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            textAlign = TextAlign.Left,
+            fontWeight = FontWeight.Black,
+            color = MaterialTheme.colorScheme.primaryContainer,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp)
+        )
+
+        // placeholder text if applicable
+        if (chartItems.isEmpty()) {
+            Text(
+                text = "Nothing to see here",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onBackground.copy(0.75f),
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 24.dp)
+            )
+            return
+        }
+
+        // retrieve model producer
+        val modelProducer = remember { CartesianChartModelProducer() }
+
+        // extract the x and y values and update line chart
+        LaunchedEffect(chartItems, selectedMetric) {
+            val xValues = chartItems.indices.map { it.toDouble() }
+            val yValues = chartItems.map { selectedMetric.getSetDistributionPointValue(it) }
+
+            modelProducer.runTransaction {
+                lineModel {
+                    series(
+                        x = xValues,
+                        y = yValues
+                    )
+                }
+            }
+        }
+
+        // calculate spacing for x values
+        val xAxisSpacing = remember(chartItems.size) {
+            (chartItems.size / 4).coerceAtLeast(1)
+        }
+
+        // create x axis labels
+        val bottomAxisValueFormatter = remember(chartItems) {
+            CartesianValueFormatter { _, value, _ ->
+                val index = value.roundToInt()
+                chartItems.getOrNull(index)
+                    ?.setNumber
+                    ?.toSetLabel()
+                    ?: index.toString()
+            }
+        }
+
+        // create y axis labels
+        val yAxisValueFormatter = remember {
+            CartesianValueFormatter.decimal(decimalCount = 2)
+        }
+
+        // create line with primary container color
+        val line = LineCartesianLayer.rememberLine(
+            fill = LineCartesianLayer.LineFill.single(
+                Fill(MaterialTheme.colorScheme.primaryContainer)
+            )
+        )
+
+        // create background shape for marker labels
+        val markerLabelBackground = rememberShapeComponent(
+            fill = Fill(MaterialTheme.colorScheme.surfaceContainerHighest),
+            shape = MarkerCornerBasedShape(
+                base = RoundedCornerShape(6.dp)
+            )
+        )
+
+        // create marker line
+        val markerGuideline = rememberLineComponent(
+            fill = Fill(MaterialTheme.colorScheme.primaryContainer.copy(0.75f)),
+            thickness = 1.dp
+        )
+
+        // create marker label as the x's y value and historical value
+        val markerValueFormatter = remember(chartItems, selectedMetric) {
+            DefaultCartesianMarker.ValueFormatter { _, targets ->
+                val target = targets.firstOrNull() as? LineCartesianLayerMarkerTarget
+                val point = target?.points?.firstOrNull()
+                val index = point?.entry?.x?.roundToInt()
+                val dataPoint = index?.let { chartItems.getOrNull(it) }
+
+                val value = point?.entry?.y
+                val historicalVal: Double? = dataPoint?.let { selectedMetric.getSetDistributionHistoricalPointValue(dataPoint) }
+
+                buildString {
+                    append("This session: ")
+                    if (timed) {
+                        append(value?.let { DateTimeCalculator.convertDoubleTimeToString(abs(it)) } ?: "")
+                    } else {
+                        append(value?.let { "%.2f".format(abs(it)) } ?: "")
+                    }
+                    if (historicalVal != null) {
+                        append("\n")
+                        append("Historical: ")
+                        if (timed) {
+                            append(DateTimeCalculator.convertDoubleTimeToString(abs(historicalVal)))
+                        } else {
+                            append("%.2f".format(abs(historicalVal)))
+                        }
+                    }
+                }
+            }
+        }
+
+        // create marker label
+        val markerLabel = rememberTextComponent(
+            style = MaterialTheme.typography.bodyMedium.copy(
+                color = MaterialTheme.colorScheme.onSurface
+            ),
+            lineCount = 2,
+            overflow = TextOverflow.Ellipsis,
+            padding = Insets(
+                horizontal = 8.dp,
+                vertical = 4.dp
+            ),
+            background = markerLabelBackground
+        )
+
+        // stroke color for circle indicator which appears on the corresponding point while the
+        // marker is shown
+        val indicatorStrokeColor = MaterialTheme.colorScheme.background
+
+        val chart = rememberCartesianChart(
+            rememberLineCartesianLayer(
+                lineProvider = LineCartesianLayer.LineProvider.series(line)
+            ),
+            startAxis = VerticalAxis.rememberStart(
+                valueFormatter = yAxisValueFormatter
+            ),
+            bottomAxis = HorizontalAxis.rememberBottom(
+                valueFormatter = bottomAxisValueFormatter,
+                labelRotationDegrees = -45f,
+                itemPlacer = remember(xAxisSpacing) {
+                    HorizontalAxis.ItemPlacer.aligned(
+                        spacing = { xAxisSpacing }
+                    )
+                }
+            ),
+            marker = rememberDefaultCartesianMarker(
+                label = markerLabel,
+                valueFormatter = markerValueFormatter,
+                labelPosition = DefaultCartesianMarker.LabelPosition.Top,
+                indicator = { color ->
+                    ShapeComponent(
+                        fill = Fill(color),
+                        shape = CircleShape,
+                        strokeFill = Fill(indicatorStrokeColor),
+                        strokeThickness = 2.dp
+                    )
+                },
+                indicatorSize = 10.dp,
+                guideline = markerGuideline
+            ),
+            markerController = CartesianMarkerController.rememberShowOnPress(
+                consumeMoveEvents = true
+            )
+        )
+
+        CartesianChartHost(
+            chart = chart,
+            modelProducer = modelProducer,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(250.dp),
+            placeholder = {
+                Text(
+                    text = "Loading chart...",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            },
+            zoomState = rememberVicoZoomState(
+                initialZoom = Zoom.Content
+            )
+        )
+    }
+}
+
+@Composable
 fun SessionSummaryLineGraph(
     title: String,
     dataPoints: List<SessionDataPoint>,
-    selectedMetric: SessionSummaryChartMetric,
+    selectedMetric: SummaryChartMetric,
+    timed: Boolean,
     modifier: Modifier = Modifier
 ) {
+    // define chart items
     val chartItems = remember(dataPoints) {
         dataPoints.sortedWith(
             compareBy<SessionDataPoint> { it.sessionDateIso }
@@ -664,11 +896,13 @@ fun SessionSummaryLineGraph(
             return
         }
 
+        // retrieve model producer
         val modelProducer = remember { CartesianChartModelProducer() }
 
+        // extract the x and y values and update line chart
         LaunchedEffect(chartItems, selectedMetric) {
             val xValues = chartItems.indices.map { it.toDouble() }
-            val yValues = chartItems.map { selectedMetric.getValue(it) }
+            val yValues = chartItems.map { selectedMetric.getSessionDataPointValue(it) }
 
             modelProducer.runTransaction {
                 lineModel {
@@ -680,10 +914,12 @@ fun SessionSummaryLineGraph(
             }
         }
 
+        // calculate spacing for x values
         val xAxisSpacing = remember(chartItems.size) {
             (chartItems.size / 4).coerceAtLeast(1)
         }
 
+        // create x axis labels
         val bottomAxisValueFormatter = remember(chartItems) {
             CartesianValueFormatter { _, value, _ ->
                 val index = value.roundToInt()
@@ -694,14 +930,17 @@ fun SessionSummaryLineGraph(
             }
         }
 
+        // create y axis labels
         val yAxisValueFormatter = remember {
             CartesianValueFormatter.decimal(decimalCount = 2)
         }
 
+        // create line with primary container color
         val line = LineCartesianLayer.rememberLine(
             fill = LineCartesianLayer.LineFill.single(Fill(MaterialTheme.colorScheme.primaryContainer))
         )
 
+        // create dotted line for average
         val averageLine = rememberLineComponent(
             fill = Fill(MaterialTheme.colorScheme.tertiaryContainer),
             thickness = 2.dp,
@@ -712,12 +951,14 @@ fun SessionSummaryLineGraph(
             )
         )
 
+        // create label for average line
         val averageLabel = rememberTextComponent(
             style = MaterialTheme.typography.bodyMedium.copy(
                 color = MaterialTheme.colorScheme.tertiaryContainer
             )
         )
 
+        // create line decoration for average line
         val averageLineDecoration = remember(averageLine, averageLabel) {
             HorizontalLine(
                 y = { 0.0 },
@@ -729,6 +970,7 @@ fun SessionSummaryLineGraph(
             )
         }
 
+        // create background shape for the marker labels
         val markerLabelBackground = rememberShapeComponent(
             fill = Fill(MaterialTheme.colorScheme.surfaceContainerHighest),
             shape = MarkerCornerBasedShape(
@@ -736,12 +978,13 @@ fun SessionSummaryLineGraph(
             )
         )
 
+        // create marker line
         val markerGuideline = rememberLineComponent(
             fill = Fill(MaterialTheme.colorScheme.primaryContainer.copy(0.75f)),
             thickness = 1.dp
         )
 
-        // create marker label as the x's y value plus the corresponding session's note
+        // create marker label as the x's y value with the corresponding session's note
         val markerValueFormatter = remember(chartItems, selectedMetric) {
             DefaultCartesianMarker.ValueFormatter { _, targets ->
                 val target = targets.firstOrNull() as? LineCartesianLayerMarkerTarget
@@ -757,10 +1000,16 @@ fun SessionSummaryLineGraph(
                         if (value != null && value > 0.0) {
                             "+"
                         } else {
-                            ""
+                            "-"
                         }
                     )
-                    append(value?.let { "%.2f".format(it) } ?: "")
+
+                    if (timed) {
+                        append(value?.let { DateTimeCalculator.convertDoubleTimeToString(abs(it))} ?: "")
+                    } else {
+                        append(value?.let { "%.2f".format(abs(it)) } ?: "")
+                    }
+
                     if (note.isNotBlank()) {
                         append("\n")
                         append(note)
@@ -769,6 +1018,7 @@ fun SessionSummaryLineGraph(
             }
         }
 
+        // create marker label
         val markerLabel = rememberTextComponent(
             style = MaterialTheme.typography.bodyMedium.copy(
                 color = MaterialTheme.colorScheme.onSurface
@@ -852,6 +1102,10 @@ private fun String.toShortAxisDate(): String {
     }
 }
 
+private fun Int.toSetLabel(): String {
+    return "Set $this"
+}
+
 private fun String.substringOrNull(
     startIndex: Int,
     endIndex: Int
@@ -871,16 +1125,32 @@ fun String.capitalizeFirstChar(): String {
     }
 }
 
-enum class SessionSummaryChartMetric {
+enum class SummaryChartMetric {
     WEIGHT,
     REPS_OR_TIME,
     INTENSITY;
 
-    fun getValue(dataPoint: SessionDataPoint): Double {
+    fun getSessionDataPointValue(dataPoint: SessionDataPoint): Double {
         return when (this) {
             WEIGHT -> dataPoint.weightDeviation
             REPS_OR_TIME -> dataPoint.repsOrTimeDeviation
             INTENSITY -> dataPoint.intensityDeviation
+        }
+    }
+
+    fun getSetDistributionPointValue(dataPoint: SetDistributionPoint): Double {
+        return when(this) {
+            WEIGHT -> dataPoint.weightValue
+            REPS_OR_TIME -> dataPoint.repsOrTime
+            INTENSITY -> dataPoint.intensity
+        }
+    }
+
+    fun getSetDistributionHistoricalPointValue(dataPoint: SetDistributionPoint): Double? {
+        return when(this) {
+            WEIGHT -> dataPoint.avgWeightValue
+            REPS_OR_TIME -> dataPoint.avgRepsOrTime
+            INTENSITY -> dataPoint.avgIntensity
         }
     }
 }

@@ -129,6 +129,13 @@ object DateTimeCalculator {
         return Triple(resultHours, resultMinutes, round(resultSeconds * 100) / 100)
     }
 
+    fun convertDoubleTimeToString(minutes: Double): String {
+        val tripleTime: Triple<Int, Int, Double> = convertDoubleTimeToTripleTime(minutes)
+
+        return tripleTime.first.toString() + ":" + tripleTime.second.toString() + ":" +
+                "%.2f".format(tripleTime.third)
+    }
+
     fun convertTripleTimeToDoubleTime(hours: Int, minutes: Int, seconds: Double): Double {
         // calculate minutes as double
         return (hours * 60.0) + minutes + (seconds / 60.0)
