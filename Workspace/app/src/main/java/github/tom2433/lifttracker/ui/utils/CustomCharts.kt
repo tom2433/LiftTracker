@@ -3,6 +3,7 @@ package github.tom2433.lifttracker.ui.utils
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -284,12 +286,14 @@ fun LiftSummaryBarGraphs(
         horizontalAlignment = Alignment.Start,
         modifier = modifier.fillMaxWidth()
     ) {
-        FlowRow(
+        // scrollable row to hold filter chips
+        Row(
             horizontalArrangement = Arrangement.Start,
-            verticalArrangement = Arrangement.Top,
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 8.dp)
+                .horizontalScroll(rememberScrollState())
         ) {
             CustomFilterChip(
                 label = weightLabel,

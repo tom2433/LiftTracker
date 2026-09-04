@@ -65,7 +65,18 @@ data class LiftSummary(
     val avgRepsOrTime: Double?,
     val historicalAvgRepsOrTime: Double?,
     val avgIntensity: Double?,
-    val historicalAvgIntensity: Double?
+    val historicalAvgIntensity: Double?,
+    val setDistributionPoints: List<SetDistributionPoint> = listOf()
+)
+
+data class SetDistributionPoint(
+    val setNumber: Int,
+    val weightValue: Double,
+    val repsOrTime: Double,
+    val intensity: Double,
+    val avgWeightValue: Double?,
+    val avgRepsOrTime: Double?,
+    val avgIntensity: Double?
 )
 
 data class SessionSummary(

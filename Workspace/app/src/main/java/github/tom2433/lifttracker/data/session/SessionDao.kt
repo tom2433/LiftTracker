@@ -21,6 +21,7 @@ import github.tom2433.lifttracker.data.structures.SessionDetailData
 import github.tom2433.lifttracker.data.structures.SessionMuscleGroupCountData
 import github.tom2433.lifttracker.data.structures.SessionNameAndFrequency
 import github.tom2433.lifttracker.data.structures.SessionSummary
+import github.tom2433.lifttracker.data.structures.SetDistributionPoint
 import github.tom2433.lifttracker.data.utils.DateTimeCalculator
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -30,12 +31,6 @@ import kotlin.math.abs
 interface SessionDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(session: Session)
-
-    @Transaction
-    suspend fun insertWithNextSessionNumber(session: Session) {
-        val nextSessionNumber = getNextSessionNumber(session.profile_id)
-        insert(session.copy(session_number = nextSessionNumber))
-    }
 
     // the entity that's updated has the same primary key as the entity that's passed in.
     // you can update some or all of the entity's other properties.
@@ -1682,9 +1677,9 @@ interface SessionDao {
         val untimedSessionDataPoints: MutableList<SessionDataPoint> = mutableListOf()
         val timedSessionDataPoints: MutableList<SessionDataPoint> = mutableListOf()
 
-        var untimedLiftSummary: String = ""
-        var timedLiftSummary: String = ""
-        var explanation: String = ""
+        var untimedLiftSummary = ""
+        var timedLiftSummary = ""
+        var explanation = ""
 
         if (!sessionHasUntimedLifts && !sessionHasTimedLifts) {
             return SessionSummary(
@@ -1799,25 +1794,25 @@ interface SessionDao {
                     deviationsList.map { it.volumePerSet }.average()
 
                 untimedLiftSummary += "For this session, your lift"
-                if (onlyOneLift) {
-                    untimedLiftSummary += " "
+                untimedLiftSummary += if (onlyOneLift) {
+                    " "
                 } else {
-                    untimedLiftSummary += "s "
+                    "s "
                 }
                 if (sessionHasTimedLifts) {
                     untimedLiftSummary += "with a metric type of 'reps' "
                 }
-                if (onlyOneLift) {
-                    untimedLiftSummary += "was "
+                untimedLiftSummary += if (onlyOneLift) {
+                    "was "
                 } else {
-                    untimedLiftSummary += "were "
+                    "were "
                 }
-                if (avgWeightDeviation < 0.0) {
-                    untimedLiftSummary += "${"%.2f".format(abs(avgWeightDeviation))} $untimedUnits lighter than "
+                untimedLiftSummary += if (avgWeightDeviation < 0.0) {
+                    "${"%.2f".format(abs(avgWeightDeviation))} $untimedUnits lighter than "
                 } else if (avgWeightDeviation > 0.0) {
-                    untimedLiftSummary += "${"%.2f".format(abs(avgWeightDeviation))} $untimedUnits heavier than "
+                    "${"%.2f".format(abs(avgWeightDeviation))} $untimedUnits heavier than "
                 } else {
-                    untimedLiftSummary += "about the same as "
+                    "about the same as "
                 }
                 if (startDate == null && numSessionsToFetch != null) {
                     untimedLiftSummary += "your last "
@@ -1944,18 +1939,18 @@ interface SessionDao {
                     .convertMinutesDoubleToSummaryDetail(abs(avgMinsDeviation))
 
                 timedLiftSummary += "For this session, your lift"
-                if (onlyOneLift) {
-                    timedLiftSummary += " "
+                timedLiftSummary += if (onlyOneLift) {
+                    " "
                 } else {
-                    timedLiftSummary += "s "
+                    "s "
                 }
                 if (sessionHasUntimedLifts) {
                     timedLiftSummary += "with a metric type of 'time' "
                 }
-                if (onlyOneLift) {
-                    timedLiftSummary += "was "
+                timedLiftSummary += if (onlyOneLift) {
+                    "was "
                 } else {
-                    timedLiftSummary += "were "
+                    "were "
                 }
                 timedLiftSummary += if (avgWeightDeviation < 0.0) {
                     "${"%.2f".format(abs(avgWeightDeviation))} $timedUnits lower than "
@@ -1964,14 +1959,14 @@ interface SessionDao {
                 } else {
                     "about the same as "
                 }
-                if (startDate == null && numSessionsToFetch != null) {
+                timedLiftSummary += if (startDate == null && numSessionsToFetch != null) {
                     if (numSessionsToFetch == 1) {
-                        timedLiftSummary += "your last $trimmedSessionName session"
+                        "your last $trimmedSessionName session"
                     } else {
-                        timedLiftSummary += "your last $numSessionsToFetch $trimmedSessionName sessions"
+                        "your last $numSessionsToFetch $trimmedSessionName sessions"
                     }
                 } else {
-                    timedLiftSummary += "your previous $trimmedSessionName sessions"
+                    "your previous $trimmedSessionName sessions"
                 }
                 timedLiftSummary += ", your intensity was "
                 timedLiftSummary += if (avgWeightPerMinDeviation < 0.0) {
@@ -1982,10 +1977,10 @@ interface SessionDao {
                     "about the same, "
                 }
                 timedLiftSummary += "and "
-                if (onlyOneLift) {
-                    timedLiftSummary += "it took "
+                timedLiftSummary += if (onlyOneLift) {
+                    "it took "
                 } else {
-                    timedLiftSummary += "they took "
+                    "they took "
                 }
                 timedLiftSummary += if (avgMinsDeviation < 0.0) {
                     "$avgTimeDeviationString shorter than "
@@ -1994,14 +1989,14 @@ interface SessionDao {
                 } else {
                     "about the same amount of time as "
                 }
-                if (startDate == null && numSessionsToFetch != null) {
+                timedLiftSummary += if (startDate == null && numSessionsToFetch != null) {
                     if (numSessionsToFetch == 1) {
-                        timedLiftSummary += "your last $trimmedSessionName session."
+                        "your last $trimmedSessionName session."
                     } else {
-                        timedLiftSummary += "your last $numSessionsToFetch $trimmedSessionName sessions."
+                        "your last $numSessionsToFetch $trimmedSessionName sessions."
                     }
                 } else {
-                    timedLiftSummary += " usual. "
+                    " usual. "
                 }
                 timedLiftSummary += "Accounted for ${deviationsList.size}/${liftAvgsForSession.size} lifts."
             }
@@ -2035,14 +2030,12 @@ interface SessionDao {
         }
 
         if (untimedLiftSummary.isBlank() && timedLiftSummary.isBlank()) {
-            if (startDate == DateTimeCalculator.START_DATE) {
-                untimedLiftSummary =
-                    "This was your first ever $trimmedSessionName workout with this " +
-                            "routine!"
+            untimedLiftSummary = if (startDate == DateTimeCalculator.START_DATE) {
+                "This was your first ever $trimmedSessionName workout with this " +
+                        "routine!"
             } else {
-                untimedLiftSummary =
-                    "This is your first $trimmedSessionName workout with this routine in the " +
-                            "selected timeframe."
+                "This is your first $trimmedSessionName workout with this routine in the " +
+                        "selected timeframe."
             }
             timedLiftSummary = "For your next $trimmedSessionName workout, You'll see a more " +
                     "detailed summary if you train some of the same lifts."
@@ -2414,6 +2407,142 @@ interface SessionDao {
     """)
     suspend fun getTrimmedLiftNameFromId(liftId: Int): String?
 
+    @Query("""
+        SELECT
+            -- setNumber
+            :liftSetNumber AS setNumber,
+            -- weightValue for this lift for this set number for this session
+            (
+                SELECT weight.value
+                FROM set_metrics AS weight
+                INNER JOIN lift_sets AS ls
+                    ON ls.id = weight.set_id
+                    AND ls.lift_id = :liftId
+                    AND ls.lift_set_number = :liftSetNumber
+                    AND ls.session_id = :sessionId
+                WHERE weight.metric_position = 1
+                    AND weight.value != -1.0
+                LIMIT 1
+            ) AS weightValue,
+            -- repsOrTime for this lift for this set number for this session
+            (
+                SELECT second.value
+                FROM set_metrics AS second
+                INNER JOIN lift_sets AS ls
+                    ON ls.id = second.set_id
+                    AND ls.lift_id = :liftId
+                    AND ls.lift_set_number = :liftSetNumber
+                    AND ls.session_id = :sessionId
+                WHERE second.metric_position = 2
+                    AND second.value > 0.0
+                LIMIT 1
+            ) AS repsOrTime,
+            -- intensity for this lift for this set number for this session
+            -- = weight * reps if untimed, reps/weight if timed
+            (
+                SELECT CASE WHEN :timed = 1 THEN weight.value / second.value ELSE weight.value * second.value END
+                FROM lift_sets AS ls
+                INNER JOIN set_metrics AS weight
+                    ON weight.set_id = ls.id
+                    AND weight.metric_position = 1
+                    AND weight.value != -1.0
+                INNER JOIN set_metrics AS second
+                    ON second.set_id = ls.id
+                    AND second.metric_position = 2
+                    AND second.value != -1.0
+                WHERE ls.lift_id = :liftId
+                    AND ls.lift_set_number = :liftSetNumber
+                    AND ls.session_id = :sessionId
+                LIMIT 1
+            ) AS intensity,
+            -- avgWeightValue of all previous lift sets belonging to sessions of the same name
+            -- within the selected timeframe
+            (
+                SELECT AVG(weight.value)
+                FROM set_metrics AS weight
+                INNER JOIN lift_sets AS ls
+                    ON ls.id = weight.set_id
+                    AND ls.lift_id = :liftId
+                    AND ls.lift_set_number = :liftSetNumber
+                    AND ls.session_id IN (
+                        SELECT s.id
+                        FROM sessions AS s
+                        INNER JOIN sessions AS target
+                            ON target.id = :sessionId
+                        INNER JOIN profiles AS p
+                            ON s.profile_id = p.id
+                            AND p.active = 1
+                        WHERE TRIM(s.session_label) = TRIM(target.session_label)
+                            AND s.session_number < target.session_number
+                            AND CASE WHEN :startDate = '' THEN 1 ELSE s.date >= :startDate END
+                        ORDER BY s.session_number DESC
+                        LIMIT :numSessions
+                    )
+                WHERE weight.metric_position = 1
+                    AND weight.value != -1.0
+            ) AS avgWeightValue,
+            -- avgRepsOrTime of all previous lift sets belonging to sessions of the same name
+            -- within the selected timeframe
+            (
+                SELECT AVG(second.value)
+                FROM set_metrics AS second
+                INNER JOIN lift_sets AS ls
+                    ON ls.id = second.set_id
+                    AND ls.lift_id = :liftId
+                    AND ls.lift_set_number = :liftSetNumber
+                    AND ls.session_id IN (
+                        SELECT s.id
+                        FROM sessions AS s
+                        INNER JOIN sessions AS target
+                            ON target.id = :sessionId
+                        WHERE TRIM(s.session_label) = TRIM(target.session_label)
+                            AND s.session_number < target.session_number
+                            AND s.profile_id = target.profile_id
+                            AND CASE WHEN :startDate = '' THEN 1 ELSE s.date >= :startDate END
+                        ORDER BY s.session_number DESC
+                        LIMIT :numSessions
+                    )
+                WHERE second.metric_position = 2
+                    AND second.value > 0.0
+            ) AS avgRepsOrTime,
+            -- avgIntensity of all previous lift sets belonging to sessions of the same name
+            -- within the selected timeframe = weight * reps if untimed, reps/weight if timed
+            (
+                SELECT CASE WHEN :timed = 1 THEN AVG(weight.value / second.value) ELSE AVG(weight.value * second.value) END
+                FROM lift_sets AS ls
+                INNER JOIN set_metrics AS weight
+                    ON weight.set_id = ls.id
+                    AND weight.metric_position = 1
+                    AND weight.value != -1.0
+                INNER JOIN set_metrics AS second
+                    ON second.set_id = ls.id
+                    AND second.metric_position = 2
+                    AND second.value > 0.0
+                WHERE ls.lift_id = :liftId
+                    AND ls.lift_set_number = :liftSetNumber
+                    AND ls.session_id IN (
+                        SELECT s.id
+                        FROM sessions AS s
+                        INNER JOIN sessions AS target
+                            ON target.id = :sessionId
+                        WHERE TRIM(s.session_label) = TRIM(target.session_label)
+                            AND s.profile_id = target.profile_id
+                            AND s.session_number < target.session_number
+                            AND CASE WHEN :startDate = '' THEN 1 ELSE s.date >= :startDate END
+                        ORDER BY s.session_number DESC
+                        LIMIT :numSessions
+                    )
+            ) AS avgIntensity
+    """)
+    suspend fun getSetDistributionPointForLift(
+        sessionId: Int,
+        liftId: Int,
+        startDate: String,
+        numSessions: Int,
+        liftSetNumber: Int,
+        timed: Boolean
+    ): SetDistributionPoint
+
     suspend fun getLiftSummaryForSessionIdAndLiftId(
         sessionId: Int,
         liftId: Int,
@@ -2431,7 +2560,8 @@ interface SessionDao {
                 avgRepsOrTime = null,
                 historicalAvgRepsOrTime = null,
                 avgIntensity = null,
-                historicalAvgIntensity = null
+                historicalAvgIntensity = null,
+                setDistributionPoints = listOf()
             )
         val trimmedLiftName: String = getTrimmedLiftNameFromId(liftId)
             ?: return LiftSummary(
@@ -2444,7 +2574,8 @@ interface SessionDao {
                 avgRepsOrTime = null,
                 historicalAvgRepsOrTime = null,
                 avgIntensity = null,
-                historicalAvgIntensity = null
+                historicalAvgIntensity = null,
+                setDistributionPoints = listOf()
             )
         val trimmedUnitName: String = getTrimmedUnitNameFromLiftId(liftId)
             ?: return LiftSummary(
@@ -2457,7 +2588,8 @@ interface SessionDao {
                 avgRepsOrTime = null,
                 historicalAvgRepsOrTime = null,
                 avgIntensity = null,
-                historicalAvgIntensity = null
+                historicalAvgIntensity = null,
+                setDistributionPoints = listOf()
             )
         val liftIsTimed: Boolean = liftIsTimed(liftId)
             ?: return LiftSummary(
@@ -2470,40 +2602,48 @@ interface SessionDao {
                 avgRepsOrTime = null,
                 historicalAvgRepsOrTime = null,
                 avgIntensity = null,
-                historicalAvgIntensity = null
+                historicalAvgIntensity = null,
+                setDistributionPoints = listOf()
             )
-        var paragraph: String = ""
+        var paragraph = ""
 
+        // get number of sets for this lift for this session
         val numberOfSetsForThisSession: Int = getNumberOfSetsForLiftInSession(
             liftId = liftId,
             sessionId = sessionId
         )
+        // get the typical number of sets for this lift for this session name within the timeframe
         val typicalNumberOfSets: Double? = getTypicalNumberOfSetsForLiftWithSessionName(
             liftId = liftId,
             sessionId = sessionId,
             startDate = startDate ?: "",
             numSessions = numSessionsToFetch ?: -1
         )
+        // get the avg weight value for this lift for this session
         val averageWeightForSession: Double? = getAvgWeightForLiftForSession(
             liftId = liftId,
             sessionId = sessionId,
         )
+        // get the avg weight value for this lift for this session name within the timeframe
         val averageHistoricalWeight: Double? = getAvgHistoricalWeightForLiftAndSessionName(
             liftId = liftId,
             sessionId = sessionId,
             startDate = startDate ?: "",
             numSessions = numSessionsToFetch ?: -1
         )
+        // get the avg reps/time value for this lift for this session
         val averageRepsOrTimeForSession: Double? = getAvgRepsOrTimeForLiftForSession(
             liftId = liftId,
             sessionId = sessionId
         )
+        // get the avg reps/time value for this lift for this session name within the timeframe
         val averageHistoricalRepsOrTime: Double? = getAvgHistoricalRepsOrTimeForLiftAndSessionName(
             liftId = liftId,
             sessionId = sessionId,
             startDate = startDate ?: "",
             numSessions = numSessionsToFetch ?: -1
         )
+        // get the avg intensity for this lift for this session
         val averageIntensityForSession: Double? = if (liftIsTimed) {
             getAvgIntensityForLiftForSession(
                 liftId = liftId,
@@ -2515,6 +2655,7 @@ interface SessionDao {
                 sessionId = sessionId
             )
         }
+        // get the avg intensity for this lift for this session name within the timeframe
         val averageHistoricalIntensity: Double? = if (liftIsTimed) {
             getAvgHistoricalIntensityForLiftAndSessionName(
                 liftId = liftId,
@@ -2531,13 +2672,14 @@ interface SessionDao {
             )
         }
 
+        // add this session's number of sets vs typical number of sets to summary
         if (typicalNumberOfSets == null) {
             paragraph += "You have not trained this lift before during a $trimmedSessionLabel workout, but " +
                     "for this session, you logged $numberOfSetsForThisSession set"
-            if (numberOfSetsForThisSession == 1) {
-                paragraph += ". "
+            paragraph += if (numberOfSetsForThisSession == 1) {
+                ". "
             } else {
-                paragraph += "s. "
+                "s. "
             }
         } else {
             paragraph += "For this session, you trained $trimmedLiftName for $numberOfSetsForThisSession set"
@@ -2551,17 +2693,21 @@ interface SessionDao {
             }
         }
 
+        // add tip to lift summary if there is no historical weight value
         if (averageHistoricalWeight == null) {
             paragraph +=
                 "Try training this lift again in a session with the same name to see how your " +
                 "routines are progressing. "
         }
 
+        // add tip to lift summary if the user has not logged any weight for this lift for this
+        // session
         if (averageWeightForSession == null) {
             paragraph +=
                 "You haven't logged any valid sets for this lift in this session yet. "
         }
 
+        // null check the remaining metrics before creating the rest of the summary
         if (averageWeightForSession != null && averageHistoricalWeight != null &&
             averageRepsOrTimeForSession != null && averageHistoricalRepsOrTime != null &&
             averageIntensityForSession != null && averageHistoricalIntensity != null &&
@@ -2611,6 +2757,24 @@ interface SessionDao {
             }
         }
 
+        // fill the setDistributionPoints list.
+        val setDistributionPoints: MutableList<SetDistributionPoint> = mutableListOf()
+        if (averageWeightForSession != null && averageRepsOrTimeForSession != null &&
+            averageIntensityForSession != null) {
+            for (i in (1..numberOfSetsForThisSession)) {
+                setDistributionPoints.add(
+                    getSetDistributionPointForLift(
+                        sessionId = sessionId,
+                        liftId = liftId,
+                        startDate = startDate ?: "",
+                        numSessions = numSessionsToFetch ?: -1,
+                        liftSetNumber = i,
+                        timed = liftIsTimed
+                    )
+                )
+            }
+        }
+
         return LiftSummary(
             liftName = trimmedLiftName,
             timed = liftIsTimed,
@@ -2621,7 +2785,8 @@ interface SessionDao {
             avgRepsOrTime = averageRepsOrTimeForSession,
             historicalAvgRepsOrTime = averageHistoricalRepsOrTime,
             avgIntensity = averageIntensityForSession,
-            historicalAvgIntensity = averageHistoricalIntensity
+            historicalAvgIntensity = averageHistoricalIntensity,
+            setDistributionPoints = setDistributionPoints
         )
     }
 }

@@ -1905,13 +1905,6 @@ fun DisplaySessionAnalytics(
                             untimedUnits = sessionSummary.untimedUnits
                         )
                     }
-
-                    HorizontalDivider(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 16.dp),
-                        color = MaterialTheme.colorScheme.onBackground.copy(0.3f)
-                    )
                 }
             }
         }
@@ -1964,13 +1957,14 @@ fun SessionSummaryGraphsContainer(
         var repsOrTimeSelected by remember { mutableStateOf(false) }
         var intensitySelected by remember { mutableStateOf(false) }
 
-        // flow row for filter chips
-        FlowRow(
+        // scrollable row for filter chips
+        Row(
             horizontalArrangement = Arrangement.Start,
-            verticalArrangement = Arrangement.Top,
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 8.dp)
+                .horizontalScroll(rememberScrollState())
         ) {
             CustomFilterChip(
                 label = weightLabel,
