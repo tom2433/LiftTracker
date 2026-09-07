@@ -382,7 +382,7 @@ fun LiftSummaryBarGraphs(
         )
 
         // line chart for set distribution
-        if (liftSummary != null) {
+        if (liftSummary != null && liftSummary.setDistributionPoints.size > 1) {
             LiftSummaryDistributionLineGraph(
                 title =
                     if (weightSelected) {
@@ -691,12 +691,26 @@ fun LiftSummaryDistributionLineGraph(
             val xValues = chartItems.indices.map { it.toDouble() }
             val yValues = chartItems.map { selectedMetric.getSetDistributionPointValue(it) }
 
+            val historicalPoints = chartItems.mapIndexedNotNull { index, dataPoint ->
+                selectedMetric.getSetDistributionHistoricalPointValue(dataPoint)
+                    ?.let { historicalValue -> index.toDouble() to historicalValue }
+            }
+
             modelProducer.runTransaction {
                 lineModel {
                     series(
                         x = xValues,
-                        y = yValues
+                        y = yValues,
+                        key = "current"
                     )
+
+                    if (historicalPoints.isNotEmpty()) {
+                        series(
+                            x = historicalPoints.map { it.first },
+                            y = historicalPoints.map { it.second },
+                            key = "historical"
+                        )
+                    }
                 }
             }
         }
@@ -723,9 +737,21 @@ fun LiftSummaryDistributionLineGraph(
         }
 
         // create line with primary container color
-        val line = LineCartesianLayer.rememberLine(
+        val currentLine = LineCartesianLayer.rememberLine(
             fill = LineCartesianLayer.LineFill.single(
                 Fill(MaterialTheme.colorScheme.primaryContainer)
+            )
+        )
+
+        // create historical line with tertiary container color
+        val historicalLine = LineCartesianLayer.rememberLine(
+            fill = LineCartesianLayer.LineFill.single(
+                Fill(MaterialTheme.colorScheme.tertiaryContainer)
+            ),
+            stroke = LineCartesianLayer.LineStroke.Dashed(
+                thickness = 2.dp,
+                dashLength = 2.dp,
+                gapLength = 4.dp
             )
         )
 
@@ -794,7 +820,10 @@ fun LiftSummaryDistributionLineGraph(
 
         val chart = rememberCartesianChart(
             rememberLineCartesianLayer(
-                lineProvider = LineCartesianLayer.LineProvider.series(line)
+                lineProvider = LineCartesianLayer.LineProvider.series(
+                    currentLine,
+                    historicalLine
+                )
             ),
             startAxis = VerticalAxis.rememberStart(
                 valueFormatter = yAxisValueFormatter
