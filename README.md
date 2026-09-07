@@ -712,3 +712,5 @@ create the settings table so the user can save their more complex preferences ac
 
 when the user clicks the session analysis button, if there are no lifts currently selected, select the first one and show it's lift analysis. show the lift analysis whenever the session analysis button is clicked for the selected lift if there is one selected, and close the lift analysis section when the user clicks hide session analysis. show/hide lift analysis button will remain with its existing functionality.
 
+Session screen overall looks good, only things to change are the info buttons' contents, the mechanism for adjusting the timeframe from which to fetch data, and how the summaries change based on this change in timeframe.
+
