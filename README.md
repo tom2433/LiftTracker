@@ -714,3 +714,10 @@ when the user clicks the session analysis button, if there are no lifts currentl
 
 Session screen overall looks good, only things to change are the info buttons' contents and the mechanism for adjusting the timeframe from which to fetch data (this mechanism should be used for the timeframe selector in the top left of the sessions screen).
 
+mechanism should include:
+- row with label saying "comparing this session to other [session label] workouts from [applied timeframe label]" and gear icon to the right 
+- gear icon will rotate when pressed and expand the area below it
+- this area will display filter chips in a flow row or scrollable row.
+- then a counter beneath (- 1 +) that the user can press to increase (- 2 +), (- 3 +), and decrease (- 2 +) which will change the multiplier of the time measurement selected (only to be shown when the selected filter chip is not "all time" or "custom date range").
+- then a "save" button at the bottom for both the summaries and the session cards.
+
