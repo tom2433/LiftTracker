@@ -1,5 +1,7 @@
 package github.tom2433.lifttracker.ui.utils
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
@@ -1684,6 +1686,7 @@ fun LabelAndDropdownRow(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DisplaySessionAnalytics(
     trimmedSessionName: String,
@@ -1817,7 +1820,6 @@ fun DisplaySessionAnalytics(
                             style = MaterialTheme.typography.titleLarge,
                         )
                         // info button
-                        // TODO: edit this info button content
                         InfoButton {
                             // explanation title
                             Text(
@@ -1832,31 +1834,28 @@ fun DisplaySessionAnalytics(
                             )
                             Text(
                                 text =
-                                    "Full lift summaries consist of three values, all of which are " +
-                                    "calculated as average deviations from the mean. This means " +
-                                    "that the summary is comparing this session's data to the " +
-                                    "average data for previous sessions with the same name within " +
-                                    "the selected timeframe.",
+                                    "All values in the session summary are calculated as average " +
+                                    "deviations from the mean; this session's data is compared " +
+                                    "to the average of the previous sessions with the same name " +
+                                    "within the selected timeframe.",
                                 style = MaterialTheme.typography.bodyMedium,
                                 modifier = Modifier.padding(bottom = 8.dp)
                             )
                             Text(
                                 text =
-                                    "First, three deviations are calculated for each valid lift. " +
-                                    "A valid lift is one that has been trained before for this " +
-                                    "session name. The deviations include the lift's average " +
-                                    "weight, average reps/minutes, and average weight per " +
-                                    "rep/minute, so the data are not skewed as a result of " +
-                                    "more/less sets trained.",
+                                    "Deviations are first calculated for each valid lift trained " +
+                                    "in this session, given that it has been trained before for " +
+                                    "this session name. These deviations are averaged across all " +
+                                    "valid lifts to result in the values you see in the session " +
+                                    "summary.",
                                 style = MaterialTheme.typography.bodyMedium,
                                 modifier = Modifier.padding(bottom = 8.dp)
                             )
                             Text(
                                 text =
-                                    "These three deviations are then averaged across all valid " +
-                                    "lifts to result in the values that you see in the summary. " +
-                                    "Thus, any unusual lifts for this session name will not be " +
-                                    "accounted for, and they will not skew your data.",
+                                    "Because some lifts may not be accounted for (meaning you " +
+                                    "haven't trained them before for this session name), the " +
+                                    "summary may not always be accurate.",
                                 style = MaterialTheme.typography.bodyMedium,
                                 modifier = Modifier.padding(bottom = 8.dp)
                             )
@@ -1866,6 +1865,68 @@ fun DisplaySessionAnalytics(
                                 style = MaterialTheme.typography.bodyMedium,
                                 modifier = Modifier.padding(bottom = 8.dp),
                                 fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "How do I get an accurate session summary?",
+                                style = MaterialTheme.typography.titleLarge,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+                            HorizontalDivider(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 8.dp)
+                            )
+                            Text(
+                                text =
+                                    "Session summaries compare this session to the sessions " +
+                                    "before it, only counting sessions that have the same name. " +
+                                    "These sessions are considered \"routines.\"",
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+                            Text(
+                                text =
+                                    "The types of lifts trained should be mostly consistent " +
+                                    "across routines, but they don't all have to be in order to " +
+                                    "generate a summary.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+                            Text(
+                                text =
+                                    "Values like volume and intensity will be most accurate when " +
+                                    "training mostly the same lifts with the same range of " +
+                                    "motion, form, conditions, etc.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+                            Text(
+                                text = "What is volume per set?",
+                                style = MaterialTheme.typography.titleLarge,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+                            HorizontalDivider(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 8.dp)
+                            )
+                            Text(
+                                text =
+                                    "Volume per set measures weight * reps, and it is a better " +
+                                    "indicator of how much work you're doing during a given set. " +
+                                    "It can provide a better measurement of progressive overload " +
+                                    "given that you train your lifts with a consistent rep range " +
+                                    "in the same conditions.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            )
+                            Text(
+                                text =
+                                    "For timed lifts, volume per set is replaced with weight per " +
+                                    "minute, which provides a better measurement for the " +
+                                    "intensity of your cardio sessions.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(bottom = 8.dp)
                             )
                         }
                     }
@@ -1907,6 +1968,7 @@ fun DisplaySessionAnalytics(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun SessionSummaryGraphsContainer(
     timedDataPoints: List<SessionDataPoint>,

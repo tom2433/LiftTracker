@@ -1048,7 +1048,7 @@ fun SessionSummaryLineGraph(
                         }
                     )
 
-                    if (timed) {
+                    if (timed && selectedMetric == SummaryChartMetric.REPS_OR_TIME) {
                         append(value?.let { DateTimeCalculator.convertDoubleTimeToString(abs(it))} ?: "")
                     } else {
                         append(value?.let { "%.2f".format(abs(it)) } ?: "")
