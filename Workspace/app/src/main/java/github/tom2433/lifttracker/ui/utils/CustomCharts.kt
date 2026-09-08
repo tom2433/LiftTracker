@@ -1,5 +1,7 @@
 package github.tom2433.lifttracker.ui.utils
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -781,7 +783,13 @@ fun LiftSummaryDistributionLineGraph(
                 val historicalVal: Double? = dataPoint?.let { selectedMetric.getSetDistributionHistoricalPointValue(dataPoint) }
 
                 buildString {
+                    if (dataPoint != null) {
+                        append(
+                            "${dataPoint.setNumber.toSetLabel()}\n"
+                        )
+                    }
                     append("This session: ")
+
                     if (timed) {
                         append(value?.let { DateTimeCalculator.convertDoubleTimeToString(abs(it)) } ?: "")
                     } else {
@@ -805,7 +813,7 @@ fun LiftSummaryDistributionLineGraph(
             style = MaterialTheme.typography.bodyMedium.copy(
                 color = MaterialTheme.colorScheme.onSurface
             ),
-            lineCount = 2,
+            lineCount = 3,
             overflow = TextOverflow.Ellipsis,
             padding = Insets(
                 horizontal = 8.dp,
@@ -877,6 +885,7 @@ fun LiftSummaryDistributionLineGraph(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun SessionSummaryLineGraph(
     title: String,
@@ -1020,11 +1029,17 @@ fun SessionSummaryLineGraph(
                 val point = target?.points?.firstOrNull()
                 val index = point?.entry?.x?.roundToInt()
                 val dataPoint = index?.let { chartItems.getOrNull(it) }
+                val date: String? = index?.let { chartItems.getOrNull(it)?.sessionDateIso ?: "" }
 
                 val value = point?.entry?.y
                 val note = dataPoint?.sessionNote?.trim().orEmpty()
 
                 buildString {
+                    if (date != null) {
+                        append(
+                            "${DateTimeCalculator.convertIsoDateToReadableFormat(date)}  |  "
+                        )
+                    }
                     append(
                         if (value != null && value > 0.0) {
                             "+"

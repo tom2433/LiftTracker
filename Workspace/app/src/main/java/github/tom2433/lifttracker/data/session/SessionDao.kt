@@ -2810,9 +2810,9 @@ interface SessionDao {
                 "set "
             }
             paragraph += if (numberOfHistoricalSessions > 1) {
-                "when compared to your last $numberOfHistoricalSessions $trimmedSessionLabel sessions."
+                "when compared to your last $numberOfHistoricalSessions $trimmedSessionLabel sessions where you trained this lift." 
             } else {
-                "when compared to your last $trimmedSessionLabel session."
+                "when compared to your last $trimmedSessionLabel session where you trained this lift."
             }
         }
 
