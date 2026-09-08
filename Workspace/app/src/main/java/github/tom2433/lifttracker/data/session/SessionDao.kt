@@ -1814,15 +1814,11 @@ interface SessionDao {
                 } else {
                     "about the same as "
                 }
-                if (startDate == null && numSessionsToFetch != null) {
-                    untimedLiftSummary += "your last "
-                    untimedLiftSummary += if (numSessionsToFetch > 1 ) {
-                        "$numSessionsToFetch $trimmedSessionName sessions, "
-                    } else {
-                        "$trimmedSessionName session, "
-                    }
+                untimedLiftSummary += "your last "
+                untimedLiftSummary += if (untimedSessionDataPoints.size > 2 ) {
+                    "${untimedSessionDataPoints.size - 1} $trimmedSessionName sessions, "
                 } else {
-                    untimedLiftSummary += "previous $trimmedSessionName sessions, "
+                    "$trimmedSessionName session, "
                 }
                 untimedLiftSummary += "your volume was "
                 untimedLiftSummary += if (avgVolumePerSetDeviation < 0.0) {
@@ -1959,14 +1955,10 @@ interface SessionDao {
                 } else {
                     "about the same as "
                 }
-                timedLiftSummary += if (startDate == null && numSessionsToFetch != null) {
-                    if (numSessionsToFetch == 1) {
-                        "your last $trimmedSessionName session"
-                    } else {
-                        "your last $numSessionsToFetch $trimmedSessionName sessions"
-                    }
+                timedLiftSummary += if (timedSessionDataPoints.size > 2) {
+                    "your last $numSessionsToFetch $trimmedSessionName sessions"
                 } else {
-                    "your previous $trimmedSessionName sessions"
+                    "your last $trimmedSessionName session"
                 }
                 timedLiftSummary += ", your intensity was "
                 timedLiftSummary += if (avgWeightPerMinDeviation < 0.0) {
@@ -2241,6 +2233,43 @@ interface SessionDao {
         startDate: String,
         numSessions: Int
     ): Double?
+
+    @Query("""
+        SELECT COUNT(DISTINCT ls.session_id)
+        FROM lift_sets AS ls
+        INNER JOIN lifts AS l
+            ON l.id = ls.lift_id
+        INNER JOIN (
+            SELECT s.*
+            FROM sessions AS s
+            INNER JOIN sessions AS target
+                ON target.id = :sessionId
+            WHERE s.profile_id = target.profile_id
+                AND TRIM(s.session_label) = TRIM(target.session_label)
+                AND s.session_number < target.session_number
+                AND CASE
+                    WHEN :startDate = '' THEN 1 ELSE s.date >= :startDate
+                END
+            ORDER BY s.session_number DESC
+            LIMIT :numSessions
+        ) AS s
+            ON s.id = ls.session_id
+        INNER JOIN set_metrics AS weight
+            ON weight.set_id = ls.id
+            AND weight.metric_position = 1
+        INNER JOIN set_metrics AS second
+            ON second.set_id = ls.id
+            AND second.metric_position = 2
+        WHERE l.id = :liftId
+            AND weight.value != -1.0
+            AND second.value > 0.0
+    """)
+    suspend fun getNumHistoricalSessionsForLift(
+        liftId: Int,
+        sessionId: Int,
+        startDate: String,
+        numSessions: Int
+    ): Int
 
     @Query("""
         SELECT AVG(session_set_count)
@@ -2671,6 +2700,31 @@ interface SessionDao {
                 numSessions = numSessionsToFetch ?: -1
             )
         }
+        // get the total number of sessions that are actually being fetched to determine this data
+        val numberOfHistoricalSessions: Int = getNumHistoricalSessionsForLift(
+            liftId = liftId,
+            sessionId = sessionId,
+            startDate = startDate ?: "",
+            numSessions = numSessionsToFetch ?: -1
+        )
+
+        // fill the setDistributionPoints list.
+        val setDistributionPoints: MutableList<SetDistributionPoint> = mutableListOf()
+        if (averageWeightForSession != null && averageRepsOrTimeForSession != null &&
+            averageIntensityForSession != null) {
+            for (i in (1..numberOfSetsForThisSession)) {
+                setDistributionPoints.add(
+                    getSetDistributionPointForLift(
+                        sessionId = sessionId,
+                        liftId = liftId,
+                        startDate = startDate ?: "",
+                        numSessions = numSessionsToFetch ?: -1,
+                        liftSetNumber = i,
+                        timed = liftIsTimed
+                    )
+                )
+            }
+        }
 
         // add this session's number of sets vs typical number of sets to summary
         if (typicalNumberOfSets == null) {
@@ -2751,27 +2805,14 @@ interface SessionDao {
                 paragraph += "and about the same $trimmedUnitName per "
             }
             paragraph += if (liftIsTimed) {
-                "minute."
+                "minute "
             } else {
-                "set."
+                "set "
             }
-        }
-
-        // fill the setDistributionPoints list.
-        val setDistributionPoints: MutableList<SetDistributionPoint> = mutableListOf()
-        if (averageWeightForSession != null && averageRepsOrTimeForSession != null &&
-            averageIntensityForSession != null) {
-            for (i in (1..numberOfSetsForThisSession)) {
-                setDistributionPoints.add(
-                    getSetDistributionPointForLift(
-                        sessionId = sessionId,
-                        liftId = liftId,
-                        startDate = startDate ?: "",
-                        numSessions = numSessionsToFetch ?: -1,
-                        liftSetNumber = i,
-                        timed = liftIsTimed
-                    )
-                )
+            paragraph += if (numberOfHistoricalSessions > 1) {
+                "when compared to your last $numberOfHistoricalSessions $trimmedSessionLabel sessions."
+            } else {
+                "when compared to your last $trimmedSessionLabel session."
             }
         }
 
