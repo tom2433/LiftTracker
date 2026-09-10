@@ -726,3 +726,7 @@ move the filter chips that change a chart's data to the bottom of the chart. (!!
 the borders of the expanded session card and historical lift card are too bright and it's hard to see what's going on. it makes a little bit of sense but it should at least be less intense for the historical lift card section, and it should also have a background color to it like surface container low/high/highest or something. the contrast is too intense and unlike native android apps.
 
 there are too many buttons too close to the top of the lift summary section. need a gear icon instead of the time filter chips, need to put graph filter chips below graphs.
+
+also need to see how many lifts were matched for each point in session summary graph. Put extra detail in lift summary graph also - this set's value, the deviation from the average value.
+
+replace the lift summary graph with horizontal bars beneath the actual lift sets themselves. should still be controlled by the filter chip, but use the same function as the horizontal bars. the historical bar should be much lighter. user should still have the option to display the graph.
