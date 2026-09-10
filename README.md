@@ -723,3 +723,4 @@ mechanism should include:
 
 move the filter chips that change a chart's data to the bottom of the chart. (!!)
 
+the borders of the expanded session card and historical lift card are too bright and it's hard to see what's going on. it makes a little bit of sense but it should at least be less intense for the historical lift card section, and it should also have a background color to it like surface container low/high/highest or something. the contrast is too intense and unlike native android apps.
