@@ -721,5 +721,5 @@ mechanism should include:
 - then a counter beneath (- 1 +) that the user can press to increase (- 2 +), (- 3 +), and decrease (- 2 +) which will change the multiplier of the time measurement selected (only to be shown when the selected filter chip is not "all time" or "custom date range").
 - then a "save" button at the bottom for both the summaries and the session cards.
 
-move the filter chips that change a chart's data to the bottom of the chart.
+move the filter chips that change a chart's data to the bottom of the chart. (!!)
 
