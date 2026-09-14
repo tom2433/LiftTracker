@@ -82,7 +82,7 @@ import github.tom2433.lifttracker.ui.utils.ShowElementDeleteDialog
 import github.tom2433.lifttracker.ui.utils.ShowElementEntryDialog
 import github.tom2433.lifttracker.ui.utils.ShowHistoricalSetEditDialog
 import github.tom2433.lifttracker.ui.utils.ThreeDotMenu
-import github.tom2433.lifttracker.ui.viewModels.SessionDataTimeFrameOption
+import github.tom2433.lifttracker.ui.viewModels.TimeFrameType
 import github.tom2433.lifttracker.ui.viewModels.SessionsViewModel
 
 object SessionsDestination : NavigationDestination {
@@ -90,7 +90,7 @@ object SessionsDestination : NavigationDestination {
     override val titleRes = R.string.sessions_title
 }
 
-object TimeFrameOption {
+object LegacyTimeFrameOption {
     const val ALL_TIME: String = "All time"
     const val PAST_WEEK: String = "Past week"
     const val PAST_TWO_WEEKS: String = "Past 2 weeks"
@@ -112,11 +112,11 @@ fun SessionsScreen(
     val beginDateLabel = calculateBeginDateLabel(sessionsUiState.startDate)
     val endDateLabel = calculateEndDateLabel(sessionsUiState.endDate)
     val startDateDropdownOptions: List<String> = listOf(
-        TimeFrameOption.ALL_TIME,
-        TimeFrameOption.PAST_WEEK,
-        TimeFrameOption.PAST_TWO_WEEKS,
-        TimeFrameOption.PAST_MONTH,
-        TimeFrameOption.CHOOSE_DATE
+        LegacyTimeFrameOption.ALL_TIME,
+        LegacyTimeFrameOption.PAST_WEEK,
+        LegacyTimeFrameOption.PAST_TWO_WEEKS,
+        LegacyTimeFrameOption.PAST_MONTH,
+        LegacyTimeFrameOption.CHOOSE_DATE
     )
     val context = LocalContext.current
 
@@ -369,7 +369,7 @@ fun SessionsScreen(
                                     sessionStatDisplayFilterMap = sessionsUiState.sessionStatDisplayFilterMap,
                                     filterChipClicked = {
                                         viewModel.sessionDataFilterChipClicked(
-                                            sessionDataTimeFrameOption = it,
+                                            timeFrameType = it,
                                             sessionCardId = sessionId
                                         )
                                     },
@@ -618,8 +618,8 @@ fun SessionCard(
     currentSessionLiftSetMap: Map<Int, SetCardData>,
     currentSessionSummary: SessionSummary,
     currentSessionLiftSummary: LiftSummary?,
-    sessionStatDisplayFilterMap: Map<SessionDataTimeFrameOption, Boolean>,
-    filterChipClicked: (SessionDataTimeFrameOption) -> Unit,
+    sessionStatDisplayFilterMap: Map<TimeFrameType, Boolean>,
+    filterChipClicked: (TimeFrameType) -> Unit,
     onClickThreeDotMenu: () -> Unit,
     onDismissThreeDotMenu: () -> Unit,
     onClickSwitchToInProgress: () -> Unit,

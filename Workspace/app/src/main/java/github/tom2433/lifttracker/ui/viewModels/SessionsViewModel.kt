@@ -22,7 +22,7 @@ import github.tom2433.lifttracker.data.structures.SessionDetail
 import github.tom2433.lifttracker.data.structures.SessionSummary
 import github.tom2433.lifttracker.data.structures.SetCardData
 import github.tom2433.lifttracker.data.utils.DateTimeCalculator
-import github.tom2433.lifttracker.ui.screens.TimeFrameOption
+import github.tom2433.lifttracker.ui.screens.LegacyTimeFrameOption
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -287,11 +287,11 @@ class SessionsViewModel(
         dismissTimeFrameDropdown()
 
         when (timeFrameLabel) {
-            TimeFrameOption.ALL_TIME -> {
+            LegacyTimeFrameOption.ALL_TIME -> {
                 // update start and end date to null
                 updateStartAndEndDate(null, null)
             }
-            TimeFrameOption.PAST_WEEK -> {
+            LegacyTimeFrameOption.PAST_WEEK -> {
                 // update start date to one week ago
                 updateStartAndEndDate(
                     startDate = DateTimeCalculator.calculateStartDate(
@@ -301,7 +301,7 @@ class SessionsViewModel(
                     endDate = null
                 )
             }
-            TimeFrameOption.PAST_TWO_WEEKS -> {
+            LegacyTimeFrameOption.PAST_TWO_WEEKS -> {
                 // update start date to two weeks ago
                 updateStartAndEndDate(
                     startDate = DateTimeCalculator.calculateStartDate(
@@ -311,7 +311,7 @@ class SessionsViewModel(
                     endDate = null
                 )
             }
-            TimeFrameOption.PAST_MONTH -> {
+            LegacyTimeFrameOption.PAST_MONTH -> {
                 updateStartAndEndDate(
                     startDate = DateTimeCalculator.calculateStartDate(
                         today = DateTimeCalculator.getCurrentIsoDate(),
@@ -320,7 +320,7 @@ class SessionsViewModel(
                     endDate = null
                 )
             }
-            TimeFrameOption.CHOOSE_DATE -> {
+            LegacyTimeFrameOption.CHOOSE_DATE -> {
                 showDateRangePicker()
             }
         }
@@ -668,7 +668,7 @@ class SessionsViewModel(
                 currentSessionLiftDetailMap = emptyMap(),
                 currentSessionDisplaySetList = emptyList(),
                 currentSessionSummary = SessionSummary(),
-                sessionStatDisplayFilterMap = SessionDataTimeFrameOption.getDefaultStatDisplayFilterMap()
+                sessionStatDisplayFilterMap = TimeFrameType.getDefaultFilterMap()
             )
         }
         resetLiftSummary()
@@ -678,10 +678,10 @@ class SessionsViewModel(
         setCollectionJob?.cancel()
 
         setCollectionJob = viewModelScope.launch {
-            val sessionDataTimeFrameOption: SessionDataTimeFrameOption = getCurrentSessionDataTimeFrameOption()
-            val startDate: String? = sessionDataTimeFrameOption
+            val timeFrameOptionState: TimeFrameOptionState = getCurrentSessionDataTimeFrameOptionState()
+            val startDate: String? = timeFrameOptionState
                 .getStartDate(sessionDetail.sessionDateIso)
-            val numSessionsToFetch: Int? = sessionDataTimeFrameOption.numSessionsIncluded
+            val numSessionsToFetch: Int? = timeFrameOptionState.getNumSessionsToFetch()
 
             combine(
                 sessionRepository.getDisplaySessionLiftSetRowsStream(sessionDetail.sessionId),
@@ -1554,7 +1554,7 @@ class SessionsViewModel(
     }
 
     fun sessionDataFilterChipClicked(
-        sessionDataTimeFrameOption: SessionDataTimeFrameOption,
+        timeFrameType: TimeFrameType,
         sessionCardId: Int
     ) {
         val sessionDetail: SessionDetail =
@@ -1564,8 +1564,14 @@ class SessionsViewModel(
         _sessionsUiState.update { currentState ->
             currentState.copy(
                 sessionStatDisplayFilterMap =
-                    currentState.sessionStatDisplayFilterMap.mapValues { (thisSessionDataTimeFrameOption, _) ->
-                        thisSessionDataTimeFrameOption == sessionDataTimeFrameOption
+                    currentState.sessionStatDisplayFilterMap.mapValues { (thisTimeFrameType, thisTimeFrameOptionState) ->
+                        if (thisTimeFrameType == timeFrameType) {
+                            thisTimeFrameOptionState.copy(
+                                active = !thisTimeFrameOptionState.active
+                            )
+                        } else {
+                            thisTimeFrameOptionState
+                        }
                     }
             )
         }
@@ -1599,10 +1605,10 @@ class SessionsViewModel(
                 _sessionsUiState.value.sessionDetailMap
                     .filter { it.value.selected }
                     .firstNotNullOfOrNull { it }?.value ?: return resetLiftSummary()
-            val sessionDataTimeFrameOption: SessionDataTimeFrameOption = getCurrentSessionDataTimeFrameOption()
-            val startDate: String? = sessionDataTimeFrameOption
+            val timeFrameOptionState: TimeFrameOptionState = getCurrentSessionDataTimeFrameOptionState()
+            val startDate: String? = timeFrameOptionState
                 .getStartDate(sessionDetail.sessionDateIso)
-            val numSessionsToFetch: Int? = sessionDataTimeFrameOption.numSessionsIncluded
+            val numSessionsToFetch: Int? = timeFrameOptionState.getNumSessionsToFetch()
 
             liftSummaryJob?.cancel()
             liftSummaryJob = viewModelScope.launch {
@@ -1625,11 +1631,11 @@ class SessionsViewModel(
         }
     }
 
-    private fun getCurrentSessionDataTimeFrameOption(): SessionDataTimeFrameOption {
+    private fun getCurrentSessionDataTimeFrameOptionState(): TimeFrameOptionState {
         return _sessionsUiState.value.sessionStatDisplayFilterMap
-            .filter { it.value }
-            .firstNotNullOfOrNull { it.key }
-            ?: SessionDataTimeFrameOption.ALL_TIME
+            .filter { it.value.active }
+            .firstNotNullOfOrNull { it.value }
+            ?: TimeFrameOptionState(TimeFrameType.ALL_TIME)
     }
 }
 
@@ -1642,7 +1648,7 @@ data class SessionsUiState(
     val dateRangePickerVisible: Boolean = false,
     val activeProfile: Profile? = null,
     val startDate: String? = null,
-    val timeFrameLabel: String = TimeFrameOption.ALL_TIME,
+    val timeFrameLabel: String = LegacyTimeFrameOption.ALL_TIME,
     val endDate: String? = null,
     val fetchLimit: Int = 10,
     val numSessionsInFilteredTimeFrame: Int = 0,
@@ -1667,8 +1673,8 @@ data class SessionsUiState(
     val currentSessionDisplaySetList: List<Pair<Int, List<Int>>> = emptyList(),
     val currentSessionSummary: SessionSummary = SessionSummary(),
     val currentSessionLiftSummary: LiftSummary? = null,
-    val sessionStatDisplayFilterMap: Map<SessionDataTimeFrameOption, Boolean> =
-        SessionDataTimeFrameOption.getDefaultStatDisplayFilterMap(),
+    val sessionStatDisplayFilterMap: Map<TimeFrameType, TimeFrameOptionState> =
+        TimeFrameType.getDefaultFilterMap(),
     // properties for editing/deleting a session ---------------------------------------------------
     val deleteSessionDialogVisible: Boolean = false,
     val editSessionDialogVisible: Boolean = false,
@@ -1731,46 +1737,102 @@ enum class FilterType(
     )
 }
 
-enum class SessionDataTimeFrameOption(
-    val label: String,
-    val numSessionsIncluded: Int?
+enum class TimeFrameType(
+    val defaultMultiplier: Int,
+    val defaultActiveStatus: Boolean
 ) {
-    ALL_TIME("All time", null),
-    PAST_MONTH("Past month", null),
-    PAST_TWO_MONTHS("Past 2 months", null),
-    PAST_YEAR("Past year", null),
-    LAST_SESSION_ONLY("Last session only", 1),
-    LAST_TWO_SESSIONS_ONLY("Last 2 sessions only", 2);
+    ALL_TIME(-1, true),
+    PAST_WEEK(1, false),
+    PAST_MONTH(1, false),
+    PAST_YEAR(1, false),
+    LAST_SESSION_ONLY(1, false);
 
-    fun getStartDate(sessionDate: String): String? {
+    fun getNumSessionsToFetch(multiplier: Int): Int? {
+        return when (this) {
+            ALL_TIME -> null
+            PAST_WEEK -> null
+            PAST_MONTH -> null
+            PAST_YEAR -> null
+            LAST_SESSION_ONLY -> multiplier
+        }
+    }
+
+    fun getLabel(multiplier: Int): String {
+        return when (this) {
+            ALL_TIME -> "All time"
+            PAST_WEEK -> {
+                if (multiplier == 1) {
+                    "Past week"
+                } else {
+                    "Past $multiplier weeks"
+                }
+            }
+            PAST_MONTH -> {
+                if (multiplier == 1) {
+                    "Past month"
+                } else {
+                    "Past $multiplier months"
+                }
+            }
+            PAST_YEAR -> {
+                if (multiplier == 1) {
+                    "Past year"
+                } else {
+                    "Past $multiplier years"
+                }
+            }
+            LAST_SESSION_ONLY -> {
+                if (multiplier == 1) {
+                    "Last session only"
+                } else {
+                    "Last $multiplier sessions only"
+                }
+            }
+        }
+    }
+
+    fun getStartDate(sessionDate: String, multiplier: Int): String? {
         return when (this) {
             ALL_TIME -> DateTimeCalculator.START_DATE
+            PAST_WEEK -> DateTimeCalculator.calculateStartDate(
+                today = sessionDate,
+                daysBeforeToday = DateTimeCalculator.DAYS_PER_WEEK * multiplier.toLong()
+            )
             PAST_MONTH -> DateTimeCalculator.calculateStartDate(
                 today = sessionDate,
-                daysBeforeToday = DateTimeCalculator.DAYS_PER_MONTH
-            )
-            PAST_TWO_MONTHS -> DateTimeCalculator.calculateStartDate(
-                today = sessionDate,
-                daysBeforeToday = DateTimeCalculator.DAYS_PER_MONTH * 2L
+                daysBeforeToday = DateTimeCalculator.DAYS_PER_MONTH * multiplier.toLong()
             )
             PAST_YEAR -> DateTimeCalculator.calculateStartDate(
                 today = sessionDate,
-                daysBeforeToday = DateTimeCalculator.DAYS_PER_YEAR
+                daysBeforeToday = DateTimeCalculator.DAYS_PER_YEAR * multiplier.toLong()
             )
             else -> null
         }
     }
 
     companion object {
-        fun getDefaultStatDisplayFilterMap(): Map<SessionDataTimeFrameOption, Boolean> {
+        fun getDefaultFilterMap(): Map<TimeFrameType, TimeFrameOptionState> {
             return mapOf(
-                ALL_TIME to true,
-                PAST_MONTH to false,
-                PAST_TWO_MONTHS to false,
-                PAST_YEAR to false,
-                LAST_SESSION_ONLY to false,
-                LAST_TWO_SESSIONS_ONLY to false
+                ALL_TIME to TimeFrameOptionState(ALL_TIME),
+                PAST_MONTH to TimeFrameOptionState(PAST_MONTH),
+                PAST_YEAR to TimeFrameOptionState(PAST_YEAR),
+                LAST_SESSION_ONLY to TimeFrameOptionState(LAST_SESSION_ONLY),
             )
         }
+    }
+}
+
+data class TimeFrameOptionState(
+    val timeFrameType: TimeFrameType,
+    val multiplier: Int = timeFrameType.defaultMultiplier,
+    val label: String = timeFrameType.getLabel(multiplier),
+    val active: Boolean = timeFrameType.defaultActiveStatus
+) {
+    fun getStartDate(sessionDate: String): String? {
+        return timeFrameType.getStartDate(sessionDate, multiplier)
+    }
+
+    fun getNumSessionsToFetch(): Int? {
+        return timeFrameType.getNumSessionsToFetch(multiplier)
     }
 }

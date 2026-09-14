@@ -93,7 +93,7 @@ import github.tom2433.lifttracker.data.structures.SessionDataPoint
 import github.tom2433.lifttracker.data.structures.SessionSummary
 import github.tom2433.lifttracker.data.structures.SetCardData
 import github.tom2433.lifttracker.data.utils.DateTimeCalculator
-import github.tom2433.lifttracker.ui.viewModels.SessionDataTimeFrameOption
+import github.tom2433.lifttracker.ui.viewModels.TimeFrameType
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.iterator
@@ -1691,8 +1691,8 @@ fun LabelAndDropdownRow(
 fun DisplaySessionAnalytics(
     trimmedSessionName: String,
     sessionSummary: SessionSummary,
-    statDisplayFilterMap: Map<SessionDataTimeFrameOption, Boolean>,
-    filterChipClicked: (SessionDataTimeFrameOption) -> Unit,
+    statDisplayFilterMap: Map<TimeFrameType, Boolean>,
+    filterChipClicked: (TimeFrameType) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var analyticsVisible by remember { mutableStateOf(false) }
