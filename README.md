@@ -1,6 +1,6 @@
 # LiftTracker (Lift Tracker Note)
 
-Lift Tracker Note is an Android workout tracking and data visualization project developed using Kotlin and Jetpack Compose. It allows users to record workout sessions, organize lifts by muscle group, and track weight, reps, or time for each set. It supports multiple profiles and stores workout data locally using Room, with statistics and charts to help users review their training and track progress over time.
+Lift Tracker (Lift Tracker Note) is an Android workout tracking and data visualization project developed using Kotlin and Jetpack Compose. It allows users to record workout sessions, organize lifts by muscle group, and track weight, reps, or time for each set. It supports multiple profiles and stores workout data locally using Room, with statistics and charts to help users review their training and track progress over time.
 
 The goal of Lift Tracker Note is to provide users with the ease-of-use and customizability of a notes app while giving the option to view advanced analysis which should always provide a clear and concise visualization of progressive overload for any component, including sessions, muscle groups, lifts, lift sets, and custom groups of the aforementioned components.
 
