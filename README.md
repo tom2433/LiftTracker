@@ -1,19 +1,43 @@
 # LiftTracker
 
-A Data Vis project developed using Jetpack Compose.
+LiftTracker is an Android workout tracking and data visualization project developed using Kotlin and Jetpack Compose. It allows users to record workout sessions, organize lifts by muscle group, and track weight, reps, or time for each set. It supports multiple profiles and stores workout data locally using Room, with statistics and charts to help users review their training and track progress over time.
 
-This project uses charts provided by Vico:
+## Screenshots
 
-Vico
-Copyright 2026 Patryk Goworowski and Patrick Michalik
-Licensed under the Apache License, Version 2.0
-https://github.com/patrykandpatrick/vico
+TODO: Add screenshots of session recording, muscle groups, and session history or analysis.
+
+## Contents
+
+- [Screenshots](#screenshots)
+- [Running the project](#running-the-project)
+- [Architecture](#architecture)
+- [Development](#development)
+- [Data Structure](#data-structure)
+- [Development Notes](#development-notes)
+- [Acknowledgments](#acknowledgments)
+
+## Running the project
+
+1. Clone this repository.
+2. Open the `Workspace` folder in Android Studio.
+3. Let Gradle sync and install any required SDK components when prompted.
+4. Run the `app` configuration on an emulator or Android device running API 24 or higher.
 
 ---
 
-# Development
+## Architecture
 
-## Features:
+- Jetpack Compose and Material 3 provide the UI.
+- ViewModels manage screen state using StateFlow.
+- Repositories connect the ViewModels to Room database queries.
+- Kotlin coroutines and Flow handle asynchronous work and observable data.
+- Room migrations preserve existing workout data when the database structure changes.
+
+## Development
+
+LiftTracker is under active development. The feature outline below includes completed, in-progress, and planned features. Some features are being developed on separate branches and are not yet available on `main`.
+
+### Features:
 
 - [x] F1: Backend database design
     - Add a set metric for time, in addition to weight and reps
@@ -134,53 +158,56 @@ https://github.com/patrykandpatrick/vico
 - [x] change the name of the ```units``` table to ```lift_units``` to avoid confusion with Kotlin's ```Unit``` type.
 - [x] move the scrollable columns on the dialogs so the user can see the buttons the entire time
 
-# Data Structure
+## Data Structure
 
-All data is stored in lifting_data.db. Below is the structure of this data.
+All workout data is stored locally in the Room database named `lift_tracker_database`. Below is the structure of this data on `main`.
 
-## Tables
+### Tables
 
-### ```lift_days```
+#### ```sessions```
 
-The purpose of the ```lift_days``` table is to keep track of all the days that the user has logged. A single lift_day is considered to be one single session for this current version, although the user may be able to record multiple "lift_days" on one single calendar day.
+The purpose of the ```sessions``` table is to keep track of all the sessions that the user has logged. A single row represents one session, and the user may record multiple sessions on one calendar day.
 
-The ```lift_days``` table has 5 columns:
+The ```sessions``` table has 7 columns:
 
-- ```id``` (INTEGER): primary key. This is the main identifier that the ```lift_sets``` table uses to associate set data with a specific day.
-- ```profile_id``` (INTEGER): foreign key. This is what links the lift day to the appropriate profile.
-- ```day_number``` (INTEGER): the number of the day; e.g. ```1```, ```2```, ```3```, etc.
-- ```day_label``` (TEXT): the name of the day; e.g. ```"Day 1"```, ```"Day 2"```, ```"Day 3"```, etc. as default. The user may be able to change this name in future versions.
-- ```date``` (TEXT): The date of the day that the session was recorded in ISO-8601 format: YYYY-MM-DD
-- ```note``` (TEXT): a user-written note for the day, may be blank
+- ```id``` (INTEGER): primary key. This is the main identifier that the ```lift_sets``` table uses to associate set data with a specific session.
+- ```in_progress``` (INTEGER): indicates whether the session is in progress (1) or completed (0).
+- ```profile_id``` (INTEGER): foreign key referring to ```profiles```. This is what links the session to the appropriate profile.
+- ```session_number``` (INTEGER): the number of the session; e.g. ```1```, ```2```, ```3```, etc.
+- ```session_label``` (TEXT): the name of the session; e.g. ```"Session 1"```, ```"Session 2"```, ```"Session 3"```, etc. as default. The user can change this name.
+- ```date``` (TEXT): The date that the session was recorded in ISO-8601 format: YYYY-MM-DD
+- ```note``` (TEXT): a user-written note for the session, may be blank
 
-### ```lift_sets```
+#### ```lift_sets```
 
-The purpose of the ```lift_sets``` table is to keep track of all sets that the user has completed. It also links each set with the specific lift that was trained, and the day that the user completed the set on.
+The purpose of the ```lift_sets``` table is to keep track of all sets that the user has completed. It also links each set with the specific lift that was trained, its muscle group, and the session that the user completed the set in.
 
-The ```lift_sets``` table has 6 columns:
+The ```lift_sets``` table has 9 columns:
 
-- ```id``` (INTEGER): primary key. This is the main identifier that the ```set_metrics``` table uses to associate specific set data (weight, reps) with a specific set that was completed for a specific lift on a specific day.
-- ```lift_day_id``` (INTEGER): foreign key referring to ```lift_days```. This is what links this set to a particular day.
+- ```id``` (INTEGER): primary key. This is the main identifier that the ```set_metrics``` table uses to associate specific set data (weight, reps, or time) with a specific set that was completed for a specific lift in a specific session.
+- ```session_id``` (INTEGER): foreign key referring to ```sessions```. This is what links this set to a particular session.
 - ```lift_id``` (INTEGER): foreign key referring to ```lifts```. This is what links this set to a particular lift (e.g., bicep curls).
-- ```lift_set_number``` (INTEGER): this set number identifies when this set took place, only in relation to the other sets completed for this specific lift on this specific day.
-- ```day_set_number``` (INTEGER): this set number identifies when this set took place, in relation to all other sets completed on this specific day.
-- ```set_label``` (TEXT): just a string containing the name of the set (e.g., ```"Set 1"```, ```"Set 2"```, ```"Set 3"```, etc. as default). The user may be able to change this label in future versions.
+- ```muscle_group_id``` (INTEGER): foreign key referring to ```muscle_groups```. This is what links this set to a particular muscle group (e.g., biceps).
+- ```lift_set_number``` (INTEGER): this set number identifies when this set took place, only in relation to the other sets completed for this specific lift in this specific session.
+- ```session_set_number``` (INTEGER): this set number identifies when this set took place, in relation to all other sets completed in this specific session.
+- ```muscle_group_session_set_number``` (INTEGER): this set number identifies when this set took place, in relation to all other sets completed for this specific muscle group in this specific session.
+- ```set_label``` (TEXT): just a string containing the name of the set (e.g., ```"Set 1"```, ```"Set 2"```, ```"Set 3"```, etc. as default). The user can change this label.
 - ```set_note``` (TEXT): a user-written note for the set, may be blank
 
-### ```lifts```
+#### ```lifts```
 
 The purpose of the ```lifts``` table is to store the names of all the different user-created lifts and link them to their corresponding muscle groups.
 
-The ```lifts``` table has 4 columns:
+The ```lifts``` table has 6 columns:
 
 - ```id``` (INTEGER): primary key. This is the main identifier that the ```lift_sets``` table uses to associate lift names with set data.
 - ```muscle_group_id``` (INTEGER): foreign key referring to the ```muscle_groups``` table. This is what links each lift to its corresponding muscle group.
-- ```unit_id``` (INTEGER): foreign key referring to the ```units``` table. This is what links each lift to its corresponding user-written unit.
+- ```unit_id``` (INTEGER): foreign key referring to the ```lift_units``` table. This is what links each lift to its corresponding user-written unit.
 - ```name``` (TEXT): the user-specified name for the lift.
-- ```metric_type``` (INTEGER): Int indicating if the lift will be measured in reps (1) or time (2). If the metric type is time, then the unit_id will be overridden.
+- ```metric_type``` (INTEGER): Int indicating if the lift's second metric will be measured in reps (1) or time (2). Time values are stored in minutes.
 - ```note``` (TEXT): a user-written note for the lift, may be blank
 
-### ```muscle_groups```
+#### ```muscle_groups```
 
 The purpose of the ```muscle_groups``` table is to store the user-generated names for all the muscle groups and link them to their corresponding profile.
 
@@ -191,30 +218,30 @@ The ```muscle_groups``` table has 4 columns:
 - ```name``` (TEXT): the user-specified name for the muscle group.
 - ```note``` (TEXT): a user-written note for the muscle group, may be blank.
 
-### ```set_metrics```
+#### ```set_metrics```
 
-The purpose of the ```set_metrics``` table is to store all of the user's set metrics (weight and rep data) and link them to their corresponding set (which is linked to the corresponding lift and the corresponding day via foreign keys).
+The purpose of the ```set_metrics``` table is to store all of the user's set metrics (weight and rep or time data) and link them to their corresponding set (which is linked to the corresponding lift and the corresponding session via foreign keys).
 
-The ```set_metrics``` table has 6 columns:
+The ```set_metrics``` table has 5 columns:
 
 - ```id``` (INTEGER): primary key. This is the main identifier for each set metric.
 - ```set_id``` (INTEGER): foreign key referring to the ```lift_sets``` table. This is what links each lift metric to its corresponding set.
-- ```metric_position``` (INTEGER): this indicates whether the metric is a weight value or a rep value. ```1``` indicates weight, and ```2``` indicates reps.
+- ```metric_position``` (INTEGER): this indicates whether the metric is a weight value or a rep/time value. ```1``` indicates weight, and ```2``` indicates reps or time, depending on the lift's ```metric_type```.
 - ```value``` (REAL): this indicates the number of reps performed, the weight value, or the time value for the specific set. Time values will be stored as doubles representing minutes, e.g. 1 minute and 30 seconds = 1.5 minutes
 - ```note``` (TEXT): a user-written note for the metric, may be blank.
 
-### ```profiles```
+#### ```profiles```
 
-The purpose of the ```profiles``` table is to store the names of all the profiles that the user has created. The profile is linked to its data via the ```muscle_groups``` table.
+The purpose of the ```profiles``` table is to store the names of all the profiles that the user has created. The profile is linked to its data via the ```muscle_groups``` and ```sessions``` tables.
 
-The ```profiles``` table has 3 columns:
+The ```profiles``` table has 4 columns:
 
 - ```id``` (INTEGER): primary key. This is the main identifier used to distinguish between each profile.
 - ```name``` (TEXT): the user-written name for the profile.
 - ```active``` (INTEGER): indicates whether the current profile is active (1) or not active (0)
 - ```note``` (TEXT): a user-written note for the profile, may be blank.
 
-### ```lift_units```
+#### ```lift_units```
 
 The purpose of the ```lift_units``` table is to store the names of all the user-written units, which are added to different lifts. The units table is designed to be independent of profiles, so multiple profiles can use the same unit.
 
@@ -225,13 +252,16 @@ The ```lift_units``` table has two columns:
 
 > [!NOTE]
 >
-> May need some protection to ensure that a lift unit that is being used by a lift cannot be deleted.
+> The foreign key from ```lifts.unit_id``` prevents a lift unit from being deleted while a lift still uses it.
 
 ---
 
-# Pre-Dev Notes
+## Development Notes
 
-## Things I'd like to see
+<details>
+<summary>Pre-Dev Notes</summary>
+
+### Things I'd like to see
 
 - add an option in settings to turn the entire app into a task tracker (why not)
 - In the workout logger:
@@ -245,7 +275,6 @@ The ```lift_units``` table has two columns:
     - Ability to switch between light/dark theme or use system default
     - Potentially providing insights on certain lift days based on probability distributions
     - Ability to add a lift to multiple muscle groups?
-    - Add the option to use time metrics instead of reps!!
     - Sets should be able to be viewed at any point for the duration of the workout
         - earlier sets could be displayed as a different color
     - ability to save workout summary text and upload automatically to Garmin/Strava
@@ -254,16 +283,18 @@ The ```lift_units``` table has two columns:
     - Ability to give an unknown value for reps if you don't remember - should just average the before and after for graph points.
 - Backend:
     - Add start time and end time to each Day
-    - Add names to each day (user-specified)
     - Export lift data to excel
 
 ---
 
-# Prompts sent to Codex for development
+</details>
 
-## F5_3.1:
+<details>
+<summary>Prompts sent to Codex for development</summary>
 
-### Calculate stats for each muscle group
+### F5_3.1:
+
+#### Calculate stats for each muscle group
 
 **The purpose of the prompt below was to calculate the muscle group statistics and store them in a list of objects that could be shown on the MuscleGroupsScreen:**
 
@@ -295,15 +326,15 @@ Implemented the reactive muscle-group detail calculations without touching ui/sc
 
 Key changes:
 
-- Added aggregate Room projection: [MuscleGroupDetailData.kt](C:/Github/LiftTracker/Workspace/app/src/main/java/com/example/lifttracker/data/MuscleGroupDetailData.kt)
+- Added aggregate Room projection: [MuscleGroupDetailData.kt](Workspace/app/src/main/java/github/tom2433/lifttracker/data/structures/MuscleGroupDetailData.kt)
 
-- Added the multi-table aggregate query in [MuscleGroupDao.kt (line 35)](C:/Github/LiftTracker/Workspace/app/src/main/java/com/example/lifttracker/data/MuscleGroupDao.kt:35)
+- Added the multi-table aggregate query in [MuscleGroupDao.kt](Workspace/app/src/main/java/github/tom2433/lifttracker/data/musclegroup/MuscleGroupDao.kt)
 
 - Exposed it through the repository.
 
 - Changed muscleGroupList to List<MuscleGroupDetail>.
 
-- Added rolling-week averages, rep handling, and relative-date formatting in [MuscleGroupsViewModel.kt (line 44)](C:/Github/LiftTracker/Workspace/app/src/main/java/com/example/lifttracker/ui/viewModels/MuscleGroupsViewModel.kt:44).
+- Added rolling-week averages, rep handling, and relative-date formatting in [MuscleGroupsViewModel.kt](Workspace/app/src/main/java/github/tom2433/lifttracker/ui/viewModels/MuscleGroupsViewModel.kt).
 
 - Room observes all six referenced tables, so the list recalculates when database data changes.
 
@@ -325,7 +356,7 @@ Edited 4 files+241-36
 - data/OfflineMuscleGroupRepository.ktdata/OfflineMuscleGroupRepository.kt+6-2
 - ui/viewModels/MuscleGroupsViewModel.ktui/viewModels/MuscleGroupsViewModel.kt+188-30
 
-### Follow-up prompt
+#### Follow-up prompt
 
 **The purpose of this prompt was to include the muscle group id in each MuscleGroupDetail object in the muscleGroupList:**
 
@@ -343,9 +374,9 @@ data/MuscleGroupDao.ktdata/MuscleGroupDao.kt+1-0
 data/MuscleGroupDetailData.ktdata/MuscleGroupDetailData.kt+1-0
 ui/viewModels/MuscleGroupsViewModel.ktui/viewModels/MuscleGroupsViewModel.kt+2-0
 
-## F6_4.2:
+### F6_4.2:
 
-### Calculate stats for each lift
+#### Calculate stats for each lift
 
 Version: 5.5 High Reasoning
 
@@ -391,10 +422,10 @@ For all of the code that you write, you must write comments in the code so that 
 
 Implemented the LiftScreen statistics population in init.
 Key changes:
-- Added reactive Room aggregation in [LiftDao.kt (line 31)](C:/Github/LiftTracker/Workspace/app/src/main/java/github/tom2433/lifttracker/data/LiftDao.kt:31).
-- Added reusable projection model [LiftStatisticsData.kt (line 4)](C:/Github/LiftTracker/Workspace/app/src/main/java/github/tom2433/lifttracker/data/LiftStatisticsData.kt:4).
+- Added reactive Room aggregation in [LiftDao.kt](Workspace/app/src/main/java/github/tom2433/lifttracker/data/lift/LiftDao.kt).
+- Added reusable projection model [LiftStatisticsData.kt](Workspace/app/src/main/java/github/tom2433/lifttracker/data/structures/LiftStatisticsData.kt).
 - Wired repository access.
-- Populated all four UI-state values in [LiftScreenViewModel.kt (line 37)](C:/Github/LiftTracker/Workspace/app/src/main/java/github/tom2433/lifttracker/ui/viewModels/LiftScreenViewModel.kt:37).
+- Populated all four UI-state values in [LiftScreenViewModel.kt](Workspace/app/src/main/java/github/tom2433/lifttracker/ui/viewModels/LiftScreenViewModel.kt).
 - Added exact decimal, percentage, session-average, and HH:MM:SS formatting.
 - Used inclusive 28-day and 365-day windows.
 - Added detailed - Codex comments.
@@ -402,7 +433,7 @@ Key changes:
 
 Edited LiftScreenViewModel.kt+153-10
 
-## Table name change
+### Table name change
 
 Version: 5.5 High Reasoning
 
@@ -421,8 +452,8 @@ Changed:
 - DI/view-model references from unitRepository to liftUnitRepository
 - Room queries from units to lift_units
 - LiftDao statistics join to lift_units
-- comments/docs in [README.md](C:/Github/LiftTracker/README.md) and data files
-- added a Room 1 -> 2 migration in [LiftTrackerDatabase.kt](C:/Github/LiftTracker/Workspace/app/src/main/java/github/tom2433/lifttracker/data/LiftTrackerDatabase.kt) to rename existing units tables to lift_units
+- comments/docs in [README.md](README.md) and data files
+- added a Room 1 -> 2 migration in [LiftTrackerDatabase.kt](Workspace/app/src/main/java/github/tom2433/lifttracker/data/LiftTrackerDatabase.kt) to rename existing units tables to lift_units
 - I intentionally left Kotlin’s built-in Unit usages alone, including callback return types and LaunchedEffect(Unit).
 
 Verification: .\gradlew.bat test passes. Only existing warning is Room’s profile_id foreign-key-index warning, unrelated to this refactor.
@@ -445,9 +476,9 @@ Edited 15 files+268-256
 - ui/viewModels/LiftScreenViewModel.ktui/viewModels/LiftScreenViewModel.kt+44-44
 - ui/viewModels/LiftsViewModel.ktui/viewModels/LiftsViewModel.kt+56-56
 
-## F8_6.0
+### F8_6.0
 
-### Table name change from ```lift_days``` to ```sessions```
+#### Table name change from ```lift_days``` to ```sessions```
 
 Version: 5.5 Extra High Effort
 
@@ -490,9 +521,12 @@ Edited 16 files+567-362
 - README.md+37-34
 - .codex_session_rename.py.codex_session_rename.py+27-27
 
-# Immediate Notes
+</details>
 
-## 07-06
+<details>
+<summary>Immediate Notes</summary>
+
+### 07-06
 
 - the descriptions in the lift entry dialog should be hidden behind an info button
     - the descriptions take too long to read, also previous units should be shown in a grid format
@@ -502,7 +536,7 @@ Edited 16 files+567-362
 
 - look at viewmodelstore and viewmodelstoreowner
 
-## 07-07
+### 07-07
 
 - increase size of lift note
 - eventually add a preferences table to store user preferences like setting a default unit.
@@ -518,18 +552,18 @@ Edited 16 files+567-362
 
 - also get data from Textlifttracker and convert it.
 
-## 07-08
+### 07-08
 
 - modify the info dialogs for the add/edit lift to be more descriptive
 - ask codex how to make everything less laggy
 - try to make lift screen take up the entire screen
 - bring back entry animation for muscle group cards
 
-## 07-09
+### 07-09
 
 - edit the profile note color on the switch profile nav drawer dropdown element to improve readability issues due to contrast.
 
-## 07-10
+### 07-10
 
 - maybe keep the dislog titles fixed in place and have the scrollable column only contain the body of the Dialog. maybe create a function for a dialog and content.
 
@@ -541,7 +575,6 @@ Edited 16 files+567-362
 
 - shorten the content visibility animation on the lift screen (or simplify it)
 - also change the muscle group cards so the raw data doesn't load in until after the user clicks it.
-- move the scrollable columns on the dialogs so the user can see the buttons the entire time (completed)
 - a user may not want to see a crap ton of data thrown at their face when they open the app
     - change the muscle group screen and the lift screen. their data will eventually be represented by line graphs and pie charts.
     - raw data is displeasing to look at.
@@ -549,21 +582,21 @@ Edited 16 files+567-362
 
 - raw data on the muscle group cards should not load in until after the user has clicked it. ^
 
-## 07-11
+### 07-11
 
 days with the same day_label should display the day number in the note. when creating a lift, the user can click the day label and note to edit it, and when the name input pops up, some quick add buttons should also pop up. these should be able to be grouped in the analytics screen.
 
 start also implementing the preferences table
 
-## 07-13
+### 07-13
 
 Consider putting the analytics button toggle-able on the lift screen, so the user sees previous sessions OR the analytics
 
-## 07-14
+### 07-14
 
 add a show all button to existing lift entry card to show all lifts
 
-## 07-15
+### 07-15
 
 lift set notes don't wrap appropriately, they just take up the whole card.
 
@@ -573,11 +606,11 @@ add a column to the lift sets table called muscle_group_day_set_number to indica
 
 add number of sets on each lift in progress card
 
-## 07-16
+### 07-16
 
 display the active lift day's date on the session in progress screen.
 
-## 07-17
+### 07-17
 
 ran into an issue where when the user deletes more than one lift in progress or lift sets in progress, the numbering gets messed up. need to implement a system where the delete icons are not visible while something is being deleted.
 
@@ -595,7 +628,7 @@ just turn the note into a label at this point
 
 really also need a way to manage units
 
-## 07-21
+### 07-21
 
 info description for migration makes it seem like the data is going to two places. remove "also"
 
@@ -605,7 +638,7 @@ change day to session everywhere
 
 make lift set in progress card's weight/rep note take up the same width as the value inputs
 
-## 07-22
+### 07-22
 
 need on lift set in progress card for session in progress screen: average weight/reps for this lift given it's lift set number, muscle group set number, and session set number.
 
@@ -617,13 +650,13 @@ just remove the lift set number from the ui, it's already in the lift name and i
 
 change the pencil icon on the lift set in progress to an edit note icon.
 
-## 07-23
+### 07-23
 
 on lift screen, show most recent sets as bar graph. potentially put a pie chart of lift distribution on expanded muscle group card.
 
 add an option to show sessions in list format vs. card format
 
-## 07-26
+### 07-26
 
 should have a sort of indicator for each muscle group that can show the last day you've trained it. keep things minimal on the muscle groups screen visually. should still present more significant and impressive data when the card is opened.
 
@@ -633,7 +666,7 @@ put a "usual pattern" line graph of average distribution between weight values p
 
 on the sessions screen, put also the date in relative terms like on the muscle groups screen
 
-## 07-27
+### 07-27
 
 keep on muscle group card:
 
@@ -646,13 +679,13 @@ keep on muscle group card:
     - \# of lifts
     -decide on more
 
-## 07-29
+### 07-29
 
 make the fill color of the in progress cards on session screen the border color, and make their fill transparent.
 
 add a new option to the drop-down in sessions screen called "view by week" allowing the user to cycle thru the weeks they've trained via forward and backward icon buttons.
 
-## 08/03
+### 08/03
 
 user shall view all set sections in all historical lift cards by pressing the "expand all" button at the top of the DisplayAllSetDataForSession.
 
@@ -662,7 +695,7 @@ add a "sort by" on the muscle groups screen.
 
 definitely a "sort by" on the sessions screen too
 
-## 08/04
+### 08/04
 
 filter options:
 - by session name
@@ -675,15 +708,15 @@ filter options:
 <ins>**Critical:**</ins>
 when a session note is too long, the three dot menu disappears from the historical session card
 
-## 08/06
+### 08/06
 
 volume line graph on the muscle groups and lift screen, intensity line graphs on the sessions screen.
 
-## 08/09
+### 08/09
 
 make it so that lift cards display differently depending on how many lift cards need to be displayed (how many lift IDs exist for that muscle group) on the muscle groups screen. (fill max width, thinner with potentially alternating colors)
 
-## 08/12
+### 08/12
 
 move number of sets for historical lift card to the right of the name
 
@@ -695,7 +728,10 @@ add "last session only" tag to session analysis
 
 add "Compare to:" label before tags, or "compare Today's Shoulders and arms to other Shoulders And Arms workouts:" or something like that
 
-# notes for Improvement 
+</details>
+
+<details>
+<summary>Notes for Improvement</summary>
 
 1. session card should eventually fill up the entire screen covering the navigation bar if the user long taps it.
 2. modify the session summary so that it doesn't say "for your last 2 sessions" if the user hasn't actually recorded 2 sessions. same applies to "last session"
@@ -730,3 +766,14 @@ there are too many buttons too close to the top of the lift summary section. nee
 also need to see how many lifts were matched for each point in session summary graph. Put extra detail in lift summary graph also - this set's value, the deviation from the average value.
 
 replace the lift summary graph with horizontal bars beneath the actual lift sets themselves. should still be controlled by the filter chip, but use the same function as the horizontal bars. the historical bar should be much lighter. user should still have the option to display the graph.
+
+</details>
+
+## Acknowledgments
+
+This project uses charts provided by Vico:
+
+Vico<br>
+Copyright 2026 Patryk Goworowski and Patrick Michalik<br>
+Licensed under the Apache License, Version 2.0<br>
+https://github.com/patrykandpatrick/vico
