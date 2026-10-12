@@ -22,28 +22,33 @@ Analyses should **always** provide the option to adjust the timeframe and filter
 
 ### Sessions Screen
 
-<img width="1080" height="2424" alt="sessions-screen-dark" src="https://github.com/user-attachments/assets/24c59664-f031-4ecd-a6de-3ac0e175787e" />
-<img width="1080" height="2424" alt="sessions-screen-light" src="https://github.com/user-attachments/assets/08e95fcc-9143-4015-92a4-34405bd32c3b" />
+| Dark theme | Light theme |
+| :---: | :---: |
+| <img width="280" alt="sessions-screen-dark" src="https://github.com/user-attachments/assets/24c59664-f031-4ecd-a6de-3ac0e175787e" /> | <img width="280" alt="sessions-screen-light" src="https://github.com/user-attachments/assets/08e95fcc-9143-4015-92a4-34405bd32c3b" /> |
 
 ### Session Card
 
-<img width="1080" height="2424" alt="session-card-dark" src="https://github.com/user-attachments/assets/57b37a4f-329b-40b5-ab2f-b6fe237efd34" />
-<img width="1080" height="2424" alt="session-card-light" src="https://github.com/user-attachments/assets/00627172-cbcd-493f-8623-db133567b9ed" />
+| Dark theme | Light theme |
+| :---: | :---: |
+| <img width="280" alt="session-card-dark" src="https://github.com/user-attachments/assets/57b37a4f-329b-40b5-ab2f-b6fe237efd34" /> | <img width="280" alt="session-card-light" src="https://github.com/user-attachments/assets/00627172-cbcd-493f-8623-db133567b9ed" /> |
 
 ### Session Summary
 
-<img width="1080" height="2424" alt="session-summary-dark" src="https://github.com/user-attachments/assets/9dd5194d-b19a-4363-a183-ce5eb50bdeeb" />
-<img width="1080" height="2424" alt="session-summary-light" src="https://github.com/user-attachments/assets/08bf01a1-68fb-48b7-93d8-80708a2b0f01" />
+| Dark theme | Light theme |
+| :---: | :---: |
+| <img width="280" alt="session-summary-dark" src="https://github.com/user-attachments/assets/9dd5194d-b19a-4363-a183-ce5eb50bdeeb" /> | <img width="280" alt="session-summary-light" src="https://github.com/user-attachments/assets/08bf01a1-68fb-48b7-93d8-80708a2b0f01" /> |
 
 ### Lift Summary
 
-<img width="1080" height="2424" alt="lift-summary-dark" src="https://github.com/user-attachments/assets/f2d9c17b-3587-41ba-a5fe-bfc3c4a5b9ad" />
-<img width="1080" height="2424" alt="lift-summary-light" src="https://github.com/user-attachments/assets/22d23952-7213-448c-98ed-ddd28cbfe287" />
+| Dark theme | Light theme |
+| :---: | :---: |
+| <img width="280" alt="lift-summary-dark" src="https://github.com/user-attachments/assets/f2d9c17b-3587-41ba-a5fe-bfc3c4a5b9ad" /> | <img width="280" alt="lift-summary-light" src="https://github.com/user-attachments/assets/22d23952-7213-448c-98ed-ddd28cbfe287" /> |
 
 ### Muscle Groups Screen
 
-<img width="1080" height="2424" alt="muscle-groups-screen-dark" src="https://github.com/user-attachments/assets/aafd473a-0217-4af0-9da1-f2f64f64a3e3" />
-<img width="1080" height="2424" alt="muscle-groups-screen-light" src="https://github.com/user-attachments/assets/faf71acf-cc42-4509-b8a3-9fe5c5733188" />
+| Dark theme | Light theme |
+| :---: | :---: |
+| <img width="280" alt="muscle-groups-screen-dark" src="https://github.com/user-attachments/assets/aafd473a-0217-4af0-9da1-f2f64f64a3e3" /> | <img width="280" alt="muscle-groups-screen-light" src="https://github.com/user-attachments/assets/faf71acf-cc42-4509-b8a3-9fe5c5733188" /> |
 
 ## Running the project
 
