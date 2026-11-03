@@ -50,6 +50,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Numbers
 import androidx.compose.material.icons.filled.Scale
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
@@ -93,10 +94,14 @@ import github.tom2433.lifttracker.data.structures.SessionDataPoint
 import github.tom2433.lifttracker.data.structures.SessionSummary
 import github.tom2433.lifttracker.data.structures.SetCardData
 import github.tom2433.lifttracker.data.utils.DateTimeCalculator
+import github.tom2433.lifttracker.ui.viewModels.TimeFrameOptionState
 import github.tom2433.lifttracker.ui.viewModels.TimeFrameType
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.iterator
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.material.icons.outlined.AccessTime
+import androidx.compose.ui.graphics.graphicsLayer
 
 @Composable
 fun StatRow(
@@ -1691,7 +1696,7 @@ fun LabelAndDropdownRow(
 fun DisplaySessionAnalytics(
     trimmedSessionName: String,
     sessionSummary: SessionSummary,
-    statDisplayFilterMap: Map<TimeFrameType, Boolean>,
+    statDisplayFilterMap: Map<TimeFrameType, TimeFrameOptionState>,
     filterChipClicked: (TimeFrameType) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -1785,26 +1790,26 @@ fun DisplaySessionAnalytics(
                         color = MaterialTheme.colorScheme.onBackground.copy(0.75f),
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
-                    // filter chips for timeframe
-                    Row(
-                        horizontalArrangement = Arrangement.Start,
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState())
-                    ) {
-                        for ((sessionDataTimeFrameOption, selected) in statDisplayFilterMap) {
-                            CustomFilterChip(
-                                label = sessionDataTimeFrameOption.label,
-                                onClick = { filterChipClicked(sessionDataTimeFrameOption) },
-                                selected = selected,
-                                modifier = Modifier
-                                    .padding(
-                                        end = 8.dp
-                                    )
-                            )
-                        }
-                    }
+                    // TODO: replace these filter chips with new timeframe filter
+//                    Row(
+//                        horizontalArrangement = Arrangement.Start,
+//                        verticalAlignment = Alignment.CenterVertically,
+//                        modifier = Modifier
+//                            .fillMaxWidth()
+//                            .horizontalScroll(rememberScrollState())
+//                    ) {
+//                        for ((sessionDataTimeFrameOption, selected) in statDisplayFilterMap) {
+//                            CustomFilterChip(
+//                                label = sessionDataTimeFrameOption.label,
+//                                onClick = { filterChipClicked(sessionDataTimeFrameOption) },
+//                                selected = selected,
+//                                modifier = Modifier
+//                                    .padding(
+//                                        end = 8.dp
+//                                    )
+//                            )
+//                        }
+//                    }
 
                     // row to hold summary title and info button
                     Row(
@@ -2219,6 +2224,103 @@ fun DisplayLiftSummary(
                     historicalValueContentColor = MaterialTheme.colorScheme.onTertiaryContainer
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun FilterButton(
+    filterSectionExpanded: Boolean,
+    onClickFilter: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    val cardContentColor by animateColorAsState(
+        targetValue = if (filterSectionExpanded) {
+            MaterialTheme.colorScheme.onSecondaryContainer
+        } else {
+            MaterialTheme.colorScheme.onBackground
+        }
+    )
+    val cardContainerColor by animateColorAsState(
+        targetValue = if (filterSectionExpanded) {
+            MaterialTheme.colorScheme.secondaryContainer
+        } else {
+            MaterialTheme.colorScheme.background
+        }
+    )
+    val cardBorderColor by animateColorAsState(
+        targetValue = if (filterSectionExpanded) {
+            MaterialTheme.colorScheme.background
+        } else {
+            MaterialTheme.colorScheme.onBackground.copy(0.5f)
+        }
+    )
+
+    // card to act as button
+    Card(
+        modifier = modifier,
+        onClick = onClickFilter,
+        colors = CardDefaults.cardColors().copy(
+            containerColor = cardContainerColor,
+            contentColor = cardContentColor
+        ),
+        shape = RoundedCornerShape(4.dp),
+        border = BorderStroke(
+            width = 1.dp,
+            color = cardBorderColor
+        )
+    ) {
+        // box to hold Filter content
+        Box(
+            modifier = Modifier
+                .padding(
+                    vertical = 8.dp,
+                    horizontal = 12.dp
+                )
+        ) {
+            content()
+        }
+    }
+}
+
+@Composable
+fun TimeFrameFilterButton(
+    filterSectionExpanded: Boolean,
+    onClickFilter: () -> Unit,
+    displayLabel: String,
+    modifier: Modifier = Modifier
+) {
+    val gearRotation by animateFloatAsState(
+        targetValue = if (filterSectionExpanded) 180f else 0f,
+        animationSpec = tween(300)
+    )
+
+    FilterButton(
+        filterSectionExpanded = filterSectionExpanded,
+        onClickFilter = onClickFilter,
+        modifier = modifier
+    ) {
+        // row to hold gear icon and display label
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
+        ) {
+            // gear icon
+            Icon(
+                imageVector = Icons.Outlined.AccessTime,
+                contentDescription = "Timeframe selector",
+                modifier = Modifier
+                    .padding(end = 8.dp)
+                    .graphicsLayer {
+                        rotationZ = gearRotation
+                    }
+            )
+            // display label
+            Text(
+                text = displayLabel,
+                style = MaterialTheme.typography.titleMedium
+            )
         }
     }
 }

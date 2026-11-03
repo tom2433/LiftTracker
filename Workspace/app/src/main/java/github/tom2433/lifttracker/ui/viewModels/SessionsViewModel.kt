@@ -22,7 +22,12 @@ import github.tom2433.lifttracker.data.structures.SessionDetail
 import github.tom2433.lifttracker.data.structures.SessionSummary
 import github.tom2433.lifttracker.data.structures.SetCardData
 import github.tom2433.lifttracker.data.utils.DateTimeCalculator
-import github.tom2433.lifttracker.ui.screens.LegacyTimeFrameOption
+import github.tom2433.lifttracker.ui.viewModels.TimeFrameType.ALL_TIME
+import github.tom2433.lifttracker.ui.viewModels.TimeFrameType.CUSTOM_DATE_RANGE
+import github.tom2433.lifttracker.ui.viewModels.TimeFrameType.LAST_SESSION_ONLY
+import github.tom2433.lifttracker.ui.viewModels.TimeFrameType.PAST_MONTH
+import github.tom2433.lifttracker.ui.viewModels.TimeFrameType.PAST_WEEK
+import github.tom2433.lifttracker.ui.viewModels.TimeFrameType.PAST_YEAR
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -38,6 +43,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.Date
+import kotlin.time.Duration.Companion.milliseconds
 
 // TODO: delete these debug calls before pull request
 private const val TAG = "MainActivity"
@@ -94,7 +100,7 @@ class SessionsViewModel(
             if (refreshEverything) {
                 // redo exit/entry animation on all cards
                 makeAllSessionCardsInvisible()
-                delay(300)
+                delay(300.milliseconds)
                 // reset the fetch limit
                 _sessionsUiState.update { currentState ->
                     currentState.copy(
@@ -209,7 +215,7 @@ class SessionsViewModel(
                         )
                     }
 
-                    delay(300)
+                    delay(300.milliseconds)
                     makeAllSessionCardsVisible()
                 }
             }
@@ -242,19 +248,72 @@ class SessionsViewModel(
         }
     }
 
-    fun toggleTimeFrameDropdown() {
-        _sessionsUiState.update { currentState ->
-            currentState.copy(
-                timeFrameDropdownExpanded = !currentState.timeFrameDropdownExpanded
-            )
+    // TODO: remove before PR
+//    fun toggleTimeFrameDropdown() {
+//        _sessionsUiState.update { currentState ->
+//            currentState.copy(
+//                timeFrameDropdownExpanded = !currentState.timeFrameDropdownExpanded
+//            )
+//        }
+//    }
+//
+//    fun dismissTimeFrameDropdown() {
+//        _sessionsUiState.update { currentState ->
+//            currentState.copy(
+//                timeFrameDropdownExpanded = false
+//            )
+//        }
+//    }
+
+    fun toggleTimeFrameSection() {
+        // if open, close; otherwise open
+        if (_sessionsUiState.value.timeFrameSectionStage1Expanded ||
+            _sessionsUiState.value.timeFrameSectionStage2Expanded) {
+            closeTimeFrameSection()
+        } else {
+            openTimeFrameSection()
         }
     }
 
-    fun dismissTimeFrameDropdown() {
-        _sessionsUiState.update { currentState ->
-            currentState.copy(
-                timeFrameDropdownExpanded = false
-            )
+    private fun openTimeFrameSection() {
+        viewModelScope.launch {
+            // set stage1 = true
+            _sessionsUiState.update { currentState ->
+                currentState.copy(
+                    timeFrameSectionStage1Expanded = true
+                )
+            }
+
+            // delay 150 ms
+            delay(150.milliseconds)
+
+            // set stage2 = true
+            _sessionsUiState.update { currentState ->
+                currentState.copy(
+                    timeFrameSectionStage2Expanded = true
+                )
+            }
+        }
+    }
+
+    private fun closeTimeFrameSection() {
+        viewModelScope.launch {
+            // set stage2 = false
+            _sessionsUiState.update { currentState ->
+                currentState.copy(
+                    timeFrameSectionStage2Expanded = false
+                )
+            }
+
+            // delay 300 ms
+            delay(300.milliseconds)
+
+            // set stage1 = false
+            _sessionsUiState.update { currentState ->
+                currentState.copy(
+                    timeFrameSectionStage1Expanded = false
+                )
+            }
         }
     }
 
@@ -277,54 +336,94 @@ class SessionsViewModel(
         refresh(true)
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
-    fun timeFrameMenuOptionClicked(timeFrameLabel: String) {
+    fun timeFrameSelected(newTimeFrameType: TimeFrameType) {
+        // for the whole screen, today = today
+        val today: String = DateTimeCalculator.getCurrentIsoDate()
+
+        // update active time frame (for visual purposes)
         _sessionsUiState.update { currentState ->
             currentState.copy(
-                timeFrameLabel = timeFrameLabel
+                timeFrameFilterMap = currentState.timeFrameFilterMap.mapValues { (timeFrameType, timeFrameOptionState) ->
+                    if (timeFrameType == newTimeFrameType) {
+                        timeFrameOptionState.copy(
+                            active = true
+                        )
+                    } else {
+                        timeFrameOptionState.copy(
+                            active = false
+                        )
+                    }
+                }
             )
         }
-        dismissTimeFrameDropdown()
 
-        when (timeFrameLabel) {
-            LegacyTimeFrameOption.ALL_TIME -> {
-                // update start and end date to null
-                updateStartAndEndDate(null, null)
-            }
-            LegacyTimeFrameOption.PAST_WEEK -> {
-                // update start date to one week ago
-                updateStartAndEndDate(
-                    startDate = DateTimeCalculator.calculateStartDate(
-                        today = DateTimeCalculator.getCurrentIsoDate(),
-                        daysBeforeToday = 6L
-                    ),
-                    endDate = null
-                )
-            }
-            LegacyTimeFrameOption.PAST_TWO_WEEKS -> {
-                // update start date to two weeks ago
-                updateStartAndEndDate(
-                    startDate = DateTimeCalculator.calculateStartDate(
-                        today = DateTimeCalculator.getCurrentIsoDate(),
-                        daysBeforeToday = 13L
-                    ),
-                    endDate = null
-                )
-            }
-            LegacyTimeFrameOption.PAST_MONTH -> {
-                updateStartAndEndDate(
-                    startDate = DateTimeCalculator.calculateStartDate(
-                        today = DateTimeCalculator.getCurrentIsoDate(),
-                        daysBeforeToday = 27L
-                    ),
-                    endDate = null
-                )
-            }
-            LegacyTimeFrameOption.CHOOSE_DATE -> {
-                showDateRangePicker()
-            }
+        // refresh label
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                timeFrameDisplayLabel = currentState.timeFrameFilterMap[newTimeFrameType]?.getDisplayLabel() ?: ""
+            )
+        }
+
+        // refresh start and end dates if not custom time frame
+        if (newTimeFrameType != CUSTOM_DATE_RANGE) {
+            updateStartAndEndDate(
+                startDate = _sessionsUiState.value.timeFrameFilterMap[newTimeFrameType]?.getStartDate(today),
+                endDate = today
+            )
+        } else {
+            showDateRangePicker()
         }
     }
+
+    // TODO: remove before PR
+//    @RequiresApi(Build.VERSION_CODES.O)
+//    fun timeFrameMenuOptionClicked(timeFrameLabel: String) {
+//        _sessionsUiState.update { currentState ->
+//            currentState.copy(
+//                timeFrameLabel = timeFrameLabel
+//            )
+//        }
+//        dismissTimeFrameDropdown()
+//
+//        when (timeFrameLabel) {
+//            LegacyTimeFrameOption.ALL_TIME -> {
+//                // update start and end date to null
+//                updateStartAndEndDate(null, null)
+//            }
+//            LegacyTimeFrameOption.PAST_WEEK -> {
+//                // update start date to one week ago
+//                updateStartAndEndDate(
+//                    startDate = DateTimeCalculator.calculateStartDate(
+//                        today = DateTimeCalculator.getCurrentIsoDate(),
+//                        daysBeforeToday = 6L
+//                    ),
+//                    endDate = null
+//                )
+//            }
+//            LegacyTimeFrameOption.PAST_TWO_WEEKS -> {
+//                // update start date to two weeks ago
+//                updateStartAndEndDate(
+//                    startDate = DateTimeCalculator.calculateStartDate(
+//                        today = DateTimeCalculator.getCurrentIsoDate(),
+//                        daysBeforeToday = 13L
+//                    ),
+//                    endDate = null
+//                )
+//            }
+//            LegacyTimeFrameOption.PAST_MONTH -> {
+//                updateStartAndEndDate(
+//                    startDate = DateTimeCalculator.calculateStartDate(
+//                        today = DateTimeCalculator.getCurrentIsoDate(),
+//                        daysBeforeToday = 27L
+//                    ),
+//                    endDate = null
+//                )
+//            }
+//            LegacyTimeFrameOption.CHOOSE_DATE -> {
+//                showDateRangePicker()
+//            }
+//        }
+//    }
 
     fun dismissDateRangePicker() {
         _sessionsUiState.update { currentState ->
@@ -403,13 +502,13 @@ class SessionsViewModel(
                 sessionCardId = sessionCardId,
                 newVisibility = false
             )
-            delay(300)
+            delay(300.milliseconds)
 
             // otherwise, switch this session to in progress
             sessionRepository.switchSessionIdToInProgress(sessionCardId)
 
             // delay and make the session card visible
-            delay(300)
+            delay(300.milliseconds)
             changeSessionCardVisibility(
                 sessionCardId = sessionCardId,
                 newVisibility = true
@@ -427,12 +526,12 @@ class SessionsViewModel(
                 sessionCardId = sessionCardId,
                 newVisibility = false
             )
-            delay(300)
+            delay(300.milliseconds)
 
             val sessionSaved: Boolean = sessionRepository.finishSession(sessionCardId)
 
             // delay and make the session card visible
-            delay(300)
+            delay(300.milliseconds)
             changeSessionCardVisibility(
                 sessionCardId = sessionCardId,
                 newVisibility = true
@@ -568,7 +667,7 @@ class SessionsViewModel(
                 sessionCardId = sessionToDelete.id,
                 newVisibility = false
             )
-            delay(300)
+            delay(300.milliseconds)
 
             // delete session from database
             sessionRepository.deleteSession(sessionToDelete)
@@ -657,7 +756,7 @@ class SessionsViewModel(
 
         // wait for close animation to execute before cancelling the collection job
         if (selectedCardsRemain) {
-            delay(300)
+            delay(300.milliseconds)
         }
         setCollectionJob?.cancel()
 
@@ -668,7 +767,7 @@ class SessionsViewModel(
                 currentSessionLiftDetailMap = emptyMap(),
                 currentSessionDisplaySetList = emptyList(),
                 currentSessionSummary = SessionSummary(),
-                sessionStatDisplayFilterMap = TimeFrameType.getDefaultFilterMap()
+                sessionTimeFrameFilterMap = TimeFrameType.getDefaultFilterMap()
             )
         }
         resetLiftSummary()
@@ -1139,7 +1238,7 @@ class SessionsViewModel(
                 )
             }
 
-            delay(300)
+            delay(300.milliseconds)
 
             // finish animation and reset all filter states
             _sessionsUiState.update { currentState ->
@@ -1343,7 +1442,7 @@ class SessionsViewModel(
                 )
             }
 
-            delay(150)
+            delay(150.milliseconds)
 
             _sessionsUiState.update { currentState ->
                 currentState.copy(
@@ -1494,8 +1593,8 @@ class SessionsViewModel(
 
     fun updateFilterLabel() {
         var numFiltersApplied = 0
-        for (filterState in _sessionsUiState.value.filterStatesMap.values) {
-            if (filterState.selectedElementName != null) {
+        for ((selectedElementName) in _sessionsUiState.value.filterStatesMap.values) {
+            if (selectedElementName != null) {
                 numFiltersApplied++
             }
         }
@@ -1563,8 +1662,8 @@ class SessionsViewModel(
         // first update the time frame option, then refresh the session collection
         _sessionsUiState.update { currentState ->
             currentState.copy(
-                sessionStatDisplayFilterMap =
-                    currentState.sessionStatDisplayFilterMap.mapValues { (thisTimeFrameType, thisTimeFrameOptionState) ->
+                sessionTimeFrameFilterMap =
+                    currentState.sessionTimeFrameFilterMap.mapValues { (thisTimeFrameType, thisTimeFrameOptionState) ->
                         if (thisTimeFrameType == timeFrameType) {
                             thisTimeFrameOptionState.copy(
                                 active = !thisTimeFrameOptionState.active
@@ -1632,10 +1731,10 @@ class SessionsViewModel(
     }
 
     private fun getCurrentSessionDataTimeFrameOptionState(): TimeFrameOptionState {
-        return _sessionsUiState.value.sessionStatDisplayFilterMap
+        return _sessionsUiState.value.sessionTimeFrameFilterMap
             .filter { it.value.active }
             .firstNotNullOfOrNull { it.value }
-            ?: TimeFrameOptionState(TimeFrameType.ALL_TIME)
+            ?: TimeFrameOptionState(ALL_TIME)
     }
 }
 
@@ -1648,11 +1747,9 @@ data class SessionsUiState(
     val dateRangePickerVisible: Boolean = false,
     val activeProfile: Profile? = null,
     val startDate: String? = null,
-    val timeFrameLabel: String = LegacyTimeFrameOption.ALL_TIME,
     val endDate: String? = null,
     val fetchLimit: Int = 10,
     val numSessionsInFilteredTimeFrame: Int = 0,
-    val timeFrameDropdownExpanded: Boolean = false,
     // list of LiftSetCountPerMuscleGroup objects to create the donut chart at the top.
     // this includes ALL data in the selected timeframe, not affected by fetchLimit
     val muscleGroupFrequencyList: List<LiftSetCountPerMuscleGroup> = emptyList(),
@@ -1673,7 +1770,7 @@ data class SessionsUiState(
     val currentSessionDisplaySetList: List<Pair<Int, List<Int>>> = emptyList(),
     val currentSessionSummary: SessionSummary = SessionSummary(),
     val currentSessionLiftSummary: LiftSummary? = null,
-    val sessionStatDisplayFilterMap: Map<TimeFrameType, TimeFrameOptionState> =
+    val sessionTimeFrameFilterMap: Map<TimeFrameType, TimeFrameOptionState> =
         TimeFrameType.getDefaultFilterMap(),
     // properties for editing/deleting a session ---------------------------------------------------
     val deleteSessionDialogVisible: Boolean = false,
@@ -1697,7 +1794,7 @@ data class SessionsUiState(
     // properties for deleting a set ---------------------------------------------------------------
     val deleteSetDialogVisible: Boolean = false,
     val liftSetIdToDelete: Int? = null,
-    // properties for filtering --------------------------------------------------------------------
+    // properties for filtering (whole screen) -----------------------------------------------------
     val filterStatesMap: Map<FilterType, FilterState> = mapOf(
         FilterType.SESSION_NAME to FilterState(),
         FilterType.MUSCLE_GROUP to FilterState(),
@@ -1708,7 +1805,14 @@ data class SessionsUiState(
     val filterSectionStage2Expanded: Boolean = false,
     val filterNoteText: String = "",
     val noteFilterApplied: Boolean = false,
-    val anyCountForFilter: Int = 0
+    val anyCountForFilter: Int = 0,
+    // properties for timeframe selecting (whole screen) -------------------------------------------
+    val timeFrameDisplayLabel: String =
+        TimeFrameOptionState(TimeFrameType.getDefaultTimeFrameType()).getDisplayLabel(),
+    val timeFrameSectionStage1Expanded: Boolean = false,
+    val timeFrameSectionStage2Expanded: Boolean = false,
+    val timeFrameFilterMap: Map<TimeFrameType, TimeFrameOptionState> =
+        TimeFrameType.getDefaultFilterMap()
 )
 
 data class FilterState(
@@ -1739,13 +1843,15 @@ enum class FilterType(
 
 enum class TimeFrameType(
     val defaultMultiplier: Int,
-    val defaultActiveStatus: Boolean
+    val label: String,
+    val defaultActiveStatus: Boolean = false,
 ) {
-    ALL_TIME(-1, true),
-    PAST_WEEK(1, false),
-    PAST_MONTH(1, false),
-    PAST_YEAR(1, false),
-    LAST_SESSION_ONLY(1, false);
+    ALL_TIME(-1, "All time", true),
+    PAST_WEEK(1, "Past # of weeks"),
+    PAST_MONTH(1, "Past # of months"),
+    PAST_YEAR(1, "Past # of years"),
+    LAST_SESSION_ONLY(1, "Past # of sessions"),
+    CUSTOM_DATE_RANGE(-1, "Custom date range");
 
     fun getNumSessionsToFetch(multiplier: Int): Int? {
         return when (this) {
@@ -1753,41 +1859,8 @@ enum class TimeFrameType(
             PAST_WEEK -> null
             PAST_MONTH -> null
             PAST_YEAR -> null
+            CUSTOM_DATE_RANGE -> null
             LAST_SESSION_ONLY -> multiplier
-        }
-    }
-
-    fun getLabel(multiplier: Int): String {
-        return when (this) {
-            ALL_TIME -> "All time"
-            PAST_WEEK -> {
-                if (multiplier == 1) {
-                    "Past week"
-                } else {
-                    "Past $multiplier weeks"
-                }
-            }
-            PAST_MONTH -> {
-                if (multiplier == 1) {
-                    "Past month"
-                } else {
-                    "Past $multiplier months"
-                }
-            }
-            PAST_YEAR -> {
-                if (multiplier == 1) {
-                    "Past year"
-                } else {
-                    "Past $multiplier years"
-                }
-            }
-            LAST_SESSION_ONLY -> {
-                if (multiplier == 1) {
-                    "Last session only"
-                } else {
-                    "Last $multiplier sessions only"
-                }
-            }
         }
     }
 
@@ -1817,7 +1890,17 @@ enum class TimeFrameType(
                 PAST_MONTH to TimeFrameOptionState(PAST_MONTH),
                 PAST_YEAR to TimeFrameOptionState(PAST_YEAR),
                 LAST_SESSION_ONLY to TimeFrameOptionState(LAST_SESSION_ONLY),
+                CUSTOM_DATE_RANGE to TimeFrameOptionState(CUSTOM_DATE_RANGE)
             )
+        }
+
+        fun getDefaultTimeFrameType(): TimeFrameType {
+            for (timeFrameType in TimeFrameType.entries) {
+                if (timeFrameType.defaultActiveStatus) {
+                    return timeFrameType
+                }
+            }
+            return ALL_TIME
         }
     }
 }
@@ -1825,14 +1908,35 @@ enum class TimeFrameType(
 data class TimeFrameOptionState(
     val timeFrameType: TimeFrameType,
     val multiplier: Int = timeFrameType.defaultMultiplier,
-    val label: String = timeFrameType.getLabel(multiplier),
     val active: Boolean = timeFrameType.defaultActiveStatus
 ) {
-    fun getStartDate(sessionDate: String): String? {
-        return timeFrameType.getStartDate(sessionDate, multiplier)
+    fun getStartDate(today: String): String? {
+        return timeFrameType.getStartDate(today, multiplier)
     }
 
     fun getNumSessionsToFetch(): Int? {
         return timeFrameType.getNumSessionsToFetch(multiplier)
+    }
+
+    fun getDisplayLabel(): String {
+        if (multiplier == timeFrameType.defaultMultiplier) {
+            return when (timeFrameType) {
+                ALL_TIME -> "All time"
+                PAST_WEEK -> "Past week"
+                PAST_MONTH -> "Past month"
+                PAST_YEAR -> "Past year"
+                LAST_SESSION_ONLY -> "Last session only"
+                CUSTOM_DATE_RANGE -> "Custom date range"
+            }
+        } else {
+            return when (timeFrameType) {
+                ALL_TIME -> "All time"
+                PAST_WEEK -> "Past $multiplier weeks"
+                PAST_MONTH -> "Past $multiplier months"
+                PAST_YEAR -> "Past $multiplier years"
+                LAST_SESSION_ONLY -> "Last $multiplier sessions only"
+                CUSTOM_DATE_RANGE -> "Custom date range"
+            }
+        }
     }
 }

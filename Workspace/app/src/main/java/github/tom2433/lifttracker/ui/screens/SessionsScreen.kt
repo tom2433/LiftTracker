@@ -17,7 +17,6 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,17 +30,11 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
-import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -73,6 +66,7 @@ import github.tom2433.lifttracker.ui.utils.DateRangePickerModal
 import github.tom2433.lifttracker.ui.utils.DisplayAllSetDataForSession
 import github.tom2433.lifttracker.ui.utils.DisplaySessionAnalytics
 import github.tom2433.lifttracker.ui.utils.DisplaySetCountPerMuscleGroup
+import github.tom2433.lifttracker.ui.utils.FilterButton
 import github.tom2433.lifttracker.ui.utils.FilterMenu
 import github.tom2433.lifttracker.ui.utils.LabelHeader
 import github.tom2433.lifttracker.ui.utils.LayoutSwitcher
@@ -82,8 +76,10 @@ import github.tom2433.lifttracker.ui.utils.ShowElementDeleteDialog
 import github.tom2433.lifttracker.ui.utils.ShowElementEntryDialog
 import github.tom2433.lifttracker.ui.utils.ShowHistoricalSetEditDialog
 import github.tom2433.lifttracker.ui.utils.ThreeDotMenu
+import github.tom2433.lifttracker.ui.utils.TimeFrameFilterButton
 import github.tom2433.lifttracker.ui.viewModels.TimeFrameType
 import github.tom2433.lifttracker.ui.viewModels.SessionsViewModel
+import github.tom2433.lifttracker.ui.viewModels.TimeFrameOptionState
 
 object SessionsDestination : NavigationDestination {
     override val route = "sessions"
@@ -111,13 +107,14 @@ fun SessionsScreen(
     val sessionsUiState by viewModel.sessionsUiState.collectAsState()
     val beginDateLabel = calculateBeginDateLabel(sessionsUiState.startDate)
     val endDateLabel = calculateEndDateLabel(sessionsUiState.endDate)
-    val startDateDropdownOptions: List<String> = listOf(
-        LegacyTimeFrameOption.ALL_TIME,
-        LegacyTimeFrameOption.PAST_WEEK,
-        LegacyTimeFrameOption.PAST_TWO_WEEKS,
-        LegacyTimeFrameOption.PAST_MONTH,
-        LegacyTimeFrameOption.CHOOSE_DATE
-    )
+    // TODO: remove before PR
+//    val startDateDropdownOptions: List<String> = listOf(
+//        LegacyTimeFrameOption.ALL_TIME,
+//        LegacyTimeFrameOption.PAST_WEEK,
+//        LegacyTimeFrameOption.PAST_TWO_WEEKS,
+//        LegacyTimeFrameOption.PAST_MONTH,
+//        LegacyTimeFrameOption.CHOOSE_DATE
+//    )
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
@@ -146,69 +143,83 @@ fun SessionsScreen(
                     bottom = 8.dp
                 )
         ) {
-            ExposedDropdownMenuBox(
-                expanded = sessionsUiState.timeFrameDropdownExpanded,
-                onExpandedChange = {}
-            ) {
-                // row to hold timeframe selector
-                Row(
-                    horizontalArrangement = Arrangement.Start,
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .clickable(
-                            onClick = { viewModel.toggleTimeFrameDropdown() }
-                        )
-                        .menuAnchor(
-                            type = ExposedDropdownMenuAnchorType.PrimaryNotEditable
-                        )
-                        .border(
-                            width = 1.dp,
-                            color = MaterialTheme.colorScheme.onBackground.copy(0.5f),
-                            shape = RoundedCornerShape(4.dp),
-                        )
-                ) {
-                    Text(
-                        text = sessionsUiState.timeFrameLabel,
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(
-                            top = 8.dp,
-                            bottom = 8.dp,
-                            start = 12.dp,
-                            end = 4.dp
-                        )
-                    )
-                    Icon(
-                        imageVector = Icons.Filled.ArrowDropDown,
-                        contentDescription = stringResource(R.string.select_start_date),
-                        modifier = Modifier.padding(end = 8.dp)
-                    )
-                }
+            // TODO: remove before PR
+//            ExposedDropdownMenuBox(
+//                expanded = sessionsUiState.timeFrameDropdownExpanded,
+//                onExpandedChange = {}
+//            ) {
+//                // row to hold timeframe selector
+//                Row(
+//                    horizontalArrangement = Arrangement.Start,
+//                    verticalAlignment = Alignment.CenterVertically,
+//                    modifier = Modifier
+//                        .clickable(
+//                            onClick = { viewModel.toggleTimeFrameDropdown() }
+//                        )
+//                        .menuAnchor(
+//                            type = ExposedDropdownMenuAnchorType.PrimaryNotEditable
+//                        )
+//                        .border(
+//                            width = 1.dp,
+//                            color = MaterialTheme.colorScheme.onBackground.copy(0.5f),
+//                            shape = RoundedCornerShape(4.dp),
+//                        )
+//                ) {
+//                    Text(
+//                        text = sessionsUiState.timeFrameLabel,
+//                        style = MaterialTheme.typography.titleMedium,
+//                        modifier = Modifier.padding(
+//                            top = 8.dp,
+//                            bottom = 8.dp,
+//                            start = 12.dp,
+//                            end = 4.dp
+//                        )
+//                    )
+//                    Icon(
+//                        imageVector = Icons.Filled.ArrowDropDown,
+//                        contentDescription = stringResource(R.string.select_start_date),
+//                        modifier = Modifier.padding(end = 8.dp)
+//                    )
+//                }
+//
+//                // start date dropdown menu
+//                ExposedDropdownMenu(
+//                    expanded = sessionsUiState.timeFrameDropdownExpanded,
+//                    onDismissRequest = { viewModel.dismissTimeFrameDropdown() }
+//                ) {
+//                    startDateDropdownOptions.forEach { startDateLabel ->
+//                        DropdownMenuItem(
+//                            text = {
+//                                Text(
+//                                    text = startDateLabel,
+//                                    style = MaterialTheme.typography.bodyMedium
+//                                )
+//                            },
+//                            onClick = { viewModel.timeFrameMenuOptionClicked(startDateLabel) }
+//                        )
+//                    }
+//                }
+//            }
 
-                // start date dropdown menu
-                ExposedDropdownMenu(
-                    expanded = sessionsUiState.timeFrameDropdownExpanded,
-                    onDismissRequest = { viewModel.dismissTimeFrameDropdown() }
-                ) {
-                    startDateDropdownOptions.forEach { startDateLabel ->
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    text = startDateLabel,
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                            },
-                            onClick = { viewModel.timeFrameMenuOptionClicked(startDateLabel) }
-                        )
-                    }
-                }
-            }
-            // card to represent filter button
+            // card to represent timeframe filter button
+            TimeFrameFilterButton(
+                filterSectionExpanded = sessionsUiState.timeFrameSectionStage1Expanded &&
+                    sessionsUiState.timeFrameSectionStage2Expanded,
+                onClickFilter = { viewModel.toggleTimeFrameSection() },
+                displayLabel = sessionsUiState.timeFrameDisplayLabel
+            )
+
+            // card to represent general filter button
             FilterButton(
-                filterText = sessionsUiState.filterText,
                 filterSectionExpanded = sessionsUiState.filterSectionStage1Expanded &&
                         sessionsUiState.filterSectionStage2Expanded,
                 onClickFilter = { viewModel.filterButtonClicked() }
-            )
+            ) {
+                Text(
+                    text = sessionsUiState.filterText,
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
         }
 
         FilterMenu(
@@ -285,7 +296,8 @@ fun SessionsScreen(
             ) {
                 // animated visibility for the week label and layout switcher if first index
                 AnimatedVisibility(
-                    visible = sessionsUiState.sessionDetailMap[weekPair.second[0]]?.visible ?: continue@loop,
+                    visible = sessionsUiState.sessionDetailMap[weekPair.second[0]]?.visible
+                        ?: continue@loop,
                     enter = fadeIn(tween(300)),
                     exit = fadeOut(tween(300))
                 ) {
@@ -366,7 +378,7 @@ fun SessionsScreen(
                                     currentSessionLiftSetMap = sessionsUiState.currentSessionLiftSetMap,
                                     currentSessionSummary = sessionsUiState.currentSessionSummary,
                                     currentSessionLiftSummary = sessionsUiState.currentSessionLiftSummary,
-                                    sessionStatDisplayFilterMap = sessionsUiState.sessionStatDisplayFilterMap,
+                                    sessionStatDisplayFilterMap = sessionsUiState.sessionTimeFrameFilterMap,
                                     filterChipClicked = {
                                         viewModel.sessionDataFilterChipClicked(
                                             timeFrameType = it,
@@ -453,7 +465,7 @@ fun SessionsScreen(
             onDismiss = { viewModel.dismissDateRangePicker() }
         )
     }
-    
+
     // show delete session dialog if applicable
     if (sessionsUiState.deleteSessionDialogVisible && sessionsUiState.sessionToDelete != null) {
         val sessionName: String = sessionsUiState.sessionToDelete!!.session_label
@@ -469,11 +481,13 @@ fun SessionsScreen(
             onDelete = { viewModel.deleteSession() }
         )
     }
-    
+
     // show edit session dialog if applicable
     if (sessionsUiState.editSessionDialogVisible && sessionsUiState.sessionToEdit != null) {
-        val formattedDate: String = DateTimeCalculator.convertIsoDateToReadableFormat(sessionsUiState.sessionToEdit!!.date)
-        val dialogTitle = "Edit '${sessionsUiState.sessionToEdit!!.session_label}' from ${formattedDate}:"
+        val formattedDate: String =
+            DateTimeCalculator.convertIsoDateToReadableFormat(sessionsUiState.sessionToEdit!!.date)
+        val dialogTitle =
+            "Edit '${sessionsUiState.sessionToEdit!!.session_label}' from ${formattedDate}:"
         val submitBtnText = "Update '${sessionsUiState.sessionToEdit!!.session_label}'"
 
         ShowElementEntryDialog(
@@ -494,14 +508,17 @@ fun SessionsScreen(
     // show edit historical set dialog if applicable
     if (sessionsUiState.editSetDialogVisible &&
         sessionsUiState.liftSetIdToEdit != null &&
-        sessionsUiState.currentSessionLiftSetMap[sessionsUiState.liftSetIdToEdit] != null) {
+        sessionsUiState.currentSessionLiftSetMap[sessionsUiState.liftSetIdToEdit] != null
+    ) {
         val liftSetId: Int = sessionsUiState.liftSetIdToEdit!!
         val liftSetName: String = sessionsUiState.newSetName
         val liftId: Int = sessionsUiState.currentSessionLiftSetMap[liftSetId]!!.liftSet.lift_id
         val liftName: String = sessionsUiState.currentSessionLiftDetailMap[liftId]?.liftObj?.name
             ?: "null"
-        val unitName: String = sessionsUiState.currentSessionLiftDetailMap[liftId]?.unitName ?: "reps"
-        val metricType: String = sessionsUiState.currentSessionLiftDetailMap[liftId]?.metricType ?: "pounds"
+        val unitName: String =
+            sessionsUiState.currentSessionLiftDetailMap[liftId]?.unitName ?: "reps"
+        val metricType: String =
+            sessionsUiState.currentSessionLiftDetailMap[liftId]?.metricType ?: "pounds"
 
         ShowHistoricalSetEditDialog(
             dialogTitle = "Edit '${liftSetName}' of $liftName",
@@ -535,9 +552,13 @@ fun SessionsScreen(
 
     // show delete historical set dialog if applicable
     if (sessionsUiState.deleteSetDialogVisible && sessionsUiState.liftSetIdToDelete != null &&
-        sessionsUiState.currentSessionLiftSetMap[sessionsUiState.liftSetIdToDelete] != null) {
-        val setCardData: SetCardData = sessionsUiState.currentSessionLiftSetMap[sessionsUiState.liftSetIdToDelete]!!
-        val liftName: String = sessionsUiState.currentSessionLiftDetailMap[setCardData.liftSet.lift_id]?.liftObj?.name ?: "null"
+        sessionsUiState.currentSessionLiftSetMap[sessionsUiState.liftSetIdToDelete] != null
+    ) {
+        val setCardData: SetCardData =
+            sessionsUiState.currentSessionLiftSetMap[sessionsUiState.liftSetIdToDelete]!!
+        val liftName: String =
+            sessionsUiState.currentSessionLiftDetailMap[setCardData.liftSet.lift_id]?.liftObj?.name
+                ?: "null"
 
         ShowElementDeleteDialog(
             dialogTitle = "Delete ${setCardData.liftSet.set_label} from ${liftName}?",
@@ -546,65 +567,6 @@ fun SessionsScreen(
             onDismissRequest = { viewModel.dismissDeleteHistoricalSetDialog() },
             onDelete = { viewModel.deleteHistoricalSet() }
         )
-    }
-}
-
-@Composable
-fun FilterButton(
-    filterText: String,
-    filterSectionExpanded: Boolean,
-    onClickFilter: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val cardContentColor by animateColorAsState(
-        targetValue = if (filterSectionExpanded) {
-            MaterialTheme.colorScheme.onSecondaryContainer
-        } else {
-            MaterialTheme.colorScheme.onBackground
-        }
-    )
-    val cardContainerColor by animateColorAsState(
-        targetValue = if (filterSectionExpanded) {
-            MaterialTheme.colorScheme.secondaryContainer
-        } else {
-            MaterialTheme.colorScheme.background
-        }
-    )
-    val cardBorderColor by animateColorAsState(
-        targetValue = if (filterSectionExpanded) {
-            MaterialTheme.colorScheme.background
-        } else {
-            MaterialTheme.colorScheme.onBackground.copy(0.5f)
-        }
-    )
-
-    // card to act as button
-    Card(
-        modifier = modifier,
-        onClick = onClickFilter,
-        colors = CardDefaults.cardColors().copy(
-            containerColor = cardContainerColor,
-            contentColor = cardContentColor
-        ),
-        shape = RoundedCornerShape(4.dp),
-        border = BorderStroke(
-            width = 1.dp,
-            color = cardBorderColor
-        )
-    ) {
-        // box to hold Filter text
-        Box(
-            modifier = Modifier
-                .padding(
-                    vertical = 8.dp,
-                    horizontal = 12.dp
-                )
-        ) {
-            Text(
-                text = filterText,
-                style = MaterialTheme.typography.titleMedium
-            )
-        }
     }
 }
 
@@ -618,7 +580,7 @@ fun SessionCard(
     currentSessionLiftSetMap: Map<Int, SetCardData>,
     currentSessionSummary: SessionSummary,
     currentSessionLiftSummary: LiftSummary?,
-    sessionStatDisplayFilterMap: Map<TimeFrameType, Boolean>,
+    sessionStatDisplayFilterMap: Map<TimeFrameType, TimeFrameOptionState>,
     filterChipClicked: (TimeFrameType) -> Unit,
     onClickThreeDotMenu: () -> Unit,
     onDismissThreeDotMenu: () -> Unit,
