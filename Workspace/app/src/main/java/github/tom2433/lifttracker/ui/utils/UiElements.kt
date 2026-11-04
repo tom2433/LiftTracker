@@ -100,7 +100,13 @@ import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.iterator
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.Canvas
 import androidx.compose.material.icons.outlined.AccessTime
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.ExpandMore
+import androidx.compose.material.icons.outlined.KeyboardArrowDown
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
 
 @Composable
@@ -1433,6 +1439,7 @@ fun SlideAndExpandSection(
     cardContainerColor: Color,
     stage1Visible: Boolean,
     stage2Visible: Boolean,
+    animateFrom: Alignment.Horizontal,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
@@ -1442,17 +1449,17 @@ fun SlideAndExpandSection(
             .fillMaxWidth()
             .animateContentSize(),
         verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.End,
+        horizontalAlignment = animateFrom,
     ) {
         // animated visibility for top divider
         AnimatedVisibility(
             visible = stage1Visible,
             enter = expandHorizontally(
-                expandFrom = Alignment.End,
+                expandFrom = animateFrom,
                 animationSpec = tween(150)
             ),
             exit = shrinkHorizontally(
-                shrinkTowards = Alignment.End,
+                shrinkTowards = animateFrom,
                 animationSpec = tween(150)
             )
         ) {
@@ -1552,11 +1559,11 @@ fun SlideAndExpandSection(
         AnimatedVisibility(
             visible = stage2Visible,
             enter = expandHorizontally(
-                expandFrom = Alignment.End,
+                expandFrom = animateFrom,
                 animationSpec = tween(300)
             ),
             exit = shrinkHorizontally(
-                shrinkTowards = Alignment.End,
+                shrinkTowards = animateFrom,
                 animationSpec = tween(300)
             )
         ) {
@@ -2240,21 +2247,24 @@ fun FilterButton(
             MaterialTheme.colorScheme.onSecondaryContainer
         } else {
             MaterialTheme.colorScheme.onBackground
-        }
+        },
+        animationSpec = tween(450)
     )
     val cardContainerColor by animateColorAsState(
         targetValue = if (filterSectionExpanded) {
             MaterialTheme.colorScheme.secondaryContainer
         } else {
             MaterialTheme.colorScheme.background
-        }
+        },
+        animationSpec = tween(450)
     )
     val cardBorderColor by animateColorAsState(
         targetValue = if (filterSectionExpanded) {
             MaterialTheme.colorScheme.background
         } else {
             MaterialTheme.colorScheme.onBackground.copy(0.5f)
-        }
+        },
+        animationSpec = tween(450)
     )
 
     // card to act as button
@@ -2293,7 +2303,7 @@ fun TimeFrameFilterButton(
 ) {
     val gearRotation by animateFloatAsState(
         targetValue = if (filterSectionExpanded) 180f else 0f,
-        animationSpec = tween(300)
+        animationSpec = tween(450)
     )
 
     FilterButton(
@@ -2322,5 +2332,83 @@ fun TimeFrameFilterButton(
                 style = MaterialTheme.typography.titleMedium
             )
         }
+    }
+}
+
+@Composable
+fun SessionFilterButton(
+    filterSectionExpanded: Boolean,
+    filterButtonClicked: () -> Unit,
+    filterText: String,
+    modifier: Modifier = Modifier
+) {
+    var showCloseIcon by remember {
+        mutableStateOf(filterSectionExpanded)
+    }
+
+    FilterButton(
+        filterSectionExpanded = filterSectionExpanded,
+        onClickFilter = filterButtonClicked,
+        modifier = modifier
+    ) {
+        // Row to hold filter text and arrow/X icon
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
+        ) {
+            Text(
+                text = filterText,
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(end = 8.dp)
+            )
+            MorphingExpandIcon(expanded = filterSectionExpanded)
+        }
+    }
+}
+
+@Composable
+fun MorphingExpandIcon(
+    expanded: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val progress by animateFloatAsState(
+        targetValue = if (expanded) 1f else 0f,
+        animationSpec = tween(durationMillis = 450),
+        label = "Filter icon morph"
+    )
+    val color = LocalContentColor.current
+
+    Canvas(
+        modifier = modifier
+            .size(24.dp)
+            .graphicsLayer {
+                rotationZ = progress * 180f
+            }
+    ) {
+        // coordinates use a 24 × 24 drawing area
+        fun point(x: Float, y: Float) = Offset(
+            x = x * size.width / 24f,
+            y = y * size.height / 24f
+        )
+
+        val startY = 9f - 3f * progress
+        val endY = 15f + 3f * progress
+        val strokeWidth = size.minDimension / 12f
+
+        drawLine(
+            color = color,
+            start = point(6f, startY),
+            end = point(12f + 6f * progress, endY),
+            strokeWidth = strokeWidth,
+            cap = StrokeCap.Round
+        )
+
+        drawLine(
+            color = color,
+            start = point(18f, startY),
+            end = point(12f - 6f * progress, endY),
+            strokeWidth = strokeWidth,
+            cap = StrokeCap.Round
+        )
     }
 }

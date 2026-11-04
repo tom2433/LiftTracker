@@ -278,8 +278,10 @@ class SessionsViewModel(
     private fun openTimeFrameSection() {
         viewModelScope.launch {
             // set stage1 = true
+            // and expanded = true
             _sessionsUiState.update { currentState ->
                 currentState.copy(
+                    timeFrameSectionExpanded = true,
                     timeFrameSectionStage1Expanded = true
                 )
             }
@@ -299,8 +301,10 @@ class SessionsViewModel(
     private fun closeTimeFrameSection() {
         viewModelScope.launch {
             // set stage2 = false
+            // and expanded = false
             _sessionsUiState.update { currentState ->
                 currentState.copy(
+                    timeFrameSectionExpanded = false,
                     timeFrameSectionStage2Expanded = false
                 )
             }
@@ -337,9 +341,6 @@ class SessionsViewModel(
     }
 
     fun timeFrameSelected(newTimeFrameType: TimeFrameType) {
-        // for the whole screen, today = today
-        val today: String = DateTimeCalculator.getCurrentIsoDate()
-
         // update active time frame (for visual purposes)
         _sessionsUiState.update { currentState ->
             currentState.copy(
@@ -367,9 +368,11 @@ class SessionsViewModel(
         // refresh start and end dates if not custom time frame
         if (newTimeFrameType != CUSTOM_DATE_RANGE) {
             updateStartAndEndDate(
-                startDate = _sessionsUiState.value.timeFrameFilterMap[newTimeFrameType]?.getStartDate(today),
-                endDate = today
+                startDate = _sessionsUiState.value.timeFrameFilterMap[newTimeFrameType]?.getStartDate(),
+                endDate = null
             )
+//        } else if (_sessionsUiState.value.timeFrameFilterMap[newTimeFrameType]?.getNumSessionsToFetch() != null) {
+
         } else {
             showDateRangePicker()
         }
@@ -1234,6 +1237,7 @@ class SessionsViewModel(
         viewModelScope.launch {
             _sessionsUiState.update { currentState ->
                 currentState.copy(
+                    filterSectionExpanded = false,
                     filterSectionStage2Expanded = false
                 )
             }
@@ -1438,6 +1442,7 @@ class SessionsViewModel(
         viewModelScope.launch {
             _sessionsUiState.update { currentState ->
                 currentState.copy(
+                    filterSectionExpanded = true,
                     filterSectionStage1Expanded = true
                 )
             }
@@ -1453,8 +1458,7 @@ class SessionsViewModel(
     }
 
     fun filterButtonClicked() {
-        val filterCurrentlyOpen = _sessionsUiState.value.filterSectionStage1Expanded &&
-                _sessionsUiState.value.filterSectionStage2Expanded
+        val filterCurrentlyOpen = _sessionsUiState.value.filterSectionExpanded
 
         if (filterCurrentlyOpen) {
             closeFilterSection()
@@ -1801,6 +1805,7 @@ data class SessionsUiState(
         FilterType.LIFT_NAME to FilterState()
     ),
     val filterText: String = "Filter",
+    val filterSectionExpanded: Boolean = false,
     val filterSectionStage1Expanded: Boolean = false,
     val filterSectionStage2Expanded: Boolean = false,
     val filterNoteText: String = "",
@@ -1809,6 +1814,7 @@ data class SessionsUiState(
     // properties for timeframe selecting (whole screen) -------------------------------------------
     val timeFrameDisplayLabel: String =
         TimeFrameOptionState(TimeFrameType.getDefaultTimeFrameType()).getDisplayLabel(),
+    val timeFrameSectionExpanded: Boolean = false,
     val timeFrameSectionStage1Expanded: Boolean = false,
     val timeFrameSectionStage2Expanded: Boolean = false,
     val timeFrameFilterMap: Map<TimeFrameType, TimeFrameOptionState> =
@@ -1866,7 +1872,7 @@ enum class TimeFrameType(
 
     fun getStartDate(sessionDate: String, multiplier: Int): String? {
         return when (this) {
-            ALL_TIME -> DateTimeCalculator.START_DATE
+            ALL_TIME -> null
             PAST_WEEK -> DateTimeCalculator.calculateStartDate(
                 today = sessionDate,
                 daysBeforeToday = DateTimeCalculator.DAYS_PER_WEEK * multiplier.toLong()
@@ -1910,8 +1916,8 @@ data class TimeFrameOptionState(
     val multiplier: Int = timeFrameType.defaultMultiplier,
     val active: Boolean = timeFrameType.defaultActiveStatus
 ) {
-    fun getStartDate(today: String): String? {
-        return timeFrameType.getStartDate(today, multiplier)
+    fun getStartDate(today: String? = null): String? {
+        return timeFrameType.getStartDate(today ?: DateTimeCalculator.getCurrentIsoDate(), multiplier)
     }
 
     fun getNumSessionsToFetch(): Int? {

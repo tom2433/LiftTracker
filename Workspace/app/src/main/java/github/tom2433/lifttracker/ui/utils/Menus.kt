@@ -1,15 +1,20 @@
 package github.tom2433.lifttracker.ui.utils
 
 import androidx.annotation.StringRes
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -20,6 +25,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -29,6 +35,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import github.tom2433.lifttracker.ui.viewModels.FilterState
 import github.tom2433.lifttracker.ui.viewModels.FilterType
+import github.tom2433.lifttracker.ui.viewModels.TimeFrameOptionState
+import github.tom2433.lifttracker.ui.viewModels.TimeFrameType
 
 @Composable
 fun ThreeDotMenu(
@@ -84,7 +92,90 @@ fun ThreeDotMenu(
     }
 }
 
+@Composable
+fun TimeFrameMenu(
+    borderColor: Color,
+    cardContentColor: Color,
+    cardContainerColor: Color,
+    stage1Visible: Boolean,
+    stage2Visible: Boolean,
+    timeFrameFilterMap: Map<TimeFrameType, TimeFrameOptionState>,
+    timeFrameSelected: (TimeFrameType) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    SlideAndExpandSection(
+        borderColor = borderColor,
+        cardContentColor = cardContentColor,
+        cardContainerColor = cardContainerColor,
+        stage1Visible = stage1Visible,
+        stage2Visible = stage2Visible,
+        animateFrom = Alignment.Start,
+        modifier = modifier
+    ) {
+        for (timeFrameOptionState in timeFrameFilterMap.values) {
+            TimeFrameSelector(
+                timeFrameOptionState = timeFrameOptionState,
+                timeFrameSelected = { timeFrameSelected(timeFrameOptionState.timeFrameType) },
+                activeBorderColor = borderColor,
+                activeContentColor = cardContentColor,
+                activeContainerColor = cardContainerColor,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+        }
+    }
+}
 
+@Composable
+fun TimeFrameSelector(
+    timeFrameOptionState: TimeFrameOptionState,
+    timeFrameSelected: () -> Unit,
+    activeBorderColor: Color,
+    activeContentColor: Color,
+    activeContainerColor: Color,
+    modifier: Modifier = Modifier
+) {
+    val borderColor by animateColorAsState(
+        targetValue = if (timeFrameOptionState.active) {
+            activeBorderColor
+        } else {
+            Color.Transparent
+        }
+    )
+    val contentColor by animateColorAsState(
+        targetValue = if (timeFrameOptionState.active) {
+            activeContentColor
+        } else {
+            MaterialTheme.colorScheme.onSurface
+        }
+    )
+    val containerColor by animateColorAsState(
+        targetValue = if (timeFrameOptionState.active) {
+            activeContainerColor
+        } else {
+            MaterialTheme.colorScheme.surfaceContainerHighest
+        }
+    )
+
+    Card(
+        shape = RoundedCornerShape(4.dp),
+        border = BorderStroke(
+            width = 1.dp,
+            color = borderColor
+        ),
+        colors = CardDefaults.cardColors().copy(
+            contentColor = contentColor,
+            containerColor = containerColor
+        ),
+        onClick = timeFrameSelected,
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = timeFrameOptionState.timeFrameType.label,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(8.dp)
+        )
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -114,6 +205,7 @@ fun FilterMenu(
         cardContainerColor = cardContainerColor,
         stage1Visible = stage1Visible,
         stage2Visible = stage2Visible,
+        animateFrom = Alignment.End,
         modifier = modifier
     ) {
         for ((filterType, filterState) in filterStatesMap) {

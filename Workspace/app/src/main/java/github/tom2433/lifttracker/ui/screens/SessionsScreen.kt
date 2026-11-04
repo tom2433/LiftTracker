@@ -72,11 +72,13 @@ import github.tom2433.lifttracker.ui.utils.LabelHeader
 import github.tom2433.lifttracker.ui.utils.LayoutSwitcher
 import github.tom2433.lifttracker.ui.utils.LoadMoreLabelAndButton
 import github.tom2433.lifttracker.ui.utils.MuscleGroupDonutChart
+import github.tom2433.lifttracker.ui.utils.SessionFilterButton
 import github.tom2433.lifttracker.ui.utils.ShowElementDeleteDialog
 import github.tom2433.lifttracker.ui.utils.ShowElementEntryDialog
 import github.tom2433.lifttracker.ui.utils.ShowHistoricalSetEditDialog
 import github.tom2433.lifttracker.ui.utils.ThreeDotMenu
 import github.tom2433.lifttracker.ui.utils.TimeFrameFilterButton
+import github.tom2433.lifttracker.ui.utils.TimeFrameMenu
 import github.tom2433.lifttracker.ui.viewModels.TimeFrameType
 import github.tom2433.lifttracker.ui.viewModels.SessionsViewModel
 import github.tom2433.lifttracker.ui.viewModels.TimeFrameOptionState
@@ -203,24 +205,33 @@ fun SessionsScreen(
 
             // card to represent timeframe filter button
             TimeFrameFilterButton(
-                filterSectionExpanded = sessionsUiState.timeFrameSectionStage1Expanded &&
-                    sessionsUiState.timeFrameSectionStage2Expanded,
+                filterSectionExpanded = sessionsUiState.timeFrameSectionExpanded,
                 onClickFilter = { viewModel.toggleTimeFrameSection() },
                 displayLabel = sessionsUiState.timeFrameDisplayLabel
             )
 
             // card to represent general filter button
-            FilterButton(
-                filterSectionExpanded = sessionsUiState.filterSectionStage1Expanded &&
-                        sessionsUiState.filterSectionStage2Expanded,
-                onClickFilter = { viewModel.filterButtonClicked() }
-            ) {
-                Text(
-                    text = sessionsUiState.filterText,
-                    style = MaterialTheme.typography.titleMedium
-                )
-            }
+            SessionFilterButton(
+                filterSectionExpanded = sessionsUiState.filterSectionExpanded,
+                filterButtonClicked = { viewModel.filterButtonClicked() },
+                filterText = sessionsUiState.filterText
+            )
         }
+
+        TimeFrameMenu(
+            borderColor = MaterialTheme.colorScheme.primaryContainer,
+            cardContentColor = MaterialTheme.colorScheme.onBackground,
+            cardContainerColor = MaterialTheme.colorScheme.background,
+            stage1Visible = sessionsUiState.timeFrameSectionStage1Expanded,
+            stage2Visible = sessionsUiState.timeFrameSectionStage2Expanded,
+            timeFrameFilterMap = sessionsUiState.timeFrameFilterMap,
+            timeFrameSelected = { viewModel.timeFrameSelected(it) },
+            modifier = Modifier.padding(
+                start = 16.dp,
+                end = 16.dp,
+                bottom = 16.dp
+            )
+        )
 
         FilterMenu(
             borderColor = MaterialTheme.colorScheme.secondaryContainer,
