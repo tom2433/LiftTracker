@@ -5,8 +5,13 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -119,9 +124,10 @@ fun TimeFrameMenu(
                 activeBorderColor = borderColor,
                 activeContentColor = cardContentColor,
                 activeContainerColor = cardContainerColor,
-                modifier = Modifier.padding(bottom = 16.dp)
+                modifier = Modifier.padding(bottom = 4.dp)
             )
         }
+        Spacer(modifier = Modifier.height(12.dp))
     }
 }
 
@@ -167,13 +173,23 @@ fun TimeFrameSelector(
             containerColor = containerColor
         ),
         onClick = timeFrameSelected,
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .height(IntrinsicSize.Min)
     ) {
-        Text(
-            text = timeFrameOptionState.timeFrameType.label,
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(8.dp)
-        )
+        // row to hold text and multiplier selector
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Text(
+                text = timeFrameOptionState.timeFrameType.label,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(8.dp)
+            )
+        }
     }
 }
 

@@ -88,13 +88,14 @@ object SessionsDestination : NavigationDestination {
     override val titleRes = R.string.sessions_title
 }
 
-object LegacyTimeFrameOption {
-    const val ALL_TIME: String = "All time"
-    const val PAST_WEEK: String = "Past week"
-    const val PAST_TWO_WEEKS: String = "Past 2 weeks"
-    const val PAST_MONTH: String = "Past month"
-    const val CHOOSE_DATE: String = "Custom date range"
-}
+// TODO: remove before PR
+//object LegacyTimeFrameOption {
+//    const val ALL_TIME: String = "All time"
+//    const val PAST_WEEK: String = "Past week"
+//    const val PAST_TWO_WEEKS: String = "Past 2 weeks"
+//    const val PAST_MONTH: String = "Past month"
+//    const val CHOOSE_DATE: String = "Custom date range"
+//}
 
 /**
  * Entry route for Sessions Screen
@@ -219,24 +220,33 @@ fun SessionsScreen(
         }
 
         TimeFrameMenu(
-            borderColor = MaterialTheme.colorScheme.primaryContainer,
+            borderColor = MaterialTheme.colorScheme.primary,
             cardContentColor = MaterialTheme.colorScheme.onBackground,
-            cardContainerColor = MaterialTheme.colorScheme.background,
+            cardContainerColor = MaterialTheme.colorScheme.surfaceContainer,
             stage1Visible = sessionsUiState.timeFrameSectionStage1Expanded,
             stage2Visible = sessionsUiState.timeFrameSectionStage2Expanded,
             timeFrameFilterMap = sessionsUiState.timeFrameFilterMap,
             timeFrameSelected = { viewModel.timeFrameSelected(it) },
-            modifier = Modifier.padding(
-                start = 16.dp,
-                end = 16.dp,
-                bottom = 16.dp
-            )
+            modifier =
+                if (sessionsUiState.timeFrameSectionExpanded
+                    && sessionsUiState.filterSectionExpanded) {
+                    Modifier.padding(
+                        start = 16.dp,
+                        end = 16.dp,
+                        bottom = 16.dp
+                    )
+                } else {
+                    Modifier.padding(
+                        start = 16.dp,
+                        end = 16.dp
+                    )
+                }
         )
 
         FilterMenu(
-            borderColor = MaterialTheme.colorScheme.secondaryContainer,
+            borderColor = MaterialTheme.colorScheme.primary,
             cardContentColor = MaterialTheme.colorScheme.onBackground,
-            cardContainerColor = MaterialTheme.colorScheme.background,
+            cardContainerColor = MaterialTheme.colorScheme.surfaceContainer,
             stage1Visible = sessionsUiState.filterSectionStage1Expanded,
             stage2Visible = sessionsUiState.filterSectionStage2Expanded,
             filterStatesMap = sessionsUiState.filterStatesMap,
@@ -875,7 +885,7 @@ fun FinishButton(
 
 @RequiresApi(Build.VERSION_CODES.O)
 private fun calculateBeginDateLabel(startDate: String?): String {
-    return if (startDate == null) {
+    return if (startDate == null || startDate == DateTimeCalculator.START_DATE) {
         "Beginning of time"
     } else {
         DateTimeCalculator.convertIsoDateToReadableFormat(startDate)
@@ -884,7 +894,7 @@ private fun calculateBeginDateLabel(startDate: String?): String {
 
 @RequiresApi(Build.VERSION_CODES.O)
 private fun calculateEndDateLabel(endDate: String?): String {
-    return if (endDate == null) {
+    return if (endDate == null || endDate == DateTimeCalculator.getCurrentIsoDate()) {
         "Today"
     } else {
         DateTimeCalculator.convertIsoDateToReadableFormat(endDate)

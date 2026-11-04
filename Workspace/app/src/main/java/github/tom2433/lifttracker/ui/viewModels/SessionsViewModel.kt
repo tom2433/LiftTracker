@@ -90,7 +90,9 @@ class SessionsViewModel(
      * startDate/endDate is changed, so it must be called manually
      */
     @RequiresApi(Build.VERSION_CODES.O)
-    private fun refresh(refreshEverything: Boolean = false) {
+    private fun refresh(
+        refreshEverything: Boolean = false
+    ) {
         refreshJob?.cancel()
 
         val startDate: String? = _sessionsUiState.value.startDate
@@ -365,16 +367,23 @@ class SessionsViewModel(
             )
         }
 
-        // refresh start and end dates if not custom time frame
-        if (newTimeFrameType != CUSTOM_DATE_RANGE) {
+        if (newTimeFrameType == CUSTOM_DATE_RANGE) {
+            // show date picker if custom timeframe
+            showDateRangePicker()
+        } else if (newTimeFrameType == LAST_SESSION_ONLY) {
+            // refresh for number of sessions if last session only
+            if (filterCollectionJob != null) {
+                filterCollectionJob?.cancel()
+                beginFilterCollectionJob()
+            }
+
+            // refresh function will check if this filter is active and update accordingly.
+            refresh(true)
+        } else {
             updateStartAndEndDate(
                 startDate = _sessionsUiState.value.timeFrameFilterMap[newTimeFrameType]?.getStartDate(),
                 endDate = null
             )
-//        } else if (_sessionsUiState.value.timeFrameFilterMap[newTimeFrameType]?.getNumSessionsToFetch() != null) {
-
-        } else {
-            showDateRangePicker()
         }
     }
 
@@ -434,6 +443,10 @@ class SessionsViewModel(
                 dateRangePickerVisible = false
             )
         }
+
+        if (_sessionsUiState.value.startDate == null && _sessionsUiState.value.endDate == null) {
+            timeFrameSelected(ALL_TIME)
+        }
     }
 
     fun showDateRangePicker() {
@@ -460,6 +473,10 @@ class SessionsViewModel(
         }
 
         updateStartAndEndDate(startDate, endDate)
+
+        if (startDate == null && endDate == null) {
+            timeFrameSelected(ALL_TIME)
+        }
     }
 
     fun threeDotMenuClicked(sessionCardId: Int) {
@@ -1853,10 +1870,10 @@ enum class TimeFrameType(
     val defaultActiveStatus: Boolean = false,
 ) {
     ALL_TIME(-1, "All time", true),
-    PAST_WEEK(1, "Past # of weeks"),
-    PAST_MONTH(1, "Past # of months"),
-    PAST_YEAR(1, "Past # of years"),
-    LAST_SESSION_ONLY(1, "Past # of sessions"),
+    PAST_WEEK(1, "Past # of weeks:"),
+    PAST_MONTH(1, "Past # of months:"),
+    PAST_YEAR(1, "Past # of years:"),
+    LAST_SESSION_ONLY(1, "Past # of sessions:"),
     CUSTOM_DATE_RANGE(-1, "Custom date range");
 
     fun getNumSessionsToFetch(multiplier: Int): Int? {
@@ -1893,6 +1910,7 @@ enum class TimeFrameType(
         fun getDefaultFilterMap(): Map<TimeFrameType, TimeFrameOptionState> {
             return mapOf(
                 ALL_TIME to TimeFrameOptionState(ALL_TIME),
+                PAST_WEEK to TimeFrameOptionState(PAST_WEEK),
                 PAST_MONTH to TimeFrameOptionState(PAST_MONTH),
                 PAST_YEAR to TimeFrameOptionState(PAST_YEAR),
                 LAST_SESSION_ONLY to TimeFrameOptionState(LAST_SESSION_ONLY),
