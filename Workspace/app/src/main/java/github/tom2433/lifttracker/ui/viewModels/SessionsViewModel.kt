@@ -95,9 +95,6 @@ class SessionsViewModel(
     ) {
         refreshJob?.cancel()
 
-        val startDate: String? = _sessionsUiState.value.startDate
-        val endDate: String? = _sessionsUiState.value.endDate
-
         refreshJob = viewModelScope.launch {
             if (refreshEverything) {
                 // redo exit/entry animation on all cards
@@ -109,6 +106,16 @@ class SessionsViewModel(
                         fetchLimit = 10
                     )
                 }
+            }
+
+            val startDate: String? = _sessionsUiState.value.startDate
+            val endDate: String? = _sessionsUiState.value.endDate
+            val activeTimeFrameType: TimeFrameType? =
+                _sessionsUiState.value.timeFrameFilterMap.getActiveTimeFrameType()
+            val lastNSessions: Int? = if (activeTimeFrameType == LAST_SESSION_ONLY) {
+                _sessionsUiState.value.timeFrameFilterMap[activeTimeFrameType]?.multiplier
+            } else {
+                null
             }
 
             // constant collection to keep numSessionsInFilteredTimeFrame up to date; this informs
@@ -128,7 +135,8 @@ class SessionsViewModel(
                             liftName =
                                 _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName,
                             sessionNote =
-                                _sessionsUiState.value.filterNoteText
+                                _sessionsUiState.value.filterNoteText,
+                            lastNSessions = lastNSessions
                         )
                     }
                 }.collect { numSessions ->
@@ -157,7 +165,8 @@ class SessionsViewModel(
                             liftName =
                                 _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName,
                             sessionNote =
-                                _sessionsUiState.value.filterNoteText
+                                _sessionsUiState.value.filterNoteText,
+                            lastNSessions = lastNSessions
                         )
                     } else {
                         flowOf(emptyList())
@@ -191,7 +200,8 @@ class SessionsViewModel(
                             liftName =
                                 _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName,
                             sessionNote =
-                                _sessionsUiState.value.filterNoteText
+                                _sessionsUiState.value.filterNoteText,
+                            lastNSessions = lastNSessions
                         )
                     }
                 }.collect { sessionDetails ->
@@ -219,6 +229,178 @@ class SessionsViewModel(
 
                     delay(300.milliseconds)
                     makeAllSessionCardsVisible()
+                }
+            }
+        }
+    }
+
+    fun beginFilterCollectionJob() {
+        filterCollectionJob = viewModelScope.launch {
+            val startDate: String? = _sessionsUiState.value.startDate
+            val endDate: String? = _sessionsUiState.value.endDate
+            val activeTimeFrameType: TimeFrameType? =
+                _sessionsUiState.value.timeFrameFilterMap.getActiveTimeFrameType()
+            val lastNSessions: Int? = if (activeTimeFrameType == LAST_SESSION_ONLY) {
+                _sessionsUiState.value.timeFrameFilterMap[activeTimeFrameType]?.multiplier
+            } else {
+                null
+            }
+
+            // collect all unique session names sorted in descending order of frequency
+            launch {
+                combine(
+                    // TODO: left off implementing this function below. need to continue this.
+                    sessionRepository.getUniqueSessionNamesAndFrequenciesStream(
+                        muscleGroupName = _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName,
+                        liftName = _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName,
+                        sessionNote = _sessionsUiState.value.filterNoteText,
+                        fetchLimit = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.fetchLimit ?: 10,
+                        startDate = startDate,
+                        endDate = endDate,
+                        lastNSessions = lastNSessions
+                    ),
+                    sessionRepository.getNumberOfUniqueSessionNamesAndFrequenciesStream(
+                        muscleGroupName = _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName,
+                        liftName = _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName,
+                        sessionNote = _sessionsUiState.value.filterNoteText,
+                        startDate = startDate,
+                        endDate = endDate
+                    )
+                ) { sessionNamesAndFrequencies, totalCount ->
+                    Pair(
+                        first = sessionNamesAndFrequencies.map { sessionNameAndFrequency ->
+                            Pair(
+                                first = sessionNameAndFrequency.sessionName,
+                                second = sessionNameAndFrequency.sessionFrequency
+                            )
+                        },
+                        second = totalCount
+                    )
+                }.collect { dataPair ->
+                    _sessionsUiState.update { currentState ->
+                        currentState.copy(
+                            filterStatesMap = currentState.filterStatesMap.mapValues { (filterType, filterState) ->
+                                if (filterType == FilterType.SESSION_NAME) {
+                                    filterState.copy(
+                                        elementList = dataPair.first,
+                                        totalNumberOfElements = dataPair.second
+                                    )
+                                } else {
+                                    filterState
+                                }
+                            }
+                        )
+                    }
+                }
+            }
+
+            // collect all unique muscle group names sorted in descending order of frequency
+            launch {
+                combine(
+                    sessionRepository.getUniqueMuscleGroupNamesAndFrequenciesStream(
+                        sessionName = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
+                        liftName = _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName,
+                        sessionNote = _sessionsUiState.value.filterNoteText,
+                        fetchLimit = _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.fetchLimit ?: 10,
+                        startDate = startDate,
+                        endDate = endDate
+                    ),
+                    sessionRepository.getNumberOfUniqueMuscleGroupNamesAndFrequenciesStream(
+                        sessionName = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
+                        liftName = _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName,
+                        sessionNote = _sessionsUiState.value.filterNoteText,
+                        startDate = startDate,
+                        endDate = endDate
+                    )
+                ) { muscleGroupNamesAndFrequencies, totalCount ->
+                    Pair(
+                        first = muscleGroupNamesAndFrequencies.map { muscleGroupNameAndFrequency ->
+                            Pair(
+                                first = muscleGroupNameAndFrequency.muscleGroupName,
+                                second = muscleGroupNameAndFrequency.muscleGroupFrequency
+                            )
+                        },
+                        second = totalCount
+                    )
+                }.collect { dataPair ->
+                    _sessionsUiState.update { currentState ->
+                        currentState.copy(
+                            filterStatesMap = currentState.filterStatesMap.mapValues { (thisFilterType, thisFilterState) ->
+                                if (thisFilterType == FilterType.MUSCLE_GROUP) {
+                                    thisFilterState.copy(
+                                        elementList = dataPair.first,
+                                        totalNumberOfElements = dataPair.second
+                                    )
+                                } else {
+                                    thisFilterState
+                                }
+                            }
+                        )
+                    }
+                }
+            }
+
+            // collect all unique lift names sorted in descending order of frequency
+            launch {
+                combine(
+                    sessionRepository.getUniqueLiftNamesAndFrequenciesStream(
+                        sessionName = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
+                        muscleGroupName = _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName,
+                        sessionNote = _sessionsUiState.value.filterNoteText,
+                        fetchLimit = _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.fetchLimit ?: 10,
+                        startDate = startDate,
+                        endDate = endDate
+                    ),
+                    sessionRepository.getNumberOfUniqueLiftNamesAndFrequenciesStream(
+                        sessionName = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
+                        muscleGroupName = _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName,
+                        sessionNote = _sessionsUiState.value.filterNoteText,
+                        startDate = startDate,
+                        endDate = endDate
+                    )
+                ) { liftNamesAndFrequencies, totalCount ->
+                    Pair(
+                        first = liftNamesAndFrequencies.map { liftNameAndFrequency ->
+                            Pair(
+                                first = liftNameAndFrequency.liftName,
+                                second = liftNameAndFrequency.liftFrequency
+                            )
+                        },
+                        second = totalCount
+                    )
+                }.collect { dataPair ->
+                    _sessionsUiState.update { currentState ->
+                        currentState.copy(
+                            filterStatesMap = currentState.filterStatesMap.mapValues { (thisFilterType, thisFilterState) ->
+                                if (thisFilterType == FilterType.LIFT_NAME) {
+                                    thisFilterState.copy(
+                                        elementList = dataPair.first,
+                                        totalNumberOfElements = dataPair.second
+                                    )
+                                } else {
+                                    thisFilterState
+                                }
+                            }
+                        )
+                    }
+                }
+            }
+
+            // collect the anyCount for all filters
+            launch {
+                sessionRepository.getNumSessionsStreamForFilteredTimeFrame(
+                    startDate = startDate,
+                    endDate = endDate,
+                    sessionName = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
+                    muscleGroupName = _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName,
+                    liftName = _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName,
+                    sessionNote = _sessionsUiState.value.filterNoteText
+                ).collect { anyCountForAll ->
+                    _sessionsUiState.update { currentState ->
+                        currentState.copy(
+                            anyCountForFilter = anyCountForAll
+                        )
+                    }
                 }
             }
         }
@@ -1290,166 +1472,6 @@ class SessionsViewModel(
         }
     }
 
-    fun beginFilterCollectionJob() {
-        filterCollectionJob = viewModelScope.launch {
-            // collect all unique session names sorted in descending order of frequency
-            launch {
-                combine(
-                    sessionRepository.getUniqueSessionNamesAndFrequenciesStream(
-                        muscleGroupName = _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName,
-                        liftName = _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName,
-                        sessionNote = _sessionsUiState.value.filterNoteText,
-                        fetchLimit = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.fetchLimit ?: 10,
-                        startDate = _sessionsUiState.value.startDate,
-                        endDate = _sessionsUiState.value.endDate
-                    ),
-                    sessionRepository.getNumberOfUniqueSessionNamesAndFrequenciesStream(
-                        muscleGroupName = _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName,
-                        liftName = _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName,
-                        sessionNote = _sessionsUiState.value.filterNoteText,
-                        startDate = _sessionsUiState.value.startDate,
-                        endDate = _sessionsUiState.value.endDate
-                    )
-                ) { sessionNamesAndFrequencies, totalCount ->
-                    Pair(
-                        first = sessionNamesAndFrequencies.map { sessionNameAndFrequency ->
-                            Pair(
-                                first = sessionNameAndFrequency.sessionName,
-                                second = sessionNameAndFrequency.sessionFrequency
-                            )
-                        },
-                        second = totalCount
-                    )
-                }.collect { dataPair ->
-                    _sessionsUiState.update { currentState ->
-                        currentState.copy(
-                            filterStatesMap = currentState.filterStatesMap.mapValues { (filterType, filterState) ->
-                                if (filterType == FilterType.SESSION_NAME) {
-                                    filterState.copy(
-                                        elementList = dataPair.first,
-                                        totalNumberOfElements = dataPair.second
-                                    )
-                                } else {
-                                    filterState
-                                }
-                            }
-                        )
-                    }
-                }
-            }
-
-            // collect all unique muscle group names sorted in descending order of frequency
-            launch {
-                combine(
-                    sessionRepository.getUniqueMuscleGroupNamesAndFrequenciesStream(
-                        sessionName = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
-                        liftName = _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName,
-                        sessionNote = _sessionsUiState.value.filterNoteText,
-                        fetchLimit = _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.fetchLimit ?: 10,
-                        startDate = _sessionsUiState.value.startDate,
-                        endDate = _sessionsUiState.value.endDate
-                    ),
-                    sessionRepository.getNumberOfUniqueMuscleGroupNamesAndFrequenciesStream(
-                        sessionName = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
-                        liftName = _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName,
-                        sessionNote = _sessionsUiState.value.filterNoteText,
-                        startDate = _sessionsUiState.value.startDate,
-                        endDate = _sessionsUiState.value.endDate
-                    )
-                ) { muscleGroupNamesAndFrequencies, totalCount ->
-                    Pair(
-                        first = muscleGroupNamesAndFrequencies.map { muscleGroupNameAndFrequency ->
-                            Pair(
-                                first = muscleGroupNameAndFrequency.muscleGroupName,
-                                second = muscleGroupNameAndFrequency.muscleGroupFrequency
-                            )
-                        },
-                        second = totalCount
-                    )
-                }.collect { dataPair ->
-                    _sessionsUiState.update { currentState ->
-                        currentState.copy(
-                            filterStatesMap = currentState.filterStatesMap.mapValues { (thisFilterType, thisFilterState) ->
-                                if (thisFilterType == FilterType.MUSCLE_GROUP) {
-                                    thisFilterState.copy(
-                                        elementList = dataPair.first,
-                                        totalNumberOfElements = dataPair.second
-                                    )
-                                } else {
-                                    thisFilterState
-                                }
-                            }
-                        )
-                    }
-                }
-            }
-
-            // collect all unique lift names sorted in descending order of frequency
-            launch {
-                combine(
-                    sessionRepository.getUniqueLiftNamesAndFrequenciesStream(
-                        sessionName = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
-                        muscleGroupName = _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName,
-                        sessionNote = _sessionsUiState.value.filterNoteText,
-                        fetchLimit = _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.fetchLimit ?: 10,
-                        startDate = _sessionsUiState.value.startDate,
-                        endDate = _sessionsUiState.value.endDate
-                    ),
-                    sessionRepository.getNumberOfUniqueLiftNamesAndFrequenciesStream(
-                        sessionName = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
-                        muscleGroupName = _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName,
-                        sessionNote = _sessionsUiState.value.filterNoteText,
-                        startDate = _sessionsUiState.value.startDate,
-                        endDate = _sessionsUiState.value.endDate
-                    )
-                ) { liftNamesAndFrequencies, totalCount ->
-                    Pair(
-                        first = liftNamesAndFrequencies.map { liftNameAndFrequency ->
-                            Pair(
-                                first = liftNameAndFrequency.liftName,
-                                second = liftNameAndFrequency.liftFrequency
-                            )
-                        },
-                        second = totalCount
-                    )
-                }.collect { dataPair ->
-                    _sessionsUiState.update { currentState ->
-                        currentState.copy(
-                            filterStatesMap = currentState.filterStatesMap.mapValues { (thisFilterType, thisFilterState) ->
-                                if (thisFilterType == FilterType.LIFT_NAME) {
-                                    thisFilterState.copy(
-                                        elementList = dataPair.first,
-                                        totalNumberOfElements = dataPair.second
-                                    )
-                                } else {
-                                    thisFilterState
-                                }
-                            }
-                        )
-                    }
-                }
-            }
-
-            // collect the anyCount for all filters
-            launch {
-                sessionRepository.getNumSessionsStreamForFilteredTimeFrame(
-                    startDate = _sessionsUiState.value.startDate,
-                    endDate = _sessionsUiState.value.endDate,
-                    sessionName = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
-                    muscleGroupName = _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName,
-                    liftName = _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName,
-                    sessionNote = _sessionsUiState.value.filterNoteText
-                ).collect { anyCountForAll ->
-                    _sessionsUiState.update { currentState ->
-                        currentState.copy(
-                            anyCountForFilter = anyCountForAll
-                        )
-                    }
-                }
-            }
-        }
-    }
-
     fun openFilterSection() {
         // begin collecting all unique session names if not already done
         if (filterCollectionJob == null) {
@@ -1963,4 +1985,14 @@ data class TimeFrameOptionState(
             }
         }
     }
+}
+
+fun Map<TimeFrameType, TimeFrameOptionState>.getActiveTimeFrameType(): TimeFrameType? {
+    for (timeFrameOptionState in this.values) {
+        if (timeFrameOptionState.active) {
+            return timeFrameOptionState.timeFrameType
+        }
+    }
+
+    return null
 }
