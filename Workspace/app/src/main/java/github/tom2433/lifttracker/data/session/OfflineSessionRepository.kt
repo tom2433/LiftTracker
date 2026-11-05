@@ -129,13 +129,15 @@ class OfflineSessionRepository(private val sessionDao: SessionDao) : SessionRepo
         liftName: String?,
         sessionNote: String,
         startDate: String?,
-        endDate: String?
+        endDate: String?,
+        lastNSessions: Int?
     ): Flow<Int> = sessionDao.getNumberOfUniqueSessionNamesAndFrequencies(
         muscleGroupName = muscleGroupName,
         liftName = liftName,
         sessionNote = sessionNote,
         startDate = startDate,
-        endDate = endDate
+        endDate = endDate,
+        lastNSessions = lastNSessions
     )
 
     override fun getNumSessionsStreamForFilteredTimeFrame(
@@ -162,14 +164,16 @@ class OfflineSessionRepository(private val sessionDao: SessionDao) : SessionRepo
         sessionNote: String,
         fetchLimit: Int,
         startDate: String?,
-        endDate: String?
+        endDate: String?,
+        lastNSessions: Int?
     ): Flow<List<MuscleGroupNameAndFrequency>> = sessionDao.getUniqueMuscleGroupNamesAndFrequencies(
         sessionName = sessionName,
         liftName = liftName,
         sessionNote = sessionNote,
         fetchLimit = fetchLimit,
         startDate = startDate,
-        endDate = endDate
+        endDate = endDate,
+        lastNSessions = lastNSessions
     )
 
     override fun getUniqueLiftNamesAndFrequenciesStream(
@@ -178,14 +182,16 @@ class OfflineSessionRepository(private val sessionDao: SessionDao) : SessionRepo
         sessionNote: String,
         fetchLimit: Int,
         startDate: String?,
-        endDate: String?
+        endDate: String?,
+        lastNSessions: Int?
     ): Flow<List<LiftNameAndFrequency>> = sessionDao.getUniqueLiftNamesAndFrequencies(
         sessionName = sessionName,
         muscleGroupName = muscleGroupName,
         sessionNote = sessionNote,
         fetchLimit = fetchLimit,
         startDate = startDate,
-        endDate = endDate
+        endDate = endDate,
+        lastNSessions = lastNSessions
     )
 
     override fun getNumberOfUniqueMuscleGroupNamesAndFrequenciesStream(
@@ -193,13 +199,15 @@ class OfflineSessionRepository(private val sessionDao: SessionDao) : SessionRepo
         liftName: String?,
         sessionNote: String,
         startDate: String?,
-        endDate: String?
+        endDate: String?,
+        lastNSessions: Int?
     ): Flow<Int> = sessionDao.getNumberOfUniqueMuscleGroupNamesAndFrequencies(
         sessionName = sessionName,
         liftName = liftName,
         sessionNote = sessionNote,
         startDate = startDate,
-        endDate = endDate
+        endDate = endDate,
+        lastNSessions = lastNSessions
     )
 
     override fun getNumberOfUniqueLiftNamesAndFrequenciesStream(
@@ -207,13 +215,15 @@ class OfflineSessionRepository(private val sessionDao: SessionDao) : SessionRepo
         muscleGroupName: String?,
         sessionNote: String,
         startDate: String?,
-        endDate: String?
+        endDate: String?,
+        lastNSessions: Int?
     ): Flow<Int> = sessionDao.getNumberOfUniqueLiftNamesAndFrequencies(
         sessionName = sessionName,
         muscleGroupName = muscleGroupName,
         sessionNote = sessionNote,
         startDate = startDate,
-        endDate = endDate
+        endDate = endDate,
+        lastNSessions = lastNSessions
     )
 
     override suspend fun getSessionSummaryFromId(

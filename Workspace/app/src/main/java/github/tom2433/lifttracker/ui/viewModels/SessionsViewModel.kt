@@ -249,7 +249,6 @@ class SessionsViewModel(
             // collect all unique session names sorted in descending order of frequency
             launch {
                 combine(
-                    // TODO: left off implementing this function below. need to continue this.
                     sessionRepository.getUniqueSessionNamesAndFrequenciesStream(
                         muscleGroupName = _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName,
                         liftName = _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName,
@@ -264,7 +263,8 @@ class SessionsViewModel(
                         liftName = _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName,
                         sessionNote = _sessionsUiState.value.filterNoteText,
                         startDate = startDate,
-                        endDate = endDate
+                        endDate = endDate,
+                        lastNSessions = lastNSessions
                     )
                 ) { sessionNamesAndFrequencies, totalCount ->
                     Pair(
@@ -303,14 +303,16 @@ class SessionsViewModel(
                         sessionNote = _sessionsUiState.value.filterNoteText,
                         fetchLimit = _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.fetchLimit ?: 10,
                         startDate = startDate,
-                        endDate = endDate
+                        endDate = endDate,
+                        lastNSessions = lastNSessions
                     ),
                     sessionRepository.getNumberOfUniqueMuscleGroupNamesAndFrequenciesStream(
                         sessionName = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
                         liftName = _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName,
                         sessionNote = _sessionsUiState.value.filterNoteText,
                         startDate = startDate,
-                        endDate = endDate
+                        endDate = endDate,
+                        lastNSessions = lastNSessions
                     )
                 ) { muscleGroupNamesAndFrequencies, totalCount ->
                     Pair(
@@ -349,14 +351,16 @@ class SessionsViewModel(
                         sessionNote = _sessionsUiState.value.filterNoteText,
                         fetchLimit = _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.fetchLimit ?: 10,
                         startDate = startDate,
-                        endDate = endDate
+                        endDate = endDate,
+                        lastNSessions = lastNSessions
                     ),
                     sessionRepository.getNumberOfUniqueLiftNamesAndFrequenciesStream(
                         sessionName = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
                         muscleGroupName = _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName,
                         sessionNote = _sessionsUiState.value.filterNoteText,
                         startDate = startDate,
-                        endDate = endDate
+                        endDate = endDate,
+                        lastNSessions = lastNSessions
                     )
                 ) { liftNamesAndFrequencies, totalCount ->
                     Pair(
@@ -394,7 +398,8 @@ class SessionsViewModel(
                     sessionName = _sessionsUiState.value.filterStatesMap[FilterType.SESSION_NAME]?.selectedElementName,
                     muscleGroupName = _sessionsUiState.value.filterStatesMap[FilterType.MUSCLE_GROUP]?.selectedElementName,
                     liftName = _sessionsUiState.value.filterStatesMap[FilterType.LIFT_NAME]?.selectedElementName,
-                    sessionNote = _sessionsUiState.value.filterNoteText
+                    sessionNote = _sessionsUiState.value.filterNoteText,
+                    lastNSessions = lastNSessions
                 ).collect { anyCountForAll ->
                     _sessionsUiState.update { currentState ->
                         currentState.copy(

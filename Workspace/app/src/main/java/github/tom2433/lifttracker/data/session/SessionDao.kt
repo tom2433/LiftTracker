@@ -149,8 +149,17 @@ interface SessionDao {
         WHERE ls.session_id IN (
             SELECT DISTINCT s.id
             FROM sessions AS s
-            WHERE CASE WHEN :lastNSessions = -1 THEN s.date <= :endDate ELSE 1 END
-                AND CASE WHEN :lastNSessions = -1 THEN s.date >= :startDate ELSE 1 END
+            WHERE
+                CASE
+                    WHEN :lastNSessions = -1 THEN s.date >= :startDate AND s.date <= :endDate
+                    ELSE s.id IN (
+                        SELECT targets.id
+                        FROM sessions AS targets
+                        WHERE targets.profile_id = :activeProfileId
+                        ORDER BY targets.session_number DESC
+                        LIMIT :lastNSessions
+                    )
+                END
                 AND s.profile_id = :activeProfileId
                 AND CASE
                     WHEN :sessionName = '' THEN 1
@@ -183,7 +192,6 @@ interface SessionDao {
                     ELSE TRIM(LOWER(s.note)) LIKE '%' || TRIM(LOWER(:sessionNote)) || '%'
                 END
             ORDER BY s.session_number DESC
-            LIMIT :lastNSessions
         )
         GROUP BY mg.id, mg.name
         ORDER BY mg.name
@@ -278,8 +286,18 @@ interface SessionDao {
         INNER JOIN profiles AS p
             ON p.id = s.profile_id
         WHERE p.active = 1
-            AND s.date <= :endDate
-            AND s.date >= :startDate
+            AND CASE
+                WHEN :lastNSessions = -1 THEN s.date >= :startDate AND s.date <= :endDate
+                ELSE s.id IN (
+                    SELECT targets.id
+                    FROM sessions AS targets
+                    INNER JOIN profiles AS p1
+                        ON p1.id = targets.profile_id
+                    WHERE p1.active = 1
+                    ORDER BY targets.session_number DESC
+                    LIMIT :lastNSessions
+                )
+            END            
             AND CASE
                 WHEN :sessionName = '' THEN 1
                 ELSE TRIM(s.session_label) = TRIM(:sessionName)
@@ -317,7 +335,8 @@ interface SessionDao {
         sessionName: String,
         muscleGroupName: String,
         liftName: String,
-        sessionNote: String
+        sessionNote: String,
+        lastNSessions: Int
     ): Flow<Int>
 
     fun getNumSessionsFromTimeFrame(
@@ -360,22 +379,15 @@ interface SessionDao {
         val realMuscleGroupName: String = muscleGroupName ?: ""
         val realLiftName: String = liftName ?: ""
 
-        val numSessionsFlow: Flow<Int> = getNumSessionsForFilteredTimeFrameFromStartEndDates(
+        return getNumSessionsForFilteredTimeFrameFromStartEndDates(
             startDate = datePair.first,
             endDate = datePair.second,
             sessionName = realSessionName,
             muscleGroupName = realMuscleGroupName,
             liftName = realLiftName,
-            sessionNote = sessionNote
+            sessionNote = sessionNote,
+            lastNSessions = lastNSessions ?: -1
         )
-
-        return numSessionsFlow.map { numSessions ->
-            if (lastNSessions != null) {
-                minOf(lastNSessions, numSessions)
-            } else {
-                numSessions
-            }
-        }
     }
 
     @Query("""
@@ -387,8 +399,16 @@ interface SessionDao {
             s.in_progress AS sessionInProgress
         FROM sessions AS s
         WHERE s.profile_id = :activeProfileId
-            AND s.date >= :startDate
-            AND s.date <= :endDate
+            AND CASE
+                WHEN :lastNSessions = -1 THEN s.date >= :startDate AND s.date <= :endDate
+                ELSE s.id IN (
+                    SELECT targets.id
+                    FROM sessions AS targets
+                    WHERE targets.profile_id = :activeProfileId
+                    ORDER BY targets.session_number DESC
+                    LIMIT :lastNSessions
+                )
+            END            
             AND CASE
                 WHEN :sessionName = '' THEN 1
                 ELSE TRIM(s.session_label) = TRIM(:sessionName)
@@ -430,7 +450,8 @@ interface SessionDao {
         sessionName: String,
         muscleGroupName: String,
         liftName: String,
-        sessionNote: String
+        sessionNote: String,
+        lastNSessions: Int
     ): Flow<List<SessionDetailData>>
 
     @Query("""
@@ -445,8 +466,16 @@ interface SessionDao {
             SELECT DISTINCT s.id
             FROM sessions AS s
             WHERE s.profile_id = :activeProfileId
-                AND s.date >= :startDate
-                AND s.date <= :endDate
+                AND CASE
+                    WHEN :lastNSessions = -1 THEN s.date >= :startDate AND s.date <= :endDate
+                    ELSE s.id IN (
+                        SELECT targets.id
+                        FROM sessions AS targets
+                        WHERE targets.profile_id = :activeProfileId
+                        ORDER BY targets.session_number DESC
+                        LIMIT :lastNSessions
+                    )
+                END                
                 AND CASE
                     WHEN :sessionName = '' THEN 1
                     ELSE TRIM(s.session_label) = TRIM(:sessionName)
@@ -491,7 +520,8 @@ interface SessionDao {
         sessionName: String,
         muscleGroupName: String,
         liftName: String,
-        sessionNote: String
+        sessionNote: String,
+        lastNSessions: Int
     ): Flow<List<SessionMuscleGroupCountData>>
 
     fun getSessionDetailsForSessionScreen(
@@ -512,32 +542,29 @@ interface SessionDao {
         val realSessionName: String = sessionName ?: ""
         val realMuscleGroupName: String = muscleGroupName ?: ""
         val realLiftName: String = liftName ?: ""
-        val numSessionsToFetch: Int = if (lastNSessions != null) {
-            minOf(fetchLimit, lastNSessions)
-        } else {
-            fetchLimit
-        }
 
         val sessionDetailDataListFlow: Flow<List<SessionDetailData>> = getSessionDetailDataListFromStartEndDates(
             activeProfileId = activeProfileId,
             startDate = datePair.first,
             endDate = datePair.second,
-            fetchLimit = numSessionsToFetch,
+            fetchLimit = fetchLimit,
             sessionName = realSessionName,
             muscleGroupName = realMuscleGroupName,
             liftName = realLiftName,
-            sessionNote = sessionNote
+            sessionNote = sessionNote,
+            lastNSessions = lastNSessions ?: -1
         )
 
         val muscleGroupCountDataListFlow: Flow<List<SessionMuscleGroupCountData>> = getSessionMuscleGroupCountDataListFromStartEndDates(
             activeProfileId = activeProfileId,
             startDate = datePair.first,
             endDate = datePair.second,
-            fetchLimit = numSessionsToFetch,
+            fetchLimit = fetchLimit,
             sessionName = realSessionName,
             muscleGroupName = realMuscleGroupName,
             liftName = realLiftName,
-            sessionNote = sessionNote
+            sessionNote = sessionNote,
+            lastNSessions = lastNSessions ?: -1
         )
 
         return combine(
@@ -982,8 +1009,18 @@ interface SessionDao {
         INNER JOIN profiles AS p
             ON p.id = s.profile_id
         WHERE p.active = 1
-            AND s.date >= :startDate
-            AND s.date <= :endDate
+            AND CASE 
+                WHEN :lastNSessions = -1 THEN s.date >= :startDate AND s.date <= :endDate
+                ELSE s.id IN (
+                    SELECT targets.id
+                    FROM sessions AS targets
+                    INNER JOIN profiles AS p1
+                        ON p1.id = targets.profile_id
+                    WHERE p1.active = 1
+                    ORDER BY targets.session_number DESC
+                    LIMIT :lastNSessions
+                )
+            END
             AND CASE
                 WHEN :muscleGroupName = '' THEN 1
                 ELSE EXISTS(
@@ -1021,6 +1058,7 @@ interface SessionDao {
         fetchLimit: Int,
         startDate: String,
         endDate: String,
+        lastNSessions: Int
     ): Flow<List<SessionNameAndFrequency>>
 
     @Query("""
@@ -1030,8 +1068,18 @@ interface SessionDao {
         INNER JOIN profiles AS p
             ON p.id = s.profile_id
         WHERE p.active = 1
-            AND s.date >= :startDate
-            AND s.date <= :endDate
+            AND CASE
+                WHEN :lastNSessions = -1 THEN s.date >= :startDate AND s.date <= :endDate
+                ELSE s.id IN (
+                    SELECT targets.id
+                    FROM sessions AS targets
+                    INNER JOIN profiles AS p1
+                        ON p1.id = targets.profile_id
+                    WHERE p1.active = 1
+                    ORDER BY targets.session_number DESC
+                    LIMIT :lastNSessions
+                )
+            END            
             AND CASE
                 WHEN :muscleGroupName = '' THEN 1
                 ELSE EXISTS(
@@ -1064,7 +1112,8 @@ interface SessionDao {
         liftName: String,
         sessionNote: String,
         startDate: String,
-        endDate: String
+        endDate: String,
+        lastNSessions: Int
     ): Flow<Int>
 
     fun getUniqueSessionNamesAndFrequencies(
@@ -1083,16 +1132,14 @@ interface SessionDao {
             endDate = endDate
         )
 
-        // TODO: determine how to implement lastNSessions here. Maybe figure out the session number of the
-        // first session in the interval given by lastNSessions.
-
         return getUniqueSessionNamesAndFrequenciesFromStartAndEndDate(
             muscleGroupName = realMuscleGroupName,
             liftName = realLiftName,
             sessionNote = sessionNote,
             fetchLimit = fetchLimit,
             startDate = datePair.first,
-            endDate = datePair.second
+            endDate = datePair.second,
+            lastNSessions = lastNSessions ?: -1
         )
     }
 
@@ -1101,7 +1148,8 @@ interface SessionDao {
         liftName: String?,
         sessionNote: String,
         startDate: String?,
-        endDate: String?
+        endDate: String?,
+        lastNSessions: Int?
     ): Flow<Int> {
         val realMuscleGroupName: String = muscleGroupName ?: ""
         val realLiftName: String = liftName ?: ""
@@ -1115,7 +1163,8 @@ interface SessionDao {
             liftName = realLiftName,
             sessionNote = sessionNote,
             startDate = datePair.first,
-            endDate = datePair.second
+            endDate = datePair.second,
+            lastNSessions = lastNSessions ?: -1
         )
     }
 
@@ -1131,8 +1180,18 @@ interface SessionDao {
         INNER JOIN profiles AS p
             ON p.id = s.profile_id
         WHERE p.active = 1
-            AND s.date >= :startDate
-            AND s.date <= :endDate
+            AND CASE
+                WHEN :lastNSessions = -1 THEN s.date >= :startDate AND s.date <= :endDate 
+                ELSE s.id IN (
+                    SELECT targets.id
+                    FROM sessions AS targets
+                    INNER JOIN profiles AS p1
+                        ON p1.id = targets.profile_id
+                    WHERE p1.active = 1
+                    ORDER BY targets.session_number DESC
+                    LIMIT :lastNSessions
+                )
+            END
             AND CASE
                 WHEN :sessionName = '' THEN 1
                 ELSE TRIM(s.session_label) = TRIM(:sessionName)
@@ -1162,7 +1221,8 @@ interface SessionDao {
         sessionNote: String,
         fetchLimit: Int,
         startDate: String,
-        endDate: String
+        endDate: String,
+        lastNSessions: Int
     ): Flow<List<MuscleGroupNameAndFrequency>>
 
     @Query("""
@@ -1177,8 +1237,18 @@ interface SessionDao {
         INNER JOIN profiles AS p
             ON p.id = s.profile_id
         WHERE p.active = 1
-            AND s.date >= :startDate
-            AND s.date <= :endDate
+            AND CASE 
+                WHEN :lastNSessions = -1 THEN s.date >= :startDate AND s.date <= :endDate
+                ELSE s.id IN (
+                    SELECT targets.id
+                    FROM sessions AS targets
+                    INNER JOIN profiles AS p1
+                        ON p1.id = targets.profile_id
+                    WHERE p1.active = 1
+                    ORDER BY targets.session_number DESC
+                    LIMIT :lastNSessions
+                )
+            END            
             AND CASE 
                 WHEN :sessionName = '' THEN 1
                 ELSE TRIM(s.session_label) = TRIM(:sessionName)
@@ -1208,7 +1278,8 @@ interface SessionDao {
         sessionNote: String,
         fetchLimit: Int,
         startDate: String,
-        endDate: String
+        endDate: String,
+        lastNSessions: Int
     ): Flow<List<LiftNameAndFrequency>>
 
     fun getUniqueMuscleGroupNamesAndFrequencies(
@@ -1217,7 +1288,8 @@ interface SessionDao {
         sessionNote: String,
         fetchLimit: Int,
         startDate: String?,
-        endDate: String?
+        endDate: String?,
+        lastNSessions: Int?
     ): Flow<List<MuscleGroupNameAndFrequency>> {
         val realSessionName: String = sessionName ?: ""
         val realLiftName: String = liftName ?: ""
@@ -1232,7 +1304,8 @@ interface SessionDao {
             sessionNote = sessionNote,
             fetchLimit = fetchLimit,
             startDate = datePair.first,
-            endDate = datePair.second
+            endDate = datePair.second,
+            lastNSessions = lastNSessions ?: -1
         )
     }
 
@@ -1242,7 +1315,8 @@ interface SessionDao {
         sessionNote: String,
         fetchLimit: Int,
         startDate: String?,
-        endDate: String?
+        endDate: String?,
+        lastNSessions: Int?
     ): Flow<List<LiftNameAndFrequency>> {
         val realSessionName: String = sessionName ?: ""
         val realMuscleGroupName: String = muscleGroupName ?: ""
@@ -1257,7 +1331,8 @@ interface SessionDao {
             sessionNote = sessionNote,
             fetchLimit = fetchLimit,
             startDate = datePair.first,
-            endDate = datePair.second
+            endDate = datePair.second,
+            lastNSessions = lastNSessions ?: -1
         )
     }
 
@@ -1272,8 +1347,18 @@ interface SessionDao {
         INNER JOIN profiles AS p
             ON p.id = s.profile_id
         WHERE p.active = 1
-            AND s.date >= :startDate
-            AND s.date <= :endDate
+            AND CASE
+                WHEN :lastNSessions = -1 THEN s.date >= :startDate AND s.date <= :endDate
+                ELSE s.id IN (
+                    SELECT targets.id
+                    FROM sessions AS targets
+                    INNER JOIN profiles AS p1
+                        ON p1.id = targets.profile_id
+                    WHERE p1.active = 1
+                    ORDER BY targets.session_number DESC
+                    LIMIT :lastNSessions
+                )
+            END            
             AND CASE
                 WHEN :sessionName = '' THEN 1
                 ELSE TRIM(s.session_label) = TRIM(:sessionName)
@@ -1299,7 +1384,8 @@ interface SessionDao {
         liftName: String,
         sessionNote: String,
         startDate: String,
-        endDate: String
+        endDate: String,
+        lastNSessions: Int
     ): Flow<Int>
 
     @Query("""
@@ -1313,8 +1399,18 @@ interface SessionDao {
         INNER JOIN profiles AS p
             ON p.id = s.profile_id
         WHERE p.active = 1
-            AND s.date >= :startDate
-            AND s.date <= :endDate
+            AND CASE
+                WHEN :lastNSessions = -1 THEN s.date >= :startDate AND s.date <= :endDate
+                ELSE s.id IN (
+                    SELECT targets.id
+                    FROM sessions AS targets
+                    INNER JOIN profiles AS p1
+                        ON p1.id = targets.profile_id
+                    WHERE p1.active = 1
+                    ORDER BY targets.session_number DESC
+                    LIMIT :lastNSessions
+                )
+            END            
             AND CASE
                 WHEN :sessionName = '' THEN 1
                 ELSE TRIM(s.session_label) = TRIM(:sessionName)
@@ -1340,7 +1436,8 @@ interface SessionDao {
         muscleGroupName: String,
         sessionNote: String,
         startDate: String,
-        endDate: String
+        endDate: String,
+        lastNSessions: Int
     ): Flow<Int>
 
     fun getNumberOfUniqueMuscleGroupNamesAndFrequencies(
@@ -1348,7 +1445,8 @@ interface SessionDao {
         liftName: String?,
         sessionNote: String,
         startDate: String?,
-        endDate: String?
+        endDate: String?,
+        lastNSessions: Int?
     ): Flow<Int> {
         val realSessionName: String = sessionName ?: ""
         val realLiftName: String = liftName ?: ""
@@ -1362,7 +1460,8 @@ interface SessionDao {
             liftName = realLiftName,
             sessionNote = sessionNote,
             startDate = datePair.first,
-            endDate = datePair.second
+            endDate = datePair.second,
+            lastNSessions = lastNSessions ?: -1
         )
     }
 
@@ -1371,7 +1470,8 @@ interface SessionDao {
         muscleGroupName: String?,
         sessionNote: String,
         startDate: String?,
-        endDate: String?
+        endDate: String?,
+        lastNSessions: Int?
     ): Flow<Int> {
         val realSessionName: String = sessionName ?: ""
         val realMuscleGroupName: String = muscleGroupName ?: ""
@@ -1385,7 +1485,8 @@ interface SessionDao {
             muscleGroupName = realMuscleGroupName,
             sessionNote = sessionNote,
             startDate = datePair.first,
-            endDate = datePair.second
+            endDate = datePair.second,
+            lastNSessions = lastNSessions ?: -1
         )
     }
 
