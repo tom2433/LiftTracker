@@ -572,6 +572,8 @@ class SessionsViewModel(
                 endDate = null
             )
         }
+
+        closeTimeFrameSection()
     }
 
     // TODO: remove before PR
