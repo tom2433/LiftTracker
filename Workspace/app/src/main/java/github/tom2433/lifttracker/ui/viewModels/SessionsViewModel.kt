@@ -1,18 +1,17 @@
 package github.tom2433.lifttracker.ui.viewModels
 
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import github.tom2433.lifttracker.data.lift.LiftRepository
-import github.tom2433.lifttracker.data.profile.Profile
 import github.tom2433.lifttracker.data.liftset.LiftSet
 import github.tom2433.lifttracker.data.liftset.LiftSetRepository
-import github.tom2433.lifttracker.data.setmetric.SetMetric
+import github.tom2433.lifttracker.data.profile.Profile
 import github.tom2433.lifttracker.data.profile.ProfileRepository
 import github.tom2433.lifttracker.data.session.Session
 import github.tom2433.lifttracker.data.session.SessionRepository
+import github.tom2433.lifttracker.data.setmetric.SetMetric
 import github.tom2433.lifttracker.data.setmetric.SetMetricRepository
 import github.tom2433.lifttracker.data.structures.DisplaySessionLiftSetRow
 import github.tom2433.lifttracker.data.structures.LiftSearchDetail
@@ -44,9 +43,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.Date
 import kotlin.time.Duration.Companion.milliseconds
-
-// TODO: delete these debug calls before pull request
-private const val TAG = "MainActivity"
 
 /**
  * ViewModel for SessionsScreen
@@ -437,23 +433,6 @@ class SessionsViewModel(
         }
     }
 
-    // TODO: remove before PR
-//    fun toggleTimeFrameDropdown() {
-//        _sessionsUiState.update { currentState ->
-//            currentState.copy(
-//                timeFrameDropdownExpanded = !currentState.timeFrameDropdownExpanded
-//            )
-//        }
-//    }
-//
-//    fun dismissTimeFrameDropdown() {
-//        _sessionsUiState.update { currentState ->
-//            currentState.copy(
-//                timeFrameDropdownExpanded = false
-//            )
-//        }
-//    }
-
     fun toggleTimeFrameSection() {
         // if open, close; otherwise open
         if (_sessionsUiState.value.timeFrameSectionStage1Expanded ||
@@ -554,77 +533,38 @@ class SessionsViewModel(
             )
         }
 
-        if (newTimeFrameType == CUSTOM_DATE_RANGE) {
-            // show date picker if custom timeframe
-            showDateRangePicker()
-        } else if (newTimeFrameType == LAST_SESSION_ONLY) {
-            // refresh for number of sessions if last session only
-            if (filterCollectionJob != null) {
-                filterCollectionJob?.cancel()
-                beginFilterCollectionJob()
+        when (newTimeFrameType) {
+            CUSTOM_DATE_RANGE -> {
+                // show date picker if custom timeframe
+                showDateRangePicker()
             }
+            LAST_SESSION_ONLY -> {
+                // refresh for number of sessions if last session only
+                if (filterCollectionJob != null) {
+                    filterCollectionJob?.cancel()
+                    beginFilterCollectionJob()
+                }
 
-            // refresh function will check if this filter is active and update accordingly.
-            refresh(true)
-        } else {
-            updateStartAndEndDate(
-                startDate = _sessionsUiState.value.timeFrameFilterMap[newTimeFrameType]?.getStartDate(),
-                endDate = null
+                // refresh function will check if this filter is active and update accordingly.
+                refresh(true)
+            }
+            else -> {
+                updateStartAndEndDate(
+                    startDate = _sessionsUiState.value.timeFrameFilterMap[newTimeFrameType]?.getStartDate(),
+                    endDate = null
+                )
+            }
+        }
+
+        // indicate that the timeFrameType is no longer pending refresh
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                timeFramePendingRefresh = false
             )
         }
 
         closeTimeFrameSection()
     }
-
-    // TODO: remove before PR
-//    @RequiresApi(Build.VERSION_CODES.O)
-//    fun timeFrameMenuOptionClicked(timeFrameLabel: String) {
-//        _sessionsUiState.update { currentState ->
-//            currentState.copy(
-//                timeFrameLabel = timeFrameLabel
-//            )
-//        }
-//        dismissTimeFrameDropdown()
-//
-//        when (timeFrameLabel) {
-//            LegacyTimeFrameOption.ALL_TIME -> {
-//                // update start and end date to null
-//                updateStartAndEndDate(null, null)
-//            }
-//            LegacyTimeFrameOption.PAST_WEEK -> {
-//                // update start date to one week ago
-//                updateStartAndEndDate(
-//                    startDate = DateTimeCalculator.calculateStartDate(
-//                        today = DateTimeCalculator.getCurrentIsoDate(),
-//                        daysBeforeToday = 6L
-//                    ),
-//                    endDate = null
-//                )
-//            }
-//            LegacyTimeFrameOption.PAST_TWO_WEEKS -> {
-//                // update start date to two weeks ago
-//                updateStartAndEndDate(
-//                    startDate = DateTimeCalculator.calculateStartDate(
-//                        today = DateTimeCalculator.getCurrentIsoDate(),
-//                        daysBeforeToday = 13L
-//                    ),
-//                    endDate = null
-//                )
-//            }
-//            LegacyTimeFrameOption.PAST_MONTH -> {
-//                updateStartAndEndDate(
-//                    startDate = DateTimeCalculator.calculateStartDate(
-//                        today = DateTimeCalculator.getCurrentIsoDate(),
-//                        daysBeforeToday = 27L
-//                    ),
-//                    endDate = null
-//                )
-//            }
-//            LegacyTimeFrameOption.CHOOSE_DATE -> {
-//                showDateRangePicker()
-//            }
-//        }
-//    }
 
     fun dismissDateRangePicker() {
         _sessionsUiState.update { currentState ->
@@ -1039,8 +979,6 @@ class SessionsViewModel(
                 }
 
                 updateLiftSummary()
-
-                Log.d(TAG, "Data loaded for session id ${sessionDetail.sessionId}")
             }
         }
     }
@@ -1786,6 +1724,66 @@ class SessionsViewModel(
             .firstNotNullOfOrNull { it.value }
             ?: TimeFrameOptionState(ALL_TIME)
     }
+
+    fun increaseMultiplierForTimeFrameType(timeFrameType: TimeFrameType) {
+        // update the corresponding TimeFrameType's multiplier
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                timeFrameFilterMap = currentState.timeFrameFilterMap.mapValues { (thisTimeFrameType, thisTimeFrameOptionState) ->
+                    if (thisTimeFrameType == timeFrameType) {
+                        thisTimeFrameOptionState.copy(
+                            multiplier = thisTimeFrameOptionState.multiplier + 1
+                        )
+                    } else {
+                        thisTimeFrameOptionState
+                    }
+                }
+            )
+        }
+
+        // if the modified TimeFrameOptionState is currently active, then indicate that the
+        // timeFrame is pending refresh
+        if (timeFrameType == _sessionsUiState.value.timeFrameFilterMap.getActiveTimeFrameType()) {
+            _sessionsUiState.update { currentState ->
+                currentState.copy(
+                    timeFramePendingRefresh = true
+                )
+            }
+        }
+    }
+
+    fun decreaseMultiplierForTimeFrameType(timeFrameType: TimeFrameType) {
+        // only update the corresponding TimeFrameType's multiplier if the current multiplier is
+        // greater than 1
+        if ((_sessionsUiState.value.timeFrameFilterMap[timeFrameType]?.multiplier ?: 0) <= 1) {
+            return
+        }
+
+        // update the corresponding TimeFrameType's multiplier
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                timeFrameFilterMap = currentState.timeFrameFilterMap.mapValues { (thisTimeFrameType, thisTimeFrameOptionState) ->
+                    if (thisTimeFrameType == timeFrameType) {
+                        thisTimeFrameOptionState.copy(
+                            multiplier = thisTimeFrameOptionState.multiplier - 1
+                        )
+                    } else {
+                        thisTimeFrameOptionState
+                    }
+                }
+            )
+        }
+
+        // if the modified TimeFrameOptionState is currently active, then indicate that the
+        // timeFrame is pending refresh
+        if (timeFrameType == _sessionsUiState.value.timeFrameFilterMap.getActiveTimeFrameType()) {
+            _sessionsUiState.update { currentState ->
+                currentState.copy(
+                    timeFramePendingRefresh = true
+                )
+            }
+        }
+    }
 }
 
 /**
@@ -1864,7 +1862,8 @@ data class SessionsUiState(
     val timeFrameSectionStage1Expanded: Boolean = false,
     val timeFrameSectionStage2Expanded: Boolean = false,
     val timeFrameFilterMap: Map<TimeFrameType, TimeFrameOptionState> =
-        TimeFrameType.getDefaultFilterMap()
+        TimeFrameType.getDefaultFilterMap(),
+    val timeFramePendingRefresh: Boolean = false
 )
 
 data class FilterState(
@@ -1902,7 +1901,7 @@ enum class TimeFrameType(
     PAST_WEEK(1, "Past # of weeks:"),
     PAST_MONTH(1, "Past # of months:"),
     PAST_YEAR(1, "Past # of years:"),
-    LAST_SESSION_ONLY(1, "Past # of sessions:"),
+    LAST_SESSION_ONLY(1, "Last # of sessions:"),
     CUSTOM_DATE_RANGE(-1, "Custom date range");
 
     fun getNumSessionsToFetch(multiplier: Int): Int? {

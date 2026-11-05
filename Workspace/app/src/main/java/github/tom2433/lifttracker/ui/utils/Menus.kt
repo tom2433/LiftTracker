@@ -8,16 +8,20 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -102,10 +106,13 @@ fun TimeFrameMenu(
     borderColor: Color,
     cardContentColor: Color,
     cardContainerColor: Color,
+    addButtonContentColor: Color,
     stage1Visible: Boolean,
     stage2Visible: Boolean,
     timeFrameFilterMap: Map<TimeFrameType, TimeFrameOptionState>,
     timeFrameSelected: (TimeFrameType) -> Unit,
+    increaseMultiplier: (TimeFrameType) -> Unit,
+    decreaseMultiplier: (TimeFrameType) -> Unit,
     modifier: Modifier = Modifier
 ) {
     SlideAndExpandSection(
@@ -121,9 +128,12 @@ fun TimeFrameMenu(
             TimeFrameSelector(
                 timeFrameOptionState = timeFrameOptionState,
                 timeFrameSelected = { timeFrameSelected(timeFrameOptionState.timeFrameType) },
+                increaseMultiplier = { increaseMultiplier(timeFrameOptionState.timeFrameType) },
+                decreaseMultiplier = { decreaseMultiplier(timeFrameOptionState.timeFrameType) },
                 activeBorderColor = borderColor,
                 activeContentColor = cardContentColor,
                 activeContainerColor = cardContainerColor,
+                addButtonContentColor = addButtonContentColor,
                 modifier = Modifier.padding(bottom = 4.dp)
             )
         }
@@ -135,9 +145,12 @@ fun TimeFrameMenu(
 fun TimeFrameSelector(
     timeFrameOptionState: TimeFrameOptionState,
     timeFrameSelected: () -> Unit,
+    increaseMultiplier: () -> Unit,
+    decreaseMultiplier: () -> Unit,
     activeBorderColor: Color,
     activeContentColor: Color,
     activeContainerColor: Color,
+    addButtonContentColor: Color,
     modifier: Modifier = Modifier
 ) {
     val borderColor by animateColorAsState(
@@ -189,6 +202,69 @@ fun TimeFrameSelector(
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(8.dp)
             )
+
+            // row to hold modifier selector (if applicable)
+            if (timeFrameOptionState.timeFrameType.defaultMultiplier != -1) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // subtract button
+                    Card(
+                        colors = CardDefaults.cardColors().copy(
+                            containerColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onError
+                        ),
+                        onClick = decreaseMultiplier,
+                        shape = RoundedCornerShape(0.dp),
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .width(48.dp)
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Remove,
+                                contentDescription = "Subtract from multiplier"
+                            )
+                        }
+                    }
+                    // multiplier label
+                    Text(
+                        text = timeFrameOptionState.multiplier.toString(),
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                    // add button
+                    Card(
+                        colors = CardDefaults.cardColors().copy(
+                            containerColor = activeBorderColor,
+                            contentColor = addButtonContentColor
+                        ),
+                        onClick = increaseMultiplier,
+                        shape = RoundedCornerShape(
+                            topStart = 0.dp,
+                            topEnd = 4.dp,
+                            bottomStart = 0.dp,
+                            bottomEnd = 4.dp
+                        ),
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .width(48.dp)
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Add,
+                                contentDescription = "Add to multiplier"
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }

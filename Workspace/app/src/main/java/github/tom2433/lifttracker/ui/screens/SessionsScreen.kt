@@ -88,15 +88,6 @@ object SessionsDestination : NavigationDestination {
     override val titleRes = R.string.sessions_title
 }
 
-// TODO: remove before PR
-//object LegacyTimeFrameOption {
-//    const val ALL_TIME: String = "All time"
-//    const val PAST_WEEK: String = "Past week"
-//    const val PAST_TWO_WEEKS: String = "Past 2 weeks"
-//    const val PAST_MONTH: String = "Past month"
-//    const val CHOOSE_DATE: String = "Custom date range"
-//}
-
 /**
  * Entry route for Sessions Screen
  */
@@ -110,14 +101,6 @@ fun SessionsScreen(
     val sessionsUiState by viewModel.sessionsUiState.collectAsState()
     val beginDateLabel = calculateBeginDateLabel(sessionsUiState.startDate)
     val endDateLabel = calculateEndDateLabel(sessionsUiState.endDate)
-    // TODO: remove before PR
-//    val startDateDropdownOptions: List<String> = listOf(
-//        LegacyTimeFrameOption.ALL_TIME,
-//        LegacyTimeFrameOption.PAST_WEEK,
-//        LegacyTimeFrameOption.PAST_TWO_WEEKS,
-//        LegacyTimeFrameOption.PAST_MONTH,
-//        LegacyTimeFrameOption.CHOOSE_DATE
-//    )
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
@@ -146,64 +129,6 @@ fun SessionsScreen(
                     bottom = 8.dp
                 )
         ) {
-            // TODO: remove before PR
-//            ExposedDropdownMenuBox(
-//                expanded = sessionsUiState.timeFrameDropdownExpanded,
-//                onExpandedChange = {}
-//            ) {
-//                // row to hold timeframe selector
-//                Row(
-//                    horizontalArrangement = Arrangement.Start,
-//                    verticalAlignment = Alignment.CenterVertically,
-//                    modifier = Modifier
-//                        .clickable(
-//                            onClick = { viewModel.toggleTimeFrameDropdown() }
-//                        )
-//                        .menuAnchor(
-//                            type = ExposedDropdownMenuAnchorType.PrimaryNotEditable
-//                        )
-//                        .border(
-//                            width = 1.dp,
-//                            color = MaterialTheme.colorScheme.onBackground.copy(0.5f),
-//                            shape = RoundedCornerShape(4.dp),
-//                        )
-//                ) {
-//                    Text(
-//                        text = sessionsUiState.timeFrameLabel,
-//                        style = MaterialTheme.typography.titleMedium,
-//                        modifier = Modifier.padding(
-//                            top = 8.dp,
-//                            bottom = 8.dp,
-//                            start = 12.dp,
-//                            end = 4.dp
-//                        )
-//                    )
-//                    Icon(
-//                        imageVector = Icons.Filled.ArrowDropDown,
-//                        contentDescription = stringResource(R.string.select_start_date),
-//                        modifier = Modifier.padding(end = 8.dp)
-//                    )
-//                }
-//
-//                // start date dropdown menu
-//                ExposedDropdownMenu(
-//                    expanded = sessionsUiState.timeFrameDropdownExpanded,
-//                    onDismissRequest = { viewModel.dismissTimeFrameDropdown() }
-//                ) {
-//                    startDateDropdownOptions.forEach { startDateLabel ->
-//                        DropdownMenuItem(
-//                            text = {
-//                                Text(
-//                                    text = startDateLabel,
-//                                    style = MaterialTheme.typography.bodyMedium
-//                                )
-//                            },
-//                            onClick = { viewModel.timeFrameMenuOptionClicked(startDateLabel) }
-//                        )
-//                    }
-//                }
-//            }
-
             // card to represent timeframe filter button
             TimeFrameFilterButton(
                 filterSectionExpanded = sessionsUiState.timeFrameSectionExpanded,
@@ -223,10 +148,13 @@ fun SessionsScreen(
             borderColor = MaterialTheme.colorScheme.primary,
             cardContentColor = MaterialTheme.colorScheme.onBackground,
             cardContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+            addButtonContentColor = MaterialTheme.colorScheme.onPrimary,
             stage1Visible = sessionsUiState.timeFrameSectionStage1Expanded,
             stage2Visible = sessionsUiState.timeFrameSectionStage2Expanded,
             timeFrameFilterMap = sessionsUiState.timeFrameFilterMap,
             timeFrameSelected = { viewModel.timeFrameSelected(it) },
+            increaseMultiplier = { viewModel.increaseMultiplierForTimeFrameType(it) },
+            decreaseMultiplier = { viewModel.decreaseMultiplierForTimeFrameType(it) },
             modifier =
                 if (sessionsUiState.timeFrameSectionExpanded
                     && sessionsUiState.filterSectionExpanded) {
