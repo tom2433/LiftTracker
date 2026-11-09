@@ -1,7 +1,15 @@
 package github.tom2433.lifttracker.ui.utils
 
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -109,10 +117,12 @@ fun TimeFrameMenu(
     addButtonContentColor: Color,
     stage1Visible: Boolean,
     stage2Visible: Boolean,
+    timeFramePendingRefresh: Boolean,
     timeFrameFilterMap: Map<TimeFrameType, TimeFrameOptionState>,
     timeFrameSelected: (TimeFrameType) -> Unit,
     increaseMultiplier: (TimeFrameType) -> Unit,
     decreaseMultiplier: (TimeFrameType) -> Unit,
+    refreshTimeFrame: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     SlideAndExpandSection(
@@ -137,6 +147,47 @@ fun TimeFrameMenu(
                 modifier = Modifier.padding(bottom = 4.dp)
             )
         }
+
+        // display refresh button if pending refresh
+        AnimatedVisibility(
+            visible = timeFramePendingRefresh,
+            enter = expandVertically(
+                animationSpec = spring(
+                    stiffness = Spring.StiffnessMediumLow
+                ),
+                expandFrom = Alignment.Top
+            ) + fadeIn(tween(300)),
+            exit = shrinkVertically(
+                animationSpec = spring(
+                    stiffness = Spring.StiffnessMediumLow
+                ),
+                shrinkTowards = Alignment.Top
+            ) + fadeOut(tween(300))
+        ) {
+            Card(
+                shape = RoundedCornerShape(4.dp),
+                colors = CardDefaults.cardColors().copy(
+                    containerColor = borderColor,
+                    contentColor = addButtonContentColor
+                ),
+                onClick = { refreshTimeFrame() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 48.dp)
+                    .height(IntrinsicSize.Min)
+            ) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Text(
+                        text = "Refresh",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        }
+
         Spacer(modifier = Modifier.height(12.dp))
     }
 }

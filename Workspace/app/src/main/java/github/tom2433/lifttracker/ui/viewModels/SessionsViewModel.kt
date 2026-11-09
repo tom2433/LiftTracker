@@ -508,8 +508,14 @@ class SessionsViewModel(
         refresh(true)
     }
 
+    fun refreshTimeFrame() {
+        val activeTimeFrameType: TimeFrameType =
+            _sessionsUiState.value.timeFrameFilterMap.getActiveTimeFrameType() ?: return
+        timeFrameSelected(activeTimeFrameType)
+    }
+
     fun timeFrameSelected(newTimeFrameType: TimeFrameType) {
-        // update active time frame (for visual purposes)
+        // update active time frame (for visual purposes), and hide refresh button
         _sessionsUiState.update { currentState ->
             currentState.copy(
                 timeFrameFilterMap = currentState.timeFrameFilterMap.mapValues { (timeFrameType, timeFrameOptionState) ->
@@ -522,7 +528,8 @@ class SessionsViewModel(
                             active = false
                         )
                     }
-                }
+                },
+                timeFramePendingRefresh = false
             )
         }
 
@@ -1773,6 +1780,7 @@ class SessionsViewModel(
                 }
             )
         }
+
 
         // if the modified TimeFrameOptionState is currently active, then indicate that the
         // timeFrame is pending refresh

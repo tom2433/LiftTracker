@@ -151,10 +151,12 @@ fun SessionsScreen(
             addButtonContentColor = MaterialTheme.colorScheme.onPrimary,
             stage1Visible = sessionsUiState.timeFrameSectionStage1Expanded,
             stage2Visible = sessionsUiState.timeFrameSectionStage2Expanded,
+            timeFramePendingRefresh = sessionsUiState.timeFramePendingRefresh,
             timeFrameFilterMap = sessionsUiState.timeFrameFilterMap,
             timeFrameSelected = { viewModel.timeFrameSelected(it) },
             increaseMultiplier = { viewModel.increaseMultiplierForTimeFrameType(it) },
             decreaseMultiplier = { viewModel.decreaseMultiplierForTimeFrameType(it) },
+            refreshTimeFrame = { viewModel.refreshTimeFrame() },
             modifier =
                 if (sessionsUiState.timeFrameSectionExpanded
                     && sessionsUiState.filterSectionExpanded) {
