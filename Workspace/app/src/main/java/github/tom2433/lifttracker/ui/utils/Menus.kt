@@ -49,6 +49,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import github.tom2433.lifttracker.ui.viewModels.FilterState
 import github.tom2433.lifttracker.ui.viewModels.FilterType
@@ -270,6 +271,7 @@ fun TimeFrameSelector(
                         modifier = Modifier
                             .fillMaxHeight()
                             .width(48.dp)
+                            .weight(1f, fill = false)
                     ) {
                         Box(
                             contentAlignment = Alignment.Center,
@@ -284,8 +286,11 @@ fun TimeFrameSelector(
                     // multiplier label
                     Text(
                         text = timeFrameOptionState.multiplier.toString(),
+                        textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(horizontal = 16.dp)
+                        modifier = Modifier
+                            .weight(1f, fill = false)
+                            .width(48.dp)
                     )
                     // add button
                     Card(
@@ -303,6 +308,7 @@ fun TimeFrameSelector(
                         modifier = Modifier
                             .fillMaxHeight()
                             .width(48.dp)
+                            .weight(1f, fill = false)
                     ) {
                         Box(
                             contentAlignment = Alignment.Center,
