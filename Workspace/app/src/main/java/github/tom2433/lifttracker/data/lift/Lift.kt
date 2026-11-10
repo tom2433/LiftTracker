@@ -29,14 +29,14 @@ The ```lifts``` table has 4 columns:
             entity = MuscleGroup::class,
             parentColumns = ["id"],
             childColumns = ["muscle_group_id"],
-            onDelete = ForeignKey.Companion.CASCADE
+            onDelete = ForeignKey.CASCADE
         ),
         ForeignKey(
             entity = LiftUnit::class,
             parentColumns = ["id"],
             childColumns = ["unit_id"],
             // this lift will not be deleted if this lift unit is deleted
-            onDelete = ForeignKey.Companion.NO_ACTION
+            onDelete = ForeignKey.NO_ACTION
         )
     ],
     indices = [

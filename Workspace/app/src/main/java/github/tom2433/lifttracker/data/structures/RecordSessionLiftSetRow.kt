@@ -1,7 +1,6 @@
 package github.tom2433.lifttracker.data.structures
 
 import androidx.room.Embedded
-import github.tom2433.lifttracker.data.lift.Lift
 import github.tom2433.lifttracker.data.liftset.LiftSet
 import github.tom2433.lifttracker.data.setmetric.SetMetric
 

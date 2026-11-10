@@ -27,7 +27,7 @@ The ```set_metrics``` table has 6 columns:
             entity = LiftSet::class,
             parentColumns = ["id"],
             childColumns = ["set_id"],
-            onDelete = ForeignKey.Companion.CASCADE
+            onDelete = ForeignKey.CASCADE
         )
     ],
     indices = [

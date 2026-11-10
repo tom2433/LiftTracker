@@ -1,6 +1,5 @@
 package github.tom2433.lifttracker.data.liftset
 
-import github.tom2433.lifttracker.data.lift.Lift
 import github.tom2433.lifttracker.data.structures.LiftSetCountPerLift
 import github.tom2433.lifttracker.data.structures.RecordSessionLiftSetRow
 import kotlinx.coroutines.flow.Flow

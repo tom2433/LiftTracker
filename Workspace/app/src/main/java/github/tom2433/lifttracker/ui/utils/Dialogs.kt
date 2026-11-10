@@ -18,7 +18,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Label
-import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Info
@@ -29,7 +28,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DateRangePicker
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -63,9 +61,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import github.tom2433.lifttracker.R
-import github.tom2433.lifttracker.data.musclegroup.MuscleGroup
 import github.tom2433.lifttracker.data.liftunit.LiftUnit
+import github.tom2433.lifttracker.data.musclegroup.MuscleGroup
 import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun ShowElementEntryDialog(
@@ -87,7 +86,7 @@ fun ShowElementEntryDialog(
     val elementNoteFocusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
     LaunchedEffect(Unit) {
-        delay(100)
+        delay(100.milliseconds)
         elementNameFocusRequester.requestFocus()
         keyboardController?.show()
     }
@@ -262,7 +261,7 @@ fun ShowHistoricalSetEditDialog(
     val keyboardController = LocalSoftwareKeyboardController.current
 
     LaunchedEffect(Unit) {
-        delay(100)
+        delay(100.milliseconds)
         liftSetNameFocusRequester.requestFocus()
         keyboardController?.show()
     }
@@ -638,7 +637,7 @@ fun ShowMetricEntryDialog(
     val metricFocusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
     LaunchedEffect(Unit) {
-        delay(100)
+        delay(100.milliseconds)
         metricFocusRequester.requestFocus()
         keyboardController?.show()
     }
@@ -740,7 +739,6 @@ fun ShowMetricEntryDialog(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WelcomeDialog(
     buttonEnabled: Boolean,
@@ -968,7 +966,7 @@ fun ShowLiftEntryDialog(
     val elementNoteFocusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
     LaunchedEffect(Unit) {
-        delay(100)
+        delay(100.milliseconds)
         elementNameFocusRequester.requestFocus()
         keyboardController?.show()
     }
@@ -1489,7 +1487,6 @@ fun InfoButton(
     if (showDialog) {
         BasicDialog(
             onDismissRequest = {
-                @Suppress("AssignedValueIsNeverRead")
                 showDialog = false
             },
             dialogContent = content

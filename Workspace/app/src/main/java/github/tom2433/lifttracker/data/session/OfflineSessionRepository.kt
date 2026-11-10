@@ -1,6 +1,5 @@
 package github.tom2433.lifttracker.data.session
 
-import github.tom2433.lifttracker.data.profile.Profile
 import github.tom2433.lifttracker.data.structures.DisplaySessionLiftSetRow
 import github.tom2433.lifttracker.data.structures.LiftNameAndFrequency
 import github.tom2433.lifttracker.data.structures.LiftSetCountPerMuscleGroup

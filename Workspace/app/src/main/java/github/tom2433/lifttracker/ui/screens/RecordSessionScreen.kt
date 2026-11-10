@@ -26,7 +26,6 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -107,13 +106,13 @@ import github.tom2433.lifttracker.ui.navigation.NavigationDestination
 import github.tom2433.lifttracker.ui.utils.DisplaySetCountPerMuscleGroup
 import github.tom2433.lifttracker.ui.utils.LiftDetailFlowRow
 import github.tom2433.lifttracker.ui.utils.LiftSetLabels
-import github.tom2433.lifttracker.ui.utils.SetNumberRow
 import github.tom2433.lifttracker.ui.utils.ShowElementDeleteDialog
 import github.tom2433.lifttracker.ui.utils.ShowElementEntryDialog
 import github.tom2433.lifttracker.ui.utils.ShowMetricEntryDialog
 import github.tom2433.lifttracker.ui.viewModels.RecordSessionUiState
 import github.tom2433.lifttracker.ui.viewModels.RecordSessionViewModel
 import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 object RecordSessionDestination : NavigationDestination {
     override val route = "recordSession"
@@ -277,7 +276,6 @@ fun RecordSessionScreen(
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SessionInProgressScreen(
     viewModel: RecordSessionViewModel,
@@ -478,8 +476,7 @@ fun SessionInProgressScreen(
                                         liftSetVisibleMap = recordSessionUiState.liftSetVisibleMap,
                                         setCountPerLiftMap = recordSessionUiState.setCountPerLiftMap,
                                         focusManager = focusManager,
-                                        deleteButtonsEnabled = recordSessionUiState.deleteButtonsEnabled,
-                                        activeSession = activeSession
+                                        deleteButtonsEnabled = recordSessionUiState.deleteButtonsEnabled
                                     )
                                 }
                             }
@@ -556,7 +553,6 @@ fun LiftInProgressCard(
     setCountPerLiftMap: Map<Int, Int>,
     focusManager: FocusManager,
     deleteButtonsEnabled: Boolean,
-    activeSession: Session,
     modifier: Modifier = Modifier
 ) {
     val bottomCornerRadius by animateDpAsState(
@@ -768,8 +764,7 @@ fun LiftInProgressCard(
                                     screenContentColor = screenContentColor,
                                     liftHasMoreThanOneSet = setMap.keys.size > 1,
                                     focusManager = focusManager,
-                                    deleteButtonsEnabled = deleteButtonsEnabled,
-                                    activeSession = activeSession
+                                    deleteButtonsEnabled = deleteButtonsEnabled
                                 )
                             }
                         }
@@ -825,7 +820,6 @@ fun LiftSetInProgressCard(
     liftHasMoreThanOneSet: Boolean,
     focusManager: FocusManager,
     deleteButtonsEnabled: Boolean,
-    activeSession: Session,
     modifier: Modifier = Modifier
 ) {
     // focus requesters for each input except weight; user will enter the weight field if they want
@@ -1295,7 +1289,7 @@ fun ExistingLiftEntryCard(
     val liftNameFocusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
     LaunchedEffect(Unit) {
-        delay(100)
+        delay(100.milliseconds)
         liftNameFocusRequester.requestFocus()
         keyboardController?.show()
     }

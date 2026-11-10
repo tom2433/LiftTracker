@@ -32,6 +32,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.collections.emptyList
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * ViewModel for RecordSessionScreen
@@ -279,16 +280,12 @@ class RecordSessionViewModel(
         // pending lift set is officially ready, so now we can set it visible
         viewModelScope.launch {
             // wait a little for compose ot render the hidden card
-            delay(50)
+            delay(50.milliseconds)
 
             _recordSessionUiState.update { currentState ->
                 currentState.copy(
                     liftSetVisibleMap = currentState.liftSetVisibleMap.mapValues { (liftSetId, visible) ->
-                        if (liftSetId == pendingLiftSetId) {
-                            true
-                        } else {
-                            visible
-                        }
+                        liftSetId == pendingLiftSetId || visible
                     }
                 )
             }
@@ -308,7 +305,7 @@ class RecordSessionViewModel(
 
         viewModelScope.launch {
             // wait a little for compose to render the hidden card
-            delay(50)
+            delay(50.milliseconds)
 
             _recordSessionUiState.update { currentState ->
                 currentState.copy(
@@ -323,7 +320,7 @@ class RecordSessionViewModel(
             }
 
             // wait for enter animation to finish
-            delay(150)
+            delay(150.milliseconds)
             _recordSessionUiState.update { currentState ->
                 currentState.copy(
                     liftDetailMap = currentState.liftDetailMap.mapValues { (liftId, liftDetail) ->
@@ -667,11 +664,7 @@ class RecordSessionViewModel(
             liftSearchDetail.selected
         }
 
-        return if (selectedLifts.isNotEmpty()) {
-            selectedLifts[0]
-        } else {
-            null
-        }
+        return selectedLifts.firstOrNull()
     }
 
     fun showDeleteLiftInProgressDialog(liftId: Int) {
@@ -731,7 +724,7 @@ class RecordSessionViewModel(
             }
 
             // wait for card to swipe away
-            delay(1500)
+            delay(1500.milliseconds)
 
             // delete lift sets
             for (liftSet in liftSetsToDelete) {
@@ -906,11 +899,7 @@ class RecordSessionViewModel(
             _recordSessionUiState.update { currentState ->
                 currentState.copy(
                     liftSetVisibleMap = currentState.liftSetVisibleMap.mapValues { (liftSetId, visible) ->
-                        if (liftSetId == liftSetToDelete.id) {
-                            false
-                        } else {
-                            visible
-                        }
+                        liftSetId != liftSetToDelete.id && visible
                     },
                     deleteButtonsEnabled = false
                 )
@@ -919,7 +908,7 @@ class RecordSessionViewModel(
             dismissDeleteLiftSetDialog()
 
             // wait for the lift set card to swipe away
-            delay(1000)
+            delay(1000.milliseconds)
 
             // delete the liftSet
             liftSetRepository.deleteLiftSet(

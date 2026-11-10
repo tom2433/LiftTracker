@@ -1,5 +1,7 @@
 package github.tom2433.lifttracker.ui.screens
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
@@ -22,6 +24,7 @@ object AnalyticsDestination : NavigationDestination {
 /**
  * Entry route for Analytics Screen
  */
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AnalyticsScreen(
     modifier: Modifier = Modifier,

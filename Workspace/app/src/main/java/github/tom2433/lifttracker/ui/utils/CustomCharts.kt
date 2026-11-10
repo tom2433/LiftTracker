@@ -649,7 +649,7 @@ fun LiftSummaryDistributionLineGraph(
     // define chart items
     val chartItems = remember(dataPoints) {
         dataPoints.sortedWith(
-            compareBy<SetDistributionPoint> { it.setNumber }
+            compareBy { it.setNumber }
         )
     }
 

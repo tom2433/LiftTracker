@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * ViewModel to retrieve all profiles in the Room database
@@ -166,11 +167,7 @@ class MuscleGroupsViewModel(
             currentState.copy(
                 muscleGroupList = currentState.muscleGroupList.mapValues { (muscleGroupId, muscleGroupDetail) ->
                     muscleGroupDetail.copy(
-                        cardIsOpen = if (muscleGroupId == id) {
-                            !muscleGroupDetail.cardIsOpen
-                        } else {
-                            false
-                        }
+                        cardIsOpen = muscleGroupId == id && !muscleGroupDetail.cardIsOpen
                     )
                 }
             )
@@ -305,7 +302,7 @@ class MuscleGroupsViewModel(
                 }
 
                 // delay for swipe animation
-                delay(300)
+                delay(300.milliseconds)
 
                 muscleGroupRepository.deleteMuscleGroup(_muscleGroupsUiState.value.muscleGroupToDelete!!)
                 dismissDeleteMuscleGroupDialog()

@@ -30,7 +30,7 @@ The ```sessions``` table has 7 columns:
             entity = Profile::class,
             parentColumns = ["id"],
             childColumns = ["profile_id"],
-            onDelete = ForeignKey.Companion.CASCADE
+            onDelete = ForeignKey.CASCADE
         )
     ],
     indices = [

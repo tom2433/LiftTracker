@@ -215,7 +215,7 @@ object DateTimeCalculator {
 
     fun convertMinutesDoubleToSummaryDetail(minutesDouble: Double): String {
         val timeTriple: Triple<Int, Int, Double> = convertDoubleTimeToTripleTime(minutesDouble)
-        var timeString: String = ""
+        var timeString = ""
         if (timeTriple.first != 0) {
             timeString += if (timeTriple.first == 1) {
                 "1 hour, "

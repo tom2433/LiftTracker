@@ -102,6 +102,7 @@ import github.tom2433.lifttracker.ui.viewModels.DrawerViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Top level composable that holds all screens of the application via a NavController
@@ -178,6 +179,7 @@ fun LiftTrackerApp(navController: NavHostController = rememberNavController()) {
  * @see github.tom2433.lifttracker.ui.screens.ToolsScreen
  * @see github.tom2433.lifttracker.ui.screens.SettingsScreen
  */
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LiftTrackerDrawer(
@@ -397,7 +399,7 @@ fun LiftTrackerDrawer(
                     onClick = {
                         coroutineScope.launch {
                             viewModel.closeDrawer()
-                            delay(200)
+                            delay(200.milliseconds)
                             navigateToRecordSession()
                         }
                     },
@@ -417,7 +419,7 @@ fun LiftTrackerDrawer(
                     onClick = {
                         coroutineScope.launch {
                             viewModel.closeDrawer()
-                            delay(200)
+                            delay(200.milliseconds)
                             navigateToMuscleGroups()
                         }
                     }
@@ -436,7 +438,7 @@ fun LiftTrackerDrawer(
                     onClick = {
                         coroutineScope.launch {
                             viewModel.closeDrawer()
-                            delay(200)
+                            delay(200.milliseconds)
                             navigateToSessions()
                         }
                     }
@@ -455,7 +457,7 @@ fun LiftTrackerDrawer(
                     onClick = {
                         coroutineScope.launch {
                             viewModel.closeDrawer()
-                            delay(200)
+                            delay(200.milliseconds)
                             navigateToCalendar()
                         }
                     }
@@ -658,7 +660,7 @@ fun LiftTrackerDrawer(
                     onClick = {
                         coroutineScope.launch {
                             viewModel.closeDrawer()
-                            delay(200)
+                            delay(200.milliseconds)
                             navigateToAnalytics()
                         }
                     }
@@ -678,7 +680,7 @@ fun LiftTrackerDrawer(
                     onClick = {
                         coroutineScope.launch {
                             viewModel.closeDrawer()
-                            delay(200)
+                            delay(200.milliseconds)
                             navigateToTools()
                         }
                     }
@@ -698,7 +700,7 @@ fun LiftTrackerDrawer(
                     onClick = {
                         coroutineScope.launch {
                             viewModel.closeDrawer()
-                            delay(200)
+                            delay(200.milliseconds)
                             navigateToSettings()
                         }
                     }

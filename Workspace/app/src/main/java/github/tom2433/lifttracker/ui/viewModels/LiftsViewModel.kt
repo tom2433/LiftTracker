@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 class LiftsViewModel(
     private val muscleGroupId: Int,
@@ -140,11 +141,7 @@ class LiftsViewModel(
             currentState.copy(
                 liftMap = currentState.liftMap.mapValues { (liftId, liftDetail) ->
                     liftDetail.copy(
-                        threeDotMenuOpen = if (liftId == id) {
-                            !liftDetail.threeDotMenuOpen
-                        } else {
-                            false
-                        }
+                        threeDotMenuOpen = liftId == id && !liftDetail.threeDotMenuOpen
                     )
                 }
             )
@@ -213,7 +210,7 @@ class LiftsViewModel(
                 )
 
                 // wait for lift unit to be added
-                delay(100)
+                delay(100.milliseconds)
 
                 liftUnit = liftUnitRepository.getLiftUnitFromNameStream(_liftsUiState.value.newLiftUnitName).firstOrNull()
             }

@@ -18,7 +18,6 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -33,7 +32,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -66,7 +64,6 @@ import github.tom2433.lifttracker.ui.utils.DateRangePickerModal
 import github.tom2433.lifttracker.ui.utils.DisplayAllSetDataForSession
 import github.tom2433.lifttracker.ui.utils.DisplaySessionAnalytics
 import github.tom2433.lifttracker.ui.utils.DisplaySetCountPerMuscleGroup
-import github.tom2433.lifttracker.ui.utils.FilterButton
 import github.tom2433.lifttracker.ui.utils.FilterMenu
 import github.tom2433.lifttracker.ui.utils.LabelHeader
 import github.tom2433.lifttracker.ui.utils.LayoutSwitcher
@@ -79,9 +76,9 @@ import github.tom2433.lifttracker.ui.utils.ShowHistoricalSetEditDialog
 import github.tom2433.lifttracker.ui.utils.ThreeDotMenu
 import github.tom2433.lifttracker.ui.utils.TimeFrameFilterButton
 import github.tom2433.lifttracker.ui.utils.TimeFrameMenu
-import github.tom2433.lifttracker.ui.viewModels.TimeFrameType
 import github.tom2433.lifttracker.ui.viewModels.SessionsViewModel
 import github.tom2433.lifttracker.ui.viewModels.TimeFrameOptionState
+import github.tom2433.lifttracker.ui.viewModels.TimeFrameType
 
 object SessionsDestination : NavigationDestination {
     override val route = "sessions"
@@ -91,7 +88,6 @@ object SessionsDestination : NavigationDestination {
 /**
  * Entry route for Sessions Screen
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun SessionsScreen(

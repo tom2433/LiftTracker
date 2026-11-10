@@ -26,7 +26,7 @@ The ```muscle_groups``` table has 4 columns:
             entity = Profile::class,
             parentColumns = ["id"],
             childColumns = ["profile_id"],
-            onDelete = ForeignKey.Companion.CASCADE
+            onDelete = ForeignKey.CASCADE
         )
     ],
     indices = [

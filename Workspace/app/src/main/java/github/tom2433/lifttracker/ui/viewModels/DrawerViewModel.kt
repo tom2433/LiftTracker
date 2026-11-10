@@ -1,7 +1,6 @@
 package github.tom2433.lifttracker.ui.viewModels
 
 import androidx.annotation.StringRes
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import github.tom2433.lifttracker.R
@@ -372,7 +371,6 @@ class DrawerViewModel(
         }
     }
 
-    @OptIn(ExperimentalMaterial3Api::class)
     fun checkScreenForScrollBehavior(titleRes: Int) {
         _drawerUiState.update { currentState ->
             currentState.copy(
@@ -394,7 +392,7 @@ class DrawerViewModel(
 /**
  * Ui State for SettingsScreen
  */
-data class DrawerUiState @OptIn(ExperimentalMaterial3Api::class) constructor(
+data class DrawerUiState(
     val profileList: List<Profile> = listOf(),
     val isDrawerOpen: Boolean = false,
     val drawerWidthPx: Float = 0f,

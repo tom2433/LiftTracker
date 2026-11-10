@@ -1,5 +1,7 @@
 package github.tom2433.lifttracker.ui.screens
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
@@ -54,7 +56,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -64,7 +65,6 @@ import github.tom2433.lifttracker.data.lift.Lift
 import github.tom2433.lifttracker.data.profile.Profile
 import github.tom2433.lifttracker.ui.AppViewModelProvider
 import github.tom2433.lifttracker.ui.navigation.NavigationDestination
-import github.tom2433.lifttracker.ui.theme.LiftTrackerTheme
 import github.tom2433.lifttracker.ui.utils.ShowElementDeleteDialog
 import github.tom2433.lifttracker.ui.utils.ShowElementEntryDialog
 import github.tom2433.lifttracker.ui.utils.StatRow
@@ -81,6 +81,7 @@ object MuscleGroupsDestination : NavigationDestination {
 /**
  * Entry route for Muscle Groups Screen (Home Screen)
  */
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun MuscleGroupsScreen(
     modifier: Modifier = Modifier,
