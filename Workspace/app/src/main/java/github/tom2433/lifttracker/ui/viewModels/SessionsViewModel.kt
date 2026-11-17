@@ -435,11 +435,18 @@ class SessionsViewModel(
 
     fun toggleTimeFrameSection() {
         // if open, close; otherwise open
-        if (_sessionsUiState.value.timeFrameSectionStage1Expanded ||
-            _sessionsUiState.value.timeFrameSectionStage2Expanded) {
+        if (_sessionsUiState.value.timeFrameSectionExpanded) {
             closeTimeFrameSection()
         } else {
             openTimeFrameSection()
+        }
+    }
+
+    fun toggleSessionTimeFrameSection() {
+        if (_sessionsUiState.value.sessionTimeFrameSectionExpanded) {
+            closeSessionTimeFrameSection()
+        } else {
+            openSessionTimeFrameSection()
         }
     }
 
@@ -461,6 +468,44 @@ class SessionsViewModel(
             _sessionsUiState.update { currentState ->
                 currentState.copy(
                     timeFrameSectionStage2Expanded = true
+                )
+            }
+        }
+    }
+
+    private fun openSessionTimeFrameSection() {
+        viewModelScope.launch {
+            _sessionsUiState.update { currentState ->
+                currentState.copy(
+                    sessionTimeFrameSectionExpanded = true,
+                    sessionTimeFrameSectionStage1Expanded = true
+                )
+            }
+
+            delay(150.milliseconds)
+
+            _sessionsUiState.update { currentState ->
+                currentState.copy(
+                    sessionTimeFrameSectionStage2Expanded = true
+                )
+            }
+        }
+    }
+
+    private fun closeSessionTimeFrameSection() {
+        viewModelScope.launch {
+            _sessionsUiState.update { currentState ->
+                currentState.copy(
+                    sessionTimeFrameSectionExpanded = false,
+                    sessionTimeFrameSectionStage2Expanded = false
+                )
+            }
+
+            delay(300.milliseconds)
+
+            _sessionsUiState.update { currentState ->
+                currentState.copy(
+                    sessionTimeFrameSectionStage1Expanded = false
                 )
             }
         }
@@ -512,6 +557,12 @@ class SessionsViewModel(
         val activeTimeFrameType: TimeFrameType =
             _sessionsUiState.value.timeFrameFilterMap.getActiveTimeFrameType() ?: return
         timeFrameSelected(activeTimeFrameType)
+    }
+
+    fun refreshSessionTimeFrame() {
+        val activeTimeFrameType: TimeFrameType =
+            _sessionsUiState.value.sessionTimeFrameFilterMap.getActiveTimeFrameType() ?: return
+        sessionTimeFrameSelected(activeTimeFrameType)
     }
 
     fun timeFrameSelected(newTimeFrameType: TimeFrameType) {
@@ -571,6 +622,51 @@ class SessionsViewModel(
         }
 
         closeTimeFrameSection()
+    }
+
+    fun sessionTimeFrameSelected(newTimeFrameType: TimeFrameType) {
+        // retrieve sessionDetail
+        val sessionCardId: Int =
+            _sessionsUiState.value.sessionDetailMap.getSelectedSessionCardId() ?: return
+        val sessionDetail: SessionDetail =
+            _sessionsUiState.value.sessionDetailMap[sessionCardId] ?: return
+
+        // update active time frame and hide refresh button
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                sessionTimeFrameFilterMap = currentState.sessionTimeFrameFilterMap.mapValues { (thisTimeFrameType, thisTimeFrameOptionState) ->
+                    if (thisTimeFrameType == newTimeFrameType) {
+                        thisTimeFrameOptionState.copy(
+                            active = true
+                        )
+                    } else {
+                        thisTimeFrameOptionState.copy(
+                            active = false
+                        )
+                    }
+                },
+                sessionTimeFramePendingRefresh = false
+            )
+        }
+
+        // refresh label
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                sessionTimeFrameDisplayLabel = currentState.sessionTimeFrameFilterMap[newTimeFrameType]?.getDisplayLabel() ?: ""
+            )
+        }
+
+        when (newTimeFrameType) {
+            CUSTOM_DATE_RANGE -> {
+                // TODO: implement calendar date picker for sessionTimeFrameType
+            }
+            else -> {
+                setCollectionJob?.cancel()
+                beginSetCollectionJob(sessionDetail)
+            }
+        }
+
+        closeSessionTimeFrameSection()
     }
 
     fun dismissDateRangePicker() {
@@ -933,7 +1029,10 @@ class SessionsViewModel(
         setCollectionJob?.cancel()
 
         setCollectionJob = viewModelScope.launch {
-            val timeFrameOptionState: TimeFrameOptionState = getCurrentSessionDataTimeFrameOptionState()
+            val timeFrameType: TimeFrameType =
+                _sessionsUiState.value.sessionTimeFrameFilterMap.getActiveTimeFrameType() ?: ALL_TIME
+            val timeFrameOptionState: TimeFrameOptionState =
+                _sessionsUiState.value.sessionTimeFrameFilterMap[timeFrameType] ?: return@launch
             val startDate: String? = timeFrameOptionState
                 .getStartDate(sessionDetail.sessionDateIso)
             val numSessionsToFetch: Int? = timeFrameOptionState.getNumSessionsToFetch()
@@ -1647,32 +1746,33 @@ class SessionsViewModel(
         updateLiftSummary()
     }
 
-    fun sessionDataFilterChipClicked(
-        timeFrameType: TimeFrameType,
-        sessionCardId: Int
-    ) {
-        val sessionDetail: SessionDetail =
-            _sessionsUiState.value.sessionDetailMap[sessionCardId] ?: return
-
-        // first update the time frame option, then refresh the session collection
-        _sessionsUiState.update { currentState ->
-            currentState.copy(
-                sessionTimeFrameFilterMap =
-                    currentState.sessionTimeFrameFilterMap.mapValues { (thisTimeFrameType, thisTimeFrameOptionState) ->
-                        if (thisTimeFrameType == timeFrameType) {
-                            thisTimeFrameOptionState.copy(
-                                active = !thisTimeFrameOptionState.active
-                            )
-                        } else {
-                            thisTimeFrameOptionState
-                        }
-                    }
-            )
-        }
-
-        setCollectionJob?.cancel()
-        beginSetCollectionJob(sessionDetail)
-    }
+// TODO: remove before PR
+//    fun sessionDataFilterChipClicked(
+//        timeFrameType: TimeFrameType,
+//        sessionCardId: Int
+//    ) {
+//        val sessionDetail: SessionDetail =
+//            _sessionsUiState.value.sessionDetailMap[sessionCardId] ?: return
+//
+//        // first update the time frame option, then refresh the session collection
+//        _sessionsUiState.update { currentState ->
+//            currentState.copy(
+//                sessionTimeFrameFilterMap =
+//                    currentState.sessionTimeFrameFilterMap.mapValues { (thisTimeFrameType, thisTimeFrameOptionState) ->
+//                        if (thisTimeFrameType == timeFrameType) {
+//                            thisTimeFrameOptionState.copy(
+//                                active = !thisTimeFrameOptionState.active
+//                            )
+//                        } else {
+//                            thisTimeFrameOptionState
+//                        }
+//                    }
+//            )
+//        }
+//
+//        setCollectionJob?.cancel()
+//        beginSetCollectionJob(sessionDetail)
+//    }
 
     private fun resetLiftSummary() {
         liftSummaryJob?.cancel()
@@ -1699,7 +1799,11 @@ class SessionsViewModel(
                 _sessionsUiState.value.sessionDetailMap
                     .filter { it.value.selected }
                     .firstNotNullOfOrNull { it }?.value ?: return resetLiftSummary()
-            val timeFrameOptionState: TimeFrameOptionState = getCurrentSessionDataTimeFrameOptionState()
+            val timeFrameType: TimeFrameType =
+                _sessionsUiState.value.sessionTimeFrameFilterMap.getActiveTimeFrameType()
+                    ?: ALL_TIME
+            val timeFrameOptionState: TimeFrameOptionState =
+                _sessionsUiState.value.sessionTimeFrameFilterMap[timeFrameType] ?: return
             val startDate: String? = timeFrameOptionState
                 .getStartDate(sessionDetail.sessionDateIso)
             val numSessionsToFetch: Int? = timeFrameOptionState.getNumSessionsToFetch()
@@ -1725,11 +1829,31 @@ class SessionsViewModel(
         }
     }
 
-    private fun getCurrentSessionDataTimeFrameOptionState(): TimeFrameOptionState {
-        return _sessionsUiState.value.sessionTimeFrameFilterMap
-            .filter { it.value.active }
-            .firstNotNullOfOrNull { it.value }
-            ?: TimeFrameOptionState(ALL_TIME)
+    fun increaseMultiplierForSessionTimeFrameType(timeFrameType: TimeFrameType) {
+        // update the corresponding TimeFrameType's multiplier
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                sessionTimeFrameFilterMap = currentState.sessionTimeFrameFilterMap.mapValues { (thisTimeFrameType, thisTimeFrameOptionState) ->
+                    if (thisTimeFrameType == timeFrameType) {
+                        thisTimeFrameOptionState.copy(
+                            multiplier = thisTimeFrameOptionState.multiplier + 1
+                        )
+                    } else {
+                        thisTimeFrameOptionState
+                    }
+                }
+            )
+        }
+
+        // if the modified TimeFrameOptionState is currently active, then indicate that the
+        // timeFrame is pending refresh
+        if (timeFrameType == _sessionsUiState.value.sessionTimeFrameFilterMap.getActiveTimeFrameType()) {
+            _sessionsUiState.update { currentState ->
+                currentState.copy(
+                    sessionTimeFramePendingRefresh = true
+                )
+            }
+        }
     }
 
     fun increaseMultiplierForTimeFrameType(timeFrameType: TimeFrameType) {
@@ -1754,6 +1878,39 @@ class SessionsViewModel(
             _sessionsUiState.update { currentState ->
                 currentState.copy(
                     timeFramePendingRefresh = true
+                )
+            }
+        }
+    }
+
+    fun decreaseMultiplierForSessionTimeFrameType(timeFrameType: TimeFrameType) {
+        // only update the corresponding TimeFrameType's multiplier if the current multiplier is
+        // greater than 1
+        if ((_sessionsUiState.value.sessionTimeFrameFilterMap[timeFrameType]?.multiplier ?: 0) <= 1) {
+            return
+        }
+
+        // update the corresponding TimeFrameType's multiplier
+        _sessionsUiState.update { currentState ->
+            currentState.copy(
+                sessionTimeFrameFilterMap = currentState.sessionTimeFrameFilterMap.mapValues { (thisTimeFrameType, thisTimeFrameOptionState) ->
+                    if (thisTimeFrameType == timeFrameType) {
+                        thisTimeFrameOptionState.copy(
+                            multiplier = thisTimeFrameOptionState.multiplier - 1
+                        )
+                    } else {
+                        thisTimeFrameOptionState
+                    }
+                }
+            )
+        }
+
+        // if the modified TimeFrameOptionState is currently active, then indicate that the
+        // timeFrame is pending refresh
+        if (timeFrameType == _sessionsUiState.value.timeFrameFilterMap.getActiveTimeFrameType()) {
+            _sessionsUiState.update { currentState ->
+                currentState.copy(
+                    sessionTimeFramePendingRefresh = true
                 )
             }
         }
@@ -1828,6 +1985,12 @@ data class SessionsUiState(
     val currentSessionLiftSummary: LiftSummary? = null,
     val sessionTimeFrameFilterMap: Map<TimeFrameType, TimeFrameOptionState> =
         TimeFrameType.getDefaultFilterMap(),
+    val sessionTimeFramePendingRefresh: Boolean = false,
+    val sessionTimeFrameDisplayLabel: String =
+        TimeFrameOptionState(TimeFrameType.getDefaultTimeFrameType()).getDisplayLabel(),
+    val sessionTimeFrameSectionExpanded: Boolean = false,
+    val sessionTimeFrameSectionStage1Expanded: Boolean = false,
+    val sessionTimeFrameSectionStage2Expanded: Boolean = false,
     // properties for editing/deleting a session ---------------------------------------------------
     val deleteSessionDialogVisible: Boolean = false,
     val editSessionDialogVisible: Boolean = false,
@@ -1999,6 +2162,10 @@ data class TimeFrameOptionState(
             }
         }
     }
+}
+
+fun Map<Int, SessionDetail>.getSelectedSessionCardId(): Int? {
+    return this.entries.firstOrNull { it.value.selected } ?.key
 }
 
 fun Map<TimeFrameType, TimeFrameOptionState>.getActiveTimeFrameType(): TimeFrameType? {

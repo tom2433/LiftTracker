@@ -1696,8 +1696,17 @@ fun LabelAndDropdownRow(
 fun DisplaySessionAnalytics(
     trimmedSessionName: String,
     sessionSummary: SessionSummary,
-    statDisplayFilterMap: Map<TimeFrameType, TimeFrameOptionState>,
-    filterChipClicked: (TimeFrameType) -> Unit,
+    timeFrameFilterSectionExpanded: Boolean,
+    toggleTimeFrameSection: () -> Unit,
+    timeFrameDisplayLabel: String,
+    timeFrameSectionStage1Expanded: Boolean,
+    timeFrameSectionStage2Expanded: Boolean,
+    timeFramePendingRefresh: Boolean,
+    timeFrameFilterMap: Map<TimeFrameType, TimeFrameOptionState>,
+    timeFrameSelected: (TimeFrameType) -> Unit,
+    increaseMultiplierForTimeFrame: (TimeFrameType) -> Unit,
+    decreaseMultiplierForTimeFrame: (TimeFrameType) -> Unit,
+    refreshTimeFrame: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var analyticsVisible by remember { mutableStateOf(false) }
@@ -1783,33 +1792,34 @@ fun DisplaySessionAnalytics(
                         .fillMaxWidth()
                         .padding(top = 16.dp)
                 ) {
-                    // label before filter chips
+                    // label before filter section
                     Text(
                         text = "Compare this session to other $trimmedSessionName workouts from:",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onBackground.copy(0.75f),
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
-                    // TODO: replace these filter chips with new timeframe filter
-//                    Row(
-//                        horizontalArrangement = Arrangement.Start,
-//                        verticalAlignment = Alignment.CenterVertically,
-//                        modifier = Modifier
-//                            .fillMaxWidth()
-//                            .horizontalScroll(rememberScrollState())
-//                    ) {
-//                        for ((sessionDataTimeFrameOption, selected) in statDisplayFilterMap) {
-//                            CustomFilterChip(
-//                                label = sessionDataTimeFrameOption.label,
-//                                onClick = { filterChipClicked(sessionDataTimeFrameOption) },
-//                                selected = selected,
-//                                modifier = Modifier
-//                                    .padding(
-//                                        end = 8.dp
-//                                    )
-//                            )
-//                        }
-//                    }
+                    TimeFrameFilterButton(
+                        filterSectionExpanded = timeFrameFilterSectionExpanded,
+                        onClickFilter = toggleTimeFrameSection,
+                        displayLabel = timeFrameDisplayLabel,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+
+                    TimeFrameMenu(
+                        borderColor = MaterialTheme.colorScheme.primary,
+                        cardContentColor = MaterialTheme.colorScheme.onBackground,
+                        cardContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        addButtonContentColor = MaterialTheme.colorScheme.onPrimary,
+                        stage1Visible = timeFrameSectionStage1Expanded,
+                        stage2Visible = timeFrameSectionStage2Expanded,
+                        timeFramePendingRefresh = timeFramePendingRefresh,
+                        timeFrameFilterMap = timeFrameFilterMap,
+                        timeFrameSelected = timeFrameSelected,
+                        increaseMultiplier = increaseMultiplierForTimeFrame,
+                        decreaseMultiplier = decreaseMultiplierForTimeFrame,
+                        refreshTimeFrame = refreshTimeFrame
+                    )
 
                     // row to hold summary title and info button
                     Row(

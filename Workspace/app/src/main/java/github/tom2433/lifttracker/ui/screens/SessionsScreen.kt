@@ -325,13 +325,17 @@ fun SessionsScreen(
                                     currentSessionLiftSetMap = sessionsUiState.currentSessionLiftSetMap,
                                     currentSessionSummary = sessionsUiState.currentSessionSummary,
                                     currentSessionLiftSummary = sessionsUiState.currentSessionLiftSummary,
-                                    sessionStatDisplayFilterMap = sessionsUiState.sessionTimeFrameFilterMap,
-                                    filterChipClicked = {
-                                        viewModel.sessionDataFilterChipClicked(
-                                            timeFrameType = it,
-                                            sessionCardId = sessionId
-                                        )
-                                    },
+                                    timeFrameFilterSectionExpanded = sessionsUiState.sessionTimeFrameSectionExpanded,
+                                    timeFrameDisplayLabel = sessionsUiState.sessionTimeFrameDisplayLabel,
+                                    timeFrameSectionStage1Expanded = sessionsUiState.sessionTimeFrameSectionStage1Expanded,
+                                    timeFrameSectionStage2Expanded = sessionsUiState.sessionTimeFrameSectionStage2Expanded,
+                                    timeFramePendingRefresh = sessionsUiState.sessionTimeFramePendingRefresh,
+                                    timeFrameFilterMap = sessionsUiState.sessionTimeFrameFilterMap,
+                                    toggleTimeFrameSection = { viewModel.toggleSessionTimeFrameSection() },
+                                    timeFrameSelected = { viewModel.sessionTimeFrameSelected(it) },
+                                    increaseMultiplierForTimeFrame = { viewModel.increaseMultiplierForSessionTimeFrameType(it) },
+                                    decreaseMultiplierForTimeFrame = { viewModel.decreaseMultiplierForSessionTimeFrameType(it) },
+                                    refreshTimeFrame = { viewModel.refreshSessionTimeFrame() },
                                     onClickThreeDotMenu = {
                                         viewModel.threeDotMenuClicked(
                                             sessionCardId = sessionDetail.sessionId
@@ -527,8 +531,17 @@ fun SessionCard(
     currentSessionLiftSetMap: Map<Int, SetCardData>,
     currentSessionSummary: SessionSummary,
     currentSessionLiftSummary: LiftSummary?,
-    sessionStatDisplayFilterMap: Map<TimeFrameType, TimeFrameOptionState>,
-    filterChipClicked: (TimeFrameType) -> Unit,
+    timeFrameFilterSectionExpanded: Boolean,
+    timeFrameDisplayLabel: String,
+    timeFrameSectionStage1Expanded: Boolean,
+    timeFrameSectionStage2Expanded: Boolean,
+    timeFramePendingRefresh: Boolean,
+    timeFrameFilterMap: Map<TimeFrameType, TimeFrameOptionState>,
+    toggleTimeFrameSection: () -> Unit,
+    timeFrameSelected: (TimeFrameType) -> Unit,
+    increaseMultiplierForTimeFrame: (TimeFrameType) -> Unit,
+    decreaseMultiplierForTimeFrame: (TimeFrameType) -> Unit,
+    refreshTimeFrame: () -> Unit,
     onClickThreeDotMenu: () -> Unit,
     onDismissThreeDotMenu: () -> Unit,
     onClickSwitchToInProgress: () -> Unit,
@@ -766,8 +779,17 @@ fun SessionCard(
                 DisplaySessionAnalytics(
                     trimmedSessionName = sessionDetail.sessionName.trim(),
                     sessionSummary = currentSessionSummary,
-                    statDisplayFilterMap = sessionStatDisplayFilterMap,
-                    filterChipClicked = { filterChipClicked(it) },
+                    timeFrameFilterSectionExpanded = timeFrameFilterSectionExpanded,
+                    toggleTimeFrameSection = toggleTimeFrameSection,
+                    timeFrameDisplayLabel = timeFrameDisplayLabel,
+                    timeFrameSectionStage1Expanded = timeFrameSectionStage1Expanded,
+                    timeFrameSectionStage2Expanded = timeFrameSectionStage2Expanded,
+                    timeFramePendingRefresh = timeFramePendingRefresh,
+                    timeFrameFilterMap = timeFrameFilterMap,
+                    timeFrameSelected = timeFrameSelected,
+                    increaseMultiplierForTimeFrame = increaseMultiplierForTimeFrame,
+                    decreaseMultiplierForTimeFrame = decreaseMultiplierForTimeFrame,
+                    refreshTimeFrame = refreshTimeFrame,
                     modifier = Modifier.padding(top = 16.dp)
                 )
 
